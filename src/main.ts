@@ -1,7 +1,6 @@
 import ElementPlus from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { createPinia } from 'pinia'
-import Apis from '@/api/alova'
 import { AppError } from '@/components'
 import { createLogger, createPWA, customPaint, ElementIcons } from '@/plugin'
 import { router } from '@/router'
@@ -10,8 +9,6 @@ import App from './App.vue'
 import './style/app.scss'
 import 'element-plus/dist/index.css'
 import 'element-plus/theme-chalk/dark/css-vars.css'
-
-Reflect.set(globalThis, 'Apis', Apis)
 
 void (async () => {
   const container = '#app'
