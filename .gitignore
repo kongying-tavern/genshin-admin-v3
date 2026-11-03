@@ -48,8 +48,9 @@ auto-imports.d.ts
 # VSCode
 .vscode/**/*.code-snippets
 
-# Trae temp file
-.trae/documents
+# Harness temp file
+.trae/documents/
+.workbuddy/memory/
 
 # 临时文件
 temp
