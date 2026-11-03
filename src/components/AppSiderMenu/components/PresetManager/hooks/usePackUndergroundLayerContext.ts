@@ -10,8 +10,7 @@ const collectLayerCodes = (areaExtraConfigs: Record<string, DTO.ExtraConfig>): s
     const { underground = {} } = areaExtraConfigs[areaCode]
     const { levels = [] } = underground
     for (const group of levels) {
-      for (const item of group.children ?? [])
-        codes.push(item.value)
+      for (const item of group.children ?? []) codes.push(item.value)
     }
   }
   return codes
@@ -27,16 +26,14 @@ export const usePackUndergroundLayerContext = () => {
   /** code → 24 位 MD5 哈希 */
   const codeToHashMap = computed(() => {
     const map = new Map<string, bigint>()
-    for (const code of codes.value)
-      map.set(code, md5ToBigInt(code, 1, 3))
+    for (const code of codes.value) map.set(code, md5ToBigInt(code, 1, 3))
     return map
   })
 
   /** 24 位 MD5 哈希 → code */
   const hashToCodeMap = computed(() => {
     const map = new Map<bigint, string>()
-    for (const code of codes.value)
-      map.set(md5ToBigInt(code, 1, 3), code)
+    for (const code of codes.value) map.set(md5ToBigInt(code, 1, 3), code)
     return map
   })
 

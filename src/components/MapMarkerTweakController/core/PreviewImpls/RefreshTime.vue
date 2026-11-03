@@ -5,7 +5,9 @@ const props = defineProps<{
   value?: number | string
 }>()
 
-const { refreshTimeType, isCustom, humanFriendlyTimeText } = useRefreshTime(computed(() => Number(props.value)))
+const { refreshTimeType, isCustom, humanFriendlyTimeText } = useRefreshTime(
+  computed(() => Number(props.value)),
+)
 </script>
 
 <template>

@@ -28,8 +28,7 @@ const submit = async () => {
   try {
     await formRef.value?.validate()
     emits('submit')
-  }
-  catch {
+  } catch {
     // validate, no error
   }
 }
@@ -44,9 +43,7 @@ const submit = async () => {
     </el-form>
 
     <div class="flex justify-end">
-      <el-button :icon="Check" type="primary" :loading="loading" @click="submit">
-        确认
-      </el-button>
+      <el-button :icon="Check" type="primary" :loading="loading" @click="submit"> 确认 </el-button>
     </div>
   </div>
 </template>

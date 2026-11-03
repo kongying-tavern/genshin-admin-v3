@@ -1,11 +1,7 @@
 <script lang="ts" setup>
 import type { FilterConditions } from './types'
 import { GSDivider, GSTab } from '@/components'
-import {
-  PresetCurrentCodePanel,
-  PresetImportCodePanel,
-  PresetListPanel,
-} from './components'
+import { PresetCurrentCodePanel, PresetImportCodePanel, PresetListPanel } from './components'
 
 defineProps<{
   conditions: FilterConditions
@@ -15,21 +11,20 @@ const modelValue = defineModel<boolean>('modelValue', {
   default: false,
 })
 
-const tabs: { title: string, value: string }[] = [
+const tabs: { title: string; value: string }[] = [
   { title: '预设列表', value: 'list' },
   { title: '当前分享码', value: 'currentCode' },
   { title: '导入预设', value: 'importPreset' },
 ]
 const activeTab = shallowRef<string>('list')
 
-const presetListPanelRef = useTemplateRef<InstanceType<typeof PresetListPanel> | null>('presetListPanelRef')
+const presetListPanelRef = useTemplateRef<InstanceType<typeof PresetListPanel> | null>(
+  'presetListPanelRef',
+)
 
 /** 面板是否应展开：当前标签页可展开，且当前标签页内已展开 */
 const isPanelExpanded = computed(() => {
-  return (
-    activeTab.value === 'list'
-    && presetListPanelRef.value?.expanded === true
-  )
+  return activeTab.value === 'list' && presetListPanelRef.value?.expanded === true
 })
 
 const handlePresetLoad = () => {
@@ -50,13 +45,17 @@ const handlePresetLoad = () => {
       class="genshin-dark-card flex flex-col overflow-hidden font-['HYWenHei-85W'] h-[600px] max-w-[100dvw] max-h-[100dvh] transition-[width] duration-200"
       :class="isPanelExpanded ? 'w-[850px]' : 'w-[530px]'"
     >
-      <div class="text-xl text-center">
-        点位筛选条件预设
-      </div>
+      <div class="text-xl text-center">点位筛选条件预设</div>
 
       <GSDivider :height="12" />
 
-      <GSTab v-model="activeTab" :tabs="tabs" size="small" theme="dark" class="preset-manager-tab flex-1">
+      <GSTab
+        v-model="activeTab"
+        :tabs="tabs"
+        size="small"
+        theme="dark"
+        class="preset-manager-tab flex-1"
+      >
         <template #list>
           <PresetListPanel
             ref="presetListPanelRef"

@@ -31,12 +31,8 @@ const isAddonActive = useAddonActive(addonId, 'video')
 
     <AddonTeleporter :active="isAddonActive">
       <div class="">
-        <div class="font-bold">
-          原视频
-        </div>
-        <div v-if="!cachedVideoURL">
-          无视频
-        </div>
+        <div class="font-bold">原视频</div>
+        <div v-if="!cachedVideoURL">无视频</div>
         <AppBilibiliVideoPlayer
           v-else
           :url="cachedVideoURL"
@@ -46,16 +42,10 @@ const isAddonActive = useAddonActive(addonId, 'video')
         />
 
         <template v-if="videoURL !== cachedVideoURL">
-          <div class="font-bold mt-8">
-            新视频
-          </div>
+          <div class="font-bold mt-8">新视频</div>
           <div
             v-if="!videoURL"
-            class="
-              w-96 h-[216px] grid place-content-center
-              border border-[var(--el-border-color)]
-              text-[var(--el-text-color-secondary)]
-            "
+            class="w-96 h-[216px] grid place-content-center border border-[var(--el-border-color)] text-[var(--el-text-color-secondary)]"
           >
             无
           </div>
@@ -69,12 +59,7 @@ const isAddonActive = useAddonActive(addonId, 'video')
           >
             <template #error>
               <div
-                class="
-                  w-96 h-[216px] grid place-content-center
-                  border border-[var(--el-color-danger)]
-                  bg-[var(--el-color-danger-light-9)]
-                  text-[var(--el-color-danger)]
-                "
+                class="w-96 h-[216px] grid place-content-center border border-[var(--el-color-danger)] bg-[var(--el-color-danger-light-9)] text-[var(--el-color-danger)]"
               >
                 视频地址有误
               </div>

@@ -22,8 +22,7 @@ export const createHashGroupMap = <T extends object>(rawList: T[], options: Opti
       continue
     }
     const group = result.get(hash)!
-    if (time > group.time)
-      group.time = time
+    if (time > group.time) group.time = time
     group.list.push(item)
   }
   return result

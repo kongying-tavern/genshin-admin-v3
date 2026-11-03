@@ -2,15 +2,18 @@
 import type { FilterPreset } from '@/stores/types'
 import { SelectList } from '../../SelectList'
 
-withDefaults(defineProps<{
-  title?: string
-  list: FilterPreset[]
-  disabled?: boolean
-}>(), {
-  title: '',
-  list: () => [],
-  disabled: false,
-})
+withDefaults(
+  defineProps<{
+    title?: string
+    list: FilterPreset[]
+    disabled?: boolean
+  }>(),
+  {
+    title: '',
+    list: () => [],
+    disabled: false,
+  },
+)
 
 const presetName = defineModel<string>('presetName', {
   default: '',
@@ -18,16 +21,14 @@ const presetName = defineModel<string>('presetName', {
 
 const selectedPresetName = computed<string>({
   get: () => presetName.value ?? '',
-  set: value => presetName.value = value ?? '',
+  set: value => (presetName.value = value ?? ''),
 })
 </script>
 
 <template>
   <div class="flex flex-col h-full gap-3">
     <div class="flex items-center gap-1">
-      <div v-if="title" class="text-white whitespace-nowrap">
-        · {{ title }}
-      </div>
+      <div v-if="title" class="text-white whitespace-nowrap">· {{ title }}</div>
       <div class="flex-auto">
         <slot name="header-left" />
       </div>

@@ -6,12 +6,15 @@ const DESIGN_W = 1180
 const DESIGN_H = 560
 
 const scale = computed(() => {
-  if (!width.value || !height.value)
-    return 1
+  if (!width.value || !height.value) return 1
   return Math.min(width.value / DESIGN_W, height.value / DESIGN_H, 1)
 })
 
-interface CardPos { x: number, y: number, hasChildren?: boolean }
+interface CardPos {
+  x: number
+  y: number
+  hasChildren?: boolean
+}
 
 // 卡片尺寸与 useGraph 中保持一致：240 x 120，圆角 8
 const cards: CardPos[] = [
@@ -61,10 +64,20 @@ const lines = [
             class="absolute"
             :style="{ left: `${card.x}px`, top: `${card.y}px` }"
           >
-            <el-skeleton-item variant="rect" style="width: 240px; height: 120px; border-radius: 8px;" />
+            <el-skeleton-item
+              variant="rect"
+              style="width: 240px; height: 120px; border-radius: 8px"
+            />
             <div class="flex gap-2 mt-2">
-              <el-skeleton-item variant="rect" style="width: 116px; height: 32px; border-radius: 8px;" />
-              <el-skeleton-item v-if="card.hasChildren" variant="rect" style="width: 72px; height: 32px; border-radius: 8px;" />
+              <el-skeleton-item
+                variant="rect"
+                style="width: 116px; height: 32px; border-radius: 8px"
+              />
+              <el-skeleton-item
+                v-if="card.hasChildren"
+                variant="rect"
+                style="width: 72px; height: 32px; border-radius: 8px"
+              />
             </div>
           </div>
         </div>

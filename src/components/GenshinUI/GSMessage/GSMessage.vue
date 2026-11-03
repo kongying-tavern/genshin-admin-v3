@@ -19,15 +19,13 @@ const closeMessageInAnimation = () => {
 }
 
 onMounted(async () => {
-  if (!props.duration)
-    return
+  if (!props.duration) return
   await promiseTimeout(props.duration)
   closeMessageInAnimation()
 })
 
 const onAnimationEnd = (ev: AnimationEvent) => {
-  if (!ev.animationName.startsWith('message-anime-out'))
-    return
+  if (!ev.animationName.startsWith('message-anime-out')) return
   emits('close')
 }
 </script>
@@ -81,8 +79,8 @@ const onAnimationEnd = (ev: AnimationEvent) => {
   max-width: calc(100% - 2em);
   max-height: calc(100% - 2em);
   background: var(--message-bg);
-  color: #ECE5D8;
-  outline: 2px solid #FFFFFF40;
+  color: #ece5d8;
+  outline: 2px solid #ffffff40;
   border-radius: 6px;
   animation: message-anime-in 100ms ease-out forwards;
   scale: 0.95;

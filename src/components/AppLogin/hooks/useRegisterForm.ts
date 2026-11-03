@@ -20,11 +20,7 @@ export const useRegisterForm = (init: RegisterForm = {}) => {
   const formRef = ref<ElFormType | null>(null)
 
   const { isValid, handleValidate } = useValidateStatus({
-    keys: [
-      'username',
-      'password',
-      'repeatPassword',
-    ],
+    keys: ['username', 'password', 'repeatPassword'],
   })
 
   const form = ref({
@@ -40,50 +36,49 @@ export const useRegisterForm = (init: RegisterForm = {}) => {
     code: {
       required: true,
       validator: (_, v: string, callback) => {
-        if (!v.trim().length)
-          return callback('邀请码不能为空')
+        if (!v.trim().length) return callback('邀请码不能为空')
         callback()
       },
     },
     username: {
       required: true,
       validator: (_, v: string, callback) => {
-        if (v.length < 6)
-          return callback('不能少于 6 个字符')
-        if (v.match(/\s/))
-          return callback('不能包含空白字符')
+        if (v.length < 6) return callback('不能少于 6 个字符')
+        if (v.match(/\s/)) return callback('不能包含空白字符')
         callback()
       },
     },
     password: {
       required: true,
       validator: (_, v: string, callback) => {
-        if (v.length < 6)
-          return callback('不能少于 6 个字符')
-        if (v.match(/\s/))
-          return callback('不能包含空白字符')
+        if (v.length < 6) return callback('不能少于 6 个字符')
+        if (v.match(/\s/)) return callback('不能包含空白字符')
         callback()
       },
     },
     repeatPassword: {
       required: true,
       validator: (_, v: string, callback) => {
-        if (v.length < 6)
-          return callback('不能少于 6 个字符')
-        if (v.match(/\s/))
-          return callback('不能包含空白字符')
-        if (v !== form.value.password)
-          return callback('两次密码不一致')
+        if (v.length < 6) return callback('不能少于 6 个字符')
+        if (v.match(/\s/)) return callback('不能包含空白字符')
+        if (v !== form.value.password) return callback('两次密码不一致')
         callback()
       },
     },
   }
 
-  const { refresh: register, onSuccess, onError, ...rest } = useFetchHook({
+  const {
+    refresh: register,
+    onSuccess,
+    onError,
+    ...rest
+  } = useFetchHook({
     onRequest: async () => {
-      const isFormValid = await formRef.value?.validate().then(() => true).catch(() => false)
-      if (!isFormValid)
-        throw new Error('表单校验未通过')
+      const isFormValid = await formRef.value
+        ?.validate()
+        .then(() => true)
+        .catch(() => false)
+      if (!isFormValid) throw new Error('表单校验未通过')
       const { code, username, nickname, password } = form.value
       const { data, message } = await Apis.invitation.consumeInvitation({
         data: {
@@ -93,8 +88,7 @@ export const useRegisterForm = (init: RegisterForm = {}) => {
           password,
         },
       })
-      if (!data)
-        throw new Error(message ?? '无效的注册码')
+      if (!data) throw new Error(message ?? '无效的注册码')
       // 注册后自动登录
       const auth = await userStore.login({
         grant_type: 'password',
@@ -112,7 +106,7 @@ export const useRegisterForm = (init: RegisterForm = {}) => {
     })
   })
 
-  onError((err) => {
+  onError(err => {
     ElMessage({
       type: 'error',
       message: `注册失败，原因为：${err.message}`,

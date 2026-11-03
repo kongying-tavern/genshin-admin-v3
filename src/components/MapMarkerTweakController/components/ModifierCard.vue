@@ -21,17 +21,23 @@ const selectedIndex = defineModel<number>('selectedIndex', {
 })
 
 const activeModifier = () => {
-  if (props.index === selectedIndex.value)
-    return
+  if (props.index === selectedIndex.value) return
   selectedIndex.value = props.index
 }
 </script>
 
 <template>
   <Suspense>
-    <div class="modifier-card" :class="{ 'is-active': index === selectedIndex }" @click="activeModifier">
+    <div
+      class="modifier-card"
+      :class="{ 'is-active': index === selectedIndex }"
+      @click="activeModifier"
+    >
       <div class="card-title">
-        <div class="flex-1 whitespace-nowrap overflow-hidden text-ellipsis text-xs px-1" :title="modifier.options.label">
+        <div
+          class="flex-1 whitespace-nowrap overflow-hidden text-ellipsis text-xs px-1"
+          :title="modifier.options.label"
+        >
           {{ `${index + 1}. ${modifier.options.label} - ${modifier.typeLabel}` }}
         </div>
         <div class="flex-shrink-0">
@@ -41,9 +47,10 @@ const activeModifier = () => {
             :icon="Delete"
             size="small"
             style="
-            --el-fill-color-light: var(--el-color-danger-light-7);
-            --el-fill-color: var(--el-color-danger-light-9);
-            padding: 5px 6px"
+              --el-fill-color-light: var(--el-color-danger-light-7);
+              --el-fill-color: var(--el-color-danger-light-9);
+              padding: 5px 6px;
+            "
             @click.stop="() => $emit('remove')"
           />
         </div>

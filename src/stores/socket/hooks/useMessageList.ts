@@ -10,11 +10,13 @@ export const useMessageList = (messageEvent: EventBus<Socket.DataEventMap>) => {
     _messageList.value = []
   }
 
-  useSubscription(liveQuery(() => {
-    return db.websocketEvents.orderBy('time').reverse().limit(100).reverse().toArray()
-  }).subscribe((list) => {
-    _messageList.value = list
-  }))
+  useSubscription(
+    liveQuery(() => {
+      return db.websocketEvents.orderBy('time').reverse().limit(100).reverse().toArray()
+    }).subscribe(list => {
+      _messageList.value = list
+    }),
+  )
 
   messageEvent.on('MarkerAdded', async (markerInfo, user) => {
     const data: Socket.DataEventRecord<'MarkerAdded'> = {
@@ -51,8 +53,7 @@ export const useMessageList = (messageEvent: EventBus<Socket.DataEventMap>) => {
 
   messageEvent.on('MarkerTweaked', async (markers, user) => {
     const [first] = markers
-    if (!first)
-      return
+    if (!first) return
     const data: Socket.DataEventRecord<'MarkerTweaked'> = {
       key: crypto.randomUUID(),
       type: 'MarkerTweaked',
@@ -65,8 +66,7 @@ export const useMessageList = (messageEvent: EventBus<Socket.DataEventMap>) => {
 
   messageEvent.on('MarkerLinked', async (markers, user) => {
     const [first] = markers
-    if (!first)
-      return
+    if (!first) return
     const data: Socket.DataEventRecord<'MarkerLinked'> = {
       key: crypto.randomUUID(),
       type: 'MarkerLinked',

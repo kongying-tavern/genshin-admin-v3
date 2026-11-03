@@ -16,7 +16,7 @@ const text = computed<string>({
   get: () => {
     return `${modelValue.value.value ?? ''}`
   },
-  set: (newText) => {
+  set: newText => {
     modelValue.value = {
       ...modelValue.value,
       value: newText as unknown as object,

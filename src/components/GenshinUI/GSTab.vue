@@ -1,18 +1,21 @@
 <script lang="ts" setup>
 import { GSDivider } from '.'
 
-const props = withDefaults(defineProps<{
-  modelValue: string
-  tabs: { title: string, value: string }[]
-  size?: 'small' | 'medium' | 'large'
-  divider?: boolean
-  theme?: 'light' | 'dark'
-}>(), {
-  tabs: () => [],
-  size: 'medium',
-  divider: false,
-  theme: 'light',
-})
+const props = withDefaults(
+  defineProps<{
+    modelValue: string
+    tabs: { title: string; value: string }[]
+    size?: 'small' | 'medium' | 'large'
+    divider?: boolean
+    theme?: 'light' | 'dark'
+  }>(),
+  {
+    tabs: () => [],
+    size: 'medium',
+    divider: false,
+    theme: 'light',
+  },
+)
 
 const emits = defineEmits<{
   (e: 'update:modelValue', v: string): void
@@ -20,7 +23,11 @@ const emits = defineEmits<{
 </script>
 
 <template>
-  <div v-if="tabs.length" class="gs-tab" :class="[`gs-tab--size-${size}`, `gs-tab--theme-${theme}`]">
+  <div
+    v-if="tabs.length"
+    class="gs-tab"
+    :class="[`gs-tab--size-${size}`, `gs-tab--theme-${theme}`]"
+  >
     <div class="gs-tab-title shrink-0">
       <div
         v-for="tab in tabs"
@@ -51,14 +58,14 @@ const emits = defineEmits<{
   --tab-item-min-width: 150px;
   --tab-item-padding: 6px 24px;
   // light theme
-  --tab-bg: #DCCAA8;
-  --tab-arrow-bg: #E2D3B8;
+  --tab-bg: #dccaa8;
+  --tab-arrow-bg: #e2d3b8;
   --tab-border-color: transparent;
-  --tab-text-color: #7F6B5B;
-  --tab-hover-color: #FFF;
-  --tab-active-bg: #F7F3EC;
-  --tab-active-border: #ECE5D8;
-  --tab-active-color: #7F6B5B;
+  --tab-text-color: #7f6b5b;
+  --tab-hover-color: #fff;
+  --tab-active-bg: #f7f3ec;
+  --tab-active-border: #ece5d8;
+  --tab-active-color: #7f6b5b;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -67,14 +74,14 @@ const emits = defineEmits<{
 }
 
 .gs-tab--theme-dark {
-  --tab-bg: #2A3444;
-  --tab-arrow-bg: #6B7A92;
-  --tab-border-color: #6B7A92;
-  --tab-text-color: #A9B4C4;
-  --tab-hover-color: #D3BC8E;
-  --tab-active-bg: #3E4556;
-  --tab-active-border: #D3BC8E;
-  --tab-active-color: #F7D98A;
+  --tab-bg: #2a3444;
+  --tab-arrow-bg: #6b7a92;
+  --tab-border-color: #6b7a92;
+  --tab-text-color: #a9b4c4;
+  --tab-hover-color: #d3bc8e;
+  --tab-active-bg: #3e4556;
+  --tab-active-border: #d3bc8e;
+  --tab-active-color: #f7d98a;
 }
 
 .gs-tab--size-small {
@@ -90,7 +97,8 @@ const emits = defineEmits<{
 }
 
 @mixin clip-shape() {
-  clip-path: path('M 7.5 10 \
+  clip-path: path(
+    'M 7.5 10 \
     A 20 20 0 0 0 20 0 \
     A 23 23 0 0 0 20 20 \
     A 20 20 0 0 0 7.5 10 \

@@ -18,10 +18,6 @@ const modelValue = defineModel<MAFValueString>('modelValue', {
 <template>
   <div class="flex-auto flex gap-1 items-center">
     <span class="flex-none">ID范围</span>
-    <InputBase
-      v-model="modelValue.s"
-      class="flex-auto"
-      :options="options"
-    />
+    <InputBase v-model="modelValue.s" class="flex-auto" :options="options" />
   </div>
 </template>

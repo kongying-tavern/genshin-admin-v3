@@ -26,17 +26,24 @@ const formData = ref(props.modelValue)
 const isIntarnalChange = ref(false)
 
 // 下行同步
-watch(() => props.modelValue, () => {
-  if (isIntarnalChange.value)
-    return (isIntarnalChange.value = false)
-  formData.value = props.modelValue
-}, { deep: true })
+watch(
+  () => props.modelValue,
+  () => {
+    if (isIntarnalChange.value) return (isIntarnalChange.value = false)
+    formData.value = props.modelValue
+  },
+  { deep: true },
+)
 
 // 上行同步
-watch(formData, () => {
-  isIntarnalChange.value = true
-  emits('update:modelValue', formData.value)
-}, { deep: true })
+watch(
+  formData,
+  () => {
+    isIntarnalChange.value = true
+    emits('update:modelValue', formData.value)
+  },
+  { deep: true },
+)
 
 // ==================== 表单校验 ====================
 const formRef = ref<ElFormType | null>(null)
@@ -46,35 +53,46 @@ const rules: ItemFormRules<ItemVo> = {
   areaId: [requireCheck('change', '地区')],
   hiddenFlag: [requireCheck('change', '显示类型')],
   typeIdList: [
-    { required: true, message: '至少需要一个物品类型', validator: (_, typeIds) => typeIds.length >= 1, trigger: 'change' },
+    {
+      required: true,
+      message: '至少需要一个物品类型',
+      validator: (_, typeIds) => typeIds.length >= 1,
+      trigger: 'change',
+    },
   ],
 }
 
 // ==================== 物品地区 ====================
 const areaStore = useAreaStore()
 
-const areaList = computed(() => areaStore.areaList
-  .filter(area => area.isFinal)
-  .sort(({ sortIndex: ia = 0 }, { sortIndex: ib = 0 }) => ib - ia),
+const areaList = computed(() =>
+  areaStore.areaList
+    .filter(area => area.isFinal)
+    .sort(({ sortIndex: ia = 0 }, { sortIndex: ib = 0 }) => ib - ia),
 )
 
 // ==================== 物品类型 ====================
 const itemTypeStore = useItemTypeStore()
 
-const itemTypeList = computed(() => itemTypeStore.itemTypeList
-  .filter(itemType => itemType.isFinal)
-  .sort(({ sortIndex: ia = 0 }, { sortIndex: ib = 0 }) => ib - ia),
+const itemTypeList = computed(() =>
+  itemTypeStore.itemTypeList
+    .filter(itemType => itemType.isFinal)
+    .sort(({ sortIndex: ia = 0 }, { sortIndex: ib = 0 }) => ib - ia),
 )
 
 // ==================== 显示类型 ====================
-const hiddenFlagOptions = useArrayFilter(HIDDEN_FLAG_OPTIONS, ({ value }) => accessStore.checkHiddenFlag(value))
+const hiddenFlagOptions = useArrayFilter(HIDDEN_FLAG_OPTIONS, ({ value }) =>
+  accessStore.checkHiddenFlag(value),
+)
 
 // ==================== 物品图标 ====================
-const iconList = computed(() => iconStore.iconList.map(icon => ({
-  label: icon.tag ?? '',
-  value: icon.id,
-  url: icon.url,
-})))
+const iconList = computed(() =>
+  iconStore.iconList.map(icon => ({
+    label: icon.tag ?? '',
+    value: icon.id,
+    url: icon.url,
+  })),
+)
 
 // ==================== 图标类型 ====================
 const iconStyleOptions = [...ICON_STYLE_META_MAP.entries()].map(([key, meta]) => ({
@@ -160,23 +178,54 @@ defineExpose({
       </el-form-item>
 
       <el-form-item label="显示类型" prop="hiddenFlag">
-        <el-select-v2 v-model="formData.hiddenFlag" :options="hiddenFlagOptions" style="width: 100%" />
+        <el-select-v2
+          v-model="formData.hiddenFlag"
+          :options="hiddenFlagOptions"
+          style="width: 100%"
+        />
       </el-form-item>
 
       <el-form-item label="图标类型" prop="iconStyleType">
-        <el-select-v2 v-model="formData.iconStyleType" :options="iconStyleOptions" style="width: 100%" />
+        <el-select-v2
+          v-model="formData.iconStyleType"
+          :options="iconStyleOptions"
+          style="width: 100%"
+        />
       </el-form-item>
 
       <el-form-item label="排序权重" prop="sortIndex">
-        <el-input-number v-model="formData.sortIndex" :min="-65536" :max="65535" :step="1" placeholder="请输入权重" style="width: 100%" />
+        <el-input-number
+          v-model="formData.sortIndex"
+          :min="-65536"
+          :max="65535"
+          :step="1"
+          placeholder="请输入权重"
+          style="width: 100%"
+        />
       </el-form-item>
 
       <el-form-item label="物品图标" prop="iconId">
-        <el-select-v2 v-model="formData.iconId" :options="iconList" filterable placeholder="选择图标" style="width: 100%">
+        <el-select-v2
+          v-model="formData.iconId"
+          :options="iconList"
+          filterable
+          placeholder="选择图标"
+          style="width: 100%"
+        >
           <template #default="{ item }">
             <div class="flex items-center gap-2">
-              <img v-if="Boolean(item.url)" :src="item.url" class="object-contain p-[2px] w-[34px] h-[34px]" loading="lazy" crossorigin="">
-              <span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap" :title="item.label">{{ item.label }}</span>
+              <img
+                v-if="Boolean(item.url)"
+                :src="item.url"
+                class="object-contain p-[2px] w-[34px] h-[34px]"
+                loading="lazy"
+                crossorigin=""
+              />
+              <span
+                class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
+                :title="item.label"
+                >{{ item.label }}</span
+              >
             </div>
           </template>
         </el-select-v2>
@@ -190,7 +239,7 @@ defineExpose({
               :src="iconStore.idMap.get(formData.iconId)?.url"
               draggable="false"
               crossorigin=""
-            >
+            />
           </div>
           <div class="w-8 h-8 relative is-markered" :class="`icon-type-${formData.iconStyleType}`">
             <img
@@ -198,7 +247,7 @@ defineExpose({
               :src="iconStore.idMap.get(formData.iconId)?.url"
               draggable="false"
               crossorigin=""
-            >
+            />
           </div>
         </div>
       </el-form-item>
@@ -218,8 +267,8 @@ defineExpose({
 .icon-type-0 > img {
   border-radius: 50%;
   border: 4px solid #00f5f3;
-  outline: 2px solid #CCCCCC60;
-  background-color: #CCCCCC60;
+  outline: 2px solid #cccccc60;
+  background-color: #cccccc60;
 }
 :is(.icon-type-0, .icon-type-1).is-markered::before {
   content: '';
@@ -233,7 +282,7 @@ defineExpose({
   border-width: 0 0 6px 6px;
   border-style: solid;
   border-color: #41dfb4;
-  filter: drop-shadow(0 0 1px #FFF) drop-shadow(0 0 1px #FFF) drop-shadow(0 0 1px #FFF);
+  filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff);
   z-index: 1;
 }
 </style>

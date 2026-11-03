@@ -30,7 +30,7 @@ import { setupApiEnv } from '../_support/pinia'
 const enabled = await probeIntegration(integrationConfigured)
 
 /** 分页查询图标 */
-const listIcons = async (search: { tag?: string, typeIdList?: number[] }) => {
+const listIcons = async (search: { tag?: string; typeIdList?: number[] }) => {
   const { data } = await Apis.icon.listIcon({
     data: { current: 1, size: 100, ...search },
   })
@@ -127,9 +127,11 @@ describe.skipIf(!enabled)('集成：图标体系', () => {
     it('标签为空时创建被拒绝', async () => {
       await loginAsTestAccount()
 
-      await expect(Apis.icon.createIcon({
-        data: { tag: '   ', url: 'https://example.test/apitest/blank.png' },
-      })).rejects.toThrow('图标标签不能为空')
+      await expect(
+        Apis.icon.createIcon({
+          data: { tag: '   ', url: 'https://example.test/apitest/blank.png' },
+        }),
+      ).rejects.toThrow('图标标签不能为空')
     })
 
     it('标签重复时创建被拒绝', async () => {
@@ -137,9 +139,11 @@ describe.skipIf(!enabled)('集成：图标体系', () => {
       const tag = `${TEST_ICON_TAG_PREFIX}duplicate_${uniqueEntityTag()}`
       await createTestIcon({ tag })
 
-      await expect(Apis.icon.createIcon({
-        data: { tag, url: 'https://example.test/apitest/duplicate.png' },
-      })).rejects.toThrow('已存在')
+      await expect(
+        Apis.icon.createIcon({
+          data: { tag, url: 'https://example.test/apitest/duplicate.png' },
+        }),
+      ).rejects.toThrow('已存在')
     })
 
     it('修改为其他图标已使用的标签被拒绝', async () => {
@@ -149,24 +153,28 @@ describe.skipIf(!enabled)('集成：图标体系', () => {
       const iconId = await createTestIcon()
       const before = await readTestIcon(iconId)
 
-      await expect(Apis.icon.updateIcon({
-        data: {
-          id: iconId,
-          tag: otherTag,
-          url: before!.url,
-          description: before!.description,
-          typeIdList: [],
-        },
-      })).rejects.toThrow('已存在')
+      await expect(
+        Apis.icon.updateIcon({
+          data: {
+            id: iconId,
+            tag: otherTag,
+            url: before!.url,
+            description: before!.description,
+            typeIdList: [],
+          },
+        }),
+      ).rejects.toThrow('已存在')
     })
 
     it('分类 ID 不存在时创建失败并提示类型错误', async () => {
       await loginAsTestAccount()
       const tag = `${TEST_ICON_TAG_PREFIX}badtype_${uniqueEntityTag()}`
 
-      await expect(Apis.icon.createIcon({
-        data: { tag, url: 'https://example.test/apitest/badtype.png', typeIdList: [999999] },
-      })).rejects.toThrow('类型ID错误')
+      await expect(
+        Apis.icon.createIcon({
+          data: { tag, url: 'https://example.test/apitest/badtype.png', typeIdList: [999999] },
+        }),
+      ).rejects.toThrow('类型ID错误')
 
       expect((await listIcons({ tag }))!.record!.map(icon => icon.id)).not.toContain(999999)
       expect((await listIcons({ tag }))!.total).toBe(0)

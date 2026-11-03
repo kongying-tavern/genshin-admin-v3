@@ -17,7 +17,9 @@ export interface GlobalDialogOptions {
 export interface GlobalDialogServiceImpl {
   config: (propsObj: GlobalDialogPropsHack) => GlobalDialogServiceImpl
   props: <T extends AnyObject>(propsObj: T) => GlobalDialogServiceImpl
-  listeners: <T extends Record<string, (...args: unknown[]) => void>>(listenersObj: T) => GlobalDialogServiceImpl
+  listeners: <T extends Record<string, (...args: unknown[]) => void>>(
+    listenersObj: T,
+  ) => GlobalDialogServiceImpl
   open: (comp: Component) => GlobalDialogControllerImpl
 }
 

@@ -13,8 +13,7 @@ const [query, setQuery] = useState('')
 
 const iconList = computed(() => {
   const queryText = toValue(query).trim()
-  if (!queryText)
-    return iconStore.iconList
+  if (!queryText) return iconStore.iconList
   return iconStore.iconList.filter(({ tag = '' }) => tag.includes(queryText))
 })
 
@@ -23,8 +22,7 @@ const modelValue = defineModel<DTO.MarkerExtra['iconOverride'] | undefined>({
 })
 
 const meta = computed(() => {
-  if (!modelValue.value?.id)
-    return undefined
+  if (!modelValue.value?.id) return undefined
   return iconStore.idMap.get(modelValue.value.id)
 })
 
@@ -34,8 +32,7 @@ const meta = computed(() => {
  */
 const zoomRange = computed({
   get: () => {
-    if (!modelValue.value)
-      return [0, 4]
+    if (!modelValue.value) return [0, 4]
     const { maxZoom = 4, minZoom = 0 } = modelValue.value
     return [minZoom, maxZoom]
   },
@@ -52,10 +49,12 @@ const quickSelect = (min: number, max: number) => {
   zoomRange.value = [min, max]
 }
 
-const marks = Object.fromEntries(Array.from({ length: 5 }).map((_, i) => {
-  const num = i
-  return [num, `${num}`]
-}))
+const marks = Object.fromEntries(
+  Array.from({ length: 5 }).map((_, i) => {
+    const num = i
+    return [num, `${num}`]
+  }),
+)
 
 const toggleTag = (icon: IconVo) => {
   const value = toValue(modelValue)
@@ -70,9 +69,7 @@ const toggleTag = (icon: IconVo) => {
 
 <template>
   <div class="mb-4">
-    <div class="mb-1">
-      覆盖图标
-    </div>
+    <div class="mb-1">覆盖图标</div>
 
     <div>
       <ElInput
@@ -129,9 +126,7 @@ const toggleTag = (icon: IconVo) => {
           </div>
 
           <div class="flex-1 w-full grid place-content-center">
-            <div v-if="!modelValue?.id">
-              无
-            </div>
+            <div v-if="!modelValue?.id">无</div>
             <AppIconTagRenderer
               v-else
               :src="iconStore.iconTextureUrl"
@@ -146,14 +141,10 @@ const toggleTag = (icon: IconVo) => {
         <span>可见放缩级别</span>
         <ElPopover placement="top-start" :width="300">
           <div>
-            <div class="font-bold">
-              放缩级别说明
-            </div>
+            <div class="font-bold">放缩级别说明</div>
             <div>4 - 地图缩小到最小时的级别</div>
             <div>0 - 地图放大到最大时的级别</div>
-            <div class="font-bold mt-2">
-              参考级别
-            </div>
+            <div class="font-bold mt-2">参考级别</div>
             <div>七天神像: 0 ~ 3</div>
             <div>传送锚点: 0 ~ 1</div>
             <div>普通点位: 0 ~ 0.5</div>
@@ -169,15 +160,9 @@ const toggleTag = (icon: IconVo) => {
         </div>
         <div class="flex-1 flex justify-end">
           <ElButtonGroup>
-            <ElButton size="small" @click="() => quickSelect(0, 3)">
-              神像
-            </ElButton>
-            <ElButton size="small" @click="() => quickSelect(0, 1)">
-              锚点
-            </ElButton>
-            <ElButton size="small" @click="() => quickSelect(0, 0.5)">
-              常规
-            </ElButton>
+            <ElButton size="small" @click="() => quickSelect(0, 3)"> 神像 </ElButton>
+            <ElButton size="small" @click="() => quickSelect(0, 1)"> 锚点 </ElButton>
+            <ElButton size="small" @click="() => quickSelect(0, 0.5)"> 常规 </ElButton>
           </ElButtonGroup>
         </div>
       </div>
@@ -216,33 +201,25 @@ const toggleTag = (icon: IconVo) => {
 }
 
 .tag-item {
-  @apply
-    w-full h-full p-1 rounded relative
+  @apply w-full h-full p-1 rounded relative
     flex flex-col
     border border-transparent
     bg-[var(--el-color-info-light-9)]
-    cursor-pointer
-  ;
+    cursor-pointer;
 
   &:hover {
-    @apply
-      border-[var(--el-color-primary-light-5)]
-      bg-[var(--el-color-primary-light-9)]
-    ;
+    @apply border-[var(--el-color-primary-light-5)]
+      bg-[var(--el-color-primary-light-9)];
   }
 
   &:active {
-    @apply
-      border-[var(--el-color-primary-light-5)]
-      bg-[var(--el-color-primary-light-7)]
-    ;
+    @apply border-[var(--el-color-primary-light-5)]
+      bg-[var(--el-color-primary-light-7)];
   }
 
   &.is-actived {
-    @apply
-      border-[var(--el-color-primary)]
-      bg-[var(--el-color-primary-light-7)]
-    ;
+    @apply border-[var(--el-color-primary)]
+      bg-[var(--el-color-primary-light-7)];
   }
 }
 </style>

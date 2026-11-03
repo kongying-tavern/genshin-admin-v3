@@ -11,9 +11,12 @@ export interface MarkerRenderLayerProps extends IconLayerProps<GSMarkerInfo> {
 export class GSMarkerRenderLayer extends IconLayer<GSMarkerInfo, MarkerRenderLayerProps> {
   static layerName = 'GSMarkerRenderLayer'
 
-  static defaultProps = Object.assign({
-    getIconFlag: { type: 'accessor', value: 0 },
-  }, IconLayer.defaultProps)
+  static defaultProps = Object.assign(
+    {
+      getIconFlag: { type: 'accessor', value: 0 },
+    },
+    IconLayer.defaultProps,
+  )
 
   declare state: IconLayer['state'] & {
     finished?: boolean
@@ -39,11 +42,11 @@ export class GSMarkerRenderLayer extends IconLayer<GSMarkerInfo, MarkerRenderLay
       ...super.getShaders(),
       fs,
       inject: {
-        'vs:#decl': /* glsl */`
+        'vs:#decl': /* glsl */ `
           in uint instanceAttachFlags;
           out vec3 vAttachCoords[${this.props.statusCount}];
         `,
-        'vs:#main-end': /* glsl */`
+        'vs:#main-end': /* glsl */ `
           for (int i = 0; i < 5; ++i) {
             float alpha = float((instanceAttachFlags >> i) & 1u);
             float x = float(i) * iconSize.x;

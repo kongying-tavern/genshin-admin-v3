@@ -9,8 +9,7 @@ export const useLinkDelete = () => {
   const { onSuccess, onError, ...rest } = useFetchHook({
     onRequest: async (link: MarkerLinkageVo) => {
       const { id } = link
-      if (id === undefined)
-        throw new Error('此关联的 id 为空')
+      if (id === undefined) throw new Error('此关联的 id 为空')
       return await markerLinkStore.deleteMarkerLinkage([id])
     },
   })
@@ -19,7 +18,7 @@ export const useLinkDelete = () => {
     ElMessage.success('删除成功')
   })
 
-  onError((err) => {
+  onError(err => {
     ElMessage.error(`删除失败，原因为：${err.message}`)
   })
 

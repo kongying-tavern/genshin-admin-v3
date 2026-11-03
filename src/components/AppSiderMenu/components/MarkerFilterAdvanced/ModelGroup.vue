@@ -15,7 +15,8 @@ const modelValue = defineModel<MAFGroupComposed[]>('modelValue', {
 
 const mapStateStore = useMapStateStore()
 
-const { toggleMAFGroupOperator, toggleMAFGroupOpposite, deleteMAFGroup, reorderMAFItems } = mapStateStore
+const { toggleMAFGroupOperator, toggleMAFGroupOpposite, deleteMAFGroup, reorderMAFItems } =
+  mapStateStore
 
 // ------------------------------------------------
 // 模型选择器相关
@@ -106,7 +107,7 @@ const openPicker = (groupIndex: number) => {
       --border-color: color(from var(--gs-color-cancel) srgb r g b / 0.5);
     }
     &:not(.is-dragging):active {
-      --border-color: color(from var(--gs-color-cancel) srgb r g b / 0.3);;
+      --border-color: color(from var(--gs-color-cancel) srgb r g b / 0.3);
     }
     &.is-grabbing {
       --border-color: color(from var(--gs-color-cancel) srgb r g b / 0.8);

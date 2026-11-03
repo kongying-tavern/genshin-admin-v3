@@ -20,61 +20,70 @@ const resizerRef = ref<HTMLElement>() as Ref<HTMLElement>
 
 const pointerdown = fromRefEvent(resizerRef, 'pointerdown') as Observable<PointerEvent>
 
-useSubscription(pointerdown.pipe(
-  filter((ev) => {
-    return [
-      ev.button === 0,
-      ev.target instanceof HTMLElement,
-      props.size !== undefined,
-      props.translate !== undefined,
-    ].every(condition => condition)
-  }),
-
-  switchMap((startEvent) => {
-    emits('resizeStart')
-    const { x: startX, y: startY } = startEvent
-
-    const { x: windowStartX, y: windowStartY } = props.translate
-    const { width: windowStartW, height: windowStartH } = props.size
-
-    const classList = (startEvent.target as HTMLElement).classList
-    const px = classList.contains('px')
-    const py = classList.contains('py')
-    const sx = classList.contains('sx')
-    const sy = classList.contains('sy')
-
-    const getX = px ? (moveX: number) => windowStartX + moveX - startX : () => undefined
-    const getY = py ? (moveY: number) => windowStartY + moveY - startY : () => undefined
-
-    const pxFlagNum = px ? -1 : 1
-    const pyFlagNum = py ? -1 : 1
-
-    const getW = sx ? (moveX: number) => windowStartW + pxFlagNum * (moveX - startX) : () => undefined
-    const getH = sy ? (moveY: number) => windowStartH + pyFlagNum * (moveY - startY) : () => undefined
-
-    const getResizeProps = (moveX: number, moveY: number): MapWindow.ResizeProps => ({
-      x: getX(moveX),
-      y: getY(moveY),
-      width: getW(moveX),
-      height: getH(moveY),
-    })
-
-    return merge(globalPointerMove$, globalTouchmove$).pipe(
-      map((moveEvent) => {
-        const { x, y } = moveEvent instanceof PointerEvent
-          ? { x: moveEvent.x, y: moveEvent.y }
-          : { x: moveEvent.touches[0].clientX, y: moveEvent.touches[0].clientY }
-        emits('resize', getResizeProps(x, y))
+useSubscription(
+  pointerdown
+    .pipe(
+      filter(ev => {
+        return [
+          ev.button === 0,
+          ev.target instanceof HTMLElement,
+          props.size !== undefined,
+          props.translate !== undefined,
+        ].every(condition => condition)
       }),
 
-      takeUntil(race(globalPointerup$, globalTouchend$)),
+      switchMap(startEvent => {
+        emits('resizeStart')
+        const { x: startX, y: startY } = startEvent
 
-      finalize(() => {
-        emits('resizeEnd')
+        const { x: windowStartX, y: windowStartY } = props.translate
+        const { width: windowStartW, height: windowStartH } = props.size
+
+        const classList = (startEvent.target as HTMLElement).classList
+        const px = classList.contains('px')
+        const py = classList.contains('py')
+        const sx = classList.contains('sx')
+        const sy = classList.contains('sy')
+
+        const getX = px ? (moveX: number) => windowStartX + moveX - startX : () => undefined
+        const getY = py ? (moveY: number) => windowStartY + moveY - startY : () => undefined
+
+        const pxFlagNum = px ? -1 : 1
+        const pyFlagNum = py ? -1 : 1
+
+        const getW = sx
+          ? (moveX: number) => windowStartW + pxFlagNum * (moveX - startX)
+          : () => undefined
+        const getH = sy
+          ? (moveY: number) => windowStartH + pyFlagNum * (moveY - startY)
+          : () => undefined
+
+        const getResizeProps = (moveX: number, moveY: number): MapWindow.ResizeProps => ({
+          x: getX(moveX),
+          y: getY(moveY),
+          width: getW(moveX),
+          height: getH(moveY),
+        })
+
+        return merge(globalPointerMove$, globalTouchmove$).pipe(
+          map(moveEvent => {
+            const { x, y } =
+              moveEvent instanceof PointerEvent
+                ? { x: moveEvent.x, y: moveEvent.y }
+                : { x: moveEvent.touches[0].clientX, y: moveEvent.touches[0].clientY }
+            emits('resize', getResizeProps(x, y))
+          }),
+
+          takeUntil(race(globalPointerup$, globalTouchend$)),
+
+          finalize(() => {
+            emits('resizeEnd')
+          }),
+        )
       }),
     )
-  }),
-).subscribe())
+    .subscribe(),
+)
 
 /**
  * sx: 是否可编辑水平尺寸
@@ -160,25 +169,18 @@ const resizeFlags = [
   pointer-events: auto;
   z-index: 1;
   border-color: var(--border-color);
-  border-width:
-    calc(var(--rt) * var(--border-width))
-    calc(var(--rr) * var(--border-width))
-    calc(var(--rb) * var(--border-width))
-    calc(var(--rl) * var(--border-width))
-  ;
+  border-width: calc(var(--rt) * var(--border-width)) calc(var(--rr) * var(--border-width))
+    calc(var(--rb) * var(--border-width)) calc(var(--rl) * var(--border-width));
   transition: border-color ease 150ms;
 
   &:hover {
-    --border-color: #7FF5FE;
+    --border-color: #7ff5fe;
   }
 
   &.sx.sy {
-    border-radius:
-      calc(var(--rl) * var(--rt) * var(--radius))
-      calc(var(--rr) * var(--rt) * var(--radius))
-      calc(var(--rr) * var(--rb) * var(--radius))
-      calc(var(--rl) * var(--rb) * var(--radius))
-    ;
+    border-radius: calc(var(--rl) * var(--rt) * var(--radius))
+      calc(var(--rr) * var(--rt) * var(--radius)) calc(var(--rr) * var(--rb) * var(--radius))
+      calc(var(--rl) * var(--rb) * var(--radius));
   }
 
   &.sx {

@@ -15,11 +15,7 @@ const color = computed(() => {
 
 <template>
   <div class="w-full flex flex-col justify-center items-center py-2">
-    <ElSelectV2
-      v-model="modelValue"
-      :options="LINK_ACTION_OPTIONS"
-      style="width: 120px"
-    >
+    <ElSelectV2 v-model="modelValue" :options="LINK_ACTION_OPTIONS" style="width: 120px">
       <template #label>
         <LinkActionLabel :value="modelValue" />
       </template>
@@ -53,7 +49,8 @@ const color = computed(() => {
     0% calc(50% - var(--stroke-width)),
     calc(100% - var(--h)) calc(50% - var(--stroke-width)),
     calc(100% - var(--h)) 0%,
-    100% 50%,calc(100% - var(--h)) 100%,
+    100% 50%,
+    calc(100% - var(--h)) 100%,
     calc(100% - var(--h)) calc(50% + var(--stroke-width)),
     0% calc(50% + var(--stroke-width))
   );

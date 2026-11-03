@@ -39,18 +39,13 @@ const isConfirmDialogShowing = ref(false)
 const userStore = useUserStore()
 
 // 实时更新的远程点位数据
-const {
-  data: remoteMarker,
-  loading: remoteMarkerLoading,
-} = useRemoteMarker(computed(() => props.markerInfo.id))
+const { data: remoteMarker, loading: remoteMarkerLoading } = useRemoteMarker(
+  computed(() => props.markerInfo.id),
+)
 
 const editorRef = ref<InstanceType<typeof MarkerForm> | null>(null)
 
-const {
-  loading,
-  submit,
-  onSuccess,
-} = useMarkerEdit(form, editorRef)
+const { loading, submit, onSuccess } = useMarkerEdit(form, editorRef)
 
 onSuccess(() => emits('close', form.value))
 
@@ -158,12 +153,10 @@ const mergeRemoteData = (remote: MarkerVo) => {
  * 处理远程数据更新
  */
 const handleRemoteUpdate = async () => {
-  if (!remoteMarker.value || remoteMarkerLoading.value)
-    return
+  if (!remoteMarker.value || remoteMarkerLoading.value) return
 
   const remoteVersion = remoteMarker.value.version
-  if (!Number.isInteger(remoteVersion) || remoteVersion === undefined)
-    return
+  if (!Number.isInteger(remoteVersion) || remoteVersion === undefined) return
 
   // 初始化时，将远程版本设置为已处理版本，避免初始加载时触发提示
   if (!isInitialized.value) {
@@ -173,8 +166,7 @@ const handleRemoteUpdate = async () => {
   }
 
   // 如果版本没有更新，跳过
-  if (remoteVersion === lastHandledRemoteVersion.value)
-    return
+  if (remoteVersion === lastHandledRemoteVersion.value) return
 
   // 如果远程版本低于或等于当前处理的版本，跳过
   if (
@@ -185,8 +177,7 @@ const handleRemoteUpdate = async () => {
   }
 
   // 如果确认对话框正在显示，跳过（防止重复弹窗）
-  if (isConfirmDialogShowing.value)
-    return
+  if (isConfirmDialogShowing.value) return
 
   // 如果更新来自当前用户，自动应用更新（不弹窗）
   const currentUserId = userStore.info?.id
@@ -198,18 +189,14 @@ const handleRemoteUpdate = async () => {
   // 显示确认对话框
   isConfirmDialogShowing.value = true
   try {
-    await ElMessageBox.confirm(
-      '点位数据已更新，是否应用最新数据？',
-      '提示',
-      {
-        type: 'info',
-        closeOnClickModal: false,
-        closeOnPressEscape: false,
-        distinguishCancelAndClose: true,
-        confirmButtonText: '应用',
-        cancelButtonText: '取消',
-      },
-    )
+    await ElMessageBox.confirm('点位数据已更新，是否应用最新数据？', '提示', {
+      type: 'info',
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      distinguishCancelAndClose: true,
+      confirmButtonText: '应用',
+      cancelButtonText: '取消',
+    })
 
     // 用户确认，合并远程数据
     mergeRemoteData(remoteMarker.value)
@@ -217,12 +204,10 @@ const handleRemoteUpdate = async () => {
     ElMessage.success({
       message: '已应用最新数据',
     })
-  }
-  catch {
+  } catch {
     // 用户取消，仅更新版本号避免重复提示
     lastHandledRemoteVersion.value = remoteVersion
-  }
-  finally {
+  } finally {
     // 重置对话框显示标志
     isConfirmDialogShowing.value = false
   }
@@ -241,14 +226,12 @@ watch(
 
 const idText = computed(() => {
   const { id } = props.markerInfo
-  if (!id)
-    return ''
+  if (!id) return ''
   return `ID：${id}`
 })
 
 const copyId = async () => {
-  if (props.markerInfo?.id === undefined)
-    return
+  if (props.markerInfo?.id === undefined) return
   const idStr = `${props.markerInfo?.id}`
   await navigator.clipboard.writeText(idStr)
   ElMessage.success({
@@ -268,17 +251,7 @@ const copyId = async () => {
     <template #title>
       <div class="flex">
         <div
-          class="
-            min-w-[80px] px-1 rounded-[2px] flex-shrink-0
-            bg-[#3E4556]
-            outline outline-[#3E4556] outline-2 -outline-offset-1
-            text-sm text-[#CDB78B]
-            decoration-[#CDB78B]
-            decoration-dashed
-            hover:underline
-            active:decoration-solid
-            cursor-pointer
-          "
+          class="min-w-[80px] px-1 rounded-[2px] flex-shrink-0 bg-[#3E4556] outline outline-[#3E4556] outline-2 -outline-offset-1 text-sm text-[#CDB78B] decoration-[#CDB78B] decoration-dashed hover:underline active:decoration-solid cursor-pointer"
           @click="copyId"
         >
           {{ idText }}
@@ -303,7 +276,9 @@ const copyId = async () => {
           <Right />
         </el-icon>
         <el-tag disable-transitions>
-          {{ `最新版本：${remoteMarkerLoading ? 'Loading...' : Number.isInteger(remoteMarker?.version) ? remoteMarker?.version : '--'}` }}
+          {{
+            `最新版本：${remoteMarkerLoading ? 'Loading...' : Number.isInteger(remoteMarker?.version) ? remoteMarker?.version : '--'}`
+          }}
         </el-tag>
       </div>
 
@@ -318,11 +293,7 @@ const copyId = async () => {
         >
           保存
         </el-button>
-        <el-button
-          :icon="Close"
-          :disabled="loading"
-          @click="() => emits('close', markerInfo)"
-        >
+        <el-button :icon="Close" :disabled="loading" @click="() => emits('close', markerInfo)">
           取消
         </el-button>
       </div>

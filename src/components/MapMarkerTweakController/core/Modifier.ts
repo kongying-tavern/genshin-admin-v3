@@ -40,8 +40,7 @@ export abstract class Modifier<T = void> {
 
   getValue = (data: GSMarkerInfo, isOld: boolean, meta?: TweakConfigMetaVo) => {
     const { field, customGetValue } = this.options
-    if (customGetValue)
-      return customGetValue(data, isOld, meta)
+    if (customGetValue) return customGetValue(data, isOld, meta)
     return data[field]
   }
 
@@ -49,10 +48,7 @@ export abstract class Modifier<T = void> {
     options: ModifierConstructorOptions<T>,
     strategies: Record<string, Strategy<GSMarkerInfo>>,
   ) {
-    const {
-      replaceLabel = '修改为',
-      ...rest
-    } = options
+    const { replaceLabel = '修改为', ...rest } = options
 
     this.options = {
       ...rest,
@@ -60,8 +56,7 @@ export abstract class Modifier<T = void> {
     } as Required<ModifierConstructorOptions<T>>
 
     const strategy = strategies[this.options.type]
-    if (!strategy)
-      throw new Error(`字段 "${this.options.field}" 未实现策略 "${this.options.type}"`)
+    if (!strategy) throw new Error(`字段 "${this.options.field}" 未实现策略 "${this.options.type}"`)
 
     this.card = defineAsyncComponent(strategy.cardComp)
     this.typeLabel = strategy.label

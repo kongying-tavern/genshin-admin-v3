@@ -1,5 +1,11 @@
 <script lang="ts" setup>
-import type { MAFMetaDummy, MAFOptionRange, MAFOptionSwitch, MAFValueBoolean, MAFValueNumberRange } from '@/stores/types'
+import type {
+  MAFMetaDummy,
+  MAFOptionRange,
+  MAFOptionSwitch,
+  MAFValueBoolean,
+  MAFValueNumberRange,
+} from '@/stores/types'
 import { MarkerFilterButton } from '../../MarkerFilterComponent'
 import { NumberRangeBase } from '../FilterModelComponent'
 
@@ -21,21 +27,16 @@ const toggleMatchMode = () => {
   modelValue.value.b = !modelValue.value.b
 }
 
-const modeTip = computed(() => modelValue.value.b ? '点位物品关联全部满足计数区间' : '点位物品关联部分满足计数区间')
+const modeTip = computed(() =>
+  modelValue.value.b ? '点位物品关联全部满足计数区间' : '点位物品关联部分满足计数区间',
+)
 </script>
 
 <template>
   <div class="flex-auto flex gap-1 items-center">
-    <MarkerFilterButton
-      theme="light"
-      @click="toggleMatchMode"
-    >
+    <MarkerFilterButton theme="light" @click="toggleMatchMode">
       <template #default>
-        <el-tooltip
-          placement="top-start"
-          effect="light"
-          :content="modeTip"
-        >
+        <el-tooltip placement="top-start" effect="light" :content="modeTip">
           {{ modelValue.b ? options.textActive : options.textInactive }}
         </el-tooltip>
       </template>

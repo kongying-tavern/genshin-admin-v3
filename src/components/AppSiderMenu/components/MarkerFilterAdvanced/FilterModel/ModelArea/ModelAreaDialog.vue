@@ -25,7 +25,7 @@ const childrenList = ref<AreaWithChildren[]>([])
  */
 const childrenCountMap = computed(() => {
   const childrenCount: Record<number, number> = {}
-  modelValue.value.forEach((areaId) => {
+  modelValue.value.forEach(areaId => {
     const parentId = props.meta.areaParentIdMap[areaId] ?? -1
     childrenCount[parentId] = (childrenCount[parentId] ?? 0) + 1
   })
@@ -40,14 +40,21 @@ const removeChildren = (parent: AreaWithChildren) => {
   const shallowCopyValue = [...modelValue.value]
   const valueSet = new Set<number>(shallowCopyValue)
   const childrenIds: number[] = (parent.children ?? []).map(child => child.id!).filter(v => v)
-  childrenIds.forEach((childId) => {
+  childrenIds.forEach(childId => {
     valueSet.delete(childId)
   })
   modelValue.value = Array.from(valueSet)
 }
 
 const { onDragStart, onDragEnd, onDrop } = useListBubbleDrag<AreaWithChildren>({
-  isDropback: (ev, item) => Boolean(ev.composedPath().find(target => (target instanceof HTMLElement) && Number(target.dataset.dragId) === item.id!)),
+  isDropback: (ev, item) =>
+    Boolean(
+      ev
+        .composedPath()
+        .find(
+          target => target instanceof HTMLElement && Number(target.dataset.dragId) === item.id!,
+        ),
+    ),
   onClearBubble: removeChildren,
 })
 </script>
@@ -65,10 +72,7 @@ const { onDragStart, onDragEnd, onDrop } = useListBubbleDrag<AreaWithChildren>({
         @drop="onDrop"
       >
         <template #default="{ item }">
-          <div
-            class="flex-auto flex items-center"
-            :data-drag-id="item.id"
-          >
+          <div class="flex-auto flex items-center" :data-drag-id="item.id">
             <span class="flex-auto">{{ item[labelKey] }}</span>
             <el-button
               v-if="childrenCountMap[item.id!] > 0"

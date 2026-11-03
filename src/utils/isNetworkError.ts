@@ -48,16 +48,15 @@ const NETWORK_ERROR_PATTERNS = [
  * @returns 是否为纯网络错误
  */
 export const isNetworkError = (err: unknown): boolean => {
-  if (!err)
-    return false
+  if (!err) return false
 
-  const message = (err instanceof Error ? err.message : typeof err === 'string' ? err : '').toLowerCase()
-  if (!message)
-    return false
+  const message = (
+    err instanceof Error ? err.message : typeof err === 'string' ? err : ''
+  ).toLowerCase()
+  if (!message) return false
 
   // 针对 fetch/axios 特殊类型：TypeError 通常就是网络错误
-  if (err instanceof TypeError)
-    return true
+  if (err instanceof TypeError) return true
 
   return NETWORK_ERROR_PATTERNS.some(pattern => message.includes(pattern.toLowerCase()))
 }

@@ -14,11 +14,7 @@ const modelValue = defineModel<string>('modelValue', {
 </script>
 
 <template>
-  <MarkerFilterInput
-    v-model="modelValue"
-    :placeholder="options?.placeholder"
-    :error="error"
-  >
+  <MarkerFilterInput v-model="modelValue" :placeholder="options?.placeholder" :error="error">
     <template v-if="$slots.prepend" #prepend>
       <slot name="prepend" />
     </template>

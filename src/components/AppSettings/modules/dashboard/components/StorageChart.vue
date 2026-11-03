@@ -14,8 +14,7 @@ const chartContainerRef = useTemplateRef('chart')
 const chartRef = shallowRef<Chart>()
 
 onMounted(() => {
-  if (!chartContainerRef.value)
-    return
+  if (!chartContainerRef.value) return
   const chart = new Chart({
     container: chartContainerRef.value,
     autoFit: true,
@@ -34,10 +33,7 @@ onMounted(() => {
         return `${data.name}: ${data.percentage.toFixed(2)}%\n${data.text}`
       },
       position: 'spider',
-      transform: [
-        { type: 'exceedAdjust' },
-        { type: 'overlapDodgeY' },
-      ],
+      transform: [{ type: 'exceedAdjust' }, { type: 'overlapDodgeY' }],
     })
     .interaction({
       elementHighlight: true,
@@ -45,11 +41,14 @@ onMounted(() => {
     .legend(false)
     .tooltip(false)
     .theme({ type: isDark.value ? 'classicDark' : 'classic' })
-  watch(() => props.data, (newData) => {
-    chart.changeData(newData)
-    chart.render()
-  })
-  watch(isDark, (dark) => {
+  watch(
+    () => props.data,
+    newData => {
+      chart.changeData(newData)
+      chart.render()
+    },
+  )
+  watch(isDark, dark => {
     chart.theme({ type: dark ? 'classicDark' : 'classic' })
     chart.render()
   })

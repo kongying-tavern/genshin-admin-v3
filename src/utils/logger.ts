@@ -54,8 +54,7 @@ export class Logger {
   }
 
   static #stringifyStyle = (style: Record<string, string>) => {
-    return Object
-      .entries(style)
+    return Object.entries(style)
       .map(([key, value]) => `${key}:${value}`)
       .join(';')
   }
@@ -71,10 +70,10 @@ export class Logger {
         color: dateTimeColor,
       }),
       this.#stringifyStyle({
-        'background': labelBackground,
-        'color': labelColor,
-        'padding': '0.25em 0.5em',
-        'margin': '0 4px',
+        background: labelBackground,
+        color: labelColor,
+        padding: '0.25em 0.5em',
+        margin: '0 4px',
         'border-radius': '2px',
       }),
     ]
@@ -82,16 +81,11 @@ export class Logger {
 
   static event = new EventBus<LoggerEvents>()
 
-  constructor(
-    label = '',
-    options: LoggerOptions = {},
-  ) {
+  constructor(label = '', options: LoggerOptions = {}) {
     this.#label = label
     this.#options = options
 
-    Logger.isInit
-      ? Logger.event.emit('register', label)
-      : Logger.loggerLabelsCache.add(label)
+    Logger.isInit ? Logger.event.emit('register', label) : Logger.loggerLabelsCache.add(label)
   }
 
   #stdoutCache = ''
@@ -105,31 +99,35 @@ export class Logger {
     },
   }
 
-  #log = (type: LogType) => (...args: unknown[]) => {
-    const timestamp = Date.now()
+  #log =
+    (type: LogType) =>
+    (...args: unknown[]) => {
+      const timestamp = Date.now()
 
-    const { port, ...rest } = this.#options
+      const { port, ...rest } = this.#options
 
-    const isWorker = Object.prototype.toString.call(globalThis) !== '[object Window]'
+      const isWorker = Object.prototype.toString.call(globalThis) !== '[object Window]'
 
-    const logInfo: LogInfo = {
-      label: this.#label,
-      isWorker,
-      type,
-      timestamp,
-      args: [Logger.getPrefix(this.#label, timestamp), ...Logger.getStyle(this.#options, isWorker), ...args],
-      options: rest,
+      const logInfo: LogInfo = {
+        label: this.#label,
+        isWorker,
+        type,
+        timestamp,
+        args: [
+          Logger.getPrefix(this.#label, timestamp),
+          ...Logger.getStyle(this.#options, isWorker),
+          ...args,
+        ],
+        options: rest,
+      }
+
+      if (port) {
+        port.postMessage(logInfo)
+        return
+      }
+
+      Logger.isInit ? Logger.event.emit('log', logInfo) : Logger.logsCache.push(logInfo)
     }
-
-    if (port) {
-      port.postMessage(logInfo)
-      return
-    }
-
-    Logger.isInit
-      ? Logger.event.emit('log', logInfo)
-      : Logger.logsCache.push(logInfo)
-  }
 
   info = this.#log('info')
 

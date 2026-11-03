@@ -59,12 +59,7 @@ const loadImage = async (src: string) => {
 
 /** 核心渲染逻辑 */
 const render = async (params: WorkerInput, logger: Logger): Promise<WorkerSuccessOutput> => {
-  const {
-    iconList,
-    size = 64,
-    gap = 2,
-    maxRequests = 10,
-  } = params
+  const { iconList, size = 64, gap = 2, maxRequests = 10 } = params
 
   logger.info('渲染图标列表', { iconList })
 
@@ -73,13 +68,9 @@ const render = async (params: WorkerInput, logger: Logger): Promise<WorkerSucces
 
   /** 基于排序后的 iconList 生成签名用于校验缓存 */
   const digest = await getDigest(
-    new TextEncoder()
-      .encode(
-        JSON.stringify(
-          iconList.toSorted(({ id: idA }, { id: idB }) => idA - idB),
-        ),
-      )
-      .buffer,
+    new TextEncoder().encode(
+      JSON.stringify(iconList.toSorted(({ id: idA }, { id: idB }) => idA - idB)),
+    ).buffer,
     'SHA-256',
   )
 
@@ -94,10 +85,11 @@ const render = async (params: WorkerInput, logger: Logger): Promise<WorkerSucces
         return
       }
       return cacheIconSprite
-    }
-    catch (err) {
+    } catch (err) {
       // 数据库操作失败（如 reopen），不清空缓存
-      logger.warn(err instanceof Error ? err.message : `Can't get icon cache cause: ${JSON.stringify(err)}`)
+      logger.warn(
+        err instanceof Error ? err.message : `Can't get icon cache cause: ${JSON.stringify(err)}`,
+      )
     }
   })()
 
@@ -117,14 +109,13 @@ const render = async (params: WorkerInput, logger: Logger): Promise<WorkerSucces
     const { length } = iconList
     for (let i = 0; i < length; i++) {
       const { id, src } = iconList[i]
-      if (!map.has(src))
-        map.set(src, [])
+      if (!map.has(src)) map.set(src, [])
       map.get(src)!.push(id)
     }
     return map
   })()
 
-  const fetchList: { ids: number[], url: string }[] = []
+  const fetchList: { ids: number[]; url: string }[] = []
   idsMap.forEach((ids, url) => {
     fetchList.push({ ids, url })
   })
@@ -137,23 +128,26 @@ const render = async (params: WorkerInput, logger: Logger): Promise<WorkerSucces
   }
 
   logger.info('请求图片...')
-  const renderList = await limitPromiseAll(fetchList, async ({ ids, url }) => {
-    try {
-      const image = await loadImage(url)
-      return {
-        image,
-        ids,
-      } satisfies RenderObject
-    }
-    catch {
-      // 对于请求失败的图标使用 fallback 图片所在的位置
-      fallbackRenderObject.ids.push(...ids)
-      return null
-    }
-  }, {
-    maxRequests,
-    initResult: [fallbackRenderObject],
-  })
+  const renderList = await limitPromiseAll(
+    fetchList,
+    async ({ ids, url }) => {
+      try {
+        const image = await loadImage(url)
+        return {
+          image,
+          ids,
+        } satisfies RenderObject
+      } catch {
+        // 对于请求失败的图标使用 fallback 图片所在的位置
+        fallbackRenderObject.ids.push(...ids)
+        return null
+      }
+    },
+    {
+      maxRequests,
+      initResult: [fallbackRenderObject],
+    },
+  )
 
   logger.info('检测重复图片...')
 
@@ -172,7 +166,13 @@ const render = async (params: WorkerInput, logger: Logger): Promise<WorkerSucces
     const col = index - row * cols
     const x = col * size + (col + 1) * gap
     const y = row * size + (row + 1) * gap
-    const { sx, sy, sw, sh, dx, dy, dw, dh } = getObjectFitSize('contain', size, size, image.width, image.height)
+    const { sx, sy, sw, sh, dx, dy, dw, dh } = getObjectFitSize(
+      'contain',
+      size,
+      size,
+      image.width,
+      image.height,
+    )
     ctx.drawImage(image, sx, sy, sw, sh, x + dx, y + dy, dw, dh)
     positionList.push({
       ids,
@@ -204,8 +204,7 @@ globalThis.addEventListener('message', async (ev: MessageEvent<WorkerInput>) => 
   try {
     const res = await render(ev.data, logger)
     send(res, [res.texture])
-  }
-  catch (err) {
+  } catch (err) {
     logger.error(err instanceof Error ? err.message : `${err}`)
     send(err instanceof Error ? err.message : `${err}`)
   }

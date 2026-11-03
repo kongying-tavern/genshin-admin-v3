@@ -13,16 +13,8 @@ import { IconMouse } from './icons'
 const itemStore = useItemStore()
 const iconStore = useIconStore()
 
-const {
-  windowInfo,
-  shape,
-  markerList,
-  width,
-  height,
-  isMatched,
-  closeWindow,
-  onFinalize,
-} = useMultiSelect()
+const { windowInfo, shape, markerList, width, height, isMatched, closeWindow, onFinalize } =
+  useMultiSelect()
 
 const {
   tweakList,
@@ -52,8 +44,7 @@ const createTweak = (value?: CascaderValue | null) => {
     console.error()
     return
   }
-  if (!Array.isArray(value))
-    return
+  if (!Array.isArray(value)) return
   _createTweak(value as string[])
   drownRef.value?.handleClose()
   cascaderPanelRef.value?.clearCheckedNodes()
@@ -79,10 +70,12 @@ onFinalize(() => {
 
     <MapMissionInfo v-if="isMatched" title="多选点位">
       <div class="flex items-center mb-1">
-        - 按住 <span class="keyboard-key">Ctrl</span> + <IconMouse class="w-5 h-5" left /> 选择点位<br>
+        - 按住 <span class="keyboard-key">Ctrl</span> +
+        <IconMouse class="w-5 h-5" left /> 选择点位<br />
       </div>
       <div class="flex items-center">
-        - 按住 <span class="keyboard-key">Ctrl</span> + <IconMouse class="w-5 h-5" right /> 取消选择点位。
+        - 按住 <span class="keyboard-key">Ctrl</span> +
+        <IconMouse class="w-5 h-5" right /> 取消选择点位。
       </div>
     </MapMissionInfo>
 
@@ -108,10 +101,7 @@ onFinalize(() => {
           </div>
 
           <div class="flex-1 flex-shrink-0 flex flex-col gap-2 overflow-auto">
-            <div
-              v-for="(tweak, index) in tweakList"
-              :key="tweak.id"
-            >
+            <div v-for="(tweak, index) in tweakList" :key="tweak.id">
               <ModifierCard
                 v-model:selected-index="selectedIndex"
                 :modifier="tweak.modifier"
@@ -124,24 +114,28 @@ onFinalize(() => {
           </div>
 
           <div class="flex justify-end pt-2">
-            <el-button :loading="loading" :disabled="isDisabled" :icon="Check" type="primary" @click="submit">
+            <el-button
+              :loading="loading"
+              :disabled="isDisabled"
+              :icon="Check"
+              type="primary"
+              @click="submit"
+            >
               应用
             </el-button>
-            <el-button :icon="Close" @click="closeWindow">
-              取消
-            </el-button>
+            <el-button :icon="Close" @click="closeWindow"> 取消 </el-button>
           </div>
         </div>
 
-        <div class="flex-1 h-full flex flex-col overflow-hidden rounded bg-[var(--el-fill-color-light)]">
-          <div class="flex h-8 items-center text-xs ml-2 mr-3 border-b-[1px] border-[var(--el-border-color)]">
-            <div class="w-16 mx-2 ml-4 text-center">
-              点位
-            </div>
+        <div
+          class="flex-1 h-full flex flex-col overflow-hidden rounded bg-[var(--el-fill-color-light)]"
+        >
+          <div
+            class="flex h-8 items-center text-xs ml-2 mr-3 border-b-[1px] border-[var(--el-border-color)]"
+          >
+            <div class="w-16 mx-2 ml-4 text-center">点位</div>
             <el-divider direction="vertical" style="height: 100%" />
-            <div v-if="!selectedModifier" class="flex-1 text-center">
-              请添加编辑操作
-            </div>
+            <div v-if="!selectedModifier" class="flex-1 text-center">请添加编辑操作</div>
             <template v-else>
               <div class="flex-1">
                 {{ selectedModifier.options.label }}
@@ -169,22 +163,38 @@ onFinalize(() => {
                 </div>
                 <div class="w-6 mx-2 ml-4">
                   <AppIconTagRenderer
-                    :mapping="iconStore.iconCoordMap.get(pickMainItem(newData, itemStore.itemIdMap).mainIconId)"
+                    :mapping="
+                      iconStore.iconCoordMap.get(
+                        pickMainItem(newData, itemStore.itemIdMap).mainIconId,
+                      )
+                    "
                     :src="iconStore.iconTextureUrl"
                     class="w-6 h-6"
                   />
                 </div>
                 <el-divider direction="vertical" style="height: 100%" />
-                <div v-if="!selectedModifier" class="flex-1 text-center text-xs text-[var(--el-text-color-secondary)]">
+                <div
+                  v-if="!selectedModifier"
+                  class="flex-1 text-center text-xs text-[var(--el-text-color-secondary)]"
+                >
                   no action
                 </div>
                 <template v-else>
                   <div class="h-full flex-1 overflow-hidden">
-                    <ModifierPreview :modifier="selectedModifier" :data="oldData" :meta="selectedMeta!" />
+                    <ModifierPreview
+                      :modifier="selectedModifier"
+                      :data="oldData"
+                      :meta="selectedMeta!"
+                    />
                   </div>
                   <el-divider direction="vertical" style="height: 100%" />
                   <div class="h-full flex-1 overflow-hidden">
-                    <ModifierPreview :modifier="selectedModifier" :data="newData" :old-data="oldData" :meta="selectedMeta!" />
+                    <ModifierPreview
+                      :modifier="selectedModifier"
+                      :data="newData"
+                      :old-data="oldData"
+                      :meta="selectedMeta!"
+                    />
                   </div>
                 </template>
               </div>
@@ -198,10 +208,8 @@ onFinalize(() => {
 
 <style scoped>
 .keyboard-key {
-  @apply
-    inline-block p-px px-1 mx-1
+  @apply inline-block p-px px-1 mx-1
     border border-[#C6C2BA] rounded
-    text-xs
-  ;
+    text-xs;
 }
 </style>

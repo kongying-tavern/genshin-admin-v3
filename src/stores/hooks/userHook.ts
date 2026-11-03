@@ -1,8 +1,6 @@
 import { CustomHook } from '.'
 
-export type UserHookType =
-  | 'onAuthChange'
-  | 'onInfoChange'
+export type UserHookType = 'onAuthChange' | 'onInfoChange'
 
 class CustomUserHook extends CustomHook<UserHookType> {
   onAuthChange = this.registerHook('onAuthChange')

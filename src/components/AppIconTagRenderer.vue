@@ -33,13 +33,13 @@ const props = defineProps<{
 
 <style scoped>
 @property --image-container-width {
-  syntax: "<length>";
+  syntax: '<length>';
   initial-value: 0px;
   inherits: false;
 }
 
 @property --image-container-height {
-  syntax: "<length>";
+  syntax: '<length>';
   initial-value: 0px;
   inherits: false;
 }

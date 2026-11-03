@@ -22,9 +22,7 @@ export const HIDDEN_FLAG_OPTIONS: {
   label: string
   /** 枚举值，可用于权限判断 */
   value: number
-}[] = Object
-  .entries(HIDDEN_FLAG_NAME_MAP)
-  .map(([key, value]) => ({
-    label: value,
-    value: Number(key),
-  }))
+}[] = Object.entries(HIDDEN_FLAG_NAME_MAP).map(([key, value]) => ({
+  label: value,
+  value: Number(key),
+}))

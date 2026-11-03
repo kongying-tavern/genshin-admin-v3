@@ -31,9 +31,8 @@ export const useAreaStore = defineStore('global-area', () => {
   const list = computed(() => {
     const result: AreaVo[] = []
     hashGroupMap.value.forEach(({ list: scopeList }) => {
-      scopeList.forEach((area) => {
-        if (!accessStore.checkHiddenFlag(area.hiddenFlag))
-          return
+      scopeList.forEach(area => {
+        if (!accessStore.checkHiddenFlag(area.hiddenFlag)) return
         result.push(area)
       })
     })
@@ -43,29 +42,46 @@ export const useAreaStore = defineStore('global-area', () => {
   const total = computed(() => list.value.length)
 
   /** @deprecated 使用 `areaIdMap` 代替 */
-  const areaMap = computed<Record<string, AreaVo>>(() => (Object.fromEntries(list.value.map(area => [
-    area.id as number,
-    area,
-  ]))))
+  const areaMap = computed<Record<string, AreaVo>>(() =>
+    Object.fromEntries(list.value.map(area => [area.id as number, area])),
+  )
 
-  const idMap = computed(() => list.value.reduce((seed, area) => {
-    seed.set(area.id!, area)
-    return seed
-  }, new Map<number, AreaVo>()))
+  const idMap = computed(() =>
+    list.value.reduce((seed, area) => {
+      seed.set(area.id!, area)
+      return seed
+    }, new Map<number, AreaVo>()),
+  )
 
-  const codeMap = computed(() => list.value.reduce((seed, area) => {
-    seed.set(area.code!, area)
-    return seed
-  }, new Map<string, AreaVo>()))
+  const codeMap = computed(() =>
+    list.value.reduce((seed, area) => {
+      seed.set(area.code!, area)
+      return seed
+    }, new Map<string, AreaVo>()),
+  )
 
   const parentAreaList = computed<AreaVo[]>(() => list.value.filter(area => !area.isFinal))
   const childrenAreaList = computed<AreaVo[]>(() => list.value.filter(area => area.isFinal))
-  const areaTree = computed<AreaWithChildren[]>(() => parentAreaList.value.map(parentArea => ({ ...parentArea, children: childrenAreaList.value.filter(childArea => childArea.parentId === parentArea.id) })))
-  const childrenAreaParentMap = computed<Record<number, AreaVo[]>>(() => Object.fromEntries(areaTree.value.map(area => [area.id!, area.children ?? []])))
+  const areaTree = computed<AreaWithChildren[]>(() =>
+    parentAreaList.value.map(parentArea => ({
+      ...parentArea,
+      children: childrenAreaList.value.filter(childArea => childArea.parentId === parentArea.id),
+    })),
+  )
+  const childrenAreaParentMap = computed<Record<number, AreaVo[]>>(() =>
+    Object.fromEntries(areaTree.value.map(area => [area.id!, area.children ?? []])),
+  )
 
   // ==================== 数据更新 ====================
 
-  const { context, isActive, error: managerError, nextUpdateTime, loading: updateLoading, update } = useManager({
+  const {
+    context,
+    isActive,
+    error: managerError,
+    nextUpdateTime,
+    loading: updateLoading,
+    update,
+  } = useManager({
     timeoutPull: {
       time: 20 * 60 * 1000,
       condition: () => userStore.info?.roleId !== undefined,
@@ -97,9 +113,11 @@ export const useAreaStore = defineStore('global-area', () => {
       message.value = '获取签名'
       const source = new TextEncoder().encode(JSON.stringify(data))
       const binaryHash = await crypto.subtle.digest('SHA-1', source)
-      const hash = [...new Uint8Array(binaryHash)].map(num => num.toString(16).padStart(2, '0')).join('')
+      const hash = [...new Uint8Array(binaryHash)]
+        .map(num => num.toString(16).padStart(2, '0'))
+        .join('')
 
-      const newData = data.map((newOne) => {
+      const newData = data.map(newOne => {
         return { ...newOne, __hash: hash }
       })
 
@@ -128,7 +146,7 @@ export const useAreaStore = defineStore('global-area', () => {
     },
   })
 
-  liveQuery(() => db.area.toArray()).subscribe((dbList) => {
+  liveQuery(() => db.area.toArray()).subscribe(dbList => {
     hashGroupMap.value = createHashGroupMap(dbList)
   })
 

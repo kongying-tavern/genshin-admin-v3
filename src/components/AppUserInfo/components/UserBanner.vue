@@ -12,19 +12,15 @@ const BANNER_FALLBACK_URL = import.meta.env.VITE_BANNER_IMAGE
 
 <template>
   <div class="w-full h-[260px] text-base pt-8 pb-0 flex rounded-t relative select-none">
-    <template v-if="!userStore.info">
-      未登录
-    </template>
+    <template v-if="!userStore.info"> 未登录 </template>
 
     <template v-else>
       <div class="absolute top-0 left-0 w-full h-full z-[-1] p-1">
-        <ElImage
-          :src="BANNER_FALLBACK_URL"
-          fit="cover"
-          style="width: 100%; height: 100%"
-        >
+        <ElImage :src="BANNER_FALLBACK_URL" fit="cover" style="width: 100%; height: 100%">
           <template #placeholder>
-            <div class="w-full h-full bg-[linear-gradient(to_bottom,#3B4250,#6395BD)] animate-pulse" />
+            <div
+              class="w-full h-full bg-[linear-gradient(to_bottom,#3B4250,#6395BD)] animate-pulse"
+            />
           </template>
           <template #error>
             <div class="w-full h-full bg-[linear-gradient(to_bottom,#3B4250,#6395BD)]" />
@@ -44,18 +40,9 @@ const BANNER_FALLBACK_URL = import.meta.env.VITE_BANNER_IMAGE
         </div>
 
         <div
-          class="
-            w-[144px] h-[144px] m-2 rounded-[80px] overflow-hidden
-            bg-[#DAAB86]
-            outline-[#ECE5D820] outline outline-8
-            border-[#ECE5D8] border-[5px]
-          "
+          class="w-[144px] h-[144px] m-2 rounded-[80px] overflow-hidden bg-[#DAAB86] outline-[#ECE5D820] outline outline-8 border-[#ECE5D8] border-[5px]"
         >
-          <ElImage
-            :src="userStore.info.logo"
-            fit="cover"
-            style="width: 100%; height: 100%"
-          >
+          <ElImage :src="userStore.info.logo" fit="cover" style="width: 100%; height: 100%">
             <template #placeholder>
               <div class="w-full h-full grid place-content-center">
                 <ElIcon :size="64" color="#F0EBE3">
@@ -75,7 +62,7 @@ const BANNER_FALLBACK_URL = import.meta.env.VITE_BANNER_IMAGE
 
         <div
           class="mt-2 text-[#ECE5D8] border border-[#ECE5D880] rounded-[16px] py-0.5 px-3 bg-[#00000040]"
-          style="-webkit-text-stroke: 2px #363D4DA0; paint-order: stroke"
+          style="-webkit-text-stroke: 2px #363d4da0; paint-order: stroke"
         >
           {{ `UID ${userStore.info.id}` }}
         </div>
@@ -83,12 +70,11 @@ const BANNER_FALLBACK_URL = import.meta.env.VITE_BANNER_IMAGE
 
       <div class="flex-1 mr-8 text-white overflow-hidden">
         <div
-          class="
-            py-0.5 overflow-hidden
-            bg-[linear-gradient(to_right,transparent,#00000020_10%,#00000020_90%,transparent)]
-          "
+          class="py-0.5 overflow-hidden bg-[linear-gradient(to_right,transparent,#00000020_10%,#00000020_90%,transparent)]"
         >
-          <div class="overflow-hidden whitespace-nowrap text-ellipsis text-3xl drop-shadow-[0_0_2px_#000]">
+          <div
+            class="overflow-hidden whitespace-nowrap text-ellipsis text-3xl drop-shadow-[0_0_2px_#000]"
+          >
             {{ userStore.info.nickname ?? userStore.info.username }}
           </div>
         </div>
@@ -98,20 +84,19 @@ const BANNER_FALLBACK_URL = import.meta.env.VITE_BANNER_IMAGE
         </div>
 
         <div
-          class="
-            h-[5.5em] grid place-content-center
-            bg-[linear-gradient(to_right,transparent,#00000020_10%,#00000020_90%,transparent)]
-          "
+          class="h-[5.5em] grid place-content-center bg-[linear-gradient(to_right,transparent,#00000020_10%,#00000020_90%,transparent)]"
         >
           Feature Comming Soon
         </div>
 
         <div class="flex justify-between drop-shadow-[0_0_2px_#000]">
+          <div class="leading-8">更新时间</div>
           <div class="leading-8">
-            更新时间
-          </div>
-          <div class="leading-8">
-            {{ userStore.info.updateTime ? new Date(userStore.info.updateTime).toLocaleString() : '--' }}
+            {{
+              userStore.info.updateTime
+                ? new Date(userStore.info.updateTime).toLocaleString()
+                : '--'
+            }}
           </div>
         </div>
       </div>

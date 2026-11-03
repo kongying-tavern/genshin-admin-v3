@@ -11,7 +11,11 @@ interface NoticeHookOptions {
 export const useNoticeList = (options: NoticeHookOptions) => {
   const { pagination, getParams } = options
 
-  const { data: noticeList, onError, ...rest } = useFetchHook({
+  const {
+    data: noticeList,
+    onError,
+    ...rest
+  } = useFetchHook({
     shallow: true,
     initialValue: [],
     immediate: true,
@@ -33,7 +37,7 @@ export const useNoticeList = (options: NoticeHookOptions) => {
     },
   })
 
-  onError((err) => {
+  onError(err => {
     ElMessage.error({
       message: `请求公告列表失败，原因为：${err.message}`,
     })

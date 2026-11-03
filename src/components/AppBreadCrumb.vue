@@ -7,11 +7,7 @@ const route = useRoute()
 
 <template>
   <el-breadcrumb :separator-icon="ArrowRight" v-bind="$attrs">
-    <el-breadcrumb-item
-      v-for="item in route.matched"
-      :key="item.path"
-      :to="item.path"
-    >
+    <el-breadcrumb-item v-for="item in route.matched" :key="item.path" :to="item.path">
       <div class="flex items-center gap-1">
         <el-icon v-if="item.meta.icon" :size="16">
           <component :is="item.meta.icon" />

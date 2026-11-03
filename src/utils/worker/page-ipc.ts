@@ -1,9 +1,4 @@
-import type {
-  EventMap,
-  PortLike,
-  RequestMessage,
-  Resolver,
-} from './types'
+import type { EventMap, PortLike, RequestMessage, Resolver } from './types'
 import { isRequest, isResponse } from './utils'
 import { WorkerError } from './worker-error'
 
@@ -15,22 +10,21 @@ export class PageIPC<
   #resolvers = new Map<string, Resolver>()
 
   constructor(worker: PortLike) {
-    if (typeof window === 'undefined')
-      throw new Error('PageIPC 只能在渲染线程中使用')
+    if (typeof window === 'undefined') throw new Error('PageIPC 只能在渲染线程中使用')
 
     this.#port = worker
 
-    this.#port.addEventListener('message', (ev) => {
+    this.#port.addEventListener('message', ev => {
       const { data } = ev
-      if (!isResponse(data))
-        return
+      if (!isResponse(data)) return
       const resolver = this.#resolvers.get(data.id)
-      if (!resolver)
-        return
+      if (!resolver) return
       if (data.error) {
-        resolver.reject(new WorkerError(data.error.message, {
-          stack: data.error.stack,
-        }))
+        resolver.reject(
+          new WorkerError(data.error.message, {
+            stack: data.error.stack,
+          }),
+        )
         return
       }
       resolver.resolve(data.result)
@@ -63,10 +57,8 @@ export class PageIPC<
   ): (() => void) => {
     const listenerWrapper = (ev: MessageEvent) => {
       const { data } = ev
-      if (!isRequest(data))
-        return
-      if (data.channel !== channel)
-        return
+      if (!isRequest(data)) return
+      if (data.channel !== channel) return
       handler(...data.args)
     }
     this.#port.addEventListener('message', listenerWrapper)

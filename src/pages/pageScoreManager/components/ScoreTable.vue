@@ -12,12 +12,7 @@ const { height } = useElementSize(tableRef)
 
 <template>
   <div ref="tableRef" v-loading="loading" element-loading-text="载入中..." class="overflow-hidden">
-    <el-table
-      :data="data"
-      :height="height"
-      :border="true"
-      table-layout="auto"
-    >
+    <el-table :data="data" :height="height" :border="true" table-layout="auto">
       <el-table-column align="center" label="用户">
         <el-table-column align="center" label="ID" prop="userId" width="60px" />
         <el-table-column align="center" label="用户名" prop="username" width="130px" />

@@ -37,8 +37,10 @@ export const LINK_ACTION_OPTIONS = [
   { label: '等价', value: LinkActionEnum.EQUIVALENT },
 ]
 
-export const LINK_ACTION_NAME_MAP = LINK_ACTION_OPTIONS
-  .reduce((map, { label, value }) => map.set(value, label), new Map<LinkActionEnum, string>())
+export const LINK_ACTION_NAME_MAP = LINK_ACTION_OPTIONS.reduce(
+  (map, { label, value }) => map.set(value, label),
+  new Map<LinkActionEnum, string>(),
+)
 
 export interface LinkActionConfig {
   /** 指示线颜色 */
@@ -74,28 +76,52 @@ export const LINK_ACTION_CONFIG: Record<LinkActionEnum, LinkActionConfig> = {
 }
 
 export const LINK_CONFIG_MAP = new Map<LinkActionEnum, LinkActionConfig>([
-  [LinkActionEnum.TRIGGER, {
-    lineColor: [255, 0, 0], // rgb(255 0 0)
-  }],
-  [LinkActionEnum.TRIGGER_ALL, {
-    lineColor: [0, 0, 128], // rgb(0 0 128)
-  }],
-  [LinkActionEnum.TRIGGER_ANY, {
-    lineColor: [173, 216, 230], // rgb(173 216 230)
-  }],
-  [LinkActionEnum.RELATED, {
-    lineColor: [0, 170, 255], // rgb(0 170 255)
-  }],
-  [LinkActionEnum.DIRECTED, {
-    lineColor: [255, 165, 0], // rgb(255 165 0)
-  }],
-  [LinkActionEnum.PATH_UNI_DIR, {
-    lineColor: [255, 153, 255], // rgb(255 153 255)
-  }],
-  [LinkActionEnum.PATH_BI_DIR, {
-    lineColor: [153, 153, 255], // rgb(153 153 255)
-  }],
-  [LinkActionEnum.EQUIVALENT, {
-    lineColor: [0, 128, 0], // rgb(0 128 0)
-  }],
+  [
+    LinkActionEnum.TRIGGER,
+    {
+      lineColor: [255, 0, 0], // rgb(255 0 0)
+    },
+  ],
+  [
+    LinkActionEnum.TRIGGER_ALL,
+    {
+      lineColor: [0, 0, 128], // rgb(0 0 128)
+    },
+  ],
+  [
+    LinkActionEnum.TRIGGER_ANY,
+    {
+      lineColor: [173, 216, 230], // rgb(173 216 230)
+    },
+  ],
+  [
+    LinkActionEnum.RELATED,
+    {
+      lineColor: [0, 170, 255], // rgb(0 170 255)
+    },
+  ],
+  [
+    LinkActionEnum.DIRECTED,
+    {
+      lineColor: [255, 165, 0], // rgb(255 165 0)
+    },
+  ],
+  [
+    LinkActionEnum.PATH_UNI_DIR,
+    {
+      lineColor: [255, 153, 255], // rgb(255 153 255)
+    },
+  ],
+  [
+    LinkActionEnum.PATH_BI_DIR,
+    {
+      lineColor: [153, 153, 255], // rgb(153 153 255)
+    },
+  ],
+  [
+    LinkActionEnum.EQUIVALENT,
+    {
+      lineColor: [0, 128, 0], // rgb(0 128 0)
+    },
+  ],
 ])

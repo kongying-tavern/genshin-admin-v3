@@ -15,19 +15,30 @@ export const useTypeList = (options: FetchHookOptions<RPageListVoItemTypeVo> = {
   /** 物品类型列表加载态 */
   const loading = ref(false)
   /** 物品类型树 */
-  const typeTree = computed(() => array2Tree(typeList.value, {
-    childrenKey: 'children',
-    getId: type => type.id!,
-    getPid: type => type.parentId!,
-    rootId: -1,
-  }))
+  const typeTree = computed(() =>
+    array2Tree(typeList.value, {
+      childrenKey: 'children',
+      getId: type => type.id!,
+      getPid: type => type.parentId!,
+      rootId: -1,
+    }),
+  )
   /** 物品 id → 物品对象映射表 */
-  const typeMap = computed(() => typeList.value.reduce((seed, typeObj) => {
-    typeObj.id !== undefined && (seed[typeObj.id] = typeObj)
-    return seed
-  }, {} as Record<number, ItemTypeVo>))
+  const typeMap = computed(() =>
+    typeList.value.reduce(
+      (seed, typeObj) => {
+        typeObj.id !== undefined && (seed[typeObj.id] = typeObj)
+        return seed
+      },
+      {} as Record<number, ItemTypeVo>,
+    ),
+  )
 
-  const { refresh: updateTypeList, onSuccess, ...rest } = useFetchHook({
+  const {
+    refresh: updateTypeList,
+    onSuccess,
+    ...rest
+  } = useFetchHook({
     immediate,
     loading: scopedLoading ?? loading,
     onRequest: () => db.itemType.toArray(),
@@ -35,10 +46,9 @@ export const useTypeList = (options: FetchHookOptions<RPageListVoItemTypeVo> = {
 
   useSubscription(liveQuery(() => db.itemType.toCollection()).subscribe(updateTypeList))
 
-  onSuccess((data) => {
+  onSuccess(data => {
     typeList.value = data.sort(({ sortIndex: ia }, { sortIndex: ib }) => {
-      if (ia === undefined || ib === undefined)
-        return 0
+      if (ia === undefined || ib === undefined) return 0
       return ib - ia
     })
   })

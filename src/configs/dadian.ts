@@ -55,7 +55,7 @@ const DADIAN_SCHEMA: JSONSchema7 = {
             },
           },
         },
-        'underground': {
+        underground: {
           type: 'object',
           properties: {
             textActive: { type: 'string', description: '开启附加图层选项时的提示文本' },
@@ -164,10 +164,16 @@ const DADIAN_SCHEMA: JSONSchema7 = {
       type: 'object',
       description: '叠层具体配置',
       properties: {
-        panelIcon: { type: 'string', description: '面板折叠后小图标的图标类（仅 Quasar 图标库，暂不通用）' },
+        panelIcon: {
+          type: 'string',
+          description: '面板折叠后小图标的图标类（仅 Quasar 图标库，暂不通用）',
+        },
         panelIconColor: { type: 'string', description: '面板折叠后小图标的颜色' },
         overlayMask: { type: 'boolean', description: '是否启用暗色遮盖' },
-        overlayMaskOnSelected: { type: 'boolean', description: '是否在有分层层级选中时才进行暗色覆盖' },
+        overlayMaskOnSelected: {
+          type: 'boolean',
+          description: '是否在有分层层级选中时才进行暗色覆盖',
+        },
         overlayMaskOpacity: { type: 'number', description: '在暗色遮盖时遮盖部分的透明度' },
         urlTemplate: { type: 'string', description: '图片地址生成模板' },
         idTemplate: { type: 'string', description: '生成元素 ID 的模板' },
@@ -203,13 +209,20 @@ const DADIAN_SCHEMA: JSONSchema7 = {
       properties: {
         code: { type: 'string', description: '区域代码，用于拼接图片 URL' },
         name: { type: 'string', description: '底图名字，用于地区切换' },
-        extend: { type: 'string', description: '继承其他配置，将当前配置与此值表示的配置项合并后的配置作为此项的配置项' },
-        center: { $ref: '#/$defs/coordinate2D', description: '坐标系原点所在位置（相对于 tile 定位坐标本身）' },
+        extend: {
+          type: 'string',
+          description: '继承其他配置，将当前配置与此值表示的配置项合并后的配置作为此项的配置项',
+        },
+        center: {
+          $ref: '#/$defs/coordinate2D',
+          description: '坐标系原点所在位置（相对于 tile 定位坐标本身）',
+        },
         extension: { type: 'string', description: '文件扩展名' },
         size: { $ref: '#/$defs/coordinate2D', description: '地图图片的总宽高（像素）' },
         settings: {
           type: 'object',
-          description: 'Leaflet.js <Map options> 的配置在新后台中用作初始化视口配置，在新后台中用作初始化视口配置。',
+          description:
+            'Leaflet.js <Map options> 的配置在新后台中用作初始化视口配置，在新后台中用作初始化视口配置。',
           properties: {
             center: { $ref: '#/$defs/coordinate2D' },
             zoom: { type: 'number' },

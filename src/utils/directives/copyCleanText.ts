@@ -2,18 +2,14 @@ import type { Directive } from 'vue'
 
 const handleCopy = (ev: ClipboardEvent) => {
   const data = ev.clipboardData
-  if (!data)
-    return
+  if (!data) return
   // 只对纯文本复制生效，包含其他类型（如富文本、图片等）时不拦截
   const types = Array.from(data.types)
-  if (types.some(t => t.startsWith('text')))
-    return
+  if (types.some(t => t.startsWith('text'))) return
   const selection = document.getSelection()
-  if (!selection)
-    return
+  if (!selection) return
   const cleanText = selection.toString().trim()
-  if (!cleanText)
-    return
+  if (!cleanText) return
   data.setData('text/plain', cleanText)
   ev.preventDefault()
 }

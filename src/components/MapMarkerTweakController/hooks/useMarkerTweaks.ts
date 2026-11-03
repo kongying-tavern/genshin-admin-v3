@@ -16,17 +16,24 @@ export const useMarkerTweaks = (options: TweakHookOptions) => {
 
   const isDisabled = computed(() => !tweakList.value.length)
 
-  const { refresh: submit, onSuccess, onError, ...rest } = useFetchHook({
+  const {
+    refresh: submit,
+    onSuccess,
+    onError,
+    ...rest
+  } = useFetchHook({
     onRequest: async () => {
       const markerIds = markerList.value.map(marker => marker.id!)
 
       // 处理自定义批量修改
       const customTweaks = tweakList.value.filter(({ isCustom }) => isCustom)
 
-      await Promise.all(customTweaks.map(async ({ id, modifier }) => {
-        const meta = tweakData.value.get(id)!
-        await modifier.options.customModify?.(markerList.value, meta)
-      }))
+      await Promise.all(
+        customTweaks.map(async ({ id, modifier }) => {
+          const meta = tweakData.value.get(id)!
+          await modifier.options.customModify?.(markerList.value, meta)
+        }),
+      )
 
       // 处理通用批量修改
       const tweaks = tweakList.value.map(({ id, prop, modifier }) => {
@@ -39,13 +46,14 @@ export const useMarkerTweaks = (options: TweakHookOptions) => {
         return config
       })
 
-      const payload: TweakVo[] = [{
-        markerIds,
-        tweaks,
-      }]
+      const payload: TweakVo[] = [
+        {
+          markerIds,
+          tweaks,
+        },
+      ]
 
-      if (!tweaks.length)
-        return []
+      if (!tweaks.length) return []
       await markerStore.tweakMarkers(payload)
     },
   })
@@ -56,7 +64,7 @@ export const useMarkerTweaks = (options: TweakHookOptions) => {
     })
   })
 
-  onError((err) => {
+  onError(err => {
     ElMessage.error({
       message: `批量编辑失败，原因为：${err.message}`,
     })

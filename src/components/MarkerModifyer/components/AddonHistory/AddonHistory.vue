@@ -21,7 +21,7 @@ const addonId = defineModel<string | undefined>('addonId', {
 
 const isAddonActived = computed({
   get: () => addonId.value === 'history',
-  set: (isActive) => {
+  set: isActive => {
     addonId.value = isActive ? 'history' : ''
   },
 })
@@ -35,8 +35,7 @@ const { data: creator } = useFetchHook({
   initialValue: {},
   onRequest: async () => {
     const { creatorId } = toValue(markerVo)
-    if (creatorId === undefined)
-      return {}
+    if (creatorId === undefined) return {}
     const { data = {} } = await Apis.user.getUserInfo({
       pathParams: {
         userId: creatorId,
@@ -68,10 +67,8 @@ const updaterId = computed(() => oldHistory.value?.creatorId ?? markerVo.value.c
 
 const updater = computed(() => {
   const user = users.value.get(`${updaterId.value}`)
-  if (user)
-    return user
-  if (!oldHistory.value)
-    return creator.value
+  if (user) return user
+  if (!oldHistory.value) return creator.value
   return undefined
 })
 
@@ -83,31 +80,35 @@ const statisticVisible = ref(false)
     :icon="Clock"
     :type="isAddonActived ? 'primary' : 'default'"
     circle
-    style="margin-left:0"
+    style="margin-left: 0"
     @click="isAddonActived = !isAddonActived"
   />
 
-  <HistoryStatistic
-    v-model:visible="statisticVisible"
-    :record="record"
-    :users="users"
-  />
+  <HistoryStatistic v-model:visible="statisticVisible" :record="record" :users="users" />
 
   <AddonTeleporter :active="isAddonActived">
     <div class="h-full overflow-hidden flex flex-col">
       <div class="flex-shrink-0 flex items-center mb-1">
         <div class="flex-1 text-center">
           <div class="flex items-center gap-1">
-            <el-tag class="flex-shrink-0" :type="oldHistory ? 'warning' : 'success'" disable-transitions>
+            <el-tag
+              class="flex-shrink-0"
+              :type="oldHistory ? 'warning' : 'success'"
+              disable-transitions
+            >
               {{ oldHistory ? '编辑' : '创建' }}
             </el-tag>
             <div class="flex-1 px-1">
               <el-button
                 text
-                style="width: 100%; padding: 0 4px; font-size: 12px;"
+                style="width: 100%; padding: 0 4px; font-size: 12px"
                 @click="statisticVisible = true"
               >
-                {{ oldHistory ? new Date(oldHistory.createTime ?? '').toLocaleString() : new Date(markerVo.createTime ?? '').toLocaleString() }}
+                {{
+                  oldHistory
+                    ? new Date(oldHistory.createTime ?? '').toLocaleString()
+                    : new Date(markerVo.createTime ?? '').toLocaleString()
+                }}
               </el-button>
             </div>
           </div>
@@ -119,9 +120,7 @@ const statisticVisible = ref(false)
               <el-icon>
                 <Back />
               </el-icon>
-              <div class="scale-90">
-                上一更改
-              </div>
+              <div class="scale-90">上一更改</div>
             </div>
           </el-button>
           <el-button style="padding: 0 4px" :disabled="newDisabled" @click="toNewOne">
@@ -129,21 +128,27 @@ const statisticVisible = ref(false)
               <el-icon>
                 <Right />
               </el-icon>
-              <div class="scale-90">
-                下一更改
-              </div>
+              <div class="scale-90">下一更改</div>
             </div>
           </el-button>
         </el-button-group>
       </div>
 
       <div class="grid grid-cols-2 items-center mb-2">
-        <div v-if="!updater" class="grid place-items-center">
-          unknown
-        </div>
+        <div v-if="!updater" class="grid place-items-center">unknown</div>
 
-        <div v-else class="flex gap-1 text-xs overflow-hidden" :title="`${updater.nickname} (${updater.username})`">
-          <el-avatar :size="32" shape="circle" :src="updater.logo" fit="cover" class="flex-shrink-0">
+        <div
+          v-else
+          class="flex gap-1 text-xs overflow-hidden"
+          :title="`${updater.nickname} (${updater.username})`"
+        >
+          <el-avatar
+            :size="32"
+            shape="circle"
+            :src="updater.logo"
+            fit="cover"
+            class="flex-shrink-0"
+          >
             <el-icon :size="24">
               <Avatar />
             </el-icon>
@@ -163,7 +168,7 @@ const statisticVisible = ref(false)
         </div>
       </div>
 
-      <el-divider style="margin: 0;" />
+      <el-divider style="margin: 0" />
 
       <div class="flex-1 overflow-hidden">
         <el-scrollbar height="100%">
@@ -177,7 +182,7 @@ const statisticVisible = ref(false)
         </el-scrollbar>
       </div>
 
-      <el-divider style="margin: 0 0 8px;" />
+      <el-divider style="margin: 0 0 8px" />
 
       <el-button
         :disabled="historyLoading || loading"

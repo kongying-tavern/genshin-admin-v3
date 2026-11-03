@@ -49,7 +49,11 @@ describe.skipIf(!enabled)('集成：物品体系', () => {
   describe('增删改查', () => {
     it('新建的物品可立即查询到，且入参字段正确落库', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_item_area', code: 'C:APITEST_ITEM', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_item_area',
+        code: 'C:APITEST_ITEM',
+        parentId: -1,
+      })
       const typeA = await createTestItemType()
       const typeB = await createTestItemType()
       const name = `${TEST_ITEM_NAME_PREFIX}crud`
@@ -81,7 +85,11 @@ describe.skipIf(!enabled)('集成：物品体系', () => {
 
     it('省略 typeIdList 时物品分类列表为空数组', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_item_notype_area', code: 'C:APITEST_ITEM_NOTYPE', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_item_notype_area',
+        code: 'C:APITEST_ITEM_NOTYPE',
+        parentId: -1,
+      })
 
       const itemId = await createTestItem(areaId)
 
@@ -90,21 +98,27 @@ describe.skipIf(!enabled)('集成：物品体系', () => {
 
     it('可更新物品名称与主要字段', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_item_update_area', code: 'C:APITEST_ITEM_UPDATE', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_item_update_area',
+        code: 'C:APITEST_ITEM_UPDATE',
+        parentId: -1,
+      })
       const itemId = await createTestItem(areaId)
       const before = await readTestItem(itemId)
 
       await Apis.item.updateItem({
         pathParams: { editSame: 0 },
-        data: [{
-          id: itemId,
-          name: `${before!.name}_updated`,
-          defaultContent: 'updated-content',
-          iconStyleType: 2,
-          sortIndex: 12,
-          specialFlag: 0,
-          typeIdList: [],
-        }],
+        data: [
+          {
+            id: itemId,
+            name: `${before!.name}_updated`,
+            defaultContent: 'updated-content',
+            iconStyleType: 2,
+            sortIndex: 12,
+            specialFlag: 0,
+            typeIdList: [],
+          },
+        ],
       })
 
       const after = await readTestItem(itemId)
@@ -116,7 +130,11 @@ describe.skipIf(!enabled)('集成：物品体系', () => {
 
     it('修改分类后返回的分类列表同步变化', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_item_type_area', code: 'C:APITEST_ITEM_TYPE', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_item_type_area',
+        code: 'C:APITEST_ITEM_TYPE',
+        parentId: -1,
+      })
       const oldType = await createTestItemType()
       const newType = await createTestItemType()
       const itemId = await createTestItem(areaId, { typeIdList: [oldType] })
@@ -132,7 +150,11 @@ describe.skipIf(!enabled)('集成：物品体系', () => {
 
     it('更新接口不会修改 defaultCount（后端更新语句未包含该字段）', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_item_count_area', code: 'C:APITEST_ITEM_COUNT', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_item_count_area',
+        code: 'C:APITEST_ITEM_COUNT',
+        parentId: -1,
+      })
       const itemId = await createTestItem(areaId, { defaultCount: 1 })
       const before = await readTestItem(itemId)
 
@@ -146,8 +168,16 @@ describe.skipIf(!enabled)('集成：物品体系', () => {
 
     it('editSame=1 时会一并更新同名的其他物品', async () => {
       await loginAsTestAccount()
-      const areaA = await createTestArea({ name: '__apitest_item_same_a', code: 'C:APITEST_ITEM_SAME_A', parentId: -1 })
-      const areaB = await createTestArea({ name: '__apitest_item_same_b', code: 'C:APITEST_ITEM_SAME_B', parentId: -1 })
+      const areaA = await createTestArea({
+        name: '__apitest_item_same_a',
+        code: 'C:APITEST_ITEM_SAME_A',
+        parentId: -1,
+      })
+      const areaB = await createTestArea({
+        name: '__apitest_item_same_b',
+        code: 'C:APITEST_ITEM_SAME_B',
+        parentId: -1,
+      })
       const name = `${TEST_ITEM_NAME_PREFIX}same`
       const itemA = await createTestItem(areaA, { name, defaultContent: 'origin' })
       const itemB = await createTestItem(areaB, { name, defaultContent: 'origin' })
@@ -163,7 +193,11 @@ describe.skipIf(!enabled)('集成：物品体系', () => {
 
     it('删除物品后无法再查询到，重复删除返回 false', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_item_delete_area', code: 'C:APITEST_ITEM_DELETE', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_item_delete_area',
+        code: 'C:APITEST_ITEM_DELETE',
+        parentId: -1,
+      })
       const itemId = await createTestItem(areaId)
 
       const { data: deleted } = await Apis.item.deleteItem({ pathParams: { itemId } })
@@ -178,12 +212,18 @@ describe.skipIf(!enabled)('集成：物品体系', () => {
   describe('边界：创建校验', () => {
     it('分类 ID 不存在时创建失败并提示类型错误', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_item_badtype_area', code: 'C:APITEST_ITEM_BADTYPE', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_item_badtype_area',
+        code: 'C:APITEST_ITEM_BADTYPE',
+        parentId: -1,
+      })
       const name = `${TEST_ITEM_NAME_PREFIX}badtype`
 
-      await expect(Apis.item.createItem({
-        data: { name, areaId, hiddenFlag: 0, typeIdList: [999999] },
-      })).rejects.toThrow('类型ID错误')
+      await expect(
+        Apis.item.createItem({
+          data: { name, areaId, hiddenFlag: 0, typeIdList: [999999] },
+        }),
+      ).rejects.toThrow('类型ID错误')
 
       // 失败后事务回滚，物品不应落库
       const page = await listItems({ name })
@@ -204,7 +244,11 @@ describe.skipIf(!enabled)('集成：物品体系', () => {
   describe('查询：地区 / 分类 / 名称筛选', () => {
     it('可按地区、分类与名称筛选出物品', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_item_filter_area', code: 'C:APITEST_ITEM_FILTER', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_item_filter_area',
+        code: 'C:APITEST_ITEM_FILTER',
+        parentId: -1,
+      })
       const typeId = await createTestItemType()
       const name = `${TEST_ITEM_NAME_PREFIX}filter`
       const itemId = await createTestItem(areaId, { name, typeIdList: [typeId] })
@@ -224,8 +268,16 @@ describe.skipIf(!enabled)('集成：物品体系', () => {
   describe('复制物品到地区', () => {
     it('复制后生成新物品，分类关联一并复制，源物品不变', async () => {
       await loginAsTestAccount()
-      const sourceArea = await createTestArea({ name: '__apitest_item_copy_src', code: 'C:APITEST_ITEM_COPY_SRC', parentId: -1 })
-      const targetArea = await createTestArea({ name: '__apitest_item_copy_dst', code: 'C:APITEST_ITEM_COPY_DST', parentId: -1 })
+      const sourceArea = await createTestArea({
+        name: '__apitest_item_copy_src',
+        code: 'C:APITEST_ITEM_COPY_SRC',
+        parentId: -1,
+      })
+      const targetArea = await createTestArea({
+        name: '__apitest_item_copy_dst',
+        code: 'C:APITEST_ITEM_COPY_DST',
+        parentId: -1,
+      })
       const typeId = await createTestItemType()
       const itemId = await createTestItem(sourceArea, { typeIdList: [typeId] })
       const sourceBefore = await readTestItem(itemId)

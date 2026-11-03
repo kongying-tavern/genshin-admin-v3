@@ -6,11 +6,13 @@ import {
   createWebHistory,
 } from 'vue-router'
 
-const history: RouterHistory = ({
-  history: createWebHistory,
-  hash: createWebHashHistory,
-  memory: createMemoryHistory,
-}[import.meta.env.VITE_ROUTER_MODE] ?? createWebHashHistory)(import.meta.env.BASE_URL)
+const history: RouterHistory = (
+  {
+    history: createWebHistory,
+    hash: createWebHashHistory,
+    memory: createMemoryHistory,
+  }[import.meta.env.VITE_ROUTER_MODE] ?? createWebHashHistory
+)(import.meta.env.BASE_URL)
 
 const router = createRouter({
   routes: [

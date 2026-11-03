@@ -25,12 +25,23 @@ export const useItemList = (options: ItemHookOptions) => {
   const userMap = ref<Record<string, SysUserSmallVo>>({})
 
   /** 共享的物品id → 物品对象映射表 */
-  const itemMap = computed(() => itemList.value.reduce((seed, item) => {
-    item.id !== undefined && (seed[item.id] = item)
-    return seed
-  }, {} as Record<number, ItemVo>))
+  const itemMap = computed(() =>
+    itemList.value.reduce(
+      (seed, item) => {
+        item.id !== undefined && (seed[item.id] = item)
+        return seed
+      },
+      {} as Record<number, ItemVo>,
+    ),
+  )
 
-  const { refresh: updateItemList, onSuccess, onError, loading, ...rest } = useFetchHook({
+  const {
+    refresh: updateItemList,
+    onSuccess,
+    onError,
+    loading,
+    ...rest
+  } = useFetchHook({
     immediate: true,
     onRequest: async () => {
       const { current, pageSize: size } = pagination.value
@@ -60,12 +71,22 @@ export const useItemList = (options: ItemHookOptions) => {
     userMap.value = users
   })
 
-  onError((err) => {
+  onError(err => {
     itemList.value = []
     ElMessage.error({
       message: `获取结果失败，原因为: ${err.message}`,
     })
   })
 
-  return { itemList, itemMap, loading, userMap, updateItemList, resetCurrent, onSuccess, onError, ...rest }
+  return {
+    itemList,
+    itemMap,
+    loading,
+    userMap,
+    updateItemList,
+    resetCurrent,
+    onSuccess,
+    onError,
+    ...rest,
+  }
 }

@@ -27,21 +27,17 @@ defineProps<{
 }
 
 .mission-info {
-  @apply
-    absolute right-1 bottom-[48px] p-2 px-3
+  @apply absolute right-1 bottom-[48px] p-2 px-3
     border border-[#ECE5D820] rounded
     text-sm text-[#C6C2BA]
     bg-[#263240]
-    pointer-events-auto
-  ;
+    pointer-events-auto;
   animation: missioninfo-anime-in ease 150ms;
 }
 
 .keyboard-key {
-  @apply
-    inline-block p-px px-1
+  @apply inline-block p-px px-1
     border border-[#C6C2BA] rounded
-    text-xs
-  ;
+    text-xs;
 }
 </style>

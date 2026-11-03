@@ -19,14 +19,18 @@ const actived = computed(() => tabNameRef.value === props.name)
 
 const activeTab = (ev: MouseEvent) => {
   emits('click', ev)
-  if (!props.name)
-    return
+  if (!props.name) return
   tabNameRef.value = props.name
 }
 </script>
 
 <template>
-  <div class="sider-menu-tab" :class="{ actived }" :data-tab-label="label" @click="ev => activeTab(ev)">
+  <div
+    class="sider-menu-tab"
+    :class="{ actived }"
+    :data-tab-label="label"
+    @click="ev => activeTab(ev)"
+  >
     <slot name="tab">
       <div class="sider-menu-tab-button">
         <slot name="icon" color="var(--icon-color)">
@@ -43,7 +47,7 @@ const activeTab = (ev: MouseEvent) => {
 <style scoped>
 .sider-menu-tab {
   --icon-padding: 5px;
-  --icon-color: #D3BC8E;
+  --icon-color: #d3bc8e;
   --scale: 1;
   --button-bg: transparent;
 
@@ -53,12 +57,13 @@ const activeTab = (ev: MouseEvent) => {
 
   &:hover {
     --scale: 1.1;
-    --button-bg: #3B4554;
-    --icon-color: #ECE5D8;
+    --button-bg: #3b4554;
+    --icon-color: #ece5d8;
   }
-  &:active, &.actived {
-    --button-bg: #ECE5D8;
-    --icon-color: #3B4255;
+  &:active,
+  &.actived {
+    --button-bg: #ece5d8;
+    --icon-color: #3b4255;
   }
 }
 

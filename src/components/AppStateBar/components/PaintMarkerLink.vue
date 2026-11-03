@@ -51,28 +51,33 @@ onSuccess(() => close())
 
 const { modifyLinks, deleteLink, extractLink, revestLink } = useLinkOperate()
 
-useSubscription(start$.subscribe(() => {
-  open()
-  mapStateStore.interaction.clearFocus()
-  mapStateStore.interaction.setIsPopoverOnHover(true)
-  mapStateStore.interaction.pauseFocus(GSMarkerLayer.layerName)
-}))
+useSubscription(
+  start$.subscribe(() => {
+    open()
+    mapStateStore.interaction.clearFocus()
+    mapStateStore.interaction.setIsPopoverOnHover(true)
+    mapStateStore.interaction.pauseFocus(GSMarkerLayer.layerName)
+  }),
+)
 
-useSubscription(end$.subscribe(() => {
-  // 注意：此处不再调用 close()，避免与 close$ 形成循环调用
-  // 窗口关闭由用户操作触发（关闭按钮 / 取消 / 提交成功）
-  // close$ 订阅中会负责清除任务
-  mapStateStore.interaction.resumeFocus(GSMarkerLayer.layerName)
-  mapStateStore.interaction.setIsPopoverOnHover(false)
-  modifyLinks.value.clear()
-  triggerRef(modifyLinks)
-}))
+useSubscription(
+  end$.subscribe(() => {
+    // 注意：此处不再调用 close()，避免与 close$ 形成循环调用
+    // 窗口关闭由用户操作触发（关闭按钮 / 取消 / 提交成功）
+    // close$ 订阅中会负责清除任务
+    mapStateStore.interaction.resumeFocus(GSMarkerLayer.layerName)
+    mapStateStore.interaction.setIsPopoverOnHover(false)
+    modifyLinks.value.clear()
+    triggerRef(modifyLinks)
+  }),
+)
 
-useSubscription(close$.subscribe(() => {
-  // 窗口关闭时统一清除任务，避免 end$ → close() → close$ → clearMission() 的循环竞态
-  if (isProcessing.value)
-    clearMission()
-}))
+useSubscription(
+  close$.subscribe(() => {
+    // 窗口关闭时统一清除任务，避免 end$ → close() → close$ → clearMission() 的循环竞态
+    if (isProcessing.value) clearMission()
+  }),
+)
 
 // ==================== 表单状态 ====================
 
@@ -96,7 +101,7 @@ const actionColor = computed(() => {
 })
 
 /** 点位指示器所在的坐标 */
-const linkIndicatorPosition = ref<{ x: number, y: number }>()
+const linkIndicatorPosition = ref<{ x: number; y: number }>()
 
 /** 起始点 */
 const prevMarker = shallowRef<GSMarkerInfo>()
@@ -112,12 +117,13 @@ const stopAnimation = ref<() => void>()
 
 const hoverLinkKey = computed({
   get: () => {
-    const set = mapStateStore.interaction.hoverElements.get(GSLinkLayer.layerName) as (Set<string> | undefined)
-    if (!set?.size || set.size > 1)
-      return ''
+    const set = mapStateStore.interaction.hoverElements.get(GSLinkLayer.layerName) as
+      | Set<string>
+      | undefined
+    if (!set?.size || set.size > 1) return ''
     return `${[...set][0]}`
   },
-  set: (linkKey) => {
+  set: linkKey => {
     if (!linkKey) {
       mapStateStore.interaction.removeHover(GSLinkLayer.layerName)
       return
@@ -128,12 +134,13 @@ const hoverLinkKey = computed({
 
 const focusLinkKey = computed({
   get: () => {
-    const set = mapStateStore.interaction.focusElements.get(GSLinkLayer.layerName) as (Set<string> | undefined)
-    if (!set?.size || set.size > 1)
-      return ''
+    const set = mapStateStore.interaction.focusElements.get(GSLinkLayer.layerName) as
+      | Set<string>
+      | undefined
+    if (!set?.size || set.size > 1) return ''
     return `${[...set][0]}`
   },
-  set: (linkKey) => {
+  set: linkKey => {
     if (!linkKey) {
       mapStateStore.interaction.removeFocus(GSLinkLayer.layerName)
       return
@@ -158,20 +165,20 @@ const containLinkGroups = computed(() => {
 
   const groups = new Map<string, Map<string, ModifyLinkOptions>>()
 
-  groupIds.forEach((groupId) => {
+  groupIds.forEach(groupId => {
     const links = markerLinkStore.groupIdMap.get(groupId)
-    if (!links?.length)
-      return
-    groups.set(groupId, links.reduce((map, link) => {
-      const { id, fromId, toId, linkAction } = link
-      const isReverse = fromId! > toId!
-      return map.set(
-        isReverse
-          ? `${toId}-${fromId}-${linkAction}`
-          : `${fromId}-${toId}-${linkAction}`,
-        { isDelete: false, isMerge: true, isReverse, raw: link, id: `${id}` },
-      )
-    }, new Map<string, ModifyLinkOptions>()))
+    if (!links?.length) return
+    groups.set(
+      groupId,
+      links.reduce((map, link) => {
+        const { id, fromId, toId, linkAction } = link
+        const isReverse = fromId! > toId!
+        return map.set(
+          isReverse ? `${toId}-${fromId}-${linkAction}` : `${fromId}-${toId}-${linkAction}`,
+          { isDelete: false, isMerge: true, isReverse, raw: link, id: `${id}` },
+        )
+      }, new Map<string, ModifyLinkOptions>()),
+    )
   })
 
   return groups
@@ -183,20 +190,21 @@ const containLinkGroups = computed(() => {
  */
 const tempContainLinkGroups = computed(() => {
   const groups = new Map<string, Map<string, ModifyLinkOptions>>()
-  void [prevMarker.value?.linkageId, nextMarker.value?.linkageId].forEach((groupId) => {
-    if (!groupId || containLinkGroups.value.has(groupId))
-      return
+  void [prevMarker.value?.linkageId, nextMarker.value?.linkageId].forEach(groupId => {
+    if (!groupId || containLinkGroups.value.has(groupId)) return
     const links = markerLinkStore.groupIdMap.get(groupId)
-    if (!links?.length)
-      return
-    groups.set(groupId, links.reduce((map, link) => {
-      const { id, fromId, toId, linkAction } = link
-      const isReverse = fromId! > toId!
-      return map.set(
-        isReverse ? `${toId}-${fromId}-${linkAction}` : `${fromId}-${toId}-${linkAction}`,
-        { isDelete: false, isMerge: true, isReverse, raw: link, id: `${id}` },
-      )
-    }, new Map<string, ModifyLinkOptions>()))
+    if (!links?.length) return
+    groups.set(
+      groupId,
+      links.reduce((map, link) => {
+        const { id, fromId, toId, linkAction } = link
+        const isReverse = fromId! > toId!
+        return map.set(
+          isReverse ? `${toId}-${fromId}-${linkAction}` : `${fromId}-${toId}-${linkAction}`,
+          { isDelete: false, isMerge: true, isReverse, raw: link, id: `${id}` },
+        )
+      }, new Map<string, ModifyLinkOptions>()),
+    )
   })
   return groups
 })
@@ -209,18 +217,15 @@ const previewLinkGroups = computed(() => {
   const result = new Map<string, ModifyLinkOptions>()
   const { merge, showDelete } = config.value
   modifyLinks.value.forEach((link, key) => {
-    if (link.isDelete && !showDelete)
-      return
+    if (link.isDelete && !showDelete) return
     result.set(key, link)
   })
   if (merge) {
-    containLinkGroups.value.forEach((group) => {
+    containLinkGroups.value.forEach(group => {
       group.forEach((link, key) => {
-        if (link.isDelete && !showDelete)
-          return
+        if (link.isDelete && !showDelete) return
         const isModifying = modifyLinks.value.get(key)
-        if (isModifying && isModifying.isReverse === link.isReverse)
-          return
+        if (isModifying && isModifying.isReverse === link.isReverse) return
         result.set(key, link)
       })
     })
@@ -249,8 +254,7 @@ const resumeOnceFocus = (data: number[]) => {
 
 /** 切换任务状态 */
 const toggleMission = () => {
-  if (!isEnable.value)
-    return
+  if (!isEnable.value) return
   if (isProcessing.value) {
     clearMission()
     close()
@@ -265,110 +269,121 @@ const submitLink = () => {
 }
 
 /** 自动更新任务 */
-watch(previewLinkGroups, (groups) => {
-  mapStateStore.interaction.removeFocus(GSLinkLayer.layerName)
-  if (!isProcessing.value)
-    return
-  const result: MarkerLinkMission[] = []
-  groups.forEach(({ isDelete, raw, id: key }) => {
-    if (isDelete)
-      return
-    result.push({
-      groupId: raw.groupId,
-      meta: {
-        key: raw.id ? `${raw.id}` : key,
-      },
-      toId: raw.toId,
-      fromId: raw.fromId,
-      linkAction: raw.linkAction,
+watch(
+  previewLinkGroups,
+  groups => {
+    mapStateStore.interaction.removeFocus(GSLinkLayer.layerName)
+    if (!isProcessing.value) return
+    const result: MarkerLinkMission[] = []
+    groups.forEach(({ isDelete, raw, id: key }) => {
+      if (isDelete) return
+      result.push({
+        groupId: raw.groupId,
+        meta: {
+          key: raw.id ? `${raw.id}` : key,
+        },
+        toId: raw.toId,
+        fromId: raw.fromId,
+        linkAction: raw.linkAction,
+      })
     })
-  })
-  update(result)
-}, { deep: true })
+    update(result)
+  },
+  { deep: true },
+)
 
 /** 悬浮指示器更新 */
-useSubscription(start$.pipe(
-  switchMap(() => MapSubject.hover.pipe(
-    tap(({ info }) => {
-      linkIndicatorPosition.value = info.coordinate
-        ? { x: info.x, y: info.y }
-        : undefined
-    }),
-    takeUntil(race(end$, MapSubject.drag)),
-    finalize(() => {
-      linkIndicatorPosition.value = undefined
-    }),
-    repeat(),
-  )),
-).subscribe())
+useSubscription(
+  start$
+    .pipe(
+      switchMap(() =>
+        MapSubject.hover.pipe(
+          tap(({ info }) => {
+            linkIndicatorPosition.value = info.coordinate ? { x: info.x, y: info.y } : undefined
+          }),
+          takeUntil(race(end$, MapSubject.drag)),
+          finalize(() => {
+            linkIndicatorPosition.value = undefined
+          }),
+          repeat(),
+        ),
+      ),
+    )
+    .subscribe(),
+)
 
 /** hover 逻辑 */
-useSubscription(start$.pipe(
-  switchMap(() => {
-    return MapSubject.hover.pipe(
-      map(({ info }) => {
-        if (!info.layer
-          || !GSMarkerLayer.isInstance(info.layer)
-          || !info.object) {
-          return undefined
-        }
-        return info.object as GSMarkerInfo
-      }),
+useSubscription(
+  start$
+    .pipe(
+      switchMap(() => {
+        return MapSubject.hover.pipe(
+          map(({ info }) => {
+            if (!info.layer || !GSMarkerLayer.isInstance(info.layer) || !info.object) {
+              return undefined
+            }
+            return info.object as GSMarkerInfo
+          }),
 
-      tap((markerInfo) => {
-        const prev = prevMarker.value
-        if (prev && nextMarker.value)
-          return
-        if (!markerInfo) {
-          hoverMarker.value = undefined
-          stopAnimation.value?.()
-          return
-        }
-        if (markerInfo.id === hoverMarker.value?.id)
-          return
-        hoverMarker.value = markerInfo
-        if (!prev
-          || prev.id === markerInfo.id
-          || nextMarker.value !== undefined) {
-          stopAnimation.value?.()
-          return
-        }
-        const id = `temp-${crypto.randomUUID()}`
-        stopAnimation.value?.()
-        stopAnimation.value = animate<number>({
-          from: 0,
-          to: Math.PI,
-          duration: 1000,
-          repeat: Number.POSITIVE_INFINITY,
-          onUpdate: (v) => {
-            mapStateStore.tempLayer.set(TempLayerIndex.BeforeMarker, new GSLinkLayer({
-              id: 'indicator',
-              hoverIds: mapStateStore.interaction.hoverElements.get(GSLinkLayer.layerName) as Set<string> | undefined,
-              outlineColor: [255, 255, 255, 255 - 255 * Math.sin(v)],
-              data: [{
-                id,
-                from: prev.render.position,
-                to: markerInfo.render.position,
-                color: actionColor.value,
-              }],
-            }))
-          },
-          onStop: () => {
+          tap(markerInfo => {
+            const prev = prevMarker.value
+            if (prev && nextMarker.value) return
+            if (!markerInfo) {
+              hoverMarker.value = undefined
+              stopAnimation.value?.()
+              return
+            }
+            if (markerInfo.id === hoverMarker.value?.id) return
+            hoverMarker.value = markerInfo
+            if (!prev || prev.id === markerInfo.id || nextMarker.value !== undefined) {
+              stopAnimation.value?.()
+              return
+            }
+            const id = `temp-${crypto.randomUUID()}`
+            stopAnimation.value?.()
+            stopAnimation.value = animate<number>({
+              from: 0,
+              to: Math.PI,
+              duration: 1000,
+              repeat: Number.POSITIVE_INFINITY,
+              onUpdate: v => {
+                mapStateStore.tempLayer.set(
+                  TempLayerIndex.BeforeMarker,
+                  new GSLinkLayer({
+                    id: 'indicator',
+                    hoverIds: mapStateStore.interaction.hoverElements.get(GSLinkLayer.layerName) as
+                      | Set<string>
+                      | undefined,
+                    outlineColor: [255, 255, 255, 255 - 255 * Math.sin(v)],
+                    data: [
+                      {
+                        id,
+                        from: prev.render.position,
+                        to: markerInfo.render.position,
+                        color: actionColor.value,
+                      },
+                    ],
+                  }),
+                )
+              },
+              onStop: () => {
+                mapStateStore.tempLayer.remove(TempLayerIndex.BeforeMarker)
+                stopAnimation.value = undefined
+              },
+            }).stop
+          }),
+
+          takeUntil(end$),
+
+          finalize(() => {
+            stopAnimation.value?.()
             mapStateStore.tempLayer.remove(TempLayerIndex.BeforeMarker)
-            stopAnimation.value = undefined
-          },
-        }).stop
-      }),
-
-      takeUntil(end$),
-
-      finalize(() => {
-        stopAnimation.value?.()
-        mapStateStore.tempLayer.remove(TempLayerIndex.BeforeMarker)
+          }),
+        )
       }),
     )
-  }),
-).subscribe())
+    .subscribe(),
+)
 
 /**
  * click 逻辑
@@ -376,98 +391,114 @@ useSubscription(start$.pipe(
  * 2. 选择目标点
  * 3. 再次选择目标点以确认
  */
-useSubscription(start$.pipe(
-  switchMap(() => {
-    return MapSubject.click.pipe(
-      filter(({ event }) => Boolean(event.leftButton)),
+useSubscription(
+  start$
+    .pipe(
+      switchMap(() => {
+        return MapSubject.click.pipe(
+          filter(({ event }) => Boolean(event.leftButton)),
 
-      map(({ info }) => {
-        // 如果点击信息为空，取消
-        if (!info.layer
-          || !GSMarkerLayer.isInstance(info.layer)
-          || !info.object
-          || prevMarker.value?.id === (info.object as GSMarkerInfo).id) {
-          clearSelect()
-        }
+          map(({ info }) => {
+            // 如果点击信息为空，取消
+            if (
+              !info.layer
+              || !GSMarkerLayer.isInstance(info.layer)
+              || !info.object
+              || prevMarker.value?.id === (info.object as GSMarkerInfo).id
+            ) {
+              clearSelect()
+            }
 
-        // 选择起始点
-        else if (!prevMarker.value) {
-          const markerInfo = info.object as GSMarkerInfo
-          resumeOnceFocus([markerInfo.id!])
-          mapStateStore.tempLayer.set(TempLayerIndex.BeforeMarker, new MarkerIndicatorLayer({
-            id: 'marker-indicater',
-            data: [markerInfo],
-          }))
-          mapStateStore.setTempMarkers('markerLink', [markerInfo])
-          prevMarker.value = markerInfo
-        }
+            // 选择起始点
+            else if (!prevMarker.value) {
+              const markerInfo = info.object as GSMarkerInfo
+              resumeOnceFocus([markerInfo.id!])
+              mapStateStore.tempLayer.set(
+                TempLayerIndex.BeforeMarker,
+                new MarkerIndicatorLayer({
+                  id: 'marker-indicater',
+                  data: [markerInfo],
+                }),
+              )
+              mapStateStore.setTempMarkers('markerLink', [markerInfo])
+              prevMarker.value = markerInfo
+            }
 
-        // 选择终止点
-        else if (!nextMarker.value) {
-          const markerInfo = info.object as GSMarkerInfo
-          resumeOnceFocus([prevMarker.value.id!, markerInfo.id!])
-          mapStateStore.tempLayer.set(TempLayerIndex.BeforeMarker, new MarkerIndicatorLayer({
-            id: 'marker-indicater',
-            data: [prevMarker.value, markerInfo],
-          }))
-          mapStateStore.tempLayer.set(TempLayerIndex.BeforeMarker, new GSLinkLayer({
-            id: 'indicator',
-            data: [{
-              id: `temp-${crypto.randomUUID()}`,
-              from: prevMarker.value.render.position,
-              to: markerInfo.render.position,
-              color: actionColor.value,
-            }],
-          }))
-          mapStateStore.setTempMarkers('markerLink', [prevMarker.value, markerInfo])
-          nextMarker.value = markerInfo
-        }
+            // 选择终止点
+            else if (!nextMarker.value) {
+              const markerInfo = info.object as GSMarkerInfo
+              resumeOnceFocus([prevMarker.value.id!, markerInfo.id!])
+              mapStateStore.tempLayer.set(
+                TempLayerIndex.BeforeMarker,
+                new MarkerIndicatorLayer({
+                  id: 'marker-indicater',
+                  data: [prevMarker.value, markerInfo],
+                }),
+              )
+              mapStateStore.tempLayer.set(
+                TempLayerIndex.BeforeMarker,
+                new GSLinkLayer({
+                  id: 'indicator',
+                  data: [
+                    {
+                      id: `temp-${crypto.randomUUID()}`,
+                      from: prevMarker.value.render.position,
+                      to: markerInfo.render.position,
+                      color: actionColor.value,
+                    },
+                  ],
+                }),
+              )
+              mapStateStore.setTempMarkers('markerLink', [prevMarker.value, markerInfo])
+              nextMarker.value = markerInfo
+            }
 
-        // 如果确认点击不为终止点，取消
-        else if (nextMarker.value?.id !== (info.object as GSMarkerInfo).id) {
-          clearSelect()
-        }
+            // 如果确认点击不为终止点，取消
+            else if (nextMarker.value?.id !== (info.object as GSMarkerInfo).id) {
+              clearSelect()
+            }
 
-        // 如果确认点击为终止点，发送结果
-        else {
-          return { prev: prevMarker.value!, next: nextMarker.value!, action: linkAction.value }
-        }
-      }),
+            // 如果确认点击为终止点，发送结果
+            else {
+              return { prev: prevMarker.value!, next: nextMarker.value!, action: linkAction.value }
+            }
+          }),
 
-      filter(result => result !== undefined),
+          filter(result => result !== undefined),
 
-      takeUntil(end$),
+          takeUntil(end$),
 
-      finalize(() => {
-        clearSelect()
+          finalize(() => {
+            clearSelect()
+          }),
+        )
       }),
     )
-  }),
-).subscribe(({ prev, next, action }) => {
-  if (!prev.id || !next.id)
-    return ElMessage.error('所选点位 id 字段为空')
+    .subscribe(({ prev, next, action }) => {
+      if (!prev.id || !next.id) return ElMessage.error('所选点位 id 字段为空')
 
-  const isReverse = prev.id > next.id
-  const linkKey = isReverse
-    ? `${next.id}-${prev.id}-${action}`
-    : `${prev.id}-${next.id}-${action}`
+      const isReverse = prev.id > next.id
+      const linkKey = isReverse
+        ? `${next.id}-${prev.id}-${action}`
+        : `${prev.id}-${next.id}-${action}`
 
-  modifyLinks.value.set(linkKey, {
-    id: `temp-${crypto.randomUUID()}`,
-    isReverse,
-    isDelete: false,
-    isMerge: false,
-    isTemp: true,
-    raw: {
-      fromId: prev.id,
-      toId: next.id,
-      linkAction: action,
-    },
-  })
-  triggerRef(modifyLinks)
+      modifyLinks.value.set(linkKey, {
+        id: `temp-${crypto.randomUUID()}`,
+        isReverse,
+        isDelete: false,
+        isMerge: false,
+        isTemp: true,
+        raw: {
+          fromId: prev.id,
+          toId: next.id,
+          linkAction: action,
+        },
+      })
+      triggerRef(modifyLinks)
 
-  clearSelect()
-}))
+      clearSelect()
+    }),
+)
 
 onBeforeUnmount(() => {
   if (isProcessing.value) {

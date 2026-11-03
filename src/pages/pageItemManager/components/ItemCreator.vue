@@ -32,9 +32,7 @@ onSuccess(() => {
       <el-button :icon="Check" :loading="loading" type="primary" @click="handleSubmit">
         确认
       </el-button>
-      <el-button :icon="Close" :disabled="loading" @click="() => emits('close')">
-        取消
-      </el-button>
+      <el-button :icon="Close" :disabled="loading" @click="() => emits('close')"> 取消 </el-button>
     </WinDialogFooter>
   </WinDialog>
 </template>

@@ -21,16 +21,15 @@ export class GlobalDialogController implements GlobalDialogControllerImpl {
   }
 
   /** 等待弹窗关闭后获取数据 */
-  afterClosed = <T = undefined>() => new Promise<T>((resolve) => {
-    const id = this.#instance._getId()
-    if (!context.resolves.has(id))
-      context.resolves.set(id, [])
-    context.resolves.get(id)!.push(resolve as (value: unknown) => void)
-  })
+  afterClosed = <T = undefined>() =>
+    new Promise<T>(resolve => {
+      const id = this.#instance._getId()
+      if (!context.resolves.has(id)) context.resolves.set(id, [])
+      context.resolves.get(id)!.push(resolve as (value: unknown) => void)
+    })
 
   updateProps = (props: AnyObject) => {
-    if (!context.current.value || context.current.value?.id !== this.#instance._getId())
-      return
+    if (!context.current.value || context.current.value?.id !== this.#instance._getId()) return
     context.current.value.props = {
       ...context.current.value.props,
       ...props,

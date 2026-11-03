@@ -26,21 +26,18 @@ const closeDropdown = () => {
 const dropdownArrowRef = ref<HTMLElement>()
 const dropdownRef = ref<HTMLElement>()
 
-useEventListener('click', (ev) => {
-  if (!dropdownVisible.value)
-    return
+useEventListener('click', ev => {
+  if (!dropdownVisible.value) return
   const path = ev.composedPath()
   for (const key in path) {
     const ele = path[key]
-    if (ele === dropdownArrowRef.value || ele === dropdownRef.value)
-      return
+    if (ele === dropdownArrowRef.value || ele === dropdownRef.value) return
   }
   closeDropdown()
 })
 
 const handleClick = (ev: MouseEvent) => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
   emits('click', ev)
 }
 </script>
@@ -64,7 +61,12 @@ const handleClick = (ev: MouseEvent) => {
       </div>
     </div>
 
-    <div v-if="$slots.dropdown" ref="dropdownArrowRef" class="item-dropdown-icon" @click="toggleDropdown">
+    <div
+      v-if="$slots.dropdown"
+      ref="dropdownArrowRef"
+      class="item-dropdown-icon"
+      @click="toggleDropdown"
+    >
       <el-icon
         class="scale-90 transition-all"
         :size="12"
@@ -174,7 +176,7 @@ const handleClick = (ev: MouseEvent) => {
   left: 0;
   top: 100%;
   z-index: 1;
-  background: #FFF;
+  background: #fff;
 
   &.is-hidden {
     content-visibility: hidden;

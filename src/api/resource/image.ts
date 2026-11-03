@@ -7,8 +7,7 @@ export const upload = (body: ResourceAPI.UploadResourceVo) => {
 
   for (const key in body) {
     const item = body[key as keyof ResourceAPI.UploadResourceVo]
-    if (item === undefined)
-      continue
+    if (item === undefined) continue
     formData.append(key, item)
   }
 

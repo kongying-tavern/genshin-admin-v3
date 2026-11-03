@@ -29,11 +29,7 @@ const focusKey = defineModel<string>('focusKey', {
 <template>
   <div class="w-full h-full overflow-hidden flex flex-col">
     <div
-      class="
-        shrink-0 rounded mx-2
-        text-center text-[var(--el-text-color-primary)]
-        border border-[var(--el-border-color)]
-      "
+      class="shrink-0 rounded mx-2 text-center text-[var(--el-text-color-primary)] border border-[var(--el-border-color)]"
     >
       {{ title }}
     </div>

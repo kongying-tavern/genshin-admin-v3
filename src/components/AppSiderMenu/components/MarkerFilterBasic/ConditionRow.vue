@@ -14,14 +14,12 @@ const emits = defineEmits<{
 }>()
 
 const handleReview = () => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
   emits('review')
 }
 
 const handleDelete = () => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
   emits('delete')
 }
 </script>

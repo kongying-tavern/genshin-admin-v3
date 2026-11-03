@@ -9,13 +9,7 @@ interface TypeCountHookOptions {
 }
 
 export const useTypeCount = (options: TypeCountHookOptions) => {
-  const {
-    archivedMarkers,
-    visibleItemIds,
-    markerList,
-    itemIdMap,
-    itemTypeIdMap,
-  } = options
+  const { archivedMarkers, visibleItemIds, markerList, itemIdMap, itemTypeIdMap } = options
 
   /**
    * @warning HACK 01
@@ -28,15 +22,12 @@ export const useTypeCount = (options: TypeCountHookOptions) => {
   const calculateTypeCount = (markers: MarkerVo[]) => {
     return markers.reduce((map, marker) => {
       marker.itemList?.forEach(({ itemId, count = 0 }) => {
-        if (!visibleItemIds.value.has(itemId!))
-          return
+        if (!visibleItemIds.value.has(itemId!)) return
         const item = itemIdMap.value.get(itemId!)
-        if (!item)
-          return
-        item.typeIdList?.forEach((typeId) => {
+        if (!item) return
+        item.typeIdList?.forEach(typeId => {
           const itemType = itemTypeIdMap.value.get(typeId)
-          if (!itemType)
-            return
+          if (!itemType) return
           // HACK 01, 02
           if (itemType.name !== '宝箱品质' || !['其他', '宝箱相关'].includes(item.name ?? ''))
             map.set(typeId, (map.get(typeId) ?? 0) + count)

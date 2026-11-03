@@ -1,11 +1,14 @@
 <script lang="ts" setup>
-withDefaults(defineProps<{
-  height?: number
-  color?: string
-}>(), {
-  height: 48,
-  color: '#E2DACE',
-})
+withDefaults(
+  defineProps<{
+    height?: number
+    color?: string
+  }>(),
+  {
+    height: 48,
+    color: '#E2DACE',
+  },
+)
 </script>
 
 <template>
@@ -39,7 +42,7 @@ withDefaults(defineProps<{
       var(--color) calc(50% - 1px),
       var(--color) calc(50% + 1px),
       transparent calc(50% + 1px),
-      transparent,
+      transparent
     );
     mask-image: linear-gradient(
       to right,
@@ -48,7 +51,7 @@ withDefaults(defineProps<{
       transparent calc(50% - var(--arrow-size)),
       transparent calc(50% + var(--arrow-size)),
       #000 calc(50% + var(--arrow-size)),
-      #000,
+      #000
     );
   }
   &::after {

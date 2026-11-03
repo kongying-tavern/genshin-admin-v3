@@ -32,8 +32,7 @@ const { markerList } = storeToRefs(useMarkerStore())
 const { reviewCondition, deleteCondition, clearCondition } = useMarkerFilter()
 
 const autoNextTab = () => {
-  if (!preferenceStore.autoNext)
-    return
+  if (!preferenceStore.autoNext) return
   preferenceStore.step += 1
 }
 
@@ -44,21 +43,21 @@ const archivedMarkers = computed(() => {
 
 // ==================== 地区 ====================
 const selectedParentArea = computed(() => {
-  if (!preferenceStore.parentAreaCode)
-    return
+  if (!preferenceStore.parentAreaCode) return
   return areaCodeMap.value.get(preferenceStore.parentAreaCode)
 })
 
 const selectedChildrenAreaList = computed<AreaVo[]>(() => {
-  if (!selectedParentArea.value)
-    return []
+  if (!selectedParentArea.value) return []
   return childrenAreaList.value.filter(({ parentId }) => parentId === selectedParentArea.value?.id)
 })
 
 const selectedArea = computed(() => areaCodeMap.value.get(preferenceStore.areaCode))
 
 // ==================== 分类 ====================
-const accessItemTypeList = computed<ItemTypeVo[]>(() => itemTypeList.value.filter(type => Boolean(type.isFinal)))
+const accessItemTypeList = computed<ItemTypeVo[]>(() =>
+  itemTypeList.value.filter(type => Boolean(type.isFinal)),
+)
 
 const selectedType = computed(() => {
   return itemTypeIdMap.value.get(preferenceStore.itemTypeId)
@@ -69,19 +68,15 @@ const selectedType = computed(() => {
 /** 当前地区可用的全部物品 */
 const accessItemList = computed(() => {
   const area = selectedArea.value
-  if (!area)
-    return []
-  return [...itemList.value]
-    .filter(item => item.areaId === area.id)
+  if (!area) return []
+  return [...itemList.value].filter(item => item.areaId === area.id)
 })
 
 /** 当前分类可用的全部物品 */
 const visibleItemList = computed<ItemVo[]>(() => {
   const type = selectedType.value
-  if (!type)
-    return []
-  return accessItemList.value
-    .filter(({ typeIdList = [] }) => new Set(typeIdList).has(type.id!))
+  if (!type) return []
+  return accessItemList.value.filter(({ typeIdList = [] }) => new Set(typeIdList).has(type.id!))
 })
 
 /** 当前分类可用的全部物品 id */
@@ -95,12 +90,10 @@ const visibleItemIds = computed(() => {
 
 /** 该项用于精细显示在当前分类下已选的物品数 */
 const selectedItemCount = computed(() => {
-  if (!preferenceStore.itemIds.length)
-    return 0
+  if (!preferenceStore.itemIds.length) return 0
   const currentTypeItemIds = new Set(visibleItemList.value.map(item => item.id!))
   return preferenceStore.itemIds.reduce((sum, cur) => {
-    if (currentTypeItemIds.has(cur))
-      sum += 1
+    if (currentTypeItemIds.has(cur)) sum += 1
     return sum
   }, 0)
 })
@@ -124,7 +117,11 @@ const { itemTotalMap, itemCountMap } = useItemCount({
 </script>
 
 <template>
-  <FilterTabs v-model="preferenceStore.step" class="flex-1" style="min-height: 350px; max-height: 500px">
+  <FilterTabs
+    v-model="preferenceStore.step"
+    class="flex-1"
+    style="min-height: 350px; max-height: 500px"
+  >
     <FilterTabPanel label="地区" :content="selectedArea?.name ?? '--'" :value="0">
       <div class="h-full grid grid-cols-[1fr_auto_1fr]">
         <CheckboxGroup
@@ -136,15 +133,19 @@ const { itemTotalMap, itemCountMap } = useItemCount({
           <template #icon="{ row }">
             <AppIconTagRenderer
               :src="iconStore.iconTextureUrl"
-              :mapping="iconStore.iconCoordMap.get(row.iconId ?? areaIdMap.get(row.parentId ?? -1)?.iconId ?? -1)"
+              :mapping="
+                iconStore.iconCoordMap.get(
+                  row.iconId ?? areaIdMap.get(row.parentId ?? -1)?.iconId ?? -1,
+                )
+              "
               class="w-full aspect-square"
             >
-              <img :src="fallbackToStaticIcon(row)">
+              <img :src="fallbackToStaticIcon(row)" />
             </AppIconTagRenderer>
           </template>
         </CheckboxGroup>
 
-        <div style="width: 1px; height: 100%; background: #E3DDD140;" />
+        <div style="width: 1px; height: 100%; background: #e3ddd140" />
 
         <CheckboxGroup
           v-model="preferenceStore.areaCode"
@@ -158,10 +159,18 @@ const { itemTotalMap, itemCountMap } = useItemCount({
               :src="iconStore.iconTextureUrl"
               :data-icon-id="row.iconId"
               :data-parent-icon-id="areaIdMap.get(row.parentId ?? -1)?.iconId"
-              :mapping="iconStore.iconCoordMap.get(row.iconId!) ?? iconStore.iconCoordMap.get(areaIdMap.get(row.parentId ?? -1)?.iconId!)"
+              :mapping="
+                iconStore.iconCoordMap.get(row.iconId!)
+                ?? iconStore.iconCoordMap.get(areaIdMap.get(row.parentId ?? -1)?.iconId!)
+              "
               class="w-full aspect-square"
             >
-              <img :src="fallbackToStaticIcon(row) || fallbackToStaticIcon(areaIdMap.get(row.parentId ?? -1))">
+              <img
+                :src="
+                  fallbackToStaticIcon(row)
+                  || fallbackToStaticIcon(areaIdMap.get(row.parentId ?? -1))
+                "
+              />
             </AppIconTagRenderer>
           </template>
         </CheckboxGroup>
@@ -195,7 +204,11 @@ const { itemTotalMap, itemCountMap } = useItemCount({
       </CheckboxGroup>
     </FilterTabPanel>
 
-    <FilterTabPanel label="物品" :content="selectedType ? `已选 ${selectedItemCount} 项` : '--'" :value="2">
+    <FilterTabPanel
+      label="物品"
+      :content="selectedType ? `已选 ${selectedItemCount} 项` : '--'"
+      :value="2"
+    >
       <CheckboxGroup
         v-model:multiple-value="preferenceStore.itemIds"
         :options="visibleItemList"
@@ -233,9 +246,7 @@ const { itemTotalMap, itemCountMap } = useItemCount({
     </FilterTabPanel>
   </FilterTabs>
 
-  <div class="text-white px-2 pt-1">
-    默认打点物品
-  </div>
+  <div class="text-white px-2 pt-1">默认打点物品</div>
 
   <DefaultMarkingItem
     v-model:item-id="preferenceStore.defaultMarkingItemId"
@@ -245,7 +256,11 @@ const { itemTotalMap, itemCountMap } = useItemCount({
 
   <div class="flex-shrink-0 flex items-center gap-2 text-white px-2 pt-1">
     条件列表
-    <el-tooltip placement="top-start" effect="light" content="部分物品可能从属于多个分类，从而对应多个条件。">
+    <el-tooltip
+      placement="top-start"
+      effect="light"
+      content="部分物品可能从属于多个分类，从而对应多个条件。"
+    >
       <el-icon :size="16">
         <QuestionFilled />
       </el-icon>

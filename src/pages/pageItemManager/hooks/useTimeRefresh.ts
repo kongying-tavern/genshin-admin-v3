@@ -51,9 +51,14 @@ export const useTimeRefresh = (options: FormTimeRefreshParamHooksOptions) => {
 
   setRefreshTime()
 
-  watch(refreshTime, (_, time) => {
-    formData.value.defaultRefreshTime = (((time.hour + time.days * 24) * 60 + time.min) * 60 + time.sec) * 1000
-  }, { deep: true })
+  watch(
+    refreshTime,
+    (_, time) => {
+      formData.value.defaultRefreshTime =
+        (((time.hour + time.days * 24) * 60 + time.min) * 60 + time.sec) * 1000
+    },
+    { deep: true },
+  )
 
   const resetRefreshTime = (options?: RefreshTimeObj) => {
     refreshTime.value.days = options ? options.days : 0
@@ -66,15 +71,15 @@ export const useTimeRefresh = (options: FormTimeRefreshParamHooksOptions) => {
 
   const resetOptionIndex = () => {
     switch (formData.value.defaultRefreshTime ?? 0) {
-      case 0 :
+      case 0:
         _refreshTimeOptionsIndex.value = 0
         timeSelectDisabled.value = true
         break
-      case 24 * 60 * 60 * 1000 :
+      case 24 * 60 * 60 * 1000:
         _refreshTimeOptionsIndex.value = 1
         timeSelectDisabled.value = true
         break
-      default :
+      default:
         _refreshTimeOptionsIndex.value = 2
         timeSelectDisabled.value = false
     }
@@ -84,26 +89,35 @@ export const useTimeRefresh = (options: FormTimeRefreshParamHooksOptions) => {
 
   const refreshTimeOptionsIndex = computed({
     get: () => _refreshTimeOptionsIndex.value,
-    set: (index) => {
+    set: index => {
       switch (index) {
-        case 0 :
+        case 0:
           resetRefreshTime()
           timeSelectDisabled.value = true
           break
-        case 1 : resetRefreshTime({
-          days: 1,
-          hour: 0,
-          min: 0,
-          sec: 0,
-        })
+        case 1:
+          resetRefreshTime({
+            days: 1,
+            hour: 0,
+            min: 0,
+            sec: 0,
+          })
           timeSelectDisabled.value = true
           break
-        default : timeSelectDisabled.value = false
+        default:
+          timeSelectDisabled.value = false
       }
 
       _refreshTimeOptionsIndex.value = index
     },
   })
 
-  return { refreshTimeOptionsIndex, refreshTimeOptions, timeSelectDisabled, refreshTime, resetRefreshTime, resetOptionIndex }
+  return {
+    refreshTimeOptionsIndex,
+    refreshTimeOptions,
+    timeSelectDisabled,
+    refreshTime,
+    resetRefreshTime,
+    resetOptionIndex,
+  }
 }

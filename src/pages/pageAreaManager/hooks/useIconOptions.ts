@@ -3,14 +3,20 @@ import db from '@/database'
 import { useFetchHook } from '@/hooks'
 
 export const useIconOptions = () => {
-  const tagOptions = ref<(IconVo & { label: string, value: string })[]>([])
+  const tagOptions = ref<(IconVo & { label: string; value: string })[]>([])
 
-  const { loading, refresh: getTagList, onSuccess, ...rest } = useFetchHook({
+  const {
+    loading,
+    refresh: getTagList,
+    onSuccess,
+    ...rest
+  } = useFetchHook({
     immediate: true,
-    onRequest: (query: string) => db.icon.filter(icon => !query ? true : (icon.tag?.includes(query) ?? false)).toArray(),
+    onRequest: (query: string) =>
+      db.icon.filter(icon => (!query ? true : (icon.tag?.includes(query) ?? false))).toArray(),
   })
 
-  onSuccess((tagList) => {
+  onSuccess(tagList => {
     tagOptions.value = tagList.map(tag => ({
       label: tag.tag!,
       value: tag.tag!,

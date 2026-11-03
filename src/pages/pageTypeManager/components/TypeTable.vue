@@ -25,9 +25,13 @@ const tableContainerRef = ref<HTMLElement>()
 const { height } = useElementSize(tableContainerRef)
 
 const tableRef = ref<InstanceType<typeof ElTable> | null>(null)
-watch(() => props.data, () => tableRef.value?.scrollTo({
-  top: 0,
-}))
+watch(
+  () => props.data,
+  () =>
+    tableRef.value?.scrollTo({
+      top: 0,
+    }),
+)
 
 const { IDENTIFICATION_SYMBOL, triggerRef, userData, trigger, close } = useUserPopover({
   getUser: userId => props.userMap[userId],
@@ -71,7 +75,12 @@ const { IDENTIFICATION_SYMBOL, triggerRef, userData, trigger, close } = useUserP
 
       <el-table-column label="可见性" prop="hiddenFlag">
         <template #default="{ row }">
-          <div :class="{ 'text-[var(--el-text-color-disabled)]': HIDDEN_FLAG_NAME_MAP[row.hiddenFlag] === undefined }">
+          <div
+            :class="{
+              'text-[var(--el-text-color-disabled)]':
+                HIDDEN_FLAG_NAME_MAP[row.hiddenFlag] === undefined,
+            }"
+          >
             {{ HIDDEN_FLAG_NAME_MAP[row.hiddenFlag] ?? '缺省' }}
           </div>
         </template>

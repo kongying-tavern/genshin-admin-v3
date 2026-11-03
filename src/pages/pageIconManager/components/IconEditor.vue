@@ -2,7 +2,13 @@
 import type { IconVariant } from '../types'
 import type { IconVo } from '@/api/alova/globals'
 import { Check, Close } from '@element-plus/icons-vue'
-import { IconRenderer, WinDialog, WinDialogFooter, WinDialogTabPanel, WinDialogTitleBar } from '@/components'
+import {
+  IconRenderer,
+  WinDialog,
+  WinDialogFooter,
+  WinDialogTabPanel,
+  WinDialogTitleBar,
+} from '@/components'
 import { useIconType } from '@/hooks'
 import { useIconFormRules, useIconUpdate } from '../hooks'
 import { ImageCropper } from './ImageCropper'
@@ -29,16 +35,8 @@ const variantTabs = [
 ] as const
 
 /** 更新逻辑封装 */
-const {
-  stash,
-  iconEditable,
-  isChanged,
-  loading,
-  onSuccess,
-  clearStash,
-  stashIcon,
-  updateIcon,
-} = useIconUpdate(form)
+const { stash, iconEditable, isChanged, loading, onSuccess, clearStash, stashIcon, updateIcon } =
+  useIconUpdate(form)
 
 const variantLabelRecord: Record<IconVariant, string> = {
   default: '默认',
@@ -51,10 +49,9 @@ const variantStatusRecord = computed(() => {
   variantTabs.forEach(({ name }) => {
     if (name === 'default')
       status.default = stash.value.default ? '待上传' : form.value.url ? '' : '未配置'
-    else if (stash.value[name] === null)
-      status[name] = '待移除'
+    else if (stash.value[name] === null) status[name] = '待移除'
     else
-      status[name] = stash.value[name] ? '待上传' : (form.value.urlVariants?.[name] ? '' : '未配置')
+      status[name] = stash.value[name] ? '待上传' : form.value.urlVariants?.[name] ? '' : '未配置'
   })
   return status
 })
@@ -68,14 +65,15 @@ const { rules } = useIconFormRules(form)
 /** 确认按钮可用性 */
 const disabledConfirm = computed(() => {
   const { tag = '' } = form.value
-  if (!tag.trim().length)
-    return true
-  if ([
-    props.icon.tag === form.value.tag,
-    props.icon.description === form.value.description,
-    JSON.stringify(props.icon.typeIdList ?? []) === JSON.stringify(form.value.typeIdList ?? []),
-    !iconEditable.value || (iconEditable.value && !isChanged.value),
-  ].every(Boolean)) {
+  if (!tag.trim().length) return true
+  if (
+    [
+      props.icon.tag === form.value.tag,
+      props.icon.description === form.value.description,
+      JSON.stringify(props.icon.typeIdList ?? []) === JSON.stringify(form.value.typeIdList ?? []),
+      !iconEditable.value || (iconEditable.value && !isChanged.value),
+    ].every(Boolean)
+  ) {
     return true
   }
   return false
@@ -87,7 +85,11 @@ onSuccess(() => {
 })
 
 /** 记录图标变更情况 */
-const handleImageLoad = ({ canvas, isRaw, variant }: {
+const handleImageLoad = ({
+  canvas,
+  isRaw,
+  variant,
+}: {
   canvas: HTMLCanvasElement
   isRaw: boolean
   variant: IconVariant
@@ -111,14 +113,8 @@ const cancel = () => {
 
 <template>
   <WinDialog>
-    <WinDialogTitleBar
-      class="gap-2"
-      :disabled="loading"
-      @close="cancel"
-    >
-      <el-tag size="small" type="warning">
-        ID: {{ props.icon.id }}
-      </el-tag>
+    <WinDialogTitleBar class="gap-2" :disabled="loading" @close="cancel">
+      <el-tag size="small" type="warning"> ID: {{ props.icon.id }} </el-tag>
       <div>
         {{ props.icon.tag }}
       </div>
@@ -139,22 +135,16 @@ const cancel = () => {
           />
         </div>
 
-        <el-form
-          :disabled="loading"
-          :rules="rules"
-          :model="form"
-          label-width="60px"
-          class="flex-1"
-        >
-          <el-form-item label="名称" prop="tag" style="margin-bottom: 17px;">
+        <el-form :disabled="loading" :rules="rules" :model="form" label-width="60px" class="flex-1">
+          <el-form-item label="名称" prop="tag" style="margin-bottom: 17px">
             <el-input v-model="form.tag" />
           </el-form-item>
 
-          <el-form-item label="描述" prop="description" style="margin-bottom: 8px;">
+          <el-form-item label="描述" prop="description" style="margin-bottom: 8px">
             <el-input v-model="form.description" :rows="3" resize="none" type="textarea" />
           </el-form-item>
 
-          <el-form-item label="分类" prop="typeIdList" style="margin-bottom: 0;">
+          <el-form-item label="分类" prop="typeIdList" style="margin-bottom: 0">
             <el-tree-select
               v-model="form.typeIdList"
               lazy
@@ -168,16 +158,9 @@ const cancel = () => {
         </el-form>
       </div>
 
-      <div
-        class="overflow-visible transition-all"
-        :class="iconEditable ? 'h-[336px]' : 'h-[0px]'"
-      >
+      <div class="overflow-visible transition-all" :class="iconEditable ? 'h-[336px]' : 'h-[0px]'">
         <el-divider style="margin: 8px 0" />
-        <el-tabs
-          v-model="variant"
-          class="custom-tabs"
-          type="border-card"
-        >
+        <el-tabs v-model="variant" class="custom-tabs" type="border-card">
           <el-tab-pane
             v-for="tab in variantTabs"
             :key="tab.name"
@@ -188,7 +171,7 @@ const cancel = () => {
             <ImageCropper
               :raw="tab.name === 'default' ? form.url : form.urlVariants?.[tab.name]"
               :variant="tab.name"
-              :disabled-delete="!form.urlVariants?.[tab.name] || (stash[tab.name] === null)"
+              :disabled-delete="!form.urlVariants?.[tab.name] || stash[tab.name] === null"
               :show-preview="stash[tab.name] !== undefined"
               class="w-full flex-1"
               @image-load="handleImageLoad"
@@ -214,13 +197,7 @@ const cancel = () => {
       >
         确认
       </el-button>
-      <el-button
-        :icon="Close"
-        :disabled="loading"
-        @click="cancel"
-      >
-        取消
-      </el-button>
+      <el-button :icon="Close" :disabled="loading" @click="cancel"> 取消 </el-button>
     </WinDialogFooter>
   </WinDialog>
 </template>
@@ -239,14 +216,22 @@ const cancel = () => {
     border-radius: 4px;
     display: grid;
     place-content: center;
-    color: color-mix(in srgb, var(--el-color-white) var(--text-alpha), transparent calc(100% - var(--text-alpha)));
+    color: color-mix(
+      in srgb,
+      var(--el-color-white) var(--text-alpha),
+      transparent calc(100% - var(--text-alpha))
+    );
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
     opacity: var(--alpha);
-    background-color: color-mix(in srgb, var(--bg) var(--bg-alpha), transparent calc(100% - var(--bg-alpha)));
+    background-color: color-mix(
+      in srgb,
+      var(--bg) var(--bg-alpha),
+      transparent calc(100% - var(--bg-alpha))
+    );
     z-index: 1;
     pointer-events: none;
   }

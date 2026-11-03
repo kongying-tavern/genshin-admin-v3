@@ -8,13 +8,14 @@ export const useTagLayer = () => {
 
   const tagLayer = computed(() => {
     const tile = tileStore.currentTileConfig?.tile
-    if (!tile)
-      return
+    if (!tile) return
     return new GSTagLayer({
       visible: preferenceStore.showZoneTag,
       tagGroups: tileStore.visibleTagGroups,
       offset: tile.center,
-      fontFamily: dadianStore.fontFamilySet.has('HYWenHei-85W') ? 'HYWenHei-85W, Monaco, monospace' : undefined,
+      fontFamily: dadianStore.fontFamilySet.has('HYWenHei-85W')
+        ? 'HYWenHei-85W, Monaco, monospace'
+        : undefined,
     })
   })
 

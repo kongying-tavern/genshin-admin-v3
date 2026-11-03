@@ -3,24 +3,23 @@ const props = defineProps<{
   error: Error
 }>()
 
-const stack = computed<undefined | { label: string, codes: string[] }>(() => {
+const stack = computed<undefined | { label: string; codes: string[] }>(() => {
   const { stack } = props.error
-  if (!stack)
-    return
+  if (!stack) return
   const [label, ...codes] = stack.split('at ')
   return { label, codes }
 })
 </script>
 
 <template>
-  <div class="w-full h-full flex flex-col justify-center bg-[var(--el-color-primary)] text-[var(--el-color-white)] px-[10%]">
+  <div
+    class="w-full h-full flex flex-col justify-center bg-[var(--el-color-primary)] text-[var(--el-color-white)] px-[10%]"
+  >
     <div class="text-9xl mb-8">
       {{ `:(` }}
     </div>
 
-    <div class="text-4xl mb-8">
-      因关键错误崩溃。
-    </div>
+    <div class="text-4xl mb-8">因关键错误崩溃。</div>
 
     <div class="custom-scrollbar h-[6em] text-xl mb-8 overflow-auto">
       <p>{{ error.message }}</p>

@@ -54,23 +54,19 @@ const openOptionList = () => {
 
 const selectValue = (option: NormalizedOption) => {
   const { disabledAutoHidden = false } = props
-  if (option.disabled)
-    return
+  if (option.disabled) return
   modelValue.value = option.value
-  if (disabledAutoHidden)
-    return
+  if (disabledAutoHidden) return
   dropdownVisible.value = false
   emits('dropdownVisibleChange', false)
 }
 
-useEventListener('pointerdown', (ev) => {
-  if (!dropdownVisible.value)
-    return
-  const hasTarget = ev.composedPath().find((target) => {
-    return (target === labelRef.value) || (target === listRef.value)
+useEventListener('pointerdown', ev => {
+  if (!dropdownVisible.value) return
+  const hasTarget = ev.composedPath().find(target => {
+    return target === labelRef.value || target === listRef.value
   })
-  if (hasTarget)
-    return
+  if (hasTarget) return
   dropdownVisible.value = false
   emits('dropdownVisibleChange', false)
 })
@@ -90,11 +86,7 @@ useEventListener('pointerdown', (ev) => {
         {{ valueMap.get(modelValue)?.label ?? `${modelValue}` }}
       </slot>
 
-      <slot
-        v-else
-        name="missed"
-        :value="modelValue"
-      >
+      <slot v-else name="missed" :value="modelValue">
         {{ modelValue }}
       </slot>
     </div>
@@ -116,12 +108,7 @@ useEventListener('pointerdown', (ev) => {
           }"
           @click="() => selectValue(option)"
         >
-          <slot
-            name="default"
-            :label="option.label"
-            :value="option.value"
-            :option="option.raw"
-          >
+          <slot name="default" :label="option.label" :value="option.value" :option="option.raw">
             <div class="flex-1 overflow-hidden whitespace-nowrap text-ellipsis">
               {{ option.label }}
             </div>
@@ -157,8 +144,8 @@ useEventListener('pointerdown', (ev) => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: #C9BEAD;
-  color: #4B5467;
+  background: #c9bead;
+  color: #4b5467;
   height: var(--height);
   line-height: calc(var(--height) - 8px);
   padding: 4px 10px;
@@ -175,7 +162,7 @@ useEventListener('pointerdown', (ev) => {
     top: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(#FFF8C0, transparent);
+    background: radial-gradient(#fff8c0, transparent);
     opacity: var(--active-opacity);
     z-index: -1;
   }
@@ -214,7 +201,7 @@ useEventListener('pointerdown', (ev) => {
 .option {
   --bg: transparent;
   --sc: 0.98 0.95;
-  --color: #ECE5D8;
+  --color: #ece5d8;
 
   position: relative;
   padding: 4px 10px;
@@ -243,17 +230,17 @@ useEventListener('pointerdown', (ev) => {
   }
 
   &.is-active {
-    --bg: #ECE5D830;
+    --bg: #ece5d830;
   }
 
   &:hover {
     --sc: 1 1;
-    --bg: #ECE5D830;
+    --bg: #ece5d830;
   }
 
   &:active {
     --color: #495366;
-    --bg: #ECE5D8;
+    --bg: #ece5d8;
   }
 }
 </style>

@@ -47,11 +47,7 @@ const showDelete = defineModel<boolean>('showDelete', {
 
 <template>
   <div
-    class="
-      w-full h-full overflow-hidden
-      grid grid-cols-[1fr_auto_1fr] grid-rows-[auto_1fr_auto] justify-items-center
-      text-sm
-    "
+    class="w-full h-full overflow-hidden grid grid-cols-[1fr_auto_1fr] grid-rows-[auto_1fr_auto] justify-items-center text-sm"
   >
     <div class="w-full h-full col-span-3 grid grid-cols-[1fr_auto_1fr] place-items-center">
       <MarkerInfo :marker="prevMarker" placeholder="起始点" />

@@ -1,4 +1,10 @@
-import type { CompositeLayerProps, GetPickingInfoParams, Layer, PickingInfo, UpdateParameters } from 'deck.gl'
+import type {
+  CompositeLayerProps,
+  GetPickingInfoParams,
+  Layer,
+  PickingInfo,
+  UpdateParameters,
+} from 'deck.gl'
 
 import type { ArrowShapeOptions, GSLinkLayerProps } from '../types'
 import { CompositeLayer, LineLayer, PolygonLayer } from 'deck.gl'
@@ -27,14 +33,13 @@ class LinkLayerContent extends CompositeLayer<GSLinkLayerProps> {
     const dy = yb - ya
     const length = Math.sqrt(dx ** 2 + dy ** 2)
     const angle = Math.atan2(dy, dx)
-    if (length + gap <= unitLength)
-      return { n: 1, ox: 0, oy: 0, angle, realUnitLength: length }
+    if (length + gap <= unitLength) return { n: 1, ox: 0, oy: 0, angle, realUnitLength: length }
     let n = Math.floor((length + gap) / (arrowLength + gap))
     // 限制最大箭头数量，避免因连线过长达到绘制上限导致箭头消失
     if (n > maxArrows) {
       n = maxArrows
     }
-    const realUnitLength = ((length - n * gap) / n) + gap
+    const realUnitLength = (length - n * gap) / n + gap
     const ox = realUnitLength * Math.cos(angle)
     const oy = realUnitLength * Math.sin(angle)
     return { n, ox, oy, angle, realUnitLength }
@@ -165,13 +170,15 @@ class LinkLayerContent extends CompositeLayer<GSLinkLayerProps> {
     return this.props.data.map((info, layerIndex) => {
       const { 0: xa, 1: ya } = info.from
       const { 0: xb, 1: yb } = info.to
-      const {
-        realUnitLength,
-        angle,
-        n,
-        ox,
-        oy,
-      } = this.calculateArrowLayout(xa, ya, xb, yb, abl + ahr, gap, maxArrows)
+      const { realUnitLength, angle, n, ox, oy } = this.calculateArrowLayout(
+        xa,
+        ya,
+        xb,
+        yb,
+        abl + ahr,
+        gap,
+        maxArrows,
+      )
       const { points, pointCount } = this.calculateArrowTemplate(angle, {
         arrowBodyLength: realUnitLength - gap,
         arrowBodyRadius: abr,
@@ -182,8 +189,7 @@ class LinkLayerContent extends CompositeLayer<GSLinkLayerProps> {
       })
 
       const data = new Uint8Array(n)
-      for (let i = 0; i < n; i++)
-        data[i] = i
+      for (let i = 0; i < n; i++) data[i] = i
 
       return new PolygonLayer<number, { index: number }>({
         id: this.props.id ? `link-layer-${layerIndex}-${this.props.id}` : undefined,
@@ -191,7 +197,7 @@ class LinkLayerContent extends CompositeLayer<GSLinkLayerProps> {
         pickable: true,
         data,
         positionFormat: 'XY',
-        getPolygon: (i) => {
+        getPolygon: i => {
           const newPoints = new Float64Array(points.length)
           for (let p = 0; p < pointCount; p++) {
             newPoints[p * 2] = points[p * 2] + xa + i * ox
@@ -243,7 +249,7 @@ export class GSLinkLayer extends CompositeLayer<GSLinkLayerProps> {
         getTargetPosition: info => info.to,
         getWidth: arrowHeadRadius,
         widthScale: scale * 2 ** (zoom + 1),
-        getColor: (info) => {
+        getColor: info => {
           return [255, 255, 0, focusIds?.has(info.id) ? 80 : 0]
         },
         widthMinPixels: 0,
@@ -270,9 +276,9 @@ export class GSLinkLayer extends CompositeLayer<GSLinkLayerProps> {
         getTargetPosition: info => info.to,
         getWidth: arrowHeadRadius,
         widthScale: scale * 2 ** (zoom + 1),
-        getColor: (info) => {
+        getColor: info => {
           const { 0: r, 1: g, 2: b } = info.color
-          return [r, g, b, (focusIds?.has(info.id) || !hoverIds?.has(info.id)) ? 0 : 80]
+          return [r, g, b, focusIds?.has(info.id) || !hoverIds?.has(info.id) ? 0 : 80]
         },
         widthMinPixels: 0,
         updateTriggers: {

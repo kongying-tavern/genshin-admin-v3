@@ -24,7 +24,11 @@ const modelValue = defineModel<TypeObject>('modelValue', {
 })
 
 /** 图标选项列表 */
-const { data: iconOptions, loading, refresh: refreshIconOptions } = useFetchHook({
+const {
+  data: iconOptions,
+  loading,
+  refresh: refreshIconOptions,
+} = useFetchHook({
   immediate: true,
   initialValue: [],
   onRequest: async (query: string) => {
@@ -46,17 +50,16 @@ const rules: FormRules = {
 
 const name = computed({
   get: () => modelValue.value.name ?? '',
-  set: (v) => {
+  set: v => {
     modelValue.value.name = v.replaceAll(/\s+/g, '')
   },
 })
 
 const sortIndex = computed({
   get: () => modelValue.value.sortIndex,
-  set: (v) => {
+  set: v => {
     const sortNumber = Number(v)
-    if (!Number.isInteger(sortNumber))
-      return
+    if (!Number.isInteger(sortNumber)) return
     modelValue.value.sortIndex = sortNumber
   },
 })
@@ -76,15 +79,15 @@ defineExpose({
       <el-input v-model="name" />
     </el-form-item>
 
-    <el-form-item v-if="(manager instanceof ItemTypeManager)" label="排序" prop="sortIndex">
+    <el-form-item v-if="manager instanceof ItemTypeManager" label="排序" prop="sortIndex">
       <el-input-number v-model="sortIndex" :min="0" :step="1" style="width: 100%" />
     </el-form-item>
 
-    <el-form-item v-if="(manager instanceof ItemTypeManager)" label="描述" prop="content">
+    <el-form-item v-if="manager instanceof ItemTypeManager" label="描述" prop="content">
       <el-input v-model="modelValue.content" type="textarea" :rows="3" />
     </el-form-item>
 
-    <el-form-item v-if="(manager instanceof ItemTypeManager)" label="图标" prop="iconId">
+    <el-form-item v-if="manager instanceof ItemTypeManager" label="图标" prop="iconId">
       <div class="w-full grid grid-cols-[32px,1fr] gap-2">
         <AppRowImage :src="iconStore.idMap.get(modelValue.iconId ?? -1)?.url" />
         <el-select-v2
@@ -99,7 +102,7 @@ defineExpose({
         >
           <template #default="{ item }">
             <div class="flex items-center gap-2">
-              <img :src="item.url" class="w-6 h-6 object-contain" crossorigin="" loading="lazy">
+              <img :src="item.url" class="w-6 h-6 object-contain" crossorigin="" loading="lazy" />
               <span>{{ item.label }}</span>
             </div>
           </template>
@@ -107,7 +110,7 @@ defineExpose({
       </div>
     </el-form-item>
 
-    <el-form-item v-if="(manager instanceof ItemTypeManager)" label="可见性" prop="hiddenFlag">
+    <el-form-item v-if="manager instanceof ItemTypeManager" label="可见性" prop="hiddenFlag">
       <el-select-v2
         v-model="modelValue.hiddenFlag"
         :options="HIDDEN_FLAG_OPTIONS"

@@ -8,18 +8,17 @@ import { apiBase } from './env'
  * 因此「能拿到 HTTP 响应」即说明服务在运行，只有网络层错误（DNS / 连接失败 / 超时）才视为不可达。
  */
 export const isBackendReachable = async (): Promise<boolean> => {
-  if (!apiBase)
-    return false
+  if (!apiBase) return false
   try {
     await fetch(`${apiBase}/system/role/list`, {
       signal: AbortSignal.timeout(5000),
     })
     return true
-  }
-  catch {
+  } catch {
     return false
   }
 }
 
 /** 集成用例是否可以真实运行：配置齐备且后端可达 */
-export const probeIntegration = async (configured: boolean) => configured && await isBackendReachable()
+export const probeIntegration = async (configured: boolean) =>
+  configured && (await isBackendReachable())

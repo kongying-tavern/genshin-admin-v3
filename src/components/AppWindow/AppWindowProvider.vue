@@ -21,7 +21,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="map-window-manager">
     <WindowPanel
-      v-for="([id, info]) in context.getWindows()"
+      v-for="[id, info] in context.getWindows()"
       :id="id"
       :key="id"
       v-model:main-ref="info.ref"

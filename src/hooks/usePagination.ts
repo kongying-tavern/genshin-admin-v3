@@ -49,12 +49,7 @@ export const usePagination = (options: PaginationHookOptions = {}) => {
   const pageSizeMap = computed(() => new Map(preferenceStore.pageSize))
 
   const {
-    init: {
-      current = 1,
-      pageSize = 10,
-      sizes = [10, 20, 30],
-      total = 0,
-    } = {},
+    init: { current = 1, pageSize = 10, sizes = [10, 20, 30], total = 0 } = {},
     units = [PgUnit.TOTAL, PgUnit.SIZE, PgUnit.PREV, PgUnit.PAGER, PgUnit.NEXT, PgUnit.JUMPER],
     module,
   } = options
@@ -62,13 +57,16 @@ export const usePagination = (options: PaginationHookOptions = {}) => {
   const defaultSizes = computed(() => new Set(sizes))
 
   const getModulePagination = (module?: ManagerModule): PaginationState => {
-    if (!module)
-      return { current, pageSize, sizes, total }
+    if (!module) return { current, pageSize, sizes, total }
     const size = Number(pageSizeMap.value.get(module))
     return {
       current,
       pageSize: Number.isInteger(size) ? size : pageSize,
-      sizes: Number.isInteger(size) ? !defaultSizes.value.has(size) ? sizes.concat(size) : sizes : sizes,
+      sizes: Number.isInteger(size)
+        ? !defaultSizes.value.has(size)
+          ? sizes.concat(size)
+          : sizes
+        : sizes,
       total,
     }
   }
@@ -83,28 +81,38 @@ export const usePagination = (options: PaginationHookOptions = {}) => {
   if (module) {
     const internalUpdateFlag = ref(false)
 
-    watch(() => pagination.value.pageSize, (pageSize) => {
-      if (internalUpdateFlag.value) {
-        internalUpdateFlag.value = false
-        return
-      }
-      preferenceStore.pageSize = [...new Map(pageSizeMap.value).set(module, pageSize).entries()]
-    }, { deep: true })
+    watch(
+      () => pagination.value.pageSize,
+      pageSize => {
+        if (internalUpdateFlag.value) {
+          internalUpdateFlag.value = false
+          return
+        }
+        preferenceStore.pageSize = [...new Map(pageSizeMap.value).set(module, pageSize).entries()]
+      },
+      { deep: true },
+    )
 
-    watch(() => pageSizeMap.value.get(module), (size) => {
-      if (size === undefined)
-        return
-      internalUpdateFlag.value = true
-      pagination.value = getModulePagination(module)
-    })
+    watch(
+      () => pageSizeMap.value.get(module),
+      size => {
+        if (size === undefined) return
+        internalUpdateFlag.value = true
+        pagination.value = getModulePagination(module)
+      },
+    )
   }
 
-  watch(() => {
-    const { current, pageSize } = toValue(pagination)
-    return [current, pageSize]
-  }, () => {
-    changeEvent.trigger(toValue(pagination))
-  }, { deep: true })
+  watch(
+    () => {
+      const { current, pageSize } = toValue(pagination)
+      return [current, pageSize]
+    },
+    () => {
+      changeEvent.trigger(toValue(pagination))
+    },
+    { deep: true },
+  )
 
   const pages = computed(() => Math.ceil(pagination.value.total / pagination.value.pageSize))
 
@@ -113,16 +121,23 @@ export const usePagination = (options: PaginationHookOptions = {}) => {
   const disabledPre = computed(() => pagination.value.current <= 1)
 
   const nextPage = () => {
-    if (disabledNext.value)
-      return
+    if (disabledNext.value) return
     pagination.value.current += 1
   }
 
   const prePage = () => {
-    if (disabledPre.value)
-      return
+    if (disabledPre.value) return
     pagination.value.current -= 1
   }
 
-  return { pagination, pages, layout, disabledNext, disabledPre, nextPage, prePage, onChange: changeEvent.on }
+  return {
+    pagination,
+    pages,
+    layout,
+    disabledNext,
+    disabledPre,
+    nextPage,
+    prePage,
+    onChange: changeEvent.on,
+  }
 }

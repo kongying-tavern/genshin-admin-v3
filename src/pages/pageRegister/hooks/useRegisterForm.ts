@@ -17,19 +17,28 @@ export const useRegisterForm = () => {
     password: '',
   })
 
-  watch(registerForm, () => {
-    for (const key in registerForm) {
-      const raw = registerForm[key as keyof SysUserRegisterVo] ?? ''
-      registerForm[key as keyof SysUserRegisterVo] = raw.replace(/\s+/g, '')
-    }
-  }, { deep: true })
+  watch(
+    registerForm,
+    () => {
+      for (const key in registerForm) {
+        const raw = registerForm[key as keyof SysUserRegisterVo] ?? ''
+        registerForm[key as keyof SysUserRegisterVo] = raw.replace(/\s+/g, '')
+      }
+    },
+    { deep: true },
+  )
 
   const rules: ItemFormRules<SysUserRegisterVo> = {
     username: [qqCheck()],
     password: [passwordCheck()],
   }
 
-  const { refresh: submit, onSuccess, onError, ...rest } = useFetchHook({
+  const {
+    refresh: submit,
+    onSuccess,
+    onError,
+    ...rest
+  } = useFetchHook({
     onRequest: async () => {
       await Apis.user.registerUserByQQ({
         data: registerForm,
@@ -45,8 +54,7 @@ export const useRegisterForm = () => {
     try {
       await formRef.value?.validate()
       await submit()
-    }
-    catch {
+    } catch {
       // cancel, no error
     }
   }
@@ -55,7 +63,7 @@ export const useRegisterForm = () => {
   const router = useRouter()
   const archiveStore = useArchiveStore()
 
-  onSuccess(async (auth) => {
+  onSuccess(async auth => {
     ElMessage.success({
       message: '注册成功',
     })
@@ -65,9 +73,11 @@ export const useRegisterForm = () => {
     await archiveStore.loadLatestArchive()
   })
 
-  onError(err => ElMessage.error({
-    message: `注册失败，原因为：${err.message}`,
-  }))
+  onError(err =>
+    ElMessage.error({
+      message: `注册失败，原因为：${err.message}`,
+    }),
+  )
 
   return { formRef, rules, registerForm, register, onSuccess, onError, ...rest }
 }

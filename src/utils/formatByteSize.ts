@@ -17,10 +17,7 @@ export interface ByteSizeFormatterOptions {
  * ```
  */
 export const formatByteSize = (byteLength: number, options: ByteSizeFormatterOptions = {}) => {
-  const {
-    binary = true,
-    decimal = 1,
-  } = options
+  const { binary = true, decimal = 1 } = options
 
   const measureUnits = binary
     ? ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
@@ -32,10 +29,8 @@ export const formatByteSize = (byteLength: number, options: ByteSizeFormatterOpt
 
   for (let i = 0; i < measureUnits.length; i++) {
     const nextUnit = measureUnits[i]
-    if (!nextUnit)
-      return `${size.toFixed(decimal)} ${unit}`
-    if (size < base)
-      return `${size.toFixed(decimal)} ${unit}`
+    if (!nextUnit) return `${size.toFixed(decimal)} ${unit}`
+    if (size < base) return `${size.toFixed(decimal)} ${unit}`
     size /= base
     unit = nextUnit
   }

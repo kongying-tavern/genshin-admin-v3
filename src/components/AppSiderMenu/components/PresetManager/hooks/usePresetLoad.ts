@@ -35,8 +35,7 @@ export const usePresetLoad = (options: PresetLoadOptions) => {
       preferenceStore.parentAreaCode = `C:${zone}`
       preferenceStore.areaCode = latestAreaCode
     }
-    if (latestTypeId !== undefined)
-      preferenceStore.itemTypeId = latestTypeId
+    if (latestTypeId !== undefined) preferenceStore.itemTypeId = latestTypeId
     preferenceStore.itemIds = itemIds
     preferenceStore.step = 2
   }
@@ -50,21 +49,19 @@ export const usePresetLoad = (options: PresetLoadOptions) => {
 
   /** 读取预设 */
   const loadPreset = (customConditions?: FilterConditions) => {
-    if (userStore.info?.id === undefined)
-      return
+    if (userStore.info?.id === undefined) return
 
     try {
-      const conditions = customConditions
+      const conditions =
+        customConditions
         ?? preferenceStore.presets.find(preset => preset.name === name.value)?.conditions
-      if (!conditions)
-        return
+      if (!conditions) return
 
       isAdvancedFilter(conditions)
         ? loadAdvancedPreset(conditions)
         : loadBasePreset(toConditionsBaseRecord(conditions))
       loadCallback?.(true)
-    }
-    catch {
+    } catch {
       loadCallback?.(false)
     }
   }

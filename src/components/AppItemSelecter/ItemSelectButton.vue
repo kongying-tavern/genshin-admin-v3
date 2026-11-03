@@ -27,11 +27,7 @@ defineProps<{
       <Select />
     </el-icon>
 
-    <AppIconTagRenderer
-      :src="src"
-      :mapping="mapping"
-      class="w-6 h-6 flex-shrink-0"
-    />
+    <AppIconTagRenderer :src="src" :mapping="mapping" class="w-6 h-6 flex-shrink-0" />
 
     <el-text truncated size="small">
       {{ item.name }}

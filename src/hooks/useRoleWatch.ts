@@ -36,8 +36,7 @@ export const useRoleWatch = (options: UseRoleWatchOptions = {}) => {
   let prevRoleId: number | undefined
 
   const check = async () => {
-    if (!userStore.isLogin)
-      return
+    if (!userStore.isLogin) return
     await userStore.refreshUserInfo()
     const newRoleId = userStore.info?.roleId
     // 仅当新旧角色都存在且不同时才触发变更事件
@@ -53,22 +52,24 @@ export const useRoleWatch = (options: UseRoleWatchOptions = {}) => {
 
   // 页面切回前台立即检查
   const visibility = useDocumentVisibility()
-  watch(visibility, (v) => {
-    if (v === 'visible')
-      check()
+  watch(visibility, v => {
+    if (v === 'visible') check()
   })
 
   // 登录状态控制轮询启停；登录后锚定初始 roleId，避免误触发
-  watch(() => userStore.isLogin, (login) => {
-    if (login) {
-      prevRoleId = userStore.info?.roleId
-      resume()
-    }
-    else {
-      prevRoleId = undefined
-      pause()
-    }
-  }, { immediate: true })
+  watch(
+    () => userStore.isLogin,
+    login => {
+      if (login) {
+        prevRoleId = userStore.info?.roleId
+        resume()
+      } else {
+        prevRoleId = undefined
+        pause()
+      }
+    },
+    { immediate: true },
+  )
 
   return { isActive, pause, resume }
 }

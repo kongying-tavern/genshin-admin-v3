@@ -64,14 +64,12 @@ export const useAccessStore = defineStore('global-access', () => {
   const userStore = useUserStore()
 
   const roleBinaryMask = computed(() => {
-    if (!userStore.info?.role)
-      return 0
+    if (!userStore.info?.role) return 0
     return userStore.info.role.mask
   })
 
   const userHiddenFlagMask = computed(() => {
-    if (!userStore.info?.role?.code)
-      return HIDDEN_FLAG_BINARY_MASK[RoleTypeEnum.VISITOR]
+    if (!userStore.info?.role?.code) return HIDDEN_FLAG_BINARY_MASK[RoleTypeEnum.VISITOR]
     return HIDDEN_FLAG_BINARY_MASK[userStore.info.role.code]
   })
 
@@ -81,7 +79,7 @@ export const useAccessStore = defineStore('global-access', () => {
 
   /** 获取某功能/资源权限 */
   const get = <K extends keyof typeof ACCESS_BINARY_MASK>(key: K): boolean => {
-    return (1 << roleBinaryMask.value & ACCESS_BINARY_MASK[key]) > 0
+    return ((1 << roleBinaryMask.value) & ACCESS_BINARY_MASK[key]) > 0
   }
 
   const hasBeta = computed(() => get('HIDDEN_FLAG_BETA'))

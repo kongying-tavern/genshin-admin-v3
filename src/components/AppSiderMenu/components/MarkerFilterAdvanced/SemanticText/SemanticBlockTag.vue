@@ -16,11 +16,11 @@ defineProps<{
 .sem-tag {
   display: inline-block !important;
   background-color: var(--gs-color-cancel);
-  border-radius: .4rem;
+  border-radius: 0.4rem;
   border: 1px solid #ccc;
   color: #fff;
   font-weight: normal;
-  padding: 0 .4rem;
-  margin: 0 .05rem;
+  padding: 0 0.4rem;
+  margin: 0 0.05rem;
 }
 </style>

@@ -14,13 +14,8 @@ interface MarkerLinkHookOptions {
 
 /** 点位关联处理 hook */
 export const useMarkerLink = (options: MarkerLinkHookOptions) => {
-  const {
-    markerIdMap,
-    markerLinkStore,
-    currentMarkerIdMap,
-    focusElements,
-    setTempMarkers,
-  } = options
+  const { markerIdMap, markerLinkStore, currentMarkerIdMap, focusElements, setTempMarkers } =
+    options
 
   const {
     loading: markerLinkLoading,
@@ -35,7 +30,7 @@ export const useMarkerLink = (options: MarkerLinkHookOptions) => {
         tempMarkerIds.add(target!)
       })
       const tempMarkers: MarkerVo[] = []
-      tempMarkerIds.forEach((id) => {
+      tempMarkerIds.forEach(id => {
         const marker = markerIdMap.get(id)
         marker && tempMarkers.push(marker)
       })
@@ -44,37 +39,37 @@ export const useMarkerLink = (options: MarkerLinkHookOptions) => {
     },
   })
 
-  watch(() => focusElements.value.get('marker') as Set<number> | undefined, (markerIds) => {
-    const list: MLRenderUnit[] = []
+  watch(
+    () => focusElements.value.get('marker') as Set<number> | undefined,
+    markerIds => {
+      const list: MLRenderUnit[] = []
 
-    if (!markerIds || !markerIds.size || markerIds.size > 1) {
-      setTempMarkers('markerLink', [])
-      return setMLRenderList(list)
-    }
+      if (!markerIds || !markerIds.size || markerIds.size > 1) {
+        setTempMarkers('markerLink', [])
+        return setMLRenderList(list)
+      }
 
-    const focusedMarkerId = markerIds.values().next().value
-    if (focusedMarkerId === undefined)
-      return setMLRenderList(list)
+      const focusedMarkerId = markerIds.values().next().value
+      if (focusedMarkerId === undefined) return setMLRenderList(list)
 
-    const focusedMarker = currentMarkerIdMap.value.get(focusedMarkerId)
-    if (!focusedMarker)
-      return setMLRenderList(list)
+      const focusedMarker = currentMarkerIdMap.value.get(focusedMarkerId)
+      if (!focusedMarker) return setMLRenderList(list)
 
-    const { linkageId } = focusedMarker!
+      const { linkageId } = focusedMarker!
 
-    markerLinkStore.markerLinkList.forEach(({ groupId, fromId, toId, linkAction }) => {
-      if (groupId !== linkageId)
-        return
-      list.push({
-        source: fromId!,
-        target: toId!,
-        type: linkAction! as MLRenderUnit['type'],
-        key: `${Math.min(fromId!, toId!)}-${Math.max(fromId!, toId!)}-${linkAction! as MLRenderUnit['type']}`,
+      markerLinkStore.markerLinkList.forEach(({ groupId, fromId, toId, linkAction }) => {
+        if (groupId !== linkageId) return
+        list.push({
+          source: fromId!,
+          target: toId!,
+          type: linkAction! as MLRenderUnit['type'],
+          key: `${Math.min(fromId!, toId!)}-${Math.max(fromId!, toId!)}-${linkAction! as MLRenderUnit['type']}`,
+        })
       })
-    })
 
-    setMLRenderList(list)
-  })
+      setMLRenderList(list)
+    },
+  )
 
   return {
     markerLinkLoading,

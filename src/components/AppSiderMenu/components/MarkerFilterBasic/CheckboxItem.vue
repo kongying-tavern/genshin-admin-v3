@@ -30,13 +30,13 @@ defineProps<{
 
 <style lang="scss" scoped>
 .checkbox-item {
-  --outline-color: #E3DDD180;
+  --outline-color: #e3ddd180;
   --outline-width: 2px;
   --outline-offset: calc(0px - var(--outline-width));
-  --color: #E4DDD1;
+  --color: #e4ddd1;
   --item-height: 48px;
   --item-bg: transparent;
-  --icon-bg: color-mix(in srgb, #FFF 20%, #263240);
+  --icon-bg: color-mix(in srgb, #fff 20%, #263240);
 
   height: var(--item-height);
   margin: 2px;
@@ -50,12 +50,14 @@ defineProps<{
   background-color: var(--item-bg);
   outline-offset: var(--outline-offset);
   outline: var(--outline-width) solid var(--outline-color);
-  transition: all ease 150ms, outline-offset linear 50ms;
+  transition:
+    all ease 150ms,
+    outline-offset linear 50ms;
   border-radius: 6px;
   user-select: none;
 
   &:hover {
-    --outline-color: #F3EEE6;
+    --outline-color: #f3eee6;
     outline-offset: 0px;
   }
   &:active {
@@ -63,8 +65,8 @@ defineProps<{
   }
   &.actived {
     --color: #263240;
-    --item-bg: #E4DDD1;
-    --icon-bg: color-mix(in srgb, #FFF 60%, #263240);
+    --item-bg: #e4ddd1;
+    --icon-bg: color-mix(in srgb, #fff 60%, #263240);
   }
 }
 

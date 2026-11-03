@@ -1,24 +1,25 @@
 <script lang="ts" setup>
-const props = withDefaults(defineProps<{
-  clickable?: boolean
-  disabled?: boolean
-  iconColor?: string
-  theme?: 'light' | 'dark'
-  title?: string
-}>(), {
-  clickable: true,
-  theme: 'light',
-})
+const props = withDefaults(
+  defineProps<{
+    clickable?: boolean
+    disabled?: boolean
+    iconColor?: string
+    theme?: 'light' | 'dark'
+    title?: string
+  }>(),
+  {
+    clickable: true,
+    theme: 'light',
+  },
+)
 
 const emits = defineEmits<{
   click: [MouseEvent]
 }>()
 
 const handleClick = (ev: MouseEvent) => {
-  if (!props.clickable)
-    return
-  else if (props.disabled)
-    return
+  if (!props.clickable) return
+  else if (props.disabled) return
   emits('click', ev)
 }
 </script>
@@ -27,11 +28,7 @@ const handleClick = (ev: MouseEvent) => {
   <div
     class="condition-unit"
     :title="title"
-    :class="[
-      clickable ? 'is-button' : '',
-      disabled ? 'is-disabled' : '',
-      `theme-${theme}`,
-    ]"
+    :class="[clickable ? 'is-button' : '', disabled ? 'is-disabled' : '', `theme-${theme}`]"
     @click="handleClick"
   >
     <span v-if="$slots.icon" class="icon">
@@ -48,17 +45,17 @@ const handleClick = (ev: MouseEvent) => {
   --height: 32px;
   --text-color: #313131;
   --text-color--active: var(--text-color);
-  --bg-normal: #FFF;
+  --bg-normal: #fff;
   --bg-btn: var(--bg-normal);
   --bg-btn--hover: var(--bg-btn);
   --bg-btn--active: #ffe796;
   --bg-btn--disabled: #6b6964;
   --outline-color: transparent;
-  --outline-color--hover: #FFFFFF80;
+  --outline-color--hover: #ffffff80;
   --outline-color--active: #00000020;
   --icon-size: 20px;
   --icon-color: v-bind('props.iconColor');
-  --icon-bg-color: #FFFFFF80;
+  --icon-bg-color: #ffffff80;
 
   flex-shrink: 0;
   padding: 0px 2px;
@@ -99,7 +96,7 @@ const handleClick = (ev: MouseEvent) => {
 }
 
 .theme-dark {
-  --text-color: #FFF;
+  --text-color: #fff;
   --text-color--active: #313131;
   --bg-btn: #313131;
   --bg-btn--hover: #404040;

@@ -4,11 +4,7 @@ import { createController } from '../utils'
 
 export class GenshinMap extends Deck<OrthographicView> {
   constructor(canvas: HTMLCanvasElement, props: GenshinMapProps = {}) {
-    const {
-      controller = {},
-      initialViewState = {},
-      ...rest
-    } = props
+    const { controller = {}, initialViewState = {}, ...rest } = props
 
     const {
       maxZoom = Number.MAX_SAFE_INTEGER,
@@ -33,12 +29,13 @@ export class GenshinMap extends Deck<OrthographicView> {
       controller: {
         ...controllerRest,
         doubleClickZoom,
-        scrollZoom: scrollZoom === undefined
-          ? false
-          : {
-              speed: scrollZoom.speed ?? 0.002,
-              smooth: true,
-            },
+        scrollZoom:
+          scrollZoom === undefined
+            ? false
+            : {
+                speed: scrollZoom.speed ?? 0.002,
+                smooth: true,
+              },
         inertia,
         type: createController(props),
       },

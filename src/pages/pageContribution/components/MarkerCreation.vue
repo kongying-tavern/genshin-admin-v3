@@ -22,24 +22,20 @@ const userMap = ref(new Map<number, SysUserVo>())
 const note = ref('完成')
 const containerRef = useTemplateRef('container')
 
-const timeRange = ref(((): [number, number] => {
-  const now = Date.now()
-  return [
-    DATA_START_TIME,
-    now,
-  ]
-})())
+const timeRange = ref(
+  ((): [number, number] => {
+    const now = Date.now()
+    return [DATA_START_TIME, now]
+  })(),
+)
 
 const histories = computed(() => {
   const [startTime, endTime] = timeRange.value
   const output = markerStore.markerList.reduce((result, { creatorId = -1, createTime }) => {
-    if (!createTime)
-      return result
+    if (!createTime) return result
     const time = new Date(createTime).getTime()
-    if (time < startTime || time > endTime)
-      return result
-    if (result[creatorId] === undefined)
-      result[creatorId] = { userId: creatorId, count: 0 }
+    if (time < startTime || time > endTime) return result
+    if (result[creatorId] === undefined) result[creatorId] = { userId: creatorId, count: 0 }
     result[creatorId].count += 1
     return result
   }, [] as UserCountInfo[])
@@ -63,9 +59,8 @@ const { refresh: updateUsers, onSuccess: onUpdateUsers } = useFetchHook({
 
     let sum = 0
 
-    userIds.forEach((userId) => {
-      if (userMap.value.has(userId))
-        return
+    userIds.forEach(userId => {
+      if (userMap.value.has(userId)) return
       missions.push(async () => {
         try {
           const { data = { id: userId } } = await Apis.user.getUserInfo({
@@ -74,11 +69,9 @@ const { refresh: updateUsers, onSuccess: onUpdateUsers } = useFetchHook({
             },
           })
           return data
-        }
-        catch {
+        } catch {
           return { id: userId }
-        }
-        finally {
+        } finally {
           ++sum
           note.value = `正在查询用户信息 ${sum}/${userIds.length}`
         }
@@ -96,8 +89,7 @@ const { refresh: updateUsers, onSuccess: onUpdateUsers } = useFetchHook({
 })
 
 onMounted(() => {
-  if (!containerRef.value)
-    return
+  if (!containerRef.value) return
 
   const chart = new Chart({
     container: containerRef.value,
@@ -168,7 +160,7 @@ onMounted(() => {
 
   chart.render()
 
-  watch(isDark, (dark) => {
+  watch(isDark, dark => {
     chart.theme({
       type: dark ? 'classicDark' : 'classic',
     })
@@ -179,24 +171,27 @@ onMounted(() => {
     chart.changeSize(width, height)
   }, 50)
 
-  useResizeObserver(containerRef, (entries) => {
-    if (!entries.length)
-      return
+  useResizeObserver(containerRef, entries => {
+    if (!entries.length) return
     const [entry] = entries
     const { width } = entry.contentRect
     resize(width, CHART_HEIGHT)
   })
 
-  watch(histories, async () => {
-    const maxCount = histories.value[0]?.count ?? 100
-    const e = 10 ** (`${Math.floor(Math.max(0, maxCount))}`.length - 1)
-    maskChart.encode('y', Math.ceil(maxCount / e) * e)
-    chart.changeData(histories.value)
-    await updateUsers()
-  }, { deep: true, immediate: true })
+  watch(
+    histories,
+    async () => {
+      const maxCount = histories.value[0]?.count ?? 100
+      const e = 10 ** (`${Math.floor(Math.max(0, maxCount))}`.length - 1)
+      maskChart.encode('y', Math.ceil(maxCount / e) * e)
+      chart.changeData(histories.value)
+      await updateUsers()
+    },
+    { deep: true, immediate: true },
+  )
 
-  onUpdateUsers((newUserMap) => {
-    newUserMap.forEach((user) => {
+  onUpdateUsers(newUserMap => {
+    newUserMap.forEach(user => {
       userMap.value.set(user.id!, user)
     })
     chart.render()
@@ -218,7 +213,7 @@ onMounted(() => {
         :teleported="false"
         :empty-values="[false]"
         :shortcuts="shortcuts"
-        style="max-width: 400px;"
+        style="max-width: 400px"
       />
     </div>
 
@@ -228,11 +223,7 @@ onMounted(() => {
     />
 
     <div
-      class="
-      py-1 px-2
-      text-xs text-[var(--el-text-color-secondary)]
-      bg-[var(--el-color-info-light-9)]
-      "
+      class="py-1 px-2 text-xs text-[var(--el-text-color-secondary)] bg-[var(--el-color-info-light-9)]"
     >
       {{ note }}
     </div>

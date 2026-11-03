@@ -18,12 +18,12 @@ const { modifyLinks, extractLink } = useLinkOperate()
 const { isEnable, isProcessing } = mapStateStore.subscribeMission('markerLink', () => [])
 
 const focusedMeta = computed(() => {
-  const focusedIds = mapStateStore.interaction.focusElements.get(GSLinkLayer.layerName) as (Set<string> | undefined)
-  if (!focusedIds?.size || focusedIds.size > 1)
-    return
+  const focusedIds = mapStateStore.interaction.focusElements.get(GSLinkLayer.layerName) as
+    | Set<string>
+    | undefined
+  if (!focusedIds?.size || focusedIds.size > 1) return
   const first = markerLinkStore.idMap.get(Number([...focusedIds][0]))
-  if (!first)
-    return
+  if (!first) return
   const { fromId = -1, toId = -1, linkAction } = first
   const linkKey = `${Math.min(fromId, toId)}-${Math.max(fromId, toId)}-${linkAction!}`
   return {
@@ -34,12 +34,10 @@ const focusedMeta = computed(() => {
 })
 
 const isEditing = computed(() => {
-  if (!focusedMeta.value)
-    return false
+  if (!focusedMeta.value) return false
   const { linkKey, isReverse } = focusedMeta.value
   const editingInfo = modifyLinks.value.get(linkKey)
-  if (!editingInfo)
-    return false
+  if (!editingInfo) return false
   return isReverse === editingInfo.isReverse
 })
 
@@ -52,50 +50,39 @@ const isDeleteDisabled = computed(() => {
 })
 
 const color = computed(() => {
-  if (!focusedMeta.value)
-    return
+  if (!focusedMeta.value) return
   const { link } = focusedMeta.value
   const config = LINK_CONFIG_MAP.get(link.linkAction as LinkActionEnum)
-  if (!config)
-    return
+  if (!config) return
   return `rgba(${config.lineColor.join(',')})`
 })
 
 const actionName = computed(() => {
-  if (!focusedMeta.value)
-    return
+  if (!focusedMeta.value) return
   const { link } = focusedMeta.value
   return LINK_ACTION_NAME_MAP.get(link.linkAction as LinkActionEnum)
 })
 
 const position = computed(() => {
-  if (!focusedMeta.value)
-    return
+  if (!focusedMeta.value) return
   const { fromId, toId } = focusedMeta.value.link
   const fromMarker = mapStateStore.currentMarkerIdMap.get(fromId!)
-  if (!fromMarker)
-    return
+  if (!fromMarker) return
   const toMarker = mapStateStore.currentMarkerIdMap.get(toId!)
-  if (!toMarker)
-    return
+  if (!toMarker) return
   const [fromX, fromY] = fromMarker.render.position
   const [toX, toY] = toMarker.render.position
-  return [
-    (fromX + toX) / 2,
-    (fromY + toY) / 2,
-  ] as [number, number]
+  return [(fromX + toX) / 2, (fromY + toY) / 2] as [number, number]
 })
 
 const copyGroupId = async () => {
-  if (!focusedMeta.value?.link.groupId)
-    return
+  if (!focusedMeta.value?.link.groupId) return
   await navigator.clipboard.writeText(focusedMeta.value.link.groupId)
   ElMessage.success(`GID "${focusedMeta.value.link.groupId}" 已复制到剪贴板`)
 }
 
 const editLink = () => {
-  if (!focusedMeta.value || isEditDisabled.value)
-    return
+  if (!focusedMeta.value || isEditDisabled.value) return
   const { link, linkKey, isReverse } = focusedMeta.value
   extractLink(linkKey, {
     id: `${link.id}`,
@@ -109,15 +96,13 @@ const editLink = () => {
 const { DialogService } = useGlobalDialog()
 
 const confirmDelete = async () => {
-  if (!focusedMeta.value || isDeleteDisabled.value)
-    return
-  await DialogService
-    .config({
-      width: 'fit-content',
-      alignCenter: true,
-      closeOnClickModal: false,
-      closeOnPressEscape: false,
-    })
+  if (!focusedMeta.value || isDeleteDisabled.value) return
+  await DialogService.config({
+    width: 'fit-content',
+    alignCenter: true,
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
+  })
     .props({
       link: focusedMeta.value.link,
     })
@@ -130,8 +115,13 @@ const confirmDelete = async () => {
   <MapAffix :pos="position" no-covert-coord integer>
     <template v-if="focusedMeta">
       <div class="genshin-link-popover font-[HYWenHei-85W] text-sm">
-        <div class="bg-[#B6B3AF] p-1 rounded font-[HYWenHei-55S] flex items-center gap-1" @click="copyGroupId">
-          <span class="shrink-0 w-[32px] h-5 rounded-sm bg-[#FAF5ED] text-[#4A5366] px-1 text-xs grid place-content-center">
+        <div
+          class="bg-[#B6B3AF] p-1 rounded font-[HYWenHei-55S] flex items-center gap-1"
+          @click="copyGroupId"
+        >
+          <span
+            class="shrink-0 w-[32px] h-5 rounded-sm bg-[#FAF5ED] text-[#4A5366] px-1 text-xs grid place-content-center"
+          >
             分组
           </span>
           <span class="text-[white] overflow-hidden text-ellipsis whitespace-nowrap">
@@ -139,7 +129,9 @@ const confirmDelete = async () => {
           </span>
         </div>
         <div class="bg-[#B6B3AF] p-1 rounded font-[HYWenHei-55S] flex items-center gap-1">
-          <span class="shrink-0 w-[32px] h-5 rounded-sm bg-[#FAF5ED] text-[#4A5366] px-1 text-xs grid place-content-center">
+          <span
+            class="shrink-0 w-[32px] h-5 rounded-sm bg-[#FAF5ED] text-[#4A5366] px-1 text-xs grid place-content-center"
+          >
             连线
           </span>
           <span class="text-[white]">
@@ -147,19 +139,20 @@ const confirmDelete = async () => {
           </span>
         </div>
         <div class="bg-[#B6B3AF] p-1 rounded font-[HYWenHei-55S] flex items-center gap-1">
-          <span class="shrink-0 w-[32px] h-5 rounded-sm bg-[#FAF5ED] text-[#4A5366] px-1 text-xs grid place-content-center">
+          <span
+            class="shrink-0 w-[32px] h-5 rounded-sm bg-[#FAF5ED] text-[#4A5366] px-1 text-xs grid place-content-center"
+          >
             类型
           </span>
-          <span
-            class="inline-block w-1 h-4 bg-[var(--color)]"
-            :style="{ '--color': color }"
-          />
+          <span class="inline-block w-1 h-4 bg-[var(--color)]" :style="{ '--color': color }" />
           <span class="text-[white]">
             {{ actionName }}
           </span>
         </div>
         <div class="bg-[#B6B3AF] p-1 rounded font-[HYWenHei-55S] flex items-center gap-1">
-          <span class="shrink-0 w-[32px] h-5 rounded-sm bg-[#FAF5ED] text-[#4A5366] px-1 text-xs grid place-content-center">
+          <span
+            class="shrink-0 w-[32px] h-5 rounded-sm bg-[#FAF5ED] text-[#4A5366] px-1 text-xs grid place-content-center"
+          >
             起始
           </span>
           <span class="text-[white]">
@@ -167,7 +160,9 @@ const confirmDelete = async () => {
           </span>
         </div>
         <div class="bg-[#B6B3AF] p-1 rounded font-[HYWenHei-55S] flex items-center gap-1">
-          <span class="shrink-0 w-[32px] h-5 rounded-sm bg-[#FAF5ED] text-[#4A5366] px-1 text-xs grid place-content-center">
+          <span
+            class="shrink-0 w-[32px] h-5 rounded-sm bg-[#FAF5ED] text-[#4A5366] px-1 text-xs grid place-content-center"
+          >
             终止
           </span>
           <span class="text-[white]">
@@ -207,7 +202,7 @@ const confirmDelete = async () => {
 <style scoped>
 .genshin-link-popover {
   --arrow-size: 16px;
-  --card-bg-color: #D9D3C8;
+  --card-bg-color: #d9d3c8;
   --card-radius: 8px;
 
   padding: 4px;
@@ -218,7 +213,7 @@ const confirmDelete = async () => {
   background-color: var(--card-bg-color);
   pointer-events: auto;
   filter: drop-shadow(0 0 4px #333333);
-  color: #676D7A;
+  color: #676d7a;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -244,8 +239,8 @@ const confirmDelete = async () => {
 .link-button {
   font-size: 14px;
   padding: 4px 8px 4px 4px;
-  background-color: #4A5366;
-  color: #D9D3C8;
+  background-color: #4a5366;
+  color: #d9d3c8;
   border-radius: 6px;
   display: flex;
   gap: 4px;
@@ -256,13 +251,13 @@ const confirmDelete = async () => {
     cursor: pointer;
   }
   &:not(.is-disabled):hover {
-    outline: 2px solid #FFE6B2;
+    outline: 2px solid #ffe6b2;
     outline-offset: -1px;
   }
   &:not(.is-disabled):active {
-    outline-color: #5B6272;
-    background-color: #FFF3D1;
-    color: #4A5366;
+    outline-color: #5b6272;
+    background-color: #fff3d1;
+    color: #4a5366;
   }
   &.is-disabled {
     opacity: 0.5;

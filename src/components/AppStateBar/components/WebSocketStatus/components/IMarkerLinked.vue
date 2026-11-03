@@ -25,12 +25,10 @@ const markers = computed(() => {
 /** 获取关联类型 */
 const linkAction = computed(() => {
   const firstMarker = markers.value[0]
-  if (!firstMarker?.linkageId)
-    return LinkActionEnum.RELATED
+  if (!firstMarker?.linkageId) return LinkActionEnum.RELATED
 
   const linkGroup = markerLinkStore.groupIdMap.get(firstMarker.linkageId)
-  if (!linkGroup?.length)
-    return LinkActionEnum.RELATED
+  if (!linkGroup?.length) return LinkActionEnum.RELATED
 
   return (linkGroup[0].linkAction as LinkActionEnum) ?? LinkActionEnum.RELATED
 })
@@ -43,8 +41,7 @@ const linkActionName = computed(() => {
 /** 关联类型配色 */
 const linkColor = computed(() => {
   const config = LINK_CONFIG_MAP.get(linkAction.value)
-  if (!config)
-    return 'rgb(0, 170, 255)'
+  if (!config) return 'rgb(0, 170, 255)'
 
   const [r, g, b] = config.lineColor
   return `rgb(${r}, ${g}, ${b})`
@@ -53,8 +50,7 @@ const linkColor = computed(() => {
 /** 关联类型配色（浅色背景） */
 const linkColorLight = computed(() => {
   const config = LINK_CONFIG_MAP.get(linkAction.value)
-  if (!config)
-    return 'rgba(0, 170, 255, 0.1)'
+  if (!config) return 'rgba(0, 170, 255, 0.1)'
 
   const [r, g, b] = config.lineColor
   return `rgba(${r}, ${g}, ${b}, 0.1)`
@@ -63,8 +59,7 @@ const linkColorLight = computed(() => {
 /** 关联类型配色（悬停背景） */
 const linkColorHover = computed(() => {
   const config = LINK_CONFIG_MAP.get(linkAction.value)
-  if (!config)
-    return 'rgba(0, 170, 255, 0.15)'
+  if (!config) return 'rgba(0, 170, 255, 0.15)'
 
   const [r, g, b] = config.lineColor
   return `rgba(${r}, ${g}, ${b}, 0.15)`
@@ -78,20 +73,13 @@ const getIconId = (marker: MarkerVo) => {
 
 <template>
   <div class="p-2 rounded-lg select-none">
-    <div class="text-[var(--el-text-color-secondary)] mb-2">
-      关联点位
-    </div>
+    <div class="text-[var(--el-text-color-secondary)] mb-2">关联点位</div>
 
     <div class="flex flex-col items-center">
       <template v-for="(marker, index) in markers" :key="marker.id">
         <!-- 点位卡片 -->
         <div
-          class="
-            w-full flex items-center gap-2 p-2 px-3 rounded-lg
-            cursor-pointer
-            border-l-[3px]
-            transition-colors
-          "
+          class="w-full flex items-center gap-2 p-2 px-3 rounded-lg cursor-pointer border-l-[3px] transition-colors"
           :style="{
             borderColor: linkColor,
             backgroundColor: linkColorLight,
@@ -116,21 +104,12 @@ const getIconId = (marker: MarkerVo) => {
         </div>
 
         <!-- 连线和关联类型标签 -->
-        <div
-          v-if="index < markers.length - 1"
-          class="flex flex-col items-center py-1"
-        >
+        <div v-if="index < markers.length - 1" class="flex flex-col items-center py-1">
           <!-- 上连线 -->
-          <div
-            class="w-[2px] h-3"
-            :style="{ backgroundColor: linkColor }"
-          />
+          <div class="w-[2px] h-3" :style="{ backgroundColor: linkColor }" />
           <!-- 关联类型标签 -->
           <div
-            class="
-              px-2 py-0.5 rounded-full text-[10px] font-medium
-              border whitespace-nowrap my-0.5
-            "
+            class="px-2 py-0.5 rounded-full text-[10px] font-medium border whitespace-nowrap my-0.5"
             :style="{
               color: linkColor,
               borderColor: linkColor,
@@ -140,10 +119,7 @@ const getIconId = (marker: MarkerVo) => {
             {{ linkActionName }}
           </div>
           <!-- 下连线 -->
-          <div
-            class="w-[2px] h-3"
-            :style="{ backgroundColor: linkColor }"
-          />
+          <div class="w-[2px] h-3" :style="{ backgroundColor: linkColor }" />
         </div>
       </template>
     </div>

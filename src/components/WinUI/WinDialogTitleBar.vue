@@ -11,8 +11,7 @@ const emits = defineEmits<{
 }>()
 
 const emitClose = () => {
-  if (props.disabled || props.loading)
-    return
+  if (props.disabled || props.loading) return
   emits('close')
 }
 </script>
@@ -39,40 +38,30 @@ const emitClose = () => {
 
 <style scoped>
 .win-dialog-title-bar {
-  @apply
-    flex justify-between items-start
-    bg-[var(--el-color-primary-light-9)]
-  ;
+  @apply flex justify-between items-start
+    bg-[var(--el-color-primary-light-9)];
 }
 
 .title-name {
-  @apply
-    overflow-hidden
+  @apply overflow-hidden
     h-[28px] flex-1 flex items-center px-2
-    text-xs text-ellipsis whitespace-nowrap
-  ;
+    text-xs text-ellipsis whitespace-nowrap;
 }
 
 .title-action {
-  @apply
-    h-full p-1.5 px-2
+  @apply h-full p-1.5 px-2
     grid place-content-center
     transition-all
-    select-none
-  ;
+    select-none;
 
   &:not(.is-disabled):hover {
-    @apply
-      bg-[var(--el-color-danger)]
-      text-[var(--el-bg-color)]
-    ;
+    @apply bg-[var(--el-color-danger)]
+      text-[var(--el-bg-color)];
   }
 
   &:not(.is-disabled):active {
-    @apply
-      bg-[var(--el-color-danger-light-3)]
-      text-[var(--el-bg-color)]
-    ;
+    @apply bg-[var(--el-color-danger-light-3)]
+      text-[var(--el-bg-color)];
   }
 
   &.is-disabled {

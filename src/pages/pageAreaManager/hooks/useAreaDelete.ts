@@ -3,7 +3,13 @@ import { ElMessage } from 'element-plus'
 import { useFetchHook } from '@/hooks'
 
 export const useAreaDelete = () => {
-  const { loading, refresh: deleteArea, onSuccess, onError, ...rest } = useFetchHook({
+  const {
+    loading,
+    refresh: deleteArea,
+    onSuccess,
+    onError,
+    ...rest
+  } = useFetchHook({
     onRequest: async (area: AreaVo) => {
       await Apis.area.deleteArea({
         pathParams: {
@@ -20,7 +26,7 @@ export const useAreaDelete = () => {
     })
   })
 
-  onError((err) => {
+  onError(err => {
     ElMessage.error({
       message: `删除地区失败，原因为：${err.message}`,
     })

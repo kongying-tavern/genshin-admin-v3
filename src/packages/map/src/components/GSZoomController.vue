@@ -13,18 +13,21 @@ import {
 } from '@/shared'
 import { EaseoutInterpolator } from '../interpolator'
 
-const props = withDefaults(defineProps<{
-  /** 点击按钮的缩放差，必须为大于 0 小于 1 的值 @default 0.25 */
-  deltaZoom?: number
-  /**
-   * 缩放过渡时间
-   * @default 150
-   */
-  transitionDuration?: number
-}>(), {
-  deltaZoom: 0.25,
-  transitionDuration: 150,
-})
+const props = withDefaults(
+  defineProps<{
+    /** 点击按钮的缩放差，必须为大于 0 小于 1 的值 @default 0.25 */
+    deltaZoom?: number
+    /**
+     * 缩放过渡时间
+     * @default 150
+     */
+    transitionDuration?: number
+  }>(),
+  {
+    deltaZoom: 0.25,
+    transitionDuration: 150,
+  },
+)
 
 const viewState = defineModel<GenshinMapViewState>('modelValue', {
   required: true,
@@ -36,12 +39,14 @@ const maxZoom = computed(() => viewState.value.maxZoom ?? 0)
 const range = computed(() => maxZoom.value - minZoom.value)
 const percentage = computed(() => (zoom.value - minZoom.value) / range.value)
 
-const isZooming = autoResetRef(false, computed(() => props.transitionDuration))
+const isZooming = autoResetRef(
+  false,
+  computed(() => props.transitionDuration),
+)
 
 const zoomTo = (newPercentage: number, transition = false) => {
   if (transition) {
-    if (isZooming.value)
-      return
+    if (isZooming.value) return
     isZooming.value = true
   }
   const newZoom = range.value * newPercentage + minZoom.value
@@ -63,41 +68,51 @@ const calculateH = (percentage: number) => (1 - percentage) * 180
 
 const zoomWith = (startH: number, startY: number, moveY: number) => {
   const deltaY = startH + moveY - startY
-  if (deltaY > 180 || deltaY < 0)
-    return
+  if (deltaY > 180 || deltaY < 0) return
   zoomTo(1 - deltaY / 180)
 }
 
 // 基于 touch 的滑动
-useSubscription(globalTouchstart$.pipe(
-  filter(startEvent => findSliderIndex(startEvent)),
-  switchMap((startEvent) => {
-    const startY = startEvent.touches[0].clientY
-    const startH = calculateH(percentage.value)
-    return globalTouchmove$.pipe(
-      map(moveEvent => zoomWith(startH, startY, moveEvent.touches[0].clientY)),
-      takeUntil(race(globalPointerup$, globalTouchend$)),
+useSubscription(
+  globalTouchstart$
+    .pipe(
+      filter(startEvent => findSliderIndex(startEvent)),
+      switchMap(startEvent => {
+        const startY = startEvent.touches[0].clientY
+        const startH = calculateH(percentage.value)
+        return globalTouchmove$.pipe(
+          map(moveEvent => zoomWith(startH, startY, moveEvent.touches[0].clientY)),
+          takeUntil(race(globalPointerup$, globalTouchend$)),
+        )
+      }),
     )
-  }),
-).subscribe())
+    .subscribe(),
+)
 
 // 基于 pointer 的滑动
-useSubscription(globalPointerDown$.pipe(
-  filter(startEvent => findSliderIndex(startEvent)),
-  switchMap((startEvent) => {
-    const startY = startEvent.y
-    const startH = calculateH(percentage.value)
-    return globalPointerMove$.pipe(
-      map(moveEvent => zoomWith(startH, startY, moveEvent.y)),
-      takeUntil(race(globalTouchstart$, globalPointerup$, globalTouchend$)),
+useSubscription(
+  globalPointerDown$
+    .pipe(
+      filter(startEvent => findSliderIndex(startEvent)),
+      switchMap(startEvent => {
+        const startY = startEvent.y
+        const startH = calculateH(percentage.value)
+        return globalPointerMove$.pipe(
+          map(moveEvent => zoomWith(startH, startY, moveEvent.y)),
+          takeUntil(race(globalTouchstart$, globalPointerup$, globalTouchend$)),
+        )
+      }),
     )
-  }),
-).subscribe())
+    .subscribe(),
+)
 </script>
 
 <template>
   <div class="genshin-zoom-controller" v-bind="$attrs">
-    <div class="zoom-button cursor-pointer" @click="() => zoomTo(Math.min(1, percentage + deltaZoom), true)">
+    <div
+      class="zoom-button cursor-pointer"
+      @click="() => zoomTo(Math.min(1, percentage + deltaZoom), true)"
+    >
       <el-icon :size="12" color="#FFF7EB" class="rotate-45">
         <CloseBold />
       </el-icon>
@@ -112,12 +127,18 @@ useSubscription(globalPointerDown$.pipe(
         }"
       >
         <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-          <path fill="currentColor" d="m 0 0 l 64 0 l 0 64 l -64 0 z m 9.37 9.37 q 22.63 22.63 0 45.26 q 22.63 -22.63 45.26 0 q -22.63 -22.63 0 -45.26 q -22.63 22.63 -45.26 0 z" />
+          <path
+            fill="currentColor"
+            d="m 0 0 l 64 0 l 0 64 l -64 0 z m 9.37 9.37 q 22.63 22.63 0 45.26 q 22.63 -22.63 45.26 0 q -22.63 -22.63 0 -45.26 q -22.63 22.63 -45.26 0 z"
+          />
         </svg>
       </div>
     </div>
 
-    <div class="zoom-button cursor-pointer" @click="() => zoomTo(Math.max(0, percentage - deltaZoom), true)">
+    <div
+      class="zoom-button cursor-pointer"
+      @click="() => zoomTo(Math.max(0, percentage - deltaZoom), true)"
+    >
       <el-icon :size="12" color="#FFF7EB">
         <SemiSelect />
       </el-icon>
@@ -127,13 +148,11 @@ useSubscription(globalPointerDown$.pipe(
 
 <style scoped>
 .genshin-zoom-controller {
-  @apply
-    absolute right-0 top-1/2
+  @apply absolute right-0 top-1/2
     flex flex-col items-center gap-2
     z-[9]
     -translate-y-1/2 -translate-x-6
-    pointer-events-auto select-none
-  ;
+    pointer-events-auto select-none;
 }
 
 .zoom-button {
@@ -147,7 +166,7 @@ useSubscription(globalPointerDown$.pipe(
     height: 16px;
     position: absolute;
     rotate: 45deg;
-    border: 2px solid #FFF7EB;
+    border: 2px solid #fff7eb;
     border-radius: 2px;
   }
 }
@@ -155,9 +174,9 @@ useSubscription(globalPointerDown$.pipe(
 .zoom-track {
   width: 12px;
   height: 200px;
-  border: 1px solid #A8A29A;
+  border: 1px solid #a8a29a;
   border-radius: 6px;
-  background: #333333D0;
+  background: #333333d0;
 }
 
 .zoom-slider {
@@ -168,7 +187,7 @@ useSubscription(globalPointerDown$.pipe(
   rotate: 45deg;
   border-radius: 2px;
   overflow: hidden;
-  color: #EDE5DA;
-  filter: drop-shadow(0 0 1px #EDE5DA);
+  color: #ede5da;
+  filter: drop-shadow(0 0 1px #ede5da);
 }
 </style>

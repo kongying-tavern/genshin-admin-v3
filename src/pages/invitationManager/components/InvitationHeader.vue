@@ -19,7 +19,7 @@ const sorts = defineModel<InvitationSortOptions>('sorts', {
   required: true,
 })
 
-const sortOptions: { role: 'key' | 'type', value: string, name: string, divided?: boolean }[] = [
+const sortOptions: { role: 'key' | 'type'; value: string; name: string; divided?: boolean }[] = [
   { role: 'key', value: 'id', name: 'ID' },
   { role: 'key', value: 'username', name: '用户名' },
   { role: 'key', value: 'createTime', name: '创建时间' },
@@ -28,8 +28,7 @@ const sortOptions: { role: 'key' | 'type', value: string, name: string, divided?
 ]
 
 const handleSortCommand = (command: string) => {
-  if (props.loading)
-    return
+  if (props.loading) return
   const [key, value] = command.split(':')
   sorts.value[key as keyof InvitationSortOptions] = value
   emits('change')
@@ -46,7 +45,9 @@ const filterKeyLabelMap = filterKeys.reduce((map, { label, value }) => {
 </script>
 
 <template>
-  <div class="flex flex-wrap justify-end items-center p-2 border-b-[1px] border-[var(--el-border-color-lighter)]">
+  <div
+    class="flex flex-wrap justify-end items-center p-2 border-b-[1px] border-[var(--el-border-color-lighter)]"
+  >
     <div class="flex gap-1">
       <el-input
         v-model="filter.value"
@@ -65,11 +66,7 @@ const filterKeyLabelMap = filterKeys.reduce((map, { label, value }) => {
           </el-icon>
         </template>
         <template #prepend>
-          <el-select-v2
-            v-model="filter.key"
-            :options="filterKeys"
-            style="width: 100px"
-          />
+          <el-select-v2 v-model="filter.key" :options="filterKeys" style="width: 100px" />
         </template>
       </el-input>
     </div>
@@ -93,7 +90,11 @@ const filterKeyLabelMap = filterKeys.reduce((map, { label, value }) => {
             :divided="option.divided"
           >
             <div class="flex items-center gap-2">
-              <el-icon class="transition-all" :class="{ 'opacity-0': sorts[option.role] !== option.value }" :size="12">
+              <el-icon
+                class="transition-all"
+                :class="{ 'opacity-0': sorts[option.role] !== option.value }"
+                :size="12"
+              >
                 <CircleCheck />
               </el-icon>
               <div>{{ option.name }}</div>
@@ -105,8 +106,6 @@ const filterKeyLabelMap = filterKeys.reduce((map, { label, value }) => {
 
     <el-divider direction="vertical" />
 
-    <el-button text :icon="ElIcons.CirclePlus" @click="() => emits('create')">
-      新增
-    </el-button>
+    <el-button text :icon="ElIcons.CirclePlus" @click="() => emits('create')"> 新增 </el-button>
   </div>
 </template>

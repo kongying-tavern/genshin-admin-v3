@@ -24,21 +24,23 @@ const getAllIcons = async (context: ManagerContext) => {
   const missionTotal = Math.ceil(total / 500)
   const iconMap = new Map<number, IconVo>()
   let finished = 0
-  await Promise.allSettled(Array.from({ length: missionTotal }).map(async (_, index) => {
-    const { data: { record = [] } = {} } = await Apis.icon.listIcon({
-      data: {
-        current: index + 1,
-        size: 500,
-      },
-    })
-    const { length } = record
-    for (let i = 0; i < length; i++) {
-      const icon = record[i]
-      iconMap.set(icon.id!, icon)
-    }
-    finished += 1
-    context.message.value = `正在获取图标列表 (${finished}/${total})`
-  }))
+  await Promise.allSettled(
+    Array.from({ length: missionTotal }).map(async (_, index) => {
+      const { data: { record = [] } = {} } = await Apis.icon.listIcon({
+        data: {
+          current: index + 1,
+          size: 500,
+        },
+      })
+      const { length } = record
+      for (let i = 0; i < length; i++) {
+        const icon = record[i]
+        iconMap.set(icon.id!, icon)
+      }
+      finished += 1
+      context.message.value = `正在获取图标列表 (${finished}/${total})`
+    }),
+  )
   return iconMap
 }
 
@@ -63,10 +65,7 @@ export const useIconStore = defineStore('global-icon', () => {
     refresh: refreshIconSprite,
   } = useIconTextureRender()
 
-  const {
-    markerSpriteUrl,
-    markerSpriteMapping,
-  } = useMarkerTextureRender({
+  const { markerSpriteUrl, markerSpriteMapping } = useMarkerTextureRender({
     positionList: iconPositionList,
     iconTexture,
   })
@@ -77,10 +76,7 @@ export const useIconStore = defineStore('global-icon', () => {
    * @local 更新本地图标
    * - 已包含 version 比较逻辑
    */
-  const updateLocal = (options: {
-    updateMap?: Map<number, IconVo>
-    deleteIds?: number[]
-  }) => {
+  const updateLocal = (options: { updateMap?: Map<number, IconVo>; deleteIds?: number[] }) => {
     const { updateMap, deleteIds = [] } = options
 
     // 处理删除
@@ -91,10 +87,9 @@ export const useIconStore = defineStore('global-icon', () => {
     }
 
     // 处理更新
-    updateMap?.forEach((icon) => {
+    updateMap?.forEach(icon => {
       const { id, version = 0 } = icon
-      if (!id || (version <= (localIconMap.value.get(id)?.version ?? 0)))
-        return
+      if (!id || version <= (localIconMap.value.get(id)?.version ?? 0)) return
       localIconMap.value.set(id, icon)
     })
 
@@ -123,8 +118,7 @@ export const useIconStore = defineStore('global-icon', () => {
     },
 
     syncState: async (data, context) => {
-      if (!data)
-        return
+      if (!data) return
       if (!data.updateMap.size && !data.deleteIds.length) {
         context.message.value = [
           `[${context.tag.value}] `,
@@ -133,8 +127,7 @@ export const useIconStore = defineStore('global-icon', () => {
         ].join('')
         return
       }
-      if (data.clear)
-        localIconMap.value = new Map<number, IconVo>()
+      if (data.clear) localIconMap.value = new Map<number, IconVo>()
       const { updateMap, deleteIds } = data
       updateLocal(data)
       context.message.value = [
@@ -145,9 +138,8 @@ export const useIconStore = defineStore('global-icon', () => {
       ].join('')
     },
 
-    commit: (data) => {
-      if (!data || (!data.updateMap.size && !data.deleteIds.length))
-        return
+    commit: data => {
+      if (!data || (!data.updateMap.size && !data.deleteIds.length)) return
       const worker = new BulkPutWorker({ name: '图标更新线程' })
       worker.addEventListener('message', () => {
         worker.terminate()
@@ -160,7 +152,7 @@ export const useIconStore = defineStore('global-icon', () => {
       })
     },
 
-    init: async (context) => {
+    init: async context => {
       context.startTime.value = Date.now()
       context.tag.value = '初始化'
       context.message.value = `[${context.tag.value}] 拉取最新数据...`
@@ -169,14 +161,14 @@ export const useIconStore = defineStore('global-icon', () => {
       context.message.value = `[${context.tag.value}] 完毕: ${getCostTime(context.startTime.value).toFixed(1)}s`
     },
 
-    diff: async (context) => {
+    diff: async context => {
       context.startTime.value = Date.now()
       context.tag.value = '差异'
       context.message.value = '图标数据暂不支持差异更新'
       // no diff for items
     },
 
-    full: async (context) => {
+    full: async context => {
       context.startTime.value = Date.now()
       context.tag.value = '全量'
       const updateMap = await getAllIcons(context)
@@ -187,35 +179,37 @@ export const useIconStore = defineStore('global-icon', () => {
   /** @server 创建图标（封装 Apis.icon.createIcon 与本地更新逻辑） */
   const createIcon = async (iconForm: IconVo) => {
     const { data: id } = await Apis.icon.createIcon({ data: iconForm })
-    if (!id)
-      throw new Error('新增失败，返回 id 为空')
+    if (!id) throw new Error('新增失败，返回 id 为空')
     try {
-      const { data = {}, error, message: getMsg = '' } = await Apis.icon.getIcon({
+      const {
+        data = {},
+        error,
+        message: getMsg = '',
+      } = await Apis.icon.getIcon({
         pathParams: { iconId: id },
       })
-      if (error)
-        throw new Error(getMsg)
+      if (error) throw new Error(getMsg)
       updateLocal({ updateMap: new Map([[data.id!, data]]) })
-    }
-    catch (error) {
+    } catch (error) {
       console.warn('createIcon 本地更新失败', error)
     }
   }
 
   /** @server 更新图标（封装 Apis.icon.updateIcon 与本地更新逻辑） */
   const updateIcon = async (iconForm: IconVo) => {
-    if (!iconForm.id)
-      throw new Error('图标 id 为空')
+    if (!iconForm.id) throw new Error('图标 id 为空')
     await Apis.icon.updateIcon({ data: iconForm })
     try {
-      const { data = {}, error, message: getMsg = '' } = await Apis.icon.getIcon({
+      const {
+        data = {},
+        error,
+        message: getMsg = '',
+      } = await Apis.icon.getIcon({
         pathParams: { iconId: iconForm.id },
       })
-      if (error)
-        throw new Error(getMsg)
+      if (error) throw new Error(getMsg)
       updateLocal({ updateMap: new Map([[data.id!, data]]) })
-    }
-    catch (error) {
+    } catch (error) {
       console.warn('updateIcon 本地更新失败', error)
     }
   }
@@ -223,8 +217,7 @@ export const useIconStore = defineStore('global-icon', () => {
   /** @server 删除图标（封装 Apis.icon.deleteIcon 与本地更新逻辑） */
   const deleteIcon = async (iconId: number) => {
     const { data: isSuccess, message } = await Apis.icon.deleteIcon({ pathParams: { iconId } })
-    if (!isSuccess)
-      throw new Error(message)
+    if (!isSuccess) throw new Error(message)
     updateLocal({ deleteIds: [iconId] })
   }
 

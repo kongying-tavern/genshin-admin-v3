@@ -36,7 +36,11 @@ defineEmits<GSSwitchEmits>()
   >
     <div class="gs-switch__slider">
       <Transition name="pure-scale" appear>
-        <component :is="modelValue ? Select : CloseBold" class="absolute" style="padding: calc(0.12 * var(--height))" />
+        <component
+          :is="modelValue ? Select : CloseBold"
+          class="absolute"
+          style="padding: calc(0.12 * var(--height))"
+        />
       </Transition>
     </div>
   </div>
@@ -56,9 +60,9 @@ defineEmits<GSSwitchEmits>()
   --width: 50px;
   --height: 25px;
   --border-width: 1px;
-  --bg: #353D4F;
+  --bg: #353d4f;
   --slider-tr-x: 0;
-  --icon-color: #D3BC8E;
+  --icon-color: #d3bc8e;
   --label-color: var(--label-inactive-color);
   --label-font-size: 16px;
 
@@ -76,7 +80,7 @@ defineEmits<GSSwitchEmits>()
 .gs-switch {
   width: var(--width);
   height: var(--height);
-  border: var(--border-width) solid #EBE4D8;
+  border: var(--border-width) solid #ebe4d8;
   background: var(--bg);
   border-radius: var(--height);
   padding: calc(0.08 * var(--height));
@@ -124,9 +128,9 @@ defineEmits<GSSwitchEmits>()
     --slider-tr-x: calc(var(--width) - var(--height));
     --active-bg-scale: 1;
     --inactive-bg-scale: 0;
-    --bg: #D3BC8E;
-    --bg-border-color: #BFA57A;
-    --icon-color: #818D9D;
+    --bg: #d3bc8e;
+    --bg-border-color: #bfa57a;
+    --icon-color: #818d9d;
     --label-color: var(--label-active-color);
   }
 }
@@ -135,10 +139,10 @@ defineEmits<GSSwitchEmits>()
   height: 100%;
   aspect-ratio: 1 / 1;
   border-radius: 100%;
-  background-color: #FFF8DE;
+  background-color: #fff8de;
   transition: all ease 150ms;
   translate: var(--slider-tr-x) 0;
-  filter: drop-shadow(0 0 1.5px #FFF8DE);
+  filter: drop-shadow(0 0 1.5px #fff8de);
   position: relative;
 }
 </style>

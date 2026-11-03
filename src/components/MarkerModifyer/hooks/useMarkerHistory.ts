@@ -49,29 +49,31 @@ export const useMarkerHistory = (markerVo: Ref<MarkerVo>) => {
       selectedHistoryIndex.value = 0
 
       const { id } = toValue(clonedMarkerVo)
-      if (id === undefined)
-        throw new Error('点位 id 为空')
+      if (id === undefined) throw new Error('点位 id 为空')
 
-      const { data: { record = [], total = 0 } = {}, users: _users = {} } = await Apis.history.searchHistory({
-        data: {
-          current: 1,
-          size: 100,
-          id: [id],
-          type: HistoryRecordType.MARKER,
-          sort: ['updateTime-'],
-        },
-      })
-
-      if (total > 100) {
-        const { data: { record = [] } = {}, users: _users = {} } = await Apis.history.searchHistory({
+      const { data: { record = [], total = 0 } = {}, users: _users = {} } =
+        await Apis.history.searchHistory({
           data: {
             current: 1,
-            size: total,
+            size: 100,
             id: [id],
             type: HistoryRecordType.MARKER,
             sort: ['updateTime-'],
           },
         })
+
+      if (total > 100) {
+        const { data: { record = [] } = {}, users: _users = {} } = await Apis.history.searchHistory(
+          {
+            data: {
+              current: 1,
+              size: total,
+              id: [id],
+              type: HistoryRecordType.MARKER,
+              sort: ['updateTime-'],
+            },
+          },
+        )
         const users = new Map(Object.entries(_users))
         return { record, users }
       }
@@ -84,52 +86,62 @@ export const useMarkerHistory = (markerVo: Ref<MarkerVo>) => {
 
   const users = computed(() => data.value.users)
 
-  const historyContents = computed(() => data.value.record.map(({ content, ...rest }) => {
-    const oldContent = JSON.parse(content ?? '{}') as MarkerVo
-    return {
-      ...rest,
-      content,
-      parseredContent: oldContent,
-    }
-  }))
+  const historyContents = computed(() =>
+    data.value.record.map(({ content, ...rest }) => {
+      const oldContent = JSON.parse(content ?? '{}') as MarkerVo
+      return {
+        ...rest,
+        content,
+        parseredContent: oldContent,
+      }
+    }),
+  )
 
-  const diffContents = computed(() => historyContents.value.map(({ parseredContent, ...rest }, index, arr) => {
-    const newContent = arr[index - 1]?.parseredContent ?? clonedMarkerVo.value
-    const diffs = MarkerCollator.compare(newContent, parseredContent)
-    return {
-      ...rest,
-      parseredContent,
-      diffs,
-    }
-  }))
+  const diffContents = computed(() =>
+    historyContents.value.map(({ parseredContent, ...rest }, index, arr) => {
+      const newContent = arr[index - 1]?.parseredContent ?? clonedMarkerVo.value
+      const diffs = MarkerCollator.compare(newContent, parseredContent)
+      return {
+        ...rest,
+        parseredContent,
+        diffs,
+      }
+    }),
+  )
 
   // index ∈ [0, history.length]
   const newDisabled = computed(() => selectedHistoryIndex.value <= 0)
   const oldDisabled = computed(() => selectedHistoryIndex.value >= data.value.record.length)
 
   const toNewOne = () => {
-    if (newDisabled.value)
-      return
+    if (newDisabled.value) return
     selectedHistoryIndex.value -= 1
   }
 
   const toOldOne = () => {
-    if (oldDisabled.value)
-      return
+    if (oldDisabled.value) return
     selectedHistoryIndex.value += 1
   }
 
-  const newHistory = computed(() => diffContents.value[selectedHistoryIndex.value - 1] as (typeof diffContents.value)[number] | undefined)
-  const oldHistory = computed(() => diffContents.value[selectedHistoryIndex.value] as (typeof diffContents.value)[number] | undefined)
-
-  const newContent = computed(() => newHistory.value
-    ? newHistory.value.parseredContent
-    : clonedMarkerVo.value,
+  const newHistory = computed(
+    () =>
+      diffContents.value[selectedHistoryIndex.value - 1] as
+        | (typeof diffContents.value)[number]
+        | undefined,
+  )
+  const oldHistory = computed(
+    () =>
+      diffContents.value[selectedHistoryIndex.value] as
+        | (typeof diffContents.value)[number]
+        | undefined,
   )
 
-  const oldContent = computed(() => oldHistory.value
-    ? oldHistory.value.parseredContent
-    : newContent.value,
+  const newContent = computed(() =>
+    newHistory.value ? newHistory.value.parseredContent : clonedMarkerVo.value,
+  )
+
+  const oldContent = computed(() =>
+    oldHistory.value ? oldHistory.value.parseredContent : newContent.value,
   )
 
   return {

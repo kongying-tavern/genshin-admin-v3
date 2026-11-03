@@ -4,7 +4,13 @@ import { loginAsTestAccount } from '../_support/auth'
 import { probeIntegration } from '../_support/backend'
 import { cleanupCreatedAreas } from '../_support/cleanup'
 import { integrationConfigured } from '../_support/env'
-import { createTestArea, createTestChildArea, createTestRootArea, TEST_AREA_NAME_PREFIX, testAreaName } from '../_support/factories'
+import {
+  createTestArea,
+  createTestChildArea,
+  createTestRootArea,
+  TEST_AREA_NAME_PREFIX,
+  testAreaName,
+} from '../_support/factories'
 import { setupApiEnv } from '../_support/pinia'
 
 /**
@@ -29,8 +35,7 @@ const enabled = await probeIntegration(integrationConfigured)
 /** 读取单个地区，失败即抛错（本文件只用于已知存在的地区） */
 const getArea = async (areaId: number) => {
   const { data } = await Apis.area.getArea({ pathParams: { areaId } })
-  if (!data)
-    throw new Error(`地区 ${areaId} 不存在`)
+  if (!data) throw new Error(`地区 ${areaId} 不存在`)
   return data
 }
 
@@ -49,7 +54,13 @@ describe.skipIf(!enabled)('集成：地区体系', () => {
 
       const name = testAreaName('crud')
       const code = `C:APITEST_CRUD`
-      const areaId = await createTestArea({ name, code, parentId: -1, content: 'apitest-content', sortIndex: 7 })
+      const areaId = await createTestArea({
+        name,
+        code,
+        parentId: -1,
+        content: 'apitest-content',
+        sortIndex: 7,
+      })
 
       const created = await getArea(areaId)
       expect(created.name).toBe(name)
@@ -74,7 +85,12 @@ describe.skipIf(!enabled)('集成：地区体系', () => {
       const before = await getArea(areaId)
 
       await Apis.area.updateArea({
-        data: { id: areaId, name: `${before.name}_updated`, code: before.code, parentId: before.parentId },
+        data: {
+          id: areaId,
+          name: `${before.name}_updated`,
+          code: before.code,
+          parentId: before.parentId,
+        },
       })
 
       expect((await getArea(areaId)).name).toBe(`${before.name}_updated`)
@@ -88,10 +104,14 @@ describe.skipIf(!enabled)('集成：地区体系', () => {
       const childB = await createTestChildArea(root)
       const grandChild = await createTestChildArea(await getArea(childA))
 
-      const { data: direct = [] } = await Apis.area.listArea({ data: { parentId: root.id, isTraverse: false } })
+      const { data: direct = [] } = await Apis.area.listArea({
+        data: { parentId: root.id, isTraverse: false },
+      })
       expect(direct.map(area => area.id).sort()).toEqual([childA, childB].sort())
 
-      const { data: subtree = [] } = await Apis.area.listArea({ data: { parentId: root.id, isTraverse: true } })
+      const { data: subtree = [] } = await Apis.area.listArea({
+        data: { parentId: root.id, isTraverse: true },
+      })
       expect(subtree.map(area => area.id).sort()).toEqual([childA, childB, grandChild].sort())
     })
 
@@ -111,18 +131,22 @@ describe.skipIf(!enabled)('集成：地区体系', () => {
     it('新增地区缺少 parentId 被拒绝', async () => {
       await loginAsTestAccount()
 
-      await expect(Apis.area.createArea({
-        data: { name: testAreaName('noparent'), code: `C:APITEST_NOPARENT` },
-      })).rejects.toThrow('父节点不能为空')
+      await expect(
+        Apis.area.createArea({
+          data: { name: testAreaName('noparent'), code: `C:APITEST_NOPARENT` },
+        }),
+      ).rejects.toThrow('父节点不能为空')
     })
 
     it('新增地区把自身 id 作为 parentId 被拒绝', async () => {
       await loginAsTestAccount()
 
       // 新增时 id 正常为空，这里显式传入 id 以触发「父节点不能等于自身」的守卫
-      await expect(Apis.area.createArea({
-        data: { id: -1, name: testAreaName('self'), code: `C:APITEST_SELF`, parentId: -1 },
-      })).rejects.toThrow('指定的父节点无效')
+      await expect(
+        Apis.area.createArea({
+          data: { id: -1, name: testAreaName('self'), code: `C:APITEST_SELF`, parentId: -1 },
+        }),
+      ).rejects.toThrow('指定的父节点无效')
     })
 
     it('修改地区缺少 parentId 被拒绝', async () => {
@@ -130,9 +154,11 @@ describe.skipIf(!enabled)('集成：地区体系', () => {
 
       const area = await getArea(await createTestRootArea())
 
-      await expect(Apis.area.updateArea({
-        data: { id: area.id, name: area.name, code: area.code },
-      })).rejects.toThrow('父节点不能为空')
+      await expect(
+        Apis.area.updateArea({
+          data: { id: area.id, name: area.name, code: area.code },
+        }),
+      ).rejects.toThrow('父节点不能为空')
     })
 
     it('修改地区把自身设为父级（自环）被拒绝', async () => {
@@ -140,25 +166,31 @@ describe.skipIf(!enabled)('集成：地区体系', () => {
 
       const area = await getArea(await createTestRootArea())
 
-      await expect(Apis.area.updateArea({
-        data: { id: area.id, name: area.name, code: area.code, parentId: area.id },
-      })).rejects.toThrow('指定的父节点无效')
+      await expect(
+        Apis.area.updateArea({
+          data: { id: area.id, name: area.name, code: area.code, parentId: area.id },
+        }),
+      ).rejects.toThrow('指定的父节点无效')
     })
 
     it('缺少地区名称时被后端拒绝', async () => {
       await loginAsTestAccount()
 
-      await expect(Apis.area.createArea({
-        data: { code: `C:APITEST_NONAME`, parentId: -1 },
-      })).rejects.toThrow('地区名称不能为空')
+      await expect(
+        Apis.area.createArea({
+          data: { code: `C:APITEST_NONAME`, parentId: -1 },
+        }),
+      ).rejects.toThrow('地区名称不能为空')
     })
 
     it('缺少地区代码时被后端拒绝', async () => {
       await loginAsTestAccount()
 
-      await expect(Apis.area.createArea({
-        data: { name: testAreaName('nocode'), parentId: -1 },
-      })).rejects.toThrow('地区代码不能为空')
+      await expect(
+        Apis.area.createArea({
+          data: { name: testAreaName('nocode'), parentId: -1 },
+        }),
+      ).rejects.toThrow('地区代码不能为空')
     })
   })
 
@@ -215,7 +247,13 @@ describe.skipIf(!enabled)('集成：地区体系', () => {
 
       // 明明还有子级，却试图改成末端地区：服务端重算后仍为非末端
       const { data: updated } = await Apis.area.updateArea({
-        data: { id: rootId, name: root.name, code: root.code, parentId: root.parentId, isFinal: true },
+        data: {
+          id: rootId,
+          name: root.name,
+          code: root.code,
+          parentId: root.parentId,
+          isFinal: true,
+        },
       })
       expect(updated).toBe(true)
       expect((await getArea(rootId)).isFinal).toBe(false)
@@ -246,7 +284,9 @@ describe.skipIf(!enabled)('集成：地区体系', () => {
 
       expect((await getArea(areaId)).parentId).toBe(ghostParentId)
 
-      const { data: orphans = [] } = await Apis.area.listArea({ data: { parentId: ghostParentId, isTraverse: true } })
+      const { data: orphans = [] } = await Apis.area.listArea({
+        data: { parentId: ghostParentId, isTraverse: true },
+      })
       expect(orphans.map(area => area.id)).toContain(areaId)
     })
 
@@ -254,8 +294,16 @@ describe.skipIf(!enabled)('集成：地区体系', () => {
       await loginAsTestAccount()
 
       const code = `C:APITEST_DUP`
-      const firstId = await createTestArea({ name: `${TEST_AREA_NAME_PREFIX}dup_a`, code, parentId: -1 })
-      const secondId = await createTestArea({ name: `${TEST_AREA_NAME_PREFIX}dup_b`, code, parentId: -1 })
+      const firstId = await createTestArea({
+        name: `${TEST_AREA_NAME_PREFIX}dup_a`,
+        code,
+        parentId: -1,
+      })
+      const secondId = await createTestArea({
+        name: `${TEST_AREA_NAME_PREFIX}dup_b`,
+        code,
+        parentId: -1,
+      })
 
       expect(secondId).not.toBe(firstId)
       expect((await getArea(secondId)).code).toBe(code)
@@ -270,8 +318,12 @@ describe.skipIf(!enabled)('集成：地区体系', () => {
 
       await Apis.area.deleteArea({ pathParams: { areaId: rootId } })
 
-      await expect(Apis.area.getArea({ pathParams: { areaId: childId } })).rejects.toThrow('地区不存在')
-      await expect(Apis.area.getArea({ pathParams: { areaId: grandChildId } })).rejects.toThrow('地区不存在')
+      await expect(Apis.area.getArea({ pathParams: { areaId: childId } })).rejects.toThrow(
+        '地区不存在',
+      )
+      await expect(Apis.area.getArea({ pathParams: { areaId: grandChildId } })).rejects.toThrow(
+        '地区不存在',
+      )
     })
   })
 
@@ -279,16 +331,20 @@ describe.skipIf(!enabled)('集成：地区体系', () => {
     it('查询不存在的地区被拒绝', async () => {
       await loginAsTestAccount()
 
-      await expect(Apis.area.getArea({ pathParams: { areaId: 999999 } })).rejects.toThrow('地区不存在')
+      await expect(Apis.area.getArea({ pathParams: { areaId: 999999 } })).rejects.toThrow(
+        '地区不存在',
+      )
     })
 
     it('更新不存在的地区失败', async () => {
       await loginAsTestAccount()
 
       // 后端先按 id 取实体（未做存在性校验），取不到会直接 NPE → HTTP 500，此处只断言请求失败
-      await expect(Apis.area.updateArea({
-        data: { id: 999999, name: testAreaName('ghost'), code: `C:APITEST_GHOST`, parentId: -1 },
-      })).rejects.toThrow()
+      await expect(
+        Apis.area.updateArea({
+          data: { id: 999999, name: testAreaName('ghost'), code: `C:APITEST_GHOST`, parentId: -1 },
+        }),
+      ).rejects.toThrow()
     })
 
     it('删除不存在的地区失败', async () => {

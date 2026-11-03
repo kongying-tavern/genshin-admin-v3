@@ -27,7 +27,12 @@ export class ItemSize implements MAFConfig<MAFValueNumberRange, MAFOptionRange, 
     return {}
   }
 
-  semantic(val: MAFValueNumberRange, _opt: MAFOptionRange, _meta: MAFMetaDummy, opposite: boolean): (MAFSemanticUnit | null)[] {
+  semantic(
+    val: MAFValueNumberRange,
+    _opt: MAFOptionRange,
+    _meta: MAFMetaDummy,
+    opposite: boolean,
+  ): (MAFSemanticUnit | null)[] {
     return [
       { type: 'text', text: '物品条数' },
       opposite ? { type: 'opposite-indicator', text: '不' } : null,
@@ -36,9 +41,16 @@ export class ItemSize implements MAFConfig<MAFValueNumberRange, MAFOptionRange, 
     ]
   }
 
-  filter(val: MAFValueNumberRange, _opt: MAFOptionRange, _meta: MAFMetaDummy, marker: MarkerVo): boolean {
-    const minVal: number = val.nMin === undefined || val.nMin === null ? Number.NEGATIVE_INFINITY : val.nMin
-    const maxVal: number = val.nMax === undefined || val.nMax === null ? Number.POSITIVE_INFINITY : val.nMax
+  filter(
+    val: MAFValueNumberRange,
+    _opt: MAFOptionRange,
+    _meta: MAFMetaDummy,
+    marker: MarkerVo,
+  ): boolean {
+    const minVal: number =
+      val.nMin === undefined || val.nMin === null ? Number.NEGATIVE_INFINITY : val.nMin
+    const maxVal: number =
+      val.nMax === undefined || val.nMax === null ? Number.POSITIVE_INFINITY : val.nMax
     const itemList = marker.itemList ?? []
     return itemList.length >= minVal && itemList.length <= maxVal
   }

@@ -19,36 +19,36 @@ const slots = defineSlots<{
 
 const collapse = ref(props.detailDisabled ? true : !props.open)
 
-watch(() => props.detailDisabled, (disabled) => {
-  if (!disabled) {
-    slots.detail && (collapse.value = false)
-    return
-  }
-  collapse.value = true
-})
+watch(
+  () => props.detailDisabled,
+  disabled => {
+    if (!disabled) {
+      slots.detail && (collapse.value = false)
+      return
+    }
+    collapse.value = true
+  },
+)
 
 const toggleCollapse = () => {
-  if (props.detailDisabled || !slots.detail)
-    return
+  if (props.detailDisabled || !slots.detail) return
   collapse.value = !collapse.value
 }
 </script>
 
 <template>
   <div
-    class="
-      flex flex-col
-      bg-[var(--el-fill-color-light)]
-      select-none
-      rounded
-      overflow-hidden
-    "
+    class="flex flex-col bg-[var(--el-fill-color-light)] select-none rounded overflow-hidden"
     @click="toggleCollapse"
   >
     <slot name="default">
       <div
         class="min-h-[66px] flex gap-2 flex-shrink-0 items-center px-4 py-3 transition-[background-color]"
-        :class="(!detailDisabled && $slots.detail) ? 'hover:bg-[var(--el-fill-color)] active:bg-[var(--el-fill-color-darker)]' : ''"
+        :class="
+          !detailDisabled && $slots.detail
+            ? 'hover:bg-[var(--el-fill-color)] active:bg-[var(--el-fill-color-darker)]'
+            : ''
+        "
       >
         <div class="flex-1 flex items-center">
           <div v-if="icon" class="grid place-items-center pr-4">

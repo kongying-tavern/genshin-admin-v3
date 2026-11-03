@@ -59,9 +59,11 @@ export default defineConfig(async ({ mode }) => {
   ]
 
   if (ENV.VITE_HTTPS) {
-    plugins.push(BaseSSL({
-      name: 'test',
-    }))
+    plugins.push(
+      BaseSSL({
+        name: 'test',
+      }),
+    )
   }
 
   const COMMIT_BRANCH = await git.revparse(['--abbrev-ref', 'HEAD'])
@@ -73,13 +75,13 @@ export default defineConfig(async ({ mode }) => {
   return {
     define: {
       // 关闭选项式 API 支持
-      '__VUE_OPTIONS_API__': false,
+      __VUE_OPTIONS_API__: false,
 
       // 在生产环境中关闭 devtools 支持
-      '__VUE_PROD_DEVTOOLS__': false,
+      __VUE_PROD_DEVTOOLS__: false,
 
       // 禁用生产版本中水合不匹配的详细警告以优化
-      '__VUE_PROD_HYDRATION_MISMATCH_DETAILS__': false,
+      __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
 
       'import.meta.env.APP_VERSION': JSON.stringify(VERSION),
       'import.meta.env.APP_BRANCH': JSON.stringify(COMMIT_BRANCH),
@@ -108,7 +110,10 @@ export default defineConfig(async ({ mode }) => {
           codeSplitting: {
             groups: [
               { name: 'vue', test: /node_modules[\\/](?:vue|vue-router|pinia)[\\/]/ },
-              { name: 'element-plus-icons', test: /node_modules[\\/]@element-plus[\\/]icons-vue[\\/]/ },
+              {
+                name: 'element-plus-icons',
+                test: /node_modules[\\/]@element-plus[\\/]icons-vue[\\/]/,
+              },
               { name: 'element-plus', test: /node_modules[\\/]element-plus[\\/]/ },
               { name: 'deck', test: /node_modules[\\/]deck\.gl[\\/]/ },
               { name: 'dexie', test: /node_modules[\\/]dexie[\\/]/ },
@@ -117,7 +122,10 @@ export default defineConfig(async ({ mode }) => {
               { name: 'antv-g2', test: /node_modules[\\/]@antv[\\/]g2[\\/]/ },
               { name: 'antv-g6', test: /node_modules[\\/]@antv[\\/]g6[\\/]/ },
               { name: 'antv-s2', test: /node_modules[\\/]@antv[\\/]s2[\\/]/ },
-              { name: 'tiptap', test: /node_modules[\\/]@tiptap[\\/](?:core|extension-text-align|starter-kit|vue-3)[\\/]/ },
+              {
+                name: 'tiptap',
+                test: /node_modules[\\/]@tiptap[\\/](?:core|extension-text-align|starter-kit|vue-3)[\\/]/,
+              },
               { name: 'vueuse', test: /node_modules[\\/]@vueuse[\\/](?:core|rxjs)[\\/]/ },
             ],
           },
@@ -139,10 +147,7 @@ export default defineConfig(async ({ mode }) => {
     optimizeDeps: {
       // 在启动时预打包这些仅被 Web Worker 动态引用的依赖，
       // 避免运行时首次加载 worker 时触发重新优化导致整页刷新
-      include: [
-        'socket.io-client',
-        '7z-wasm',
-      ],
+      include: ['socket.io-client', '7z-wasm'],
     },
   }
 })

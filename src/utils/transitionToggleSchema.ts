@@ -3,10 +3,7 @@ export const transitionToggleSchema = (x: number, y: number, handler: () => void
     return handler()
   }
 
-  const endRadius = Math.hypot(
-    Math.max(x, innerWidth - x),
-    Math.max(y, innerHeight - y),
-  )
+  const endRadius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y))
 
   const ratioX = (100 * x) / innerWidth
   const ratioY = (100 * y) / innerHeight

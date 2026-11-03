@@ -5,35 +5,37 @@ import type { StyleValue } from 'vue'
  * @todo 当前实现只支持固定尺寸项
  * @todo grid 模式下效果不是很好，需要优化
  */
-const props = withDefaults(defineProps<{
-  data: T[]
-  itemHeight?: number
-  itemWidth?: number
-  itemGap?: [number, number]
-  itemClass?: string | string[] | Record<string, boolean>
-  cachedRows?: number
-  alwaysScrollbar?: boolean
-  scrollbarStyle?: StyleValue
-}>(), {
-  data: () => [],
-  itemHeight: 32,
-  itemWidth: 0,
-  itemGap: () => [0, 0],
-  cachedRows: 1,
-})
+const props = withDefaults(
+  defineProps<{
+    data: T[]
+    itemHeight?: number
+    itemWidth?: number
+    itemGap?: [number, number]
+    itemClass?: string | string[] | Record<string, boolean>
+    cachedRows?: number
+    alwaysScrollbar?: boolean
+    scrollbarStyle?: StyleValue
+  }>(),
+  {
+    data: () => [],
+    itemHeight: 32,
+    itemWidth: 0,
+    itemGap: () => [0, 0],
+    cachedRows: 1,
+  },
+)
 
 const tableRef = ref<HTMLElement>()
 
 const { width, height } = useElementSize(tableRef)
 
 const scrollHeight = ref(0)
-const handleScroll = ({ scrollTop }: { scrollTop: number, scrollLeft: number }) => {
+const handleScroll = ({ scrollTop }: { scrollTop: number; scrollLeft: number }) => {
   scrollHeight.value = scrollTop
 }
 
 const gridColumns = computed(() => {
-  if (props.itemWidth <= 0)
-    return 0
+  if (props.itemWidth <= 0) return 0
   const [gapWidth] = props.itemGap
   return Math.floor((width.value + gapWidth) / (props.itemWidth + gapWidth))
 })
@@ -48,15 +50,21 @@ const virtualHeight = computed(() => {
 })
 
 const realHeight = computed(() => {
-  if (gridColumns.value <= 0)
-    return props.data.length * props.itemHeight
-  return Math.ceil(props.data.length / gridColumns.value) * (props.itemHeight + props.itemGap[1]) - props.itemGap[1]
+  if (gridColumns.value <= 0) return props.data.length * props.itemHeight
+  return (
+    Math.ceil(props.data.length / gridColumns.value) * (props.itemHeight + props.itemGap[1])
+    - props.itemGap[1]
+  )
 })
 
 const rowIndexList = computed(() => {
   const indexList: number[] = []
   for (let row = 1; row <= virtualRows.value; row++)
-    indexList[row] = row + Math.ceil(Math.max(0, scrollHeight.value - row * props.itemHeight) / virtualHeight.value) * virtualRows.value - 1
+    indexList[row] =
+      row
+      + Math.ceil(Math.max(0, scrollHeight.value - row * props.itemHeight) / virtualHeight.value)
+        * virtualRows.value
+      - 1
   return indexList
 })
 
@@ -89,16 +97,8 @@ const style = computed<Record<string, number>>(() => ({
 </script>
 
 <template>
-  <div
-    ref="tableRef"
-    class="app-virtual-table"
-    :style="style"
-  >
-    <el-scrollbar
-      :always="alwaysScrollbar"
-      :style="scrollbarStyle"
-      @scroll="handleScroll"
-    >
+  <div ref="tableRef" class="app-virtual-table" :style="style">
+    <el-scrollbar :always="alwaysScrollbar" :style="scrollbarStyle" @scroll="handleScroll">
       <div v-if="gridColumns > 0" class="virtual-scroll-wrapper is-grid">
         <template v-for="rowIndex in virtualRows">
           <div
@@ -110,7 +110,7 @@ const style = computed<Record<string, number>>(() => ({
             :class="itemClass"
             class="virtual-item"
           >
-            <template v-if="(rowIndexList[rowIndex] * gridColumns + colIndex) <= data.length">
+            <template v-if="rowIndexList[rowIndex] * gridColumns + colIndex <= data.length">
               <slot
                 name="default"
                 :index="rowIndexList[rowIndex] * gridColumns + colIndex"
@@ -132,11 +132,7 @@ const style = computed<Record<string, number>>(() => ({
           class="virtual-item"
         >
           <template v-if="rowIndexList[i] < data.length">
-            <slot
-              name="default"
-              :index="rowIndexList[i]"
-              :item="data[rowIndexList[i]]"
-            />
+            <slot name="default" :index="rowIndexList[i]" :item="data[rowIndexList[i]]" />
           </template>
         </div>
       </div>

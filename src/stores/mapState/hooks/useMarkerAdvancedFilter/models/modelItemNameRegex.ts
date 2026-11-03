@@ -9,7 +9,11 @@ import type {
 import { MAF_MODEL_META_MAP, MAFModelId } from '@/shared'
 import { useItemStore } from '@/stores'
 
-export class ItemNameRegex implements MAFConfig<MAFValueString, MAFOptionInput, MAFMetaItemNameRegex> {
+export class ItemNameRegex implements MAFConfig<
+  MAFValueString,
+  MAFOptionInput,
+  MAFMetaItemNameRegex
+> {
   id = MAFModelId.ITEM_NAME_REGEX
   name = MAF_MODEL_META_MAP[MAFModelId.ITEM_NAME_REGEX].name
   option: MAFOptionInput = {
@@ -32,8 +36,7 @@ export class ItemNameRegex implements MAFConfig<MAFValueString, MAFOptionInput, 
     if (val.s) {
       try {
         meta.re = new RegExp(val.s, 'iu')
-      }
-      catch {
+      } catch {
         meta.re = null
       }
     }
@@ -41,19 +44,22 @@ export class ItemNameRegex implements MAFConfig<MAFValueString, MAFOptionInput, 
     // 处理物品ID
     if (meta.re) {
       const { itemList } = useItemStore()
-      const itemIdSet: Set<number> = itemList
-        .reduce<Set<number>>((seed, item) => {
-          if (meta.re!.test(item.name!))
-            seed.add(item.id!)
-          return seed
-        }, new Set())
+      const itemIdSet: Set<number> = itemList.reduce<Set<number>>((seed, item) => {
+        if (meta.re!.test(item.name!)) seed.add(item.id!)
+        return seed
+      }, new Set())
       meta.itemIds = itemIdSet
     }
 
     return meta
   }
 
-  semantic(val: MAFValueString, _opt: MAFOptionInput, meta: MAFMetaItemNameRegex, opposite: boolean): (MAFSemanticUnit | null)[] {
+  semantic(
+    val: MAFValueString,
+    _opt: MAFOptionInput,
+    meta: MAFMetaItemNameRegex,
+    opposite: boolean,
+  ): (MAFSemanticUnit | null)[] {
     return [
       { type: 'text', text: '物品名' },
       opposite ? { type: 'opposite-indicator', text: '不' } : null,
@@ -62,11 +68,15 @@ export class ItemNameRegex implements MAFConfig<MAFValueString, MAFOptionInput, 
     ]
   }
 
-  filter(_val: MAFValueString, _opt: MAFOptionInput, meta: MAFMetaItemNameRegex, marker: MarkerVo): boolean {
+  filter(
+    _val: MAFValueString,
+    _opt: MAFOptionInput,
+    meta: MAFMetaItemNameRegex,
+    marker: MarkerVo,
+  ): boolean {
     const itemIds: number[] = (marker.itemList ?? []).map(item => item.itemId!).filter(v => v)
     for (const itemId of itemIds) {
-      if (meta.itemIds.has(itemId))
-        return true
+      if (meta.itemIds.has(itemId)) return true
     }
     return false
   }

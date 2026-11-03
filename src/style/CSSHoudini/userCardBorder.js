@@ -83,7 +83,7 @@ class UserCardBorder {
     ctx.fillStyle = '#D5C5B3'
     const angle = Math.PI / 2
     this.drawPart(ctx)
-    ;[width, height, width].forEach((tx) => {
+    ;[width, height, width].forEach(tx => {
       ctx.translate(tx, 0)
       ctx.rotate(angle)
       this.drawPart(ctx)

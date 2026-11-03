@@ -5,14 +5,15 @@ import { useArchiveStore } from '@/stores'
 export const usePreferenceStore = defineStore('global-user-preference', () => {
   const archiveStore = useArchiveStore()
 
-  const model = <K extends keyof UserPreference>(key: K, defaultValue: () => UserPreference[K]) => computed({
-    get: () => {
-      return archiveStore.currentArchive.body.Preference[key] ?? defaultValue()
-    },
-    set: (v) => {
-      archiveStore.currentArchive.body.Preference[key] = v
-    },
-  }) as Ref<NonNullable<UserPreference[K]>>
+  const model = <K extends keyof UserPreference>(key: K, defaultValue: () => UserPreference[K]) =>
+    computed({
+      get: () => {
+        return archiveStore.currentArchive.body.Preference[key] ?? defaultValue()
+      },
+      set: v => {
+        archiveStore.currentArchive.body.Preference[key] = v
+      },
+    }) as Ref<NonNullable<UserPreference[K]>>
 
   return {
     advancedFilter: model('markerFilter.filter.advancedFilter', () => []),

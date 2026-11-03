@@ -8,7 +8,11 @@ import type {
 } from '@/stores/types'
 import { MAF_MODEL_META_MAP, MAFModelId } from '@/shared'
 
-export class ContentRegex implements MAFConfig<MAFValueString, MAFOptionInput, MAFMetaContentRegex> {
+export class ContentRegex implements MAFConfig<
+  MAFValueString,
+  MAFOptionInput,
+  MAFMetaContentRegex
+> {
   id = MAFModelId.CONTENT_REGEX
   name = MAF_MODEL_META_MAP[MAFModelId.CONTENT_REGEX].name
   option: MAFOptionInput = {
@@ -30,8 +34,7 @@ export class ContentRegex implements MAFConfig<MAFValueString, MAFOptionInput, M
     if (val.s) {
       try {
         meta.re = new RegExp(val.s, 'iu')
-      }
-      catch {
+      } catch {
         meta.re = null
       }
     }
@@ -39,7 +42,12 @@ export class ContentRegex implements MAFConfig<MAFValueString, MAFOptionInput, M
     return meta
   }
 
-  semantic(val: MAFValueString, _opt: MAFOptionInput, meta: MAFMetaContentRegex, opposite: boolean): (MAFSemanticUnit | null)[] {
+  semantic(
+    val: MAFValueString,
+    _opt: MAFOptionInput,
+    meta: MAFMetaContentRegex,
+    opposite: boolean,
+  ): (MAFSemanticUnit | null)[] {
     return [
       { type: 'text', text: '内容' },
       opposite ? { type: 'opposite-indicator', text: '不' } : null,
@@ -48,9 +56,13 @@ export class ContentRegex implements MAFConfig<MAFValueString, MAFOptionInput, M
     ]
   }
 
-  filter(_val: MAFValueString, _opt: MAFOptionInput, meta: MAFMetaContentRegex, marker: MarkerVo): boolean {
-    if (!meta.re)
-      return false
+  filter(
+    _val: MAFValueString,
+    _opt: MAFOptionInput,
+    meta: MAFMetaContentRegex,
+    marker: MarkerVo,
+  ): boolean {
+    if (!meta.re) return false
     return meta.re.test(marker.content ?? '')
   }
 }

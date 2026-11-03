@@ -72,34 +72,26 @@ defineEmits<{
 }
 
 .gs-guide {
-  @apply
-    fixed w-full h-full left-0 top-0 overflow-hidden
+  @apply fixed w-full h-full left-0 top-0 overflow-hidden
     grid place-content-center place-items-center
-    z-50
-  ;
+    z-50;
   animation: guide-anime-in ease-out 300ms forwards;
 }
 
 .gs-guide-header {
-  @apply
-    absolute w-full h-[90px] left-0 top-0
+  @apply absolute w-full h-[90px] left-0 top-0
     flex justify-center items-center
-    bg-[#00000060]
-  ;
+    bg-[#00000060];
 }
 
 .gs-guide-title {
-  @apply
-    mb-5 px-6
-    text-3xl text-[#D3BC8E] font-[HYWenHei-85W]
-  ;
+  @apply mb-5 px-6
+    text-3xl text-[#D3BC8E] font-[HYWenHei-85W];
 }
 
 .gs-guide-zone {
-  @apply
-    w-[80dvw] aspect-video
-    relative origin-center
-  ;
+  @apply w-[80dvw] aspect-video
+    relative origin-center;
   padding: 0.8% 0.75%;
   animation: guide-zone-anime-in ease-out 150ms forwards;
 
@@ -109,9 +101,7 @@ defineEmits<{
 }
 
 .gs-guide-text {
-  @apply
-    mt-5 px-6
-    text-xl text-[#ECE5D8] font-[HYWenHei-85W]
-  ;
+  @apply mt-5 px-6
+    text-xl text-[#ECE5D8] font-[HYWenHei-85W];
 }
 </style>

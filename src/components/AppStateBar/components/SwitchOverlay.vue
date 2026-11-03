@@ -12,24 +12,26 @@ const overlayVisible = computed({
   get: () => {
     return archiveStore.currentArchive.body.Preference['map.state.showOverlay']
   },
-  set: (bool) => {
+  set: bool => {
     archiveStore.currentArchive.body.Preference['map.state.showOverlay'] = bool
   },
 })
 
-const { info, open, close } = useAppWindow(computed(() => ({
-  name: '附加图层控制器',
-  minWidth: MIN_WIDTH,
-  minHeight: 420,
-  x: bodyWidth.value - MIN_WIDTH - 6,
-  y: 8,
-  beforeClose: () => {
-    overlayVisible.value = false
-    return true
-  },
-})))
+const { info, open, close } = useAppWindow(
+  computed(() => ({
+    name: '附加图层控制器',
+    minWidth: MIN_WIDTH,
+    minHeight: 420,
+    x: bodyWidth.value - MIN_WIDTH - 6,
+    y: 8,
+    beforeClose: () => {
+      overlayVisible.value = false
+      return true
+    },
+  })),
+)
 
-watch(overlayVisible, visible => visible ? open() : close(), { immediate: true })
+watch(overlayVisible, visible => (visible ? open() : close()), { immediate: true })
 </script>
 
 <template>
@@ -74,7 +76,7 @@ watch(overlayVisible, visible => visible ? open() : close(), { immediate: true }
 
   &.is-actived {
     --btn-icon-offset: -10%;
-    --btn-icon-color: #1CFFFF;
+    --btn-icon-color: #1cffff;
   }
 
   &:active {
@@ -101,7 +103,7 @@ watch(overlayVisible, visible => visible ? open() : close(), { immediate: true }
     top: calc((50% - var(--y-gap)) + var(--btn-icon-offset, 0%));
     width: 60%;
     height: 60%;
-    background-color: color-mix(in srgb, var(--btn-icon-color) 50%, #CCCCCCC0);
+    background-color: color-mix(in srgb, var(--btn-icon-color) 50%, #ccccccc0);
     transform: translate(-50%, -50%) scale(1, var(--x-scale)) rotateZ(45deg);
     border-radius: var(--x-radius) var(--radius) var(--x-radius) var(--radius);
     transition: all ease 150ms;

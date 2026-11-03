@@ -10,6 +10,6 @@ const { isDark } = useTheme()
     v-model="isDark"
     :active-action-icon="Moon"
     :inactive-action-icon="Sunny"
-    style="--el-switch-on-color: var(--el-fill-color-darker); padding: 8px 12px;"
+    style="--el-switch-on-color: var(--el-fill-color-darker); padding: 8px 12px"
   />
 </template>

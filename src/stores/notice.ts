@@ -30,16 +30,20 @@ export const useNoticeStore = defineStore('global-notice', () => {
   /** 所有用户的公告状态，以 userId 为键 */
   const noticeStateMap = ref<Record<string, NoticeState>>({})
   try {
-    const cached = JSON.parse(localStorage.getItem(NOTICE_STATE_KEY) ?? '{}') as Record<string, NoticeState> | null
+    const cached = JSON.parse(localStorage.getItem(NOTICE_STATE_KEY) ?? '{}') as Record<
+      string,
+      NoticeState
+    > | null
     noticeStateMap.value = cached && typeof cached === 'object' ? cached : {}
-  }
-  catch {
+  } catch {
     noticeStateMap.value = {}
   }
 
   /** 当前用户（未登录为 -1）的公告状态 */
   const stateKey = computed(() => String(userStore.auth.userId ?? -1))
-  const noticeState = computed<NoticeState>(() => noticeStateMap.value[stateKey.value] ?? NOTICE_STATE_DEFAULT)
+  const noticeState = computed<NoticeState>(
+    () => noticeStateMap.value[stateKey.value] ?? NOTICE_STATE_DEFAULT,
+  )
 
   const updateNoticeState = (patch: Partial<NoticeState>) => {
     const key = stateKey.value
@@ -49,11 +53,20 @@ export const useNoticeStore = defineStore('global-notice', () => {
     }
   }
 
-  watch(noticeStateMap, () => {
-    localStorage.setItem(NOTICE_STATE_KEY, JSON.stringify(noticeStateMap.value))
-  }, { deep: true })
+  watch(
+    noticeStateMap,
+    () => {
+      localStorage.setItem(NOTICE_STATE_KEY, JSON.stringify(noticeStateMap.value))
+    },
+    { deep: true },
+  )
 
-  const { data: noticeList, refresh, onSuccess, ...rest } = useFetchHook({
+  const {
+    data: noticeList,
+    refresh,
+    onSuccess,
+    ...rest
+  } = useFetchHook({
     shallow: true,
     initialValue: [],
     onRequest: async () => {
@@ -72,10 +85,12 @@ export const useNoticeStore = defineStore('global-notice', () => {
     },
   })
 
-  const noticeIdMap = computed(() => noticeList.value.reduce((map, notice) => {
-    map.set(notice.id!, notice)
-    return map
-  }, new Map<number, NoticeVo>()))
+  const noticeIdMap = computed(() =>
+    noticeList.value.reduce((map, notice) => {
+      map.set(notice.id!, notice)
+      return map
+    }, new Map<number, NoticeVo>()),
+  )
 
   const clear = () => {
     noticeContext.close()
@@ -83,42 +98,45 @@ export const useNoticeStore = defineStore('global-notice', () => {
   }
 
   // 作为 ws 推送挂掉时的 fallback，定时刷新公告
-  const { resume, pause } = useTimeoutPoll(async () => {
-    await refresh()
-  }, 20 * 60 * 1000, { immediate: false })
+  const { resume, pause } = useTimeoutPoll(
+    async () => {
+      await refresh()
+    },
+    20 * 60 * 1000,
+    { immediate: false },
+  )
 
-  const readArchive = computed(() => noticeState.value.read.reduce((record, [id, time]) => {
-    record.set(id, time)
-    return record
-  }, new Map<number, number>()))
+  const readArchive = computed(() =>
+    noticeState.value.read.reduce((record, [id, time]) => {
+      record.set(id, time)
+      return record
+    }, new Map<number, number>()),
+  )
 
   const isRead = computed(() => (id: number) => {
     const notice = noticeIdMap.value.get(id)
-    if (!notice)
-      return false
+    if (!notice) return false
 
     const readTime = readArchive.value.get(id)
-    if (readTime === undefined)
-      return false
+    if (readTime === undefined) return false
 
     return readTime >= Number(notice.updateTime)
   })
 
   /** 未被阅读过的新公告数量 */
-  const newCount = computed(() => noticeList.value.reduce((sum, notice) => {
-    const readTime = readArchive.value.get(notice.id!)
-    if (readTime === undefined || readTime < Number(notice.updateTime))
-      sum++
-    return sum
-  }, 0))
+  const newCount = computed(() =>
+    noticeList.value.reduce((sum, notice) => {
+      const readTime = readArchive.value.get(notice.id!)
+      if (readTime === undefined || readTime < Number(notice.updateTime)) sum++
+      return sum
+    }, 0),
+  )
 
   const read = (id: number) => {
     const notice = noticeIdMap.value.get(id)
-    if (!notice)
-      return
+    if (!notice) return
 
-    if (isRead.value(id))
-      return
+    if (isRead.value(id)) return
 
     const readMap = new Map(readArchive.value)
     readMap.set(id, Number(notice.updateTime))
@@ -128,7 +146,7 @@ export const useNoticeStore = defineStore('global-notice', () => {
 
   const selected = shallowRef<NoticeVo>()
 
-  onSuccess(async (list) => {
+  onSuccess(async list => {
     const [first] = list
     selected.value = first
 
@@ -137,8 +155,7 @@ export const useNoticeStore = defineStore('global-notice', () => {
       return updateTime > lastTime ? updateTime : lastTime
     }, 0)
 
-    if (noticeState.value.showTime >= maxUpdateTime)
-      return
+    if (noticeState.value.showTime >= maxUpdateTime) return
 
     updateNoticeState({ showTime: maxUpdateTime })
     noticeContext.show()
@@ -148,14 +165,18 @@ export const useNoticeStore = defineStore('global-notice', () => {
   socketStore.appEvent.on('NoticeDeleted', refresh)
   socketStore.appEvent.on('NoticeUpdated', refresh)
 
-  watch(() => userStore.info?.id, (userId) => {
-    if (userId === undefined) {
-      clear()
-      pause()
-      return
-    }
-    resume()
-  }, { immediate: true })
+  watch(
+    () => userStore.info?.id,
+    userId => {
+      if (userId === undefined) {
+        clear()
+        pause()
+        return
+      }
+      resume()
+    },
+    { immediate: true },
+  )
 
   return {
     newCount,

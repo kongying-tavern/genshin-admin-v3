@@ -21,11 +21,7 @@ const conditionManagerVisible = ref(false)
   <div class="marker-filter font-['HYWenHei-85W'] h-full flex flex-col">
     <MarkerFilterAdvanced v-if="filterType === 'advanced'">
       <template #append>
-        <GSButton
-          class="flex-1"
-          size="small"
-          @click="conditionManagerVisible = true"
-        >
+        <GSButton class="flex-1" size="small" @click="conditionManagerVisible = true">
           <template #icon>
             <el-icon color="var(--gs-color-confirm)">
               <IconSetting />
@@ -37,11 +33,7 @@ const conditionManagerVisible = ref(false)
     </MarkerFilterAdvanced>
     <MarkerFilterBasic v-else>
       <template #append>
-        <GSButton
-          class="flex-1"
-          size="small"
-          @click="conditionManagerVisible = true"
-        >
+        <GSButton class="flex-1" size="small" @click="conditionManagerVisible = true">
           <template #icon>
             <el-icon color="var(--gs-color-confirm)">
               <IconSetting />
@@ -52,10 +44,7 @@ const conditionManagerVisible = ref(false)
       </template>
     </MarkerFilterBasic>
 
-    <PresetManager
-      v-model="conditionManagerVisible"
-      :conditions="mapStateStore.markerFilters"
-    />
+    <PresetManager v-model="conditionManagerVisible" :conditions="mapStateStore.markerFilters" />
   </div>
 </template>
 

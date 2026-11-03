@@ -14,9 +14,15 @@ export class ByteWriter {
     this.#buffer = new Uint8Array(initialCapacity)
   }
 
-  get pointer() { return this.#pointer }
-  get byteLength() { return this.#end }
-  get capacity() { return this.#buffer.length }
+  get pointer() {
+    return this.#pointer
+  }
+  get byteLength() {
+    return this.#end
+  }
+  get capacity() {
+    return this.#buffer.length
+  }
 
   // #region internal
   #ensureCapacity(extra: number) {
@@ -28,16 +34,13 @@ export class ByteWriter {
       newBuffer.set(this.#buffer)
       this.#buffer = newBuffer
     }
-    if (needed > this.#end)
-      this.#end = needed
+    if (needed > this.#end) this.#end = needed
   }
 
   #checkRange(value: number, min: number, max: number, mode: ByteAccessorTruncateMode) {
     if (value < min || value > max) {
-      if (mode === 'error')
-        throw new RangeError(`Value ${value} out of range [${min}, ${max}]`)
-      if (mode === 'clamp')
-        return value < min ? min : max
+      if (mode === 'error') throw new RangeError(`Value ${value} out of range [${min}, ${max}]`)
+      if (mode === 'clamp') return value < min ? min : max
       return value & max
     }
     return value
@@ -54,8 +57,7 @@ export class ByteWriter {
     if (bigintValue < min || bigintValue > max) {
       if (mode === 'error')
         throw new RangeError(`Value ${bigintValue} out of range [${min}, ${max}]`)
-      if (mode === 'clamp')
-        return bigintValue < min ? min : max
+      if (mode === 'clamp') return bigintValue < min ? min : max
       return bigintValue & truncateMask
     }
     return bigintValue
@@ -64,14 +66,14 @@ export class ByteWriter {
 
   // #region uint8 / byte
   writeUint8(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const v = this.#normalizeInt(value, 0n, 0xFFn, mode)
+    const v = this.#normalizeInt(value, 0n, 0xffn, mode)
     this.#ensureCapacity(1)
     this.#buffer[this.#pointer++] = Number(v)
     return this
   }
 
   setUint8(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const v = this.#normalizeInt(value, 0n, 0xFFn, mode)
+    const v = this.#normalizeInt(value, 0n, 0xffn, mode)
     this.#ensureCapacity(1)
     this.#buffer[this.#pointer] = Number(v)
     return this
@@ -83,203 +85,203 @@ export class ByteWriter {
 
   // #region int8
   writeInt8(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, -0x80n, 0x7Fn, mode, 0xFFn)
+    const bigintValue = this.#normalizeInt(value, -0x80n, 0x7fn, mode, 0xffn)
     this.#ensureCapacity(1)
-    this.#buffer[this.#pointer++] = Number(bigintValue & 0xFFn)
+    this.#buffer[this.#pointer++] = Number(bigintValue & 0xffn)
     return this
   }
 
   setInt8(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, -0x80n, 0x7Fn, mode, 0xFFn)
+    const bigintValue = this.#normalizeInt(value, -0x80n, 0x7fn, mode, 0xffn)
     this.#ensureCapacity(1)
-    this.#buffer[this.#pointer] = Number(bigintValue & 0xFFn)
+    this.#buffer[this.#pointer] = Number(bigintValue & 0xffn)
     return this
   }
   // #endregion int8
 
   // #region uint16LE
   writeUint16LE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const v = this.#normalizeInt(value, 0n, 0xFF_FFn, mode)
+    const v = this.#normalizeInt(value, 0n, 0xff_ffn, mode)
     this.#ensureCapacity(2)
-    this.#buffer[this.#pointer++] = Number(v & 0xFFn)
-    this.#buffer[this.#pointer++] = Number((v >> 8n) & 0xFFn)
+    this.#buffer[this.#pointer++] = Number(v & 0xffn)
+    this.#buffer[this.#pointer++] = Number((v >> 8n) & 0xffn)
     return this
   }
 
   setUint16LE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const v = this.#normalizeInt(value, 0n, 0xFF_FFn, mode)
+    const v = this.#normalizeInt(value, 0n, 0xff_ffn, mode)
     this.#ensureCapacity(2)
-    this.#buffer[this.#pointer] = Number(v & 0xFFn)
-    this.#buffer[this.#pointer + 1] = Number((v >> 8n) & 0xFFn)
+    this.#buffer[this.#pointer] = Number(v & 0xffn)
+    this.#buffer[this.#pointer + 1] = Number((v >> 8n) & 0xffn)
     return this
   }
   // #endregion uint16LE
 
   // #region int16LE
   writeInt16LE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, -0x8000n, 0x7FFFn, mode, 0xFF_FFn)
+    const bigintValue = this.#normalizeInt(value, -0x8000n, 0x7fffn, mode, 0xff_ffn)
     this.#ensureCapacity(2)
-    const unsigned = bigintValue & 0xFF_FFn
-    this.#buffer[this.#pointer++] = Number(unsigned & 0xFFn)
-    this.#buffer[this.#pointer++] = Number((unsigned >> 8n) & 0xFFn)
+    const unsigned = bigintValue & 0xff_ffn
+    this.#buffer[this.#pointer++] = Number(unsigned & 0xffn)
+    this.#buffer[this.#pointer++] = Number((unsigned >> 8n) & 0xffn)
     return this
   }
 
   setInt16LE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, -0x8000n, 0x7FFFn, mode, 0xFF_FFn)
+    const bigintValue = this.#normalizeInt(value, -0x8000n, 0x7fffn, mode, 0xff_ffn)
     this.#ensureCapacity(2)
-    const unsigned = bigintValue & 0xFF_FFn
-    this.#buffer[this.#pointer] = Number(unsigned & 0xFFn)
-    this.#buffer[this.#pointer + 1] = Number((unsigned >> 8n) & 0xFFn)
+    const unsigned = bigintValue & 0xff_ffn
+    this.#buffer[this.#pointer] = Number(unsigned & 0xffn)
+    this.#buffer[this.#pointer + 1] = Number((unsigned >> 8n) & 0xffn)
     return this
   }
   // #endregion int16LE
 
   // #region uint16BE
   writeUint16BE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const v = this.#normalizeInt(value, 0n, 0xFF_FFn, mode)
+    const v = this.#normalizeInt(value, 0n, 0xff_ffn, mode)
     this.#ensureCapacity(2)
-    this.#buffer[this.#pointer++] = Number((v >> 8n) & 0xFFn)
-    this.#buffer[this.#pointer++] = Number(v & 0xFFn)
+    this.#buffer[this.#pointer++] = Number((v >> 8n) & 0xffn)
+    this.#buffer[this.#pointer++] = Number(v & 0xffn)
     return this
   }
 
   setUint16BE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const v = this.#normalizeInt(value, 0n, 0xFF_FFn, mode)
+    const v = this.#normalizeInt(value, 0n, 0xff_ffn, mode)
     this.#ensureCapacity(2)
-    this.#buffer[this.#pointer] = Number((v >> 8n) & 0xFFn)
-    this.#buffer[this.#pointer + 1] = Number(v & 0xFFn)
+    this.#buffer[this.#pointer] = Number((v >> 8n) & 0xffn)
+    this.#buffer[this.#pointer + 1] = Number(v & 0xffn)
     return this
   }
   // #endregion uint16BE
 
   // #region int16BE
   writeInt16BE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, -0x8000n, 0x7FFFn, mode, 0xFF_FFn)
+    const bigintValue = this.#normalizeInt(value, -0x8000n, 0x7fffn, mode, 0xff_ffn)
     this.#ensureCapacity(2)
-    const unsigned = bigintValue & 0xFF_FFn
-    this.#buffer[this.#pointer++] = Number((unsigned >> 8n) & 0xFFn)
-    this.#buffer[this.#pointer++] = Number(unsigned & 0xFFn)
+    const unsigned = bigintValue & 0xff_ffn
+    this.#buffer[this.#pointer++] = Number((unsigned >> 8n) & 0xffn)
+    this.#buffer[this.#pointer++] = Number(unsigned & 0xffn)
     return this
   }
 
   setInt16BE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, -0x8000n, 0x7FFFn, mode, 0xFF_FFn)
+    const bigintValue = this.#normalizeInt(value, -0x8000n, 0x7fffn, mode, 0xff_ffn)
     this.#ensureCapacity(2)
-    const unsigned = bigintValue & 0xFF_FFn
-    this.#buffer[this.#pointer] = Number((unsigned >> 8n) & 0xFFn)
-    this.#buffer[this.#pointer + 1] = Number(unsigned & 0xFFn)
+    const unsigned = bigintValue & 0xff_ffn
+    this.#buffer[this.#pointer] = Number((unsigned >> 8n) & 0xffn)
+    this.#buffer[this.#pointer + 1] = Number(unsigned & 0xffn)
     return this
   }
   // #endregion int16BE
 
   // #region uint32LE
   writeUint32LE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const v = this.#normalizeInt(value, 0n, 0xFF_FF_FF_FFn, mode)
+    const v = this.#normalizeInt(value, 0n, 0xff_ff_ff_ffn, mode)
     this.#ensureCapacity(4)
-    this.#buffer[this.#pointer++] = Number(v & 0xFFn)
-    this.#buffer[this.#pointer++] = Number((v >> 8n) & 0xFFn)
-    this.#buffer[this.#pointer++] = Number((v >> 16n) & 0xFFn)
-    this.#buffer[this.#pointer++] = Number((v >> 24n) & 0xFFn)
+    this.#buffer[this.#pointer++] = Number(v & 0xffn)
+    this.#buffer[this.#pointer++] = Number((v >> 8n) & 0xffn)
+    this.#buffer[this.#pointer++] = Number((v >> 16n) & 0xffn)
+    this.#buffer[this.#pointer++] = Number((v >> 24n) & 0xffn)
     return this
   }
 
   setUint32LE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const v = this.#normalizeInt(value, 0n, 0xFF_FF_FF_FFn, mode)
+    const v = this.#normalizeInt(value, 0n, 0xff_ff_ff_ffn, mode)
     this.#ensureCapacity(4)
-    this.#buffer[this.#pointer] = Number(v & 0xFFn)
-    this.#buffer[this.#pointer + 1] = Number((v >> 8n) & 0xFFn)
-    this.#buffer[this.#pointer + 2] = Number((v >> 16n) & 0xFFn)
-    this.#buffer[this.#pointer + 3] = Number((v >> 24n) & 0xFFn)
+    this.#buffer[this.#pointer] = Number(v & 0xffn)
+    this.#buffer[this.#pointer + 1] = Number((v >> 8n) & 0xffn)
+    this.#buffer[this.#pointer + 2] = Number((v >> 16n) & 0xffn)
+    this.#buffer[this.#pointer + 3] = Number((v >> 24n) & 0xffn)
     return this
   }
   // #endregion uint32LE
 
   // #region int32LE
   writeInt32LE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, -0x8000_0000n, 0x7FFF_FFFFn, mode, 0xFF_FF_FF_FFn)
+    const bigintValue = this.#normalizeInt(value, -0x8000_0000n, 0x7fff_ffffn, mode, 0xff_ff_ff_ffn)
     this.#ensureCapacity(4)
-    const unsigned = bigintValue & 0xFF_FF_FF_FFn
-    this.#buffer[this.#pointer++] = Number(unsigned & 0xFFn)
-    this.#buffer[this.#pointer++] = Number((unsigned >> 8n) & 0xFFn)
-    this.#buffer[this.#pointer++] = Number((unsigned >> 16n) & 0xFFn)
-    this.#buffer[this.#pointer++] = Number((unsigned >> 24n) & 0xFFn)
+    const unsigned = bigintValue & 0xff_ff_ff_ffn
+    this.#buffer[this.#pointer++] = Number(unsigned & 0xffn)
+    this.#buffer[this.#pointer++] = Number((unsigned >> 8n) & 0xffn)
+    this.#buffer[this.#pointer++] = Number((unsigned >> 16n) & 0xffn)
+    this.#buffer[this.#pointer++] = Number((unsigned >> 24n) & 0xffn)
     return this
   }
 
   setInt32LE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, -0x8000_0000n, 0x7FFF_FFFFn, mode, 0xFF_FF_FF_FFn)
+    const bigintValue = this.#normalizeInt(value, -0x8000_0000n, 0x7fff_ffffn, mode, 0xff_ff_ff_ffn)
     this.#ensureCapacity(4)
-    const unsigned = bigintValue & 0xFF_FF_FF_FFn
-    this.#buffer[this.#pointer] = Number(unsigned & 0xFFn)
-    this.#buffer[this.#pointer + 1] = Number((unsigned >> 8n) & 0xFFn)
-    this.#buffer[this.#pointer + 2] = Number((unsigned >> 16n) & 0xFFn)
-    this.#buffer[this.#pointer + 3] = Number((unsigned >> 24n) & 0xFFn)
+    const unsigned = bigintValue & 0xff_ff_ff_ffn
+    this.#buffer[this.#pointer] = Number(unsigned & 0xffn)
+    this.#buffer[this.#pointer + 1] = Number((unsigned >> 8n) & 0xffn)
+    this.#buffer[this.#pointer + 2] = Number((unsigned >> 16n) & 0xffn)
+    this.#buffer[this.#pointer + 3] = Number((unsigned >> 24n) & 0xffn)
     return this
   }
   // #endregion int32LE
 
   // #region uint32BE
   writeUint32BE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const v = this.#normalizeInt(value, 0n, 0xFF_FF_FF_FFn, mode)
+    const v = this.#normalizeInt(value, 0n, 0xff_ff_ff_ffn, mode)
     this.#ensureCapacity(4)
-    this.#buffer[this.#pointer++] = Number((v >> 24n) & 0xFFn)
-    this.#buffer[this.#pointer++] = Number((v >> 16n) & 0xFFn)
-    this.#buffer[this.#pointer++] = Number((v >> 8n) & 0xFFn)
-    this.#buffer[this.#pointer++] = Number(v & 0xFFn)
+    this.#buffer[this.#pointer++] = Number((v >> 24n) & 0xffn)
+    this.#buffer[this.#pointer++] = Number((v >> 16n) & 0xffn)
+    this.#buffer[this.#pointer++] = Number((v >> 8n) & 0xffn)
+    this.#buffer[this.#pointer++] = Number(v & 0xffn)
     return this
   }
 
   setUint32BE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const v = this.#normalizeInt(value, 0n, 0xFF_FF_FF_FFn, mode)
+    const v = this.#normalizeInt(value, 0n, 0xff_ff_ff_ffn, mode)
     this.#ensureCapacity(4)
-    this.#buffer[this.#pointer] = Number((v >> 24n) & 0xFFn)
-    this.#buffer[this.#pointer + 1] = Number((v >> 16n) & 0xFFn)
-    this.#buffer[this.#pointer + 2] = Number((v >> 8n) & 0xFFn)
-    this.#buffer[this.#pointer + 3] = Number(v & 0xFFn)
+    this.#buffer[this.#pointer] = Number((v >> 24n) & 0xffn)
+    this.#buffer[this.#pointer + 1] = Number((v >> 16n) & 0xffn)
+    this.#buffer[this.#pointer + 2] = Number((v >> 8n) & 0xffn)
+    this.#buffer[this.#pointer + 3] = Number(v & 0xffn)
     return this
   }
   // #endregion uint32BE
 
   // #region int32BE
   writeInt32BE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, -0x8000_0000n, 0x7FFF_FFFFn, mode, 0xFF_FF_FF_FFn)
+    const bigintValue = this.#normalizeInt(value, -0x8000_0000n, 0x7fff_ffffn, mode, 0xff_ff_ff_ffn)
     this.#ensureCapacity(4)
-    const unsigned = bigintValue & 0xFF_FF_FF_FFn
-    this.#buffer[this.#pointer++] = Number((unsigned >> 24n) & 0xFFn)
-    this.#buffer[this.#pointer++] = Number((unsigned >> 16n) & 0xFFn)
-    this.#buffer[this.#pointer++] = Number((unsigned >> 8n) & 0xFFn)
-    this.#buffer[this.#pointer++] = Number(unsigned & 0xFFn)
+    const unsigned = bigintValue & 0xff_ff_ff_ffn
+    this.#buffer[this.#pointer++] = Number((unsigned >> 24n) & 0xffn)
+    this.#buffer[this.#pointer++] = Number((unsigned >> 16n) & 0xffn)
+    this.#buffer[this.#pointer++] = Number((unsigned >> 8n) & 0xffn)
+    this.#buffer[this.#pointer++] = Number(unsigned & 0xffn)
     return this
   }
 
   setInt32BE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, -0x8000_0000n, 0x7FFF_FFFFn, mode, 0xFF_FF_FF_FFn)
+    const bigintValue = this.#normalizeInt(value, -0x8000_0000n, 0x7fff_ffffn, mode, 0xff_ff_ff_ffn)
     this.#ensureCapacity(4)
-    const unsigned = bigintValue & 0xFF_FF_FF_FFn
-    this.#buffer[this.#pointer] = Number((unsigned >> 24n) & 0xFFn)
-    this.#buffer[this.#pointer + 1] = Number((unsigned >> 16n) & 0xFFn)
-    this.#buffer[this.#pointer + 2] = Number((unsigned >> 8n) & 0xFFn)
-    this.#buffer[this.#pointer + 3] = Number(unsigned & 0xFFn)
+    const unsigned = bigintValue & 0xff_ff_ff_ffn
+    this.#buffer[this.#pointer] = Number((unsigned >> 24n) & 0xffn)
+    this.#buffer[this.#pointer + 1] = Number((unsigned >> 16n) & 0xffn)
+    this.#buffer[this.#pointer + 2] = Number((unsigned >> 8n) & 0xffn)
+    this.#buffer[this.#pointer + 3] = Number(unsigned & 0xffn)
     return this
   }
   // #endregion int32BE
 
   // #region uint64LE
   writeUint64LE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, 0n, 0xFFFF_FFFF_FFFF_FFFFn, mode)
+    const bigintValue = this.#normalizeInt(value, 0n, 0xffff_ffff_ffff_ffffn, mode)
     this.#ensureCapacity(8)
     for (let i = 0; i < 8; i++) {
-      this.#buffer[this.#pointer++] = Number((bigintValue >> BigInt(i * 8)) & 0xFFn)
+      this.#buffer[this.#pointer++] = Number((bigintValue >> BigInt(i * 8)) & 0xffn)
     }
     return this
   }
 
   setUint64LE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, 0n, 0xFFFF_FFFF_FFFF_FFFFn, mode)
+    const bigintValue = this.#normalizeInt(value, 0n, 0xffff_ffff_ffff_ffffn, mode)
     this.#ensureCapacity(8)
     for (let i = 0; i < 8; i++) {
-      this.#buffer[this.#pointer + i] = Number((bigintValue >> BigInt(i * 8)) & 0xFFn)
+      this.#buffer[this.#pointer + i] = Number((bigintValue >> BigInt(i * 8)) & 0xffn)
     }
     return this
   }
@@ -287,21 +289,33 @@ export class ByteWriter {
 
   // #region int64LE
   writeInt64LE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, -0x8000_0000_0000_0000n, 0x7FFF_FFFF_FFFF_FFFFn, mode, 0xFFFF_FFFF_FFFF_FFFFn)
+    const bigintValue = this.#normalizeInt(
+      value,
+      -0x8000_0000_0000_0000n,
+      0x7fff_ffff_ffff_ffffn,
+      mode,
+      0xffff_ffff_ffff_ffffn,
+    )
     this.#ensureCapacity(8)
-    const unsigned = bigintValue & 0xFFFF_FFFF_FFFF_FFFFn
+    const unsigned = bigintValue & 0xffff_ffff_ffff_ffffn
     for (let i = 0; i < 8; i++) {
-      this.#buffer[this.#pointer++] = Number((unsigned >> BigInt(i * 8)) & 0xFFn)
+      this.#buffer[this.#pointer++] = Number((unsigned >> BigInt(i * 8)) & 0xffn)
     }
     return this
   }
 
   setInt64LE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, -0x8000_0000_0000_0000n, 0x7FFF_FFFF_FFFF_FFFFn, mode, 0xFFFF_FFFF_FFFF_FFFFn)
+    const bigintValue = this.#normalizeInt(
+      value,
+      -0x8000_0000_0000_0000n,
+      0x7fff_ffff_ffff_ffffn,
+      mode,
+      0xffff_ffff_ffff_ffffn,
+    )
     this.#ensureCapacity(8)
-    const unsigned = bigintValue & 0xFFFF_FFFF_FFFF_FFFFn
+    const unsigned = bigintValue & 0xffff_ffff_ffff_ffffn
     for (let i = 0; i < 8; i++) {
-      this.#buffer[this.#pointer + i] = Number((unsigned >> BigInt(i * 8)) & 0xFFn)
+      this.#buffer[this.#pointer + i] = Number((unsigned >> BigInt(i * 8)) & 0xffn)
     }
     return this
   }
@@ -309,19 +323,19 @@ export class ByteWriter {
 
   // #region uint64BE
   writeUint64BE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, 0n, 0xFFFF_FFFF_FFFF_FFFFn, mode)
+    const bigintValue = this.#normalizeInt(value, 0n, 0xffff_ffff_ffff_ffffn, mode)
     this.#ensureCapacity(8)
     for (let i = 0; i < 8; i++) {
-      this.#buffer[this.#pointer++] = Number((bigintValue >> BigInt((7 - i) * 8)) & 0xFFn)
+      this.#buffer[this.#pointer++] = Number((bigintValue >> BigInt((7 - i) * 8)) & 0xffn)
     }
     return this
   }
 
   setUint64BE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, 0n, 0xFFFF_FFFF_FFFF_FFFFn, mode)
+    const bigintValue = this.#normalizeInt(value, 0n, 0xffff_ffff_ffff_ffffn, mode)
     this.#ensureCapacity(8)
     for (let i = 0; i < 8; i++) {
-      this.#buffer[this.#pointer + i] = Number((bigintValue >> BigInt((7 - i) * 8)) & 0xFFn)
+      this.#buffer[this.#pointer + i] = Number((bigintValue >> BigInt((7 - i) * 8)) & 0xffn)
     }
     return this
   }
@@ -329,21 +343,33 @@ export class ByteWriter {
 
   // #region int64BE
   writeInt64BE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, -0x8000_0000_0000_0000n, 0x7FFF_FFFF_FFFF_FFFFn, mode, 0xFFFF_FFFF_FFFF_FFFFn)
+    const bigintValue = this.#normalizeInt(
+      value,
+      -0x8000_0000_0000_0000n,
+      0x7fff_ffff_ffff_ffffn,
+      mode,
+      0xffff_ffff_ffff_ffffn,
+    )
     this.#ensureCapacity(8)
-    const unsigned = bigintValue & 0xFFFF_FFFF_FFFF_FFFFn
+    const unsigned = bigintValue & 0xffff_ffff_ffff_ffffn
     for (let i = 0; i < 8; i++) {
-      this.#buffer[this.#pointer++] = Number((unsigned >> BigInt((7 - i) * 8)) & 0xFFn)
+      this.#buffer[this.#pointer++] = Number((unsigned >> BigInt((7 - i) * 8)) & 0xffn)
     }
     return this
   }
 
   setInt64BE(value: number | bigint, mode: ByteAccessorTruncateMode = 'truncate') {
-    const bigintValue = this.#normalizeInt(value, -0x8000_0000_0000_0000n, 0x7FFF_FFFF_FFFF_FFFFn, mode, 0xFFFF_FFFF_FFFF_FFFFn)
+    const bigintValue = this.#normalizeInt(
+      value,
+      -0x8000_0000_0000_0000n,
+      0x7fff_ffff_ffff_ffffn,
+      mode,
+      0xffff_ffff_ffff_ffffn,
+    )
     this.#ensureCapacity(8)
-    const unsigned = bigintValue & 0xFFFF_FFFF_FFFF_FFFFn
+    const unsigned = bigintValue & 0xffff_ffff_ffff_ffffn
     for (let i = 0; i < 8; i++) {
-      this.#buffer[this.#pointer + i] = Number((unsigned >> BigInt((7 - i) * 8)) & 0xFFn)
+      this.#buffer[this.#pointer + i] = Number((unsigned >> BigInt((7 - i) * 8)) & 0xffn)
     }
     return this
   }
@@ -375,9 +401,13 @@ export class ByteWriter {
   // #endregion string
 
   // #region bit
-  setBit(value: number, bitPosStart: number, bitPosEnd: number, mode: ByteAccessorTruncateMode = 'truncate') {
-    if (bitPosStart < 1 || bitPosEnd < bitPosStart)
-      throw new RangeError('Invalid bit range')
+  setBit(
+    value: number,
+    bitPosStart: number,
+    bitPosEnd: number,
+    mode: ByteAccessorTruncateMode = 'truncate',
+  ) {
+    if (bitPosStart < 1 || bitPosEnd < bitPosStart) throw new RangeError('Invalid bit range')
     const bitCount = bitPosEnd - bitPosStart + 1
     const max = (1 << bitCount) - 1
     value = this.#checkRange(value, 0, max, mode)
@@ -393,8 +423,8 @@ export class ByteWriter {
       const mask = ((1 << bitsInThisByte) - 1) << lsbEnd
       const _shift = remaining - bitsInThisByte
       const valueBits = (value >> _shift) & ((1 << bitsInThisByte) - 1)
-      this.#buffer[this.#pointer + byteIndex]
-        = (this.#buffer[this.#pointer + byteIndex] & ~mask) | (valueBits << lsbEnd)
+      this.#buffer[this.#pointer + byteIndex] =
+        (this.#buffer[this.#pointer + byteIndex] & ~mask) | (valueBits << lsbEnd)
       remaining -= bitsInThisByte
       msb0 += bitsInThisByte
     }
@@ -425,8 +455,12 @@ export class ByteWriter {
   // #endregion pointer
 
   // #region output
-  toUint8Array() { return this.#buffer.slice(0, this.#end) }
-  slice(start = 0, end = this.#end) { return this.#buffer.slice(start, end) }
+  toUint8Array() {
+    return this.#buffer.slice(0, this.#end)
+  }
+  slice(start = 0, end = this.#end) {
+    return this.#buffer.slice(start, end)
+  }
   // #endregion output
 }
 // #endregion ByteWriter
@@ -440,16 +474,23 @@ export class ByteReader {
     this.#buffer = buffer
   }
 
-  get pointer() { return this.#pointer }
-  get length() { return this.#buffer.length }
-  get byteLength() { return this.#buffer.length }
-  get remaining() { return this.#buffer.length - this.#pointer }
+  get pointer() {
+    return this.#pointer
+  }
+  get length() {
+    return this.#buffer.length
+  }
+  get byteLength() {
+    return this.#buffer.length
+  }
+  get remaining() {
+    return this.#buffer.length - this.#pointer
+  }
 
   // #region internal
   #checkReadable(bytes: number, mode: ByteAccessorReadMode = 'error') {
     if (this.#pointer + bytes > this.#buffer.length) {
-      if (mode === 'blank' || mode === 'fill')
-        return
+      if (mode === 'blank' || mode === 'fill') return
       throw new RangeError(`Cannot read ${bytes} bytes: only ${this.remaining} bytes remaining`)
     }
   }
@@ -497,7 +538,10 @@ export class ByteReader {
 
   getUint16LE(mode: ByteAccessorReadMode = 'error'): bigint {
     this.#checkReadable(2, mode)
-    return BigInt(this.#readByte(this.#pointer, mode)) | (BigInt(this.#readByte(this.#pointer + 1, mode)) << 8n)
+    return (
+      BigInt(this.#readByte(this.#pointer, mode))
+      | (BigInt(this.#readByte(this.#pointer + 1, mode)) << 8n)
+    )
   }
   // #endregion uint16LE
 
@@ -522,7 +566,10 @@ export class ByteReader {
 
   getUint16BE(mode: ByteAccessorReadMode = 'error'): bigint {
     this.#checkReadable(2, mode)
-    return (BigInt(this.#readByte(this.#pointer, mode)) << 8n) | BigInt(this.#readByte(this.#pointer + 1, mode))
+    return (
+      (BigInt(this.#readByte(this.#pointer, mode)) << 8n)
+      | BigInt(this.#readByte(this.#pointer + 1, mode))
+    )
   }
   // #endregion uint16BE
 
@@ -547,10 +594,12 @@ export class ByteReader {
 
   getUint32LE(mode: ByteAccessorReadMode = 'error'): bigint {
     this.#checkReadable(4, mode)
-    return BigInt(this.#readByte(this.#pointer, mode))
+    return (
+      BigInt(this.#readByte(this.#pointer, mode))
       | (BigInt(this.#readByte(this.#pointer + 1, mode)) << 8n)
       | (BigInt(this.#readByte(this.#pointer + 2, mode)) << 16n)
       | (BigInt(this.#readByte(this.#pointer + 3, mode)) << 24n)
+    )
   }
   // #endregion uint32LE
 
@@ -575,10 +624,12 @@ export class ByteReader {
 
   getUint32BE(mode: ByteAccessorReadMode = 'error'): bigint {
     this.#checkReadable(4, mode)
-    return (BigInt(this.#readByte(this.#pointer, mode)) << 24n)
+    return (
+      (BigInt(this.#readByte(this.#pointer, mode)) << 24n)
       | (BigInt(this.#readByte(this.#pointer + 1, mode)) << 16n)
       | (BigInt(this.#readByte(this.#pointer + 2, mode)) << 8n)
       | BigInt(this.#readByte(this.#pointer + 3, mode))
+    )
   }
   // #endregion uint32BE
 
@@ -660,8 +711,7 @@ export class ByteReader {
   getBytes(length: number, mode: ByteAccessorReadMode = 'error') {
     this.#checkReadable(length, mode)
     const chunk = new Uint8Array(length)
-    for (let i = 0; i < length; i++)
-      chunk[i] = this.#readByte(this.#pointer + i, mode)
+    for (let i = 0; i < length; i++) chunk[i] = this.#readByte(this.#pointer + i, mode)
     return chunk
   }
   // #endregion bytes
@@ -678,8 +728,7 @@ export class ByteReader {
 
   // #region bit
   readBit(bitPosStart: number, bitPosEnd: number, mode: ByteAccessorReadMode = 'error') {
-    if (bitPosStart < 1 || bitPosEnd < bitPosStart)
-      throw new RangeError('Invalid bit range')
+    if (bitPosStart < 1 || bitPosEnd < bitPosStart) throw new RangeError('Invalid bit range')
     const bitCount = bitPosEnd - bitPosStart + 1
     const endByte = Math.floor((bitPosEnd - 1) / 8)
     this.#checkReadable(endByte + 1, mode)

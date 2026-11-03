@@ -3,15 +3,13 @@ export const useTransitionState = (target: Ref<HTMLElement | null>, checkName: s
 
   const isTransitioning = computed(() => state.value)
 
-  useEventListener<TransitionEvent>(target, 'transitionstart', (ev) => {
-    if (ev.propertyName !== checkName)
-      return
+  useEventListener<TransitionEvent>(target, 'transitionstart', ev => {
+    if (ev.propertyName !== checkName) return
     state.value = true
   })
 
-  useEventListener<TransitionEvent>(target, 'transitionend', (ev) => {
-    if (ev.propertyName !== checkName)
-      return
+  useEventListener<TransitionEvent>(target, 'transitionend', ev => {
+    if (ev.propertyName !== checkName) return
     state.value = false
   })
 

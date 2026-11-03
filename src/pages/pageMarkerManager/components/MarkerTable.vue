@@ -25,24 +25,20 @@ const { width, height } = useElementSize(tableContainerRef)
 const { DialogService } = useGlobalDialog()
 
 const playBilibiliVideo = (row: MarkerVo) => {
-  DialogService
-    .props({
-      url: row.videoPath,
-      width: 640,
-      height: 360,
-    })
-    .open(AppBilibiliVideoPlayer)
+  DialogService.props({
+    url: row.videoPath,
+    width: 640,
+    height: 360,
+  }).open(AppBilibiliVideoPlayer)
 }
 
 const getItemAreaNames = ({ itemList = [] }: MarkerVo) => {
   return itemList.reduce((set, { itemId }) => {
     const item = itemStore.itemIdMap.get(itemId!)
-    if (!item)
-      return set.add(`(itemId: ${itemId})`)
+    if (!item) return set.add(`(itemId: ${itemId})`)
 
     const area = areaStore.areaIdMap.get(item.areaId!)
-    if (!area)
-      return set.add(`(itemId: ${itemId})`)
+    if (!area) return set.add(`(itemId: ${itemId})`)
 
     return set.add(area.name ?? `(areaId: ${area.id!})`)
   }, new Set<string>())
@@ -50,10 +46,7 @@ const getItemAreaNames = ({ itemList = [] }: MarkerVo) => {
 </script>
 
 <template>
-  <div
-    ref="tableContainerRef"
-    class="flex-1 overflow-hidden px-2"
-  >
+  <div ref="tableContainerRef" class="flex-1 overflow-hidden px-2">
     <el-table
       :data="markerList"
       :width="width"
@@ -102,10 +95,13 @@ const getItemAreaNames = ({ itemList = [] }: MarkerVo) => {
 
       <el-table-column prop="videoPath" align="center" label="视频" :width="100">
         <template #default="{ row }">
-          <el-button v-if="row.videoPath" text :icon="VideoCamera" @click="() => playBilibiliVideo(row)" />
-          <div v-else>
-            无
-          </div>
+          <el-button
+            v-if="row.videoPath"
+            text
+            :icon="VideoCamera"
+            @click="() => playBilibiliVideo(row)"
+          />
+          <div v-else>无</div>
         </template>
       </el-table-column>
 
@@ -115,7 +111,12 @@ const getItemAreaNames = ({ itemList = [] }: MarkerVo) => {
         </template>
       </el-table-column>
 
-      <el-table-column prop="refreshTime" label="刷新类型" :formatter="refreshTimeFormatter" :width="150" />
+      <el-table-column
+        prop="refreshTime"
+        label="刷新类型"
+        :formatter="refreshTimeFormatter"
+        :width="150"
+      />
 
       <el-table-column prop="hiddenFlag" label="flag" :width="90">
         <template #default="{ row }">

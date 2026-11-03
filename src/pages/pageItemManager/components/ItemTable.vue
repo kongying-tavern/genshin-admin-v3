@@ -26,16 +26,14 @@ const itemTypeStore = useItemTypeStore()
 const containerRef = ref<HTMLElement>()
 const { height, width } = useElementSize(containerRef)
 
-const getCellClassName = (cell: { column: { property?: string }, rowIndex: number }) => {
+const getCellClassName = (cell: { column: { property?: string }; rowIndex: number }) => {
   const { property } = cell.column
-  if (!property)
-    return ''
+  if (!property) return ''
   return `prop-${property}`
 }
 
 const handleCellClick = (row: ItemVo, col: { property?: string }) => {
-  if (col.property !== 'name')
-    return
+  if (col.property !== 'name') return
   emits('review', row)
 }
 
@@ -95,7 +93,13 @@ const proxySelectionChange = (selections: ItemVo[]) => {
 
       <el-table-column label="物品类型" width="150">
         <template #default="{ row }">
-          <el-tag v-for="typeId in row.typeIdList" :key="typeId" disable-transitions type="primary" class="mr-1">
+          <el-tag
+            v-for="typeId in row.typeIdList"
+            :key="typeId"
+            disable-transitions
+            type="primary"
+            class="mr-1"
+          >
             {{ itemTypeStore.itemTypeIdMap.get(typeId)?.name ?? 'unknown' }}
           </el-tag>
         </template>
@@ -109,14 +113,22 @@ const proxySelectionChange = (selections: ItemVo[]) => {
 
       <el-table-column label="描述模板" prop="defaultContent" width="500 " show-overflow-tooltip />
 
-      <el-table-column label="刷新时间" prop="defaultRefreshTime" width="100" :formatter="refreshTimeFormatter" />
+      <el-table-column
+        label="刷新时间"
+        prop="defaultRefreshTime"
+        width="100"
+        :formatter="refreshTimeFormatter"
+      />
 
       <el-table-column label="最后修改" prop="updateTime" width="170">
         <template #default="{ row }">
           <div>
             {{ timeFormatter(undefined, undefined, row.updateTime) }}
           </div>
-          <div :title="userMap[row.updaterId]?.nickname" class="w-[9rem] overflow-hidden  text-ellipsis whitespace-nowrap">
+          <div
+            :title="userMap[row.updaterId]?.nickname"
+            class="w-[9rem] overflow-hidden text-ellipsis whitespace-nowrap"
+          >
             {{ userMap[row.updaterId]?.nickname ?? `(id: ${row.updaterId})` }}
           </div>
         </template>
@@ -127,7 +139,10 @@ const proxySelectionChange = (selections: ItemVo[]) => {
           <div>
             {{ timeFormatter(undefined, undefined, row.createTime) }}
           </div>
-          <div :title="userMap[row.creatorId]?.nickname" class="w-[9rem] overflow-hidden  text-ellipsis whitespace-nowrap">
+          <div
+            :title="userMap[row.creatorId]?.nickname"
+            class="w-[9rem] overflow-hidden text-ellipsis whitespace-nowrap"
+          >
             {{ userMap[row.creatorId]?.nickname ?? `(id: ${row.creatorId})` }}
           </div>
         </template>
@@ -135,13 +150,7 @@ const proxySelectionChange = (selections: ItemVo[]) => {
 
       <el-table-column fixed="right" label="操作" :width="60">
         <template #default="{ row }">
-          <el-button
-            type="danger"
-            text
-            circle
-            :icon="Delete"
-            @click="() => $emit('delete', row)"
-          />
+          <el-button type="danger" text circle :icon="Delete" @click="() => $emit('delete', row)" />
         </template>
       </el-table-column>
     </el-table>

@@ -1,15 +1,6 @@
 <template>
-  <div
-    class="
-      app-loading
-      w-full h-full grid place-content-center
-      bg-[#25313F]
-      text-[#ECE5D8]
-    "
-  >
-    <div class="text-2xl font-bold">
-      正在加载
-    </div>
+  <div class="app-loading w-full h-full grid place-content-center bg-[#25313F] text-[#ECE5D8]">
+    <div class="text-2xl font-bold">正在加载</div>
     <div>前面的区域，马上就能探索~</div>
   </div>
 </template>
@@ -30,8 +21,8 @@
   display: grid;
   place-items: center;
   place-content: center;
-  color: #ECE5D8;
-  background-color: #25313F;
+  color: #ece5d8;
+  background-color: #25313f;
   &::before {
     content: '';
     position: absolute;
@@ -39,7 +30,7 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    border: 4px solid #ECE5D8F0;
+    border: 4px solid #ece5d8f0;
     clip-path: xywh(0 0 50% 50%);
     width: 256px;
     height: 256px;
@@ -53,7 +44,7 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    border: 2px dashed #ECE5D860;
+    border: 2px dashed #ece5d860;
     width: 254px;
     height: 254px;
     border-radius: 128px;

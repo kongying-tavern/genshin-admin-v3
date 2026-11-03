@@ -33,13 +33,21 @@ import { setupApiEnv } from '../_support/pinia'
 const enabled = await probeIntegration(integrationConfigured)
 
 /** 读取筛选结果 id 列表 */
-const searchMarkerIds = async (search: { areaIdList?: number[], itemIdList?: number[], typeIdList?: number[] }) => {
+const searchMarkerIds = async (search: {
+  areaIdList?: number[]
+  itemIdList?: number[]
+  typeIdList?: number[]
+}) => {
   const { data = [] } = await Apis.marker.searchMarkerId({ data: search })
   return data
 }
 
 /** 读取点位完整信息列表 */
-const searchMarkers = async (search: { areaIdList?: number[], itemIdList?: number[], typeIdList?: number[] }) => {
+const searchMarkers = async (search: {
+  areaIdList?: number[]
+  itemIdList?: number[]
+  typeIdList?: number[]
+}) => {
   const { data = [] } = await Apis.marker.searchMarker({ data: search })
   return data
 }
@@ -56,7 +64,11 @@ describe.skipIf(!enabled)('集成：点位体系', () => {
   describe('增删改查', () => {
     it('新建的点位可立即查询到，且关联物品与字段正确落库', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_marker_area', code: 'C:APITEST_MARKER', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_marker_area',
+        code: 'C:APITEST_MARKER',
+        parentId: -1,
+      })
       const itemA = await createTestItem(areaId)
       const itemB = await createTestItem(areaId)
       const title = `${TEST_MARKER_TITLE_PREFIX}crud`
@@ -94,7 +106,11 @@ describe.skipIf(!enabled)('集成：点位体系', () => {
 
     it('更新点位字段后可查询到新值', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_marker_update_area', code: 'C:APITEST_MARKER_UPDATE', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_marker_update_area',
+        code: 'C:APITEST_MARKER_UPDATE',
+        parentId: -1,
+      })
       const itemId = await createTestItem(areaId)
       const markerId = await createTestMarker({ itemList: [{ itemId, count: 1 }] })
       const before = await readTestMarker(markerId)
@@ -121,11 +137,18 @@ describe.skipIf(!enabled)('集成：点位体系', () => {
 
     it('更新点位会整体替换物品关联', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_marker_relink_area', code: 'C:APITEST_MARKER_RELINK', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_marker_relink_area',
+        code: 'C:APITEST_MARKER_RELINK',
+        parentId: -1,
+      })
       const itemA = await createTestItem(areaId)
       const itemB = await createTestItem(areaId)
       const markerId = await createTestMarker({
-        itemList: [{ itemId: itemA, count: 1 }, { itemId: itemB, count: 1 }],
+        itemList: [
+          { itemId: itemA, count: 1 },
+          { itemId: itemB, count: 1 },
+        ],
       })
       const before = await readTestMarker(markerId)
 
@@ -150,7 +173,11 @@ describe.skipIf(!enabled)('集成：点位体系', () => {
 
     it('使用过期版本号更新被拒绝', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_marker_version_area', code: 'C:APITEST_MARKER_VERSION', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_marker_version_area',
+        code: 'C:APITEST_MARKER_VERSION',
+        parentId: -1,
+      })
       const itemId = await createTestItem(areaId)
       const markerId = await createTestMarker({ itemList: [{ itemId, count: 1 }] })
       const before = await readTestMarker(markerId)
@@ -168,23 +195,29 @@ describe.skipIf(!enabled)('集成：点位体系', () => {
         },
       })
 
-      await expect(Apis.marker.updateMarker({
-        data: {
-          id: markerId,
-          version: before!.version,
-          markerTitle: before!.markerTitle,
-          position: before!.position,
-          content: 'stale-update',
-          refreshTime: before!.refreshTime,
-          extra: {},
-          itemList: [{ itemId, count: 1 }],
-        },
-      })).rejects.toThrow('该点位已更新，请重新提交')
+      await expect(
+        Apis.marker.updateMarker({
+          data: {
+            id: markerId,
+            version: before!.version,
+            markerTitle: before!.markerTitle,
+            position: before!.position,
+            content: 'stale-update',
+            refreshTime: before!.refreshTime,
+            extra: {},
+            itemList: [{ itemId, count: 1 }],
+          },
+        }),
+      ).rejects.toThrow('该点位已更新，请重新提交')
     })
 
     it('删除点位后无法再查询到，物品不受影响', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_marker_delete_area', code: 'C:APITEST_MARKER_DELETE', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_marker_delete_area',
+        code: 'C:APITEST_MARKER_DELETE',
+        parentId: -1,
+      })
       const itemId = await createTestItem(areaId)
       const markerId = await createTestMarker({ itemList: [{ itemId, count: 1 }] })
 
@@ -201,16 +234,20 @@ describe.skipIf(!enabled)('集成：点位体系', () => {
 
       // 现状：deleteMarker 会先构造历史记录，点位不存在时 buildMarkerDto 返回 null，
       // saveHistory 中的 List.of(null) 直接抛空指针，接口返回 500 而非业务提示。
-      await expect(Apis.marker.deleteMarker({ pathParams: { markerId: 999999 } }))
-        .rejects
-        .toThrow('Internal Server Error')
+      await expect(Apis.marker.deleteMarker({ pathParams: { markerId: 999999 } })).rejects.toThrow(
+        'Internal Server Error',
+      )
     })
   })
 
   describe('查询：按物品 / 地区 / 分类筛选', () => {
     it('可按物品、地区与分类检索到点位', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_marker_filter_area', code: 'C:APITEST_MARKER_FILTER', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_marker_filter_area',
+        code: 'C:APITEST_MARKER_FILTER',
+        parentId: -1,
+      })
       const typeId = await createTestItemType()
       const itemId = await createTestItem(areaId, { typeIdList: [typeId] })
       const markerId = await createTestMarker({ itemList: [{ itemId, count: 1 }] })
@@ -227,7 +264,11 @@ describe.skipIf(!enabled)('集成：点位体系', () => {
 
     it('按地区检索不会自动展开子地区', async () => {
       await loginAsTestAccount()
-      const rootId = await createTestArea({ name: '__apitest_marker_root_area', code: 'C:APITEST_MARKER_ROOT', parentId: -1 })
+      const rootId = await createTestArea({
+        name: '__apitest_marker_root_area',
+        code: 'C:APITEST_MARKER_ROOT',
+        parentId: -1,
+      })
       const childId = await createTestArea({
         name: '__apitest_marker_child_area',
         code: 'C:APITEST_MARKER_CHILD',
@@ -243,9 +284,11 @@ describe.skipIf(!enabled)('集成：点位体系', () => {
     it('同时传入两类筛选条件时提示条件冲突', async () => {
       await loginAsTestAccount()
 
-      await expect(Apis.marker.searchMarkerId({
-        data: { areaIdList: [-1], itemIdList: [999999] },
-      })).rejects.toThrow('条件冲突')
+      await expect(
+        Apis.marker.searchMarkerId({
+          data: { areaIdList: [-1], itemIdList: [999999] },
+        }),
+      ).rejects.toThrow('条件冲突')
     })
   })
 })

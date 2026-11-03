@@ -13,7 +13,12 @@ export const requireCheck = (trigger: Trigger, name: string) => ({
   trigger,
 })
 
-export const lengthCheck = (trigger: Trigger, name: string, max: number, min = 1): FormItemRule => ({
+export const lengthCheck = (
+  trigger: Trigger,
+  name: string,
+  max: number,
+  min = 1,
+): FormItemRule => ({
   required: true,
   message: `${name}需要 ${min} - ${max} 个非空白字符`,
   pattern: new RegExp(`\\S{${min},${max}}`),

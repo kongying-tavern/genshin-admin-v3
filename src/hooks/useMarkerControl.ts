@@ -35,46 +35,42 @@ const _useMarkerControl = () => {
   const cachedMarkerId = ref<number>()
 
   const cachedMarkerVo = computed<GSMarkerInfo | null>(() => {
-    if (cachedMarkerId.value === undefined)
-      return null
+    if (cachedMarkerId.value === undefined) return null
     return mapStateStore.currentMarkerIdMap.get(cachedMarkerId.value) ?? null
   })
 
-  const {
-    hasHover,
-    addFocus,
-    addHover,
-    removeFocus,
-    removeHover,
-  } = mapStateStore.interaction
+  const { hasHover, addFocus, addHover, removeFocus, removeHover } = mapStateStore.interaction
 
-  const { isProcessing: isMultiSelecting } = mapStateStore.subscribeMission('markerMultiSelect', () => '')
+  const { isProcessing: isMultiSelecting } = mapStateStore.subscribeMission(
+    'markerMultiSelect',
+    () => '',
+  )
 
   const focus = computed(() => {
-    if (isMultiSelecting.value || hideMarkerPopover.value)
-      return
+    if (isMultiSelecting.value || hideMarkerPopover.value) return
     if (mapStateStore.interaction.isPopoverOnHover) {
-      const hoverIds = mapStateStore.interaction.hoverElements.get(MARKER_INTERACTION_KEY) as (Set<number> | undefined)
-      if (!hoverIds || hoverIds.size > 1)
-        return
+      const hoverIds = mapStateStore.interaction.hoverElements.get(MARKER_INTERACTION_KEY) as
+        | Set<number>
+        | undefined
+      if (!hoverIds || hoverIds.size > 1) return
       const markerId = hoverIds.values().next().value!
       return mapStateStore.currentMarkerIdMap.get(markerId)
-    }
-    else {
-      const focusIds = mapStateStore.interaction.focusElements.get(MARKER_INTERACTION_KEY) as (Set<number> | undefined)
-      if (!focusIds || focusIds.size > 1)
-        return
+    } else {
+      const focusIds = mapStateStore.interaction.focusElements.get(MARKER_INTERACTION_KEY) as
+        | Set<number>
+        | undefined
+      if (!focusIds || focusIds.size > 1) return
       const markerId = focusIds.values().next().value!
       return mapStateStore.currentMarkerIdMap.get(markerId)
     }
   })
 
   const hover = computed(() => {
-    if (!hasHover(MARKER_INTERACTION_KEY))
-      return undefined
-    const hoverIds = mapStateStore.interaction.hoverElements.get(MARKER_INTERACTION_KEY) as (Set<number> | undefined)
-    if (!hoverIds || hoverIds.size > 1)
-      return
+    if (!hasHover(MARKER_INTERACTION_KEY)) return undefined
+    const hoverIds = mapStateStore.interaction.hoverElements.get(MARKER_INTERACTION_KEY) as
+      | Set<number>
+      | undefined
+    if (!hoverIds || hoverIds.size > 1) return
     const markerId = hoverIds.values().next().value!
     return mapStateStore.currentMarkerIdMap.get(markerId)
   })
@@ -85,14 +81,15 @@ const _useMarkerControl = () => {
   /** 是否由 hover 触发弹窗而不是 focus */
   const isPopoverActived = computed(() => focus.value !== undefined)
 
-  whenever(() => !focus.value, () => {
-    mapStateStore.setTempMarkers('focus', [])
-  })
+  whenever(
+    () => !focus.value,
+    () => {
+      mapStateStore.setTempMarkers('focus', [])
+    },
+  )
 
   const normalizeMarker = (markerVo: MarkerVo | GSMarkerInfo): GSMarkerInfo => {
-    return 'render' in markerVo
-      ? markerVo
-      : createRenderMarkers([markerVo])[0]
+    return 'render' in markerVo ? markerVo : createRenderMarkers([markerVo])[0]
   }
 
   const updateLoading = ref(false)
@@ -101,23 +98,25 @@ const _useMarkerControl = () => {
 
   /** 与 focus 相反的行为 */
   const blur = (markerId?: number) => {
-    if (markerId !== undefined && focus.value?.id !== markerId)
-      return
+    if (markerId !== undefined && focus.value?.id !== markerId) return
     removeFocus(MARKER_INTERACTION_KEY)
   }
 
-  socketStore.ipc.on('MarkerDeleted', (id) => {
+  socketStore.ipc.on('MarkerDeleted', id => {
     blur(id)
   })
 
-  const focusMarker = (markerVo: MarkerVo, {
-    delay = 0,
-    duration = 400,
-  }: {
-    /** 在将视口移动到点位附近后才真正执行 focus */
-    delay?: number
-    duration?: number
-  } = {}) => {
+  const focusMarker = (
+    markerVo: MarkerVo,
+    {
+      delay = 0,
+      duration = 400,
+    }: {
+      /** 在将视口移动到点位附近后才真正执行 focus */
+      delay?: number
+      duration?: number
+    } = {},
+  ) => {
     blur()
     window.clearTimeout(delayTimer.value)
 
@@ -139,20 +138,21 @@ const _useMarkerControl = () => {
     // 点位可能不在筛选器的当前地区图层，需要切换到对应的地区
     const { itemList: [firstItem] = [] } = markerWithRender
     void (() => {
-      if (!firstItem)
-        return
+      if (!firstItem) return
       const { itemId = -1 } = firstItem
       const item = itemStore.idMap.get(itemId)
-      if (item?.areaId === undefined)
-        return
+      if (item?.areaId === undefined) return
       const area = areaStore.areaIdMap.get(item.areaId)
-      if (area?.code === undefined)
-        return
+      if (area?.code === undefined) return
       archiveStore.currentArchive.body.Preference['markerFilter.state.areaCode'] = area.code
     })()
 
     // 将视口移动到点位附近
-    const { render: { position: [x, y] } } = markerWithRender
+    const {
+      render: {
+        position: [x, y],
+      },
+    } = markerWithRender
     MapSubject.viewState.next({
       target: [x + FLY_OFFSET[0], y + FLY_OFFSET[1]],
       zoom: 0,
@@ -165,8 +165,7 @@ const _useMarkerControl = () => {
         addFocus(MARKER_INTERACTION_KEY, markerWithRender.id, true)
         delayTimer.value = undefined
       }, delay)
-    }
-    else {
+    } else {
       addFocus(MARKER_INTERACTION_KEY, markerWithRender.id, true)
     }
   }
@@ -183,14 +182,17 @@ const _useMarkerControl = () => {
   /** 与 hover 相反的行为 */
   const out = () => removeHover(MARKER_INTERACTION_KEY)
 
-  watch(() => [focus.value, mapStateStore.interaction.isPopoverOnHover] as const, ([currentFocus, isPopoverOnHover]) => {
-    if (!currentFocus) {
-      !isPopoverOnHover && mapStateStore.setTempMarkers('focus', [])
-      return
-    }
-    cachedMarkerId.value = currentFocus.id
-    !isPopoverOnHover && mapStateStore.setTempMarkers('focus', [currentFocus])
-  })
+  watch(
+    () => [focus.value, mapStateStore.interaction.isPopoverOnHover] as const,
+    ([currentFocus, isPopoverOnHover]) => {
+      if (!currentFocus) {
+        !isPopoverOnHover && mapStateStore.setTempMarkers('focus', [])
+        return
+      }
+      cachedMarkerId.value = currentFocus.id
+      !isPopoverOnHover && mapStateStore.setTempMarkers('focus', [currentFocus])
+    },
+  )
 
   return {
     isSnapshot,
@@ -208,7 +210,6 @@ const _useMarkerControl = () => {
 }
 
 export const useMarkerControl = () => {
-  if (!cache)
-    cache = _useMarkerControl()
+  if (!cache) cache = _useMarkerControl()
   return cache
 }

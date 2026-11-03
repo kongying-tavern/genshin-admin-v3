@@ -7,7 +7,11 @@ defineProps<{
 </script>
 
 <template>
-  <details :open="!autoCollapse || isDifferent" class="diff-item ml-1 mr-3 my-2" :class="{ 'is-different': isDifferent }">
+  <details
+    :open="!autoCollapse || isDifferent"
+    class="diff-item ml-1 mr-3 my-2"
+    :class="{ 'is-different': isDifferent }"
+  >
     <summary class="divider-line font-bold select-none">
       {{ label }}
     </summary>

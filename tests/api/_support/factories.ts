@@ -31,8 +31,7 @@ export const createTestUser = async () => {
   const { data: userId } = await Apis.user.registerUser({
     data: { username, password: TEST_USER_PASSWORD },
   })
-  if (!userId)
-    throw new Error('测试用户注册失败：后端未返回用户 id')
+  if (!userId) throw new Error('测试用户注册失败：后端未返回用户 id')
   registerUserForCleanup(userId)
   return { username, password: TEST_USER_PASSWORD, userId }
 }
@@ -57,8 +56,7 @@ export const testAreaName = (tag: string) => `${TEST_AREA_NAME_PREFIX}${tag}`
  */
 export const createTestArea = async (data: AreaVo) => {
   const { data: areaId } = await Apis.area.createArea({ data })
-  if (typeof areaId !== 'number')
-    throw new Error('测试地区创建失败：后端未返回地区 id')
+  if (typeof areaId !== 'number') throw new Error('测试地区创建失败：后端未返回地区 id')
   registerAreaForCleanup(areaId)
   return areaId
 }
@@ -116,8 +114,7 @@ export const createTestItemType = async (overrides: ItemTypeVo = {}) => {
       ...overrides,
     },
   })
-  if (typeof itemTypeId !== 'number')
-    throw new Error('测试物品分类创建失败：后端未返回分类 id')
+  if (typeof itemTypeId !== 'number') throw new Error('测试物品分类创建失败：后端未返回分类 id')
   registerItemTypeForCleanup(itemTypeId)
   return itemTypeId
 }
@@ -143,8 +140,7 @@ export const createTestItem = async (areaId: number, overrides: ItemVo = {}) => 
       ...overrides,
     },
   })
-  if (typeof itemId !== 'number')
-    throw new Error('测试物品创建失败：后端未返回物品 id')
+  if (typeof itemId !== 'number') throw new Error('测试物品创建失败：后端未返回物品 id')
   registerItemForCleanup(itemId)
   return itemId
 }
@@ -172,8 +168,7 @@ export const createTestIconType = async (overrides: IconTypeVo = {}) => {
       ...overrides,
     },
   })
-  if (typeof iconTypeId !== 'number')
-    throw new Error('测试图标分类创建失败：后端未返回分类 id')
+  if (typeof iconTypeId !== 'number') throw new Error('测试图标分类创建失败：后端未返回分类 id')
   registerIconTypeForCleanup(iconTypeId)
   return iconTypeId
 }
@@ -189,8 +184,7 @@ export const createTestIcon = async (overrides: IconVo = {}) => {
       ...overrides,
     },
   })
-  if (typeof iconId !== 'number')
-    throw new Error('测试图标创建失败：后端未返回图标 id')
+  if (typeof iconId !== 'number') throw new Error('测试图标创建失败：后端未返回图标 id')
   registerIconForCleanup(iconId)
   return iconId
 }
@@ -228,8 +222,7 @@ export const createTestMarker = async (overrides: MarkerVo = {}) => {
       ...overrides,
     },
   })
-  if (typeof markerId !== 'number')
-    throw new Error('测试点位创建失败：后端未返回点位 id')
+  if (typeof markerId !== 'number') throw new Error('测试点位创建失败：后端未返回点位 id')
   registerMarkerForCleanup(markerId)
   return markerId
 }

@@ -3,11 +3,15 @@ import { ElMessage } from 'element-plus'
 import { useFetchHook } from '@/hooks'
 
 export const useUserDelete = (form: Ref<SysUserVo>) => {
-  const { refresh: submit, onSuccess, onError, ...rest } = useFetchHook({
+  const {
+    refresh: submit,
+    onSuccess,
+    onError,
+    ...rest
+  } = useFetchHook({
     onRequest: async () => {
       const { id } = toValue(form)
-      if (id === undefined)
-        throw new Error('用户 id 为空')
+      if (id === undefined) throw new Error('用户 id 为空')
       await Apis.user.deleteUser({
         pathParams: {
           workId: id,
@@ -22,7 +26,7 @@ export const useUserDelete = (form: Ref<SysUserVo>) => {
     })
   })
 
-  onError((err) => {
+  onError(err => {
     ElMessage.error({
       message: `删除失败，原因为：${err.message}`,
     })

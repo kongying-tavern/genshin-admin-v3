@@ -17,8 +17,7 @@ globalThis.addEventListener('message', ({ data }: MessageEvent<IntervalPayload>)
     missionMap[name] = globalThis.setInterval(() => {
       globalThis.postMessage(name)
     }, interval)
-  }
-  else if (action === 'clear') {
+  } else if (action === 'clear') {
     globalThis.clearInterval(missionMap[name])
     delete missionMap[name]
   }

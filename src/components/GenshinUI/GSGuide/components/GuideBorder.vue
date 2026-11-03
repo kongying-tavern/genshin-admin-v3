@@ -5,7 +5,11 @@ const pathId = crypto.randomUUID()
 </script>
 
 <template>
-  <svg class="absolute left-0 top-0 pointer-events-none" :viewBox="`0 0 ${box[0]} ${box[1]}`" fill="#79FFFF">
+  <svg
+    class="absolute left-0 top-0 pointer-events-none"
+    :viewBox="`0 0 ${box[0]} ${box[1]}`"
+    fill="#79FFFF"
+  >
     <defs>
       <filter :id="filterId">
         <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#1DC5FD" />

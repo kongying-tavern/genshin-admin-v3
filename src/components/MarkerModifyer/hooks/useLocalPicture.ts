@@ -3,33 +3,32 @@ import { getFileType } from '@/utils'
 
 export const useLocalPicture = () => {
   const { data: localPicture, ...rest } = useFetchHook({
-    onRequest: () => new Promise<Blob | undefined>((resolve, reject) => {
-      const input = document.createElement('input')
-      input.type = 'file'
-      input.accept = 'image/*'
-      input.multiple = false
+    onRequest: () =>
+      new Promise<Blob | undefined>((resolve, reject) => {
+        const input = document.createElement('input')
+        input.type = 'file'
+        input.accept = 'image/*'
+        input.multiple = false
 
-      input.oncancel = () => {
-        input.remove()
-        resolve(undefined)
-      }
+        input.oncancel = () => {
+          input.remove()
+          resolve(undefined)
+        }
 
-      input.oninput = async () => {
-        const file = input.files?.[0]
-        input.remove()
+        input.oninput = async () => {
+          const file = input.files?.[0]
+          input.remove()
 
-        if (!file)
-          return resolve(undefined)
+          if (!file) return resolve(undefined)
 
-        const realType = await getFileType(file)
-        if (realType === 'unknown')
-          return reject(new Error('不支持的图片类型'))
+          const realType = await getFileType(file)
+          if (realType === 'unknown') return reject(new Error('不支持的图片类型'))
 
-        resolve(file)
-      }
+          resolve(file)
+        }
 
-      input.click()
-    }),
+        input.click()
+      }),
   })
 
   const localPictureUrl = useObjectUrl(localPicture)

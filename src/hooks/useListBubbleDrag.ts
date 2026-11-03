@@ -8,10 +8,7 @@ export interface ListBubbleDragHookOptions<T> {
 }
 
 export const useListBubbleDrag = <T>(options: ListBubbleDragHookOptions<T>) => {
-  const {
-    isDropback,
-    onClearBubble,
-  } = options
+  const { isDropback, onClearBubble } = options
 
   const data: ShallowRef<T | null> = shallowRef(null)
 
@@ -33,13 +30,10 @@ export const useListBubbleDrag = <T>(options: ListBubbleDragHookOptions<T>) => {
   }
 
   const onDrop = (ev: DragEvent) => {
-    if (!data.value)
-      return
+    if (!data.value) return
     if (isDropback) {
-      if (!isDropback(ev, data.value))
-        onClearBubble && onClearBubble(data.value)
-    }
-    else {
+      if (!isDropback(ev, data.value)) onClearBubble && onClearBubble(data.value)
+    } else {
       onClearBubble && onClearBubble(data.value)
     }
     data.value = null

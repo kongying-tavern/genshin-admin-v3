@@ -32,7 +32,7 @@ const getAllMarkerLinks = async (context: ManagerContext) => {
   })
 
   const updateList: MarkerLinkageVo[] = []
-  Object.values(linkGroups).forEach((links) => {
+  Object.values(linkGroups).forEach(links => {
     updateList.push(...links)
   })
 
@@ -60,10 +60,8 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
     clear?: boolean
   }) => {
     const { updateList = [], deleteIds = [], clear = false } = options
-    if (clear)
-      localLinkMap.value = new Map<number, MarkerLinkageVo>()
-    if (!updateList.length && !deleteIds.length && !clear)
-      return
+    if (clear) localLinkMap.value = new Map<number, MarkerLinkageVo>()
+    if (!updateList.length && !deleteIds.length && !clear) return
     const { length: deleteLength } = deleteIds
     for (let i = 0; i < deleteLength; i++) {
       const id = deleteIds[i]
@@ -73,8 +71,7 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
     for (let i = 0; i < updateLength; i++) {
       const link = updateList[i]
       const { id, version = 0 } = link
-      if (!id || (version <= (localLinkMap.value.get(id)?.version ?? 0)))
-        continue
+      if (!id || version <= (localLinkMap.value.get(id)?.version ?? 0)) continue
       localLinkMap.value.set(id, link)
     }
     triggerRef(localLinkMap)
@@ -86,22 +83,19 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
 
   const total = computed(() => list.value.length)
 
-  const groupIdMap = computed(() => list.value.reduce((map, link) => {
-    if (!map.has(link.groupId!))
-      map.set(link.groupId!, [])
-    map.get(link.groupId!)!.push(link)
-    return map
-  }, new Map<string, MarkerLinkageVo[]>()))
+  const groupIdMap = computed(() =>
+    list.value.reduce((map, link) => {
+      if (!map.has(link.groupId!)) map.set(link.groupId!, [])
+      map.get(link.groupId!)!.push(link)
+      return map
+    }, new Map<string, MarkerLinkageVo[]>()),
+  )
 
   // ============================== 代理方法 ==============================
 
   /** @server 创建点位关联 */
-  const linkMarker = async (
-    links: MarkerLinkageVo[],
-    deleteLinks: MarkerLinkageVo[] = [],
-  ) => {
-    if (!links.length)
-      throw new Error('提交的关联项为空')
+  const linkMarker = async (links: MarkerLinkageVo[], deleteLinks: MarkerLinkageVo[] = []) => {
+    if (!links.length) throw new Error('提交的关联项为空')
 
     // 1. 进行关联操作（只取必须的属性）
     const { data: newLinkageId } = await Apis.marker_link.linkMarker({
@@ -113,8 +107,7 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
       })),
     })
 
-    if (!newLinkageId)
-      throw new Error('服务器未返回新关联组 id')
+    if (!newLinkageId) throw new Error('服务器未返回新关联组 id')
 
     // 2. 确认关联更新
     const { data: linkGroups = {} } = await Apis.marker_link.getMarkerLinkageList({
@@ -144,25 +137,29 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
     newEffectedMarkerIdSet.delete(-1)
 
     // 5. 合并所有受影响的点位 id
-    const allEffectedMarkerIds = Array.from(new Set([...oldEffectedMarkerIdSet, ...newEffectedMarkerIdSet]))
+    const allEffectedMarkerIds = Array.from(
+      new Set([...oldEffectedMarkerIdSet, ...newEffectedMarkerIdSet]),
+    )
 
     // 7. 更新本地数据
     // 7.1 更新本地关联表
     updateLocal({ updateList: newLinks })
 
-    Apis.marker.listMarkerById({
-      data: { markerIdList: allEffectedMarkerIds },
-    }).then(({ data: updatedMarkers = [] }) => {
-      markerStore.updateLocal({ updateList: updatedMarkers })
-    }).catch(() => false)
+    Apis.marker
+      .listMarkerById({
+        data: { markerIdList: allEffectedMarkerIds },
+      })
+      .then(({ data: updatedMarkers = [] }) => {
+        markerStore.updateLocal({ updateList: updatedMarkers })
+      })
+      .catch(() => false)
 
     return newLinkageId
   }
 
   /** @server 删除点位关联 */
   const deleteMarkerLinkage = async (linkIds: number[]) => {
-    if (!linkIds.length)
-      throw new Error('删除的关联 id 列表为空')
+    if (!linkIds.length) throw new Error('删除的关联 id 列表为空')
 
     const { data = {} } = await Apis.marker_link.deleteMarkerLinkage({ data: { ids: linkIds } })
     const { groups: groupIds = [], markers: markerIds = [] } = data
@@ -218,9 +215,8 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
       tag: ref(''),
     },
 
-    syncState: (data) => {
-      if (!data)
-        return
+    syncState: data => {
+      if (!data) return
       if (!data.updateList.length && !data.deleteIds.length) {
         context.message.value = [
           `[${context.tag.value}] `,
@@ -233,31 +229,30 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
 
       // 收集更新前受影响的点位 id（包括被删除关联涉及的点位）
       const effectedMarkerIds = new Set<number>()
-      deleteIds.forEach((linkId) => {
+      deleteIds.forEach(linkId => {
         const link = localLinkMap.value.get(linkId)
         if (link) {
-          if (link.fromId)
-            effectedMarkerIds.add(link.fromId)
-          if (link.toId)
-            effectedMarkerIds.add(link.toId)
+          if (link.fromId) effectedMarkerIds.add(link.fromId)
+          if (link.toId) effectedMarkerIds.add(link.toId)
         }
       })
       updateList.forEach(({ fromId, toId }) => {
-        if (fromId)
-          effectedMarkerIds.add(fromId)
-        if (toId)
-          effectedMarkerIds.add(toId)
+        if (fromId) effectedMarkerIds.add(fromId)
+        if (toId) effectedMarkerIds.add(toId)
       })
 
       updateLocal(data)
 
       // 异步更新受影响的点位数据
       if (effectedMarkerIds.size > 0) {
-        Apis.marker.listMarkerById({
-          data: { markerIdList: Array.from(effectedMarkerIds) },
-        }).then(({ data: updatedMarkers = [] }) => {
-          markerStore.updateLocal({ updateList: updatedMarkers })
-        }).catch(() => false)
+        Apis.marker
+          .listMarkerById({
+            data: { markerIdList: Array.from(effectedMarkerIds) },
+          })
+          .then(({ data: updatedMarkers = [] }) => {
+            markerStore.updateLocal({ updateList: updatedMarkers })
+          })
+          .catch(() => false)
       }
 
       context.message.value = [
@@ -268,9 +263,8 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
       ].join('')
     },
 
-    commit: async (data) => {
-      if (!data || (!data.updateList.length && !data.deleteIds.length))
-        return
+    commit: async data => {
+      if (!data || (!data.updateList.length && !data.deleteIds.length)) return
       const worker = new BulkPutWorker({ name: '点位关联更新线程' })
       worker.addEventListener('message', () => {
         worker.terminate()
@@ -283,7 +277,7 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
       })
     },
 
-    init: async (context) => {
+    init: async context => {
       context.startTime.value = Date.now()
       context.tag.value = '初始化'
       context.message.value = `[${context.tag.value}] 拉取冷数据...`
@@ -292,7 +286,7 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
       context.message.value = `[${context.tag.value}] 完毕: ${getCostTime(context.startTime.value).toFixed(1)}s`
     },
 
-    diff: async (context) => {
+    diff: async context => {
       context.startTime.value = Date.now()
       context.tag.value = '差异'
       context.message.value = '关联数据暂不支持差异更新'
@@ -300,7 +294,7 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
       return data
     },
 
-    full: async (context) => {
+    full: async context => {
       context.startTime.value = Date.now()
       context.tag.value = '全量'
       const data = await getAllMarkerLinks(context)
@@ -313,11 +307,10 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
   const socketStore = useSocketStore()
 
   // 点位关联更新
-  socketStore.appEvent.on('MarkerLinked', async (markers) => {
+  socketStore.appEvent.on('MarkerLinked', async markers => {
     // 从受影响点位中收集关联组 id
     const groupIds = [...new Set(markers.map(m => m.linkageId).filter(Boolean))] as string[]
-    if (!groupIds.length)
-      return
+    if (!groupIds.length) return
 
     // 获取最新的关联数据
     const { data: linkGroups = {} } = await Apis.marker_link.getMarkerLinkageList({

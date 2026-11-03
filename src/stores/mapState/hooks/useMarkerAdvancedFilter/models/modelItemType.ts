@@ -44,30 +44,31 @@ export class ItemType implements MAFConfig<MAFValueNumberArray, OptionType, MAFM
 
     // 处理标签名
     const { itemTypeMap } = useItemTypeStore()
-    meta.tagList = val.na
-      .map(typeId => itemTypeMap[typeId]?.name)
-      .filter(v => v) as string[]
+    meta.tagList = val.na.map(typeId => itemTypeMap[typeId]?.name).filter(v => v) as string[]
     meta.tag = meta.tagList.join(',')
 
     // 处理物品ID
     if (val.na && val.na.length > 0) {
       const { itemList } = useItemStore()
-      const itemIdList: number[] = itemList
-        .reduce<number[]>((seed, item) => {
-          const typeIds = item.typeIdList ?? []
-          for (const typeId of typeIds) {
-            if (val.na.includes(typeId))
-              return [...seed, item.id!]
-          }
-          return seed
-        }, [])
+      const itemIdList: number[] = itemList.reduce<number[]>((seed, item) => {
+        const typeIds = item.typeIdList ?? []
+        for (const typeId of typeIds) {
+          if (val.na.includes(typeId)) return [...seed, item.id!]
+        }
+        return seed
+      }, [])
       meta.itemIds = new Set(itemIdList)
     }
 
     return meta
   }
 
-  semantic(_val: MAFValueNumberArray, _opt: OptionType, meta: MAFMetaItemType, opposite: boolean): (MAFSemanticUnit | null)[] {
+  semantic(
+    _val: MAFValueNumberArray,
+    _opt: OptionType,
+    meta: MAFMetaItemType,
+    opposite: boolean,
+  ): (MAFSemanticUnit | null)[] {
     return [
       { type: 'text', text: '类别' },
       opposite ? { type: 'opposite-indicator', text: '不' } : null,
@@ -76,11 +77,15 @@ export class ItemType implements MAFConfig<MAFValueNumberArray, OptionType, MAFM
     ]
   }
 
-  filter(_val: MAFValueNumberArray, _opt: OptionType, meta: MAFMetaItemType, marker: MarkerVo): boolean {
+  filter(
+    _val: MAFValueNumberArray,
+    _opt: OptionType,
+    meta: MAFMetaItemType,
+    marker: MarkerVo,
+  ): boolean {
     const itemIds: number[] = (marker.itemList ?? []).map(v => v.itemId!).filter(v => v)
     for (const itemId of itemIds) {
-      if (meta.itemIds.has(itemId))
-        return true
+      if (meta.itemIds.has(itemId)) return true
     }
     return false
   }

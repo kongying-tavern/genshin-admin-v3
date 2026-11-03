@@ -23,7 +23,7 @@ const modelValue = defineModel<ValueType | ValueType[] | null | undefined>('mode
     :value-key="options.optionValue"
     :dialog-title="options.dialogTitle"
     :dialog-list-class="options.dialogListClass"
-    @change="(v) => modelValue = v"
+    @change="v => (modelValue = v)"
   >
     <template v-if="$slots.default">
       <slot />

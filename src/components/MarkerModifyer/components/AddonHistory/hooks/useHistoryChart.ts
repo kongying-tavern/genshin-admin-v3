@@ -7,7 +7,10 @@ interface HistoryChartHookOptions {
   users: Ref<Map<string, SysUserSmallVo>>
 }
 
-export const useHistoryChart = (element: Ref<HTMLElement | undefined>, options: HistoryChartHookOptions) => {
+export const useHistoryChart = (
+  element: Ref<HTMLElement | undefined>,
+  options: HistoryChartHookOptions,
+) => {
   const { data, users } = options
 
   const { isDark } = useTheme()
@@ -16,7 +19,7 @@ export const useHistoryChart = (element: Ref<HTMLElement | undefined>, options: 
 
   const destoryer = shallowRef<() => void>()
 
-  watch(element, async (container) => {
+  watch(element, async container => {
     if (!container) {
       chart.value?.destroy()
       destoryer.value?.()
@@ -35,7 +38,9 @@ export const useHistoryChart = (element: Ref<HTMLElement | undefined>, options: 
     instance
       .theme({ type: isDark.value ? 'dark' : 'light' })
       .data(toValue(data))
-      .encode('x', (item: (typeof data)['value'][number]) => new Date(item.createTime ?? '').toLocaleString())
+      .encode('x', (item: (typeof data)['value'][number]) =>
+        new Date(item.createTime ?? '').toLocaleString(),
+      )
       .encode('y', (item: (typeof data)['value'][number]) => item.diffs.size)
       .axis('x', {
         title: '时间',
@@ -49,7 +54,7 @@ export const useHistoryChart = (element: Ref<HTMLElement | undefined>, options: 
         nice: true,
       })
       .interaction('tooltip', {
-        render: (_: Event, { items }: { items: { value: unknown, name: string }[] }) => {
+        render: (_: Event, { items }: { items: { value: unknown; name: string }[] }) => {
           const [id, diffs, createTime] = items
           const user = users.value.get(`${id.value}`)
           return `
@@ -58,14 +63,17 @@ export const useHistoryChart = (element: Ref<HTMLElement | undefined>, options: 
             <div class="w-full text-sm font-bold whitespace-nowrap overflow-hidden text-ellipsis">
               ${user?.nickname ?? user?.username ?? id.value}
             </div>
-            <div>修改字段: ${Array.from((diffs.value as Set<string>)).join(', ')}</div>
+            <div>修改字段: ${Array.from(diffs.value as Set<string>).join(', ')}</div>
           </div>`
         },
       })
 
-    instance.line().encode('shape', 'smooth').tooltip({
-      items: ['creatorId', 'diffs', 'createTime'],
-    })
+    instance
+      .line()
+      .encode('shape', 'smooth')
+      .tooltip({
+        items: ['creatorId', 'diffs', 'createTime'],
+      })
 
     instance.point().style('fill', 'white').tooltip(false)
 
@@ -76,7 +84,7 @@ export const useHistoryChart = (element: Ref<HTMLElement | undefined>, options: 
       await instance.render()
     })
 
-    const stopWatchTheme = watch(isDark, (dark) => {
+    const stopWatchTheme = watch(isDark, dark => {
       instance.theme({ type: dark ? 'dark' : 'light' })
       instance.render()
     })

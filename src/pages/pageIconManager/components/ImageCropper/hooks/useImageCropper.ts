@@ -18,11 +18,7 @@ export const useImageCropper = (
   containerRef: ShallowRef<HTMLDivElement | undefined>,
   options: ImageCropperOptions = {},
 ) => {
-  const {
-    disabled = false,
-    variant = 'default',
-    keepRatio = true,
-  } = options
+  const { disabled = false, variant = 'default', keepRatio = true } = options
 
   /** 裁切器是否已经初始化完毕 */
   const { resolve, promise: ready } = Promise.withResolvers<Konva.Stage>()
@@ -65,8 +61,7 @@ export const useImageCropper = (
   /** 错误捕获 */
   const catchError = (err: unknown) => {
     if (err instanceof Error) {
-      if (err.name === 'AbortError')
-        return
+      if (err.name === 'AbortError') return
       errorHook.trigger(err)
     }
     const error = new Error(typeof err === 'string' ? err : JSON.stringify(err))
@@ -75,14 +70,12 @@ export const useImageCropper = (
 
   /** 关闭 ImageBitmap 释放 GPU 内存 */
   const closeImageBitmap = (img: Konva.Image | null) => {
-    if (!img)
-      return
+    if (!img) return
     const bmp = img.image()
     if (bmp && typeof (bmp as ImageBitmap).close === 'function') {
       try {
-        (bmp as ImageBitmap).close()
-      }
-      catch {
+        ;(bmp as ImageBitmap).close()
+      } catch {
         // 忽略关闭错误
       }
     }
@@ -90,8 +83,7 @@ export const useImageCropper = (
 
   /** 清除裁切器 */
   const destory = () => {
-    if (!context.stage.value)
-      return
+    if (!context.stage.value) return
     // 先关闭 ImageBitmap 释放资源
     closeImageBitmap(context.image.value)
     // 取消动画帧
@@ -133,8 +125,7 @@ export const useImageCropper = (
   /** 将加载的图片装载为图层 */
   const setupLayer = (bmp: ImageBitmap) => {
     const stage = context.stage.value
-    if (!stage)
-      throw new Error('裁切器未初始化')
+    if (!stage) throw new Error('裁切器未初始化')
     // 先关闭旧的 ImageBitmap 释放 GPU 内存
     closeImageBitmap(context.image.value)
     if (context.layer.value) {
@@ -252,10 +243,9 @@ export const useImageCropper = (
   }
 
   if (isRef(disabled)) {
-    watch(disabled, (v) => {
+    watch(disabled, v => {
       const stage = context.stage.value
-      if (stage)
-        stage.listening(!v)
+      if (stage) stage.listening(!v)
       const transformer = context.transformer.value
       if (transformer) {
         transformer.anchorFill(v ? 'transparent' : config.anchorFill)
@@ -266,12 +256,11 @@ export const useImageCropper = (
   }
 
   if (isRef(keepRatio)) {
-    watch(keepRatio, (v) => {
+    watch(keepRatio, v => {
       const transformer = context.transformer.value
       const rect = context.rect.value
       const image = context.image.value
-      if (!transformer || !rect || !image)
-        return
+      if (!transformer || !rect || !image) return
       transformer.keepRatio(v)
       if (v) {
         // 开启时将选区收敛为正方形，保持 1:1 语义
@@ -306,8 +295,7 @@ export const useImageCropper = (
         isRaw,
         variant: toValue(variant),
       })
-    }
-    catch (err) {
+    } catch (err) {
       catchError(err)
     }
   }
@@ -333,10 +321,8 @@ export const useImageCropper = (
       loadController.value = ac
       // 加载图片
       const blob = await (async () => {
-        if (src instanceof Blob)
-          return src
-        if (src instanceof ArrayBuffer)
-          return new Blob([src], { type })
+        if (src instanceof Blob) return src
+        if (src instanceof ArrayBuffer) return new Blob([src], { type })
         const res = await fetch(src, { signal: ac.signal, mode: 'cors' })
         return res.blob()
       })()
@@ -349,63 +335,68 @@ export const useImageCropper = (
         variant: toValue(variant),
       })
       return bmp
-    }
-    catch (err) {
+    } catch (err) {
       catchError(err)
-    }
-    finally {
+    } finally {
       loadController.value = null
     }
   }
 
-  watch(containerRef, (container) => {
-    destory()
-    container && setup(container)
-  }, { immediate: true })
+  watch(
+    containerRef,
+    container => {
+      destory()
+      container && setup(container)
+    },
+    { immediate: true },
+  )
 
   // 滚轮缩放图片
-  useEventListener(containerRef, 'wheel', (ev: WheelEvent) => {
-    const image = context.image.value
-    if (!image)
-      return
+  useEventListener(
+    containerRef,
+    'wheel',
+    (ev: WheelEvent) => {
+      const image = context.image.value
+      if (!image) return
 
-    // 1. 获取容器的中心点（相对于容器左上角的像素坐标）
-    // 如果 containerRef 可以拿到 DOM，建议动态获取 clientWidth/Height
-    const container = containerRef.value
-    if (!container)
-      return
+      // 1. 获取容器的中心点（相对于容器左上角的像素坐标）
+      // 如果 containerRef 可以拿到 DOM，建议动态获取 clientWidth/Height
+      const container = containerRef.value
+      if (!container) return
 
-    const pointer = {
-      x: container.clientWidth / 2,
-      y: container.clientHeight / 2,
-    }
+      const pointer = {
+        x: container.clientWidth / 2,
+        y: container.clientHeight / 2,
+      }
 
-    // 2. 记住缩放前的 旧缩放比例
-    const oldScaleX = image.scaleX()
-    const oldScaleY = image.scaleY()
+      // 2. 记住缩放前的 旧缩放比例
+      const oldScaleX = image.scaleX()
+      const oldScaleY = image.scaleY()
 
-    // 3. 计算 缩放前 中心点在图层内部的世界坐标
-    const mousePointTo = {
-      x: (pointer.x - image.x()) / oldScaleX,
-      y: (pointer.y - image.y()) / oldScaleY,
-    }
+      // 3. 计算 缩放前 中心点在图层内部的世界坐标
+      const mousePointTo = {
+        x: (pointer.x - image.x()) / oldScaleX,
+        y: (pointer.y - image.y()) / oldScaleY,
+      }
 
-    // 4. 计算 新的缩放比例
-    const factor = 1 - ev.deltaY / 1000
-    const newScaleX = oldScaleX * factor
-    const newScaleY = oldScaleY * factor
+      // 4. 计算 新的缩放比例
+      const factor = 1 - ev.deltaY / 1000
+      const newScaleX = oldScaleX * factor
+      const newScaleY = oldScaleY * factor
 
-    // 5. 应用新缩放
-    image.scale({ x: newScaleX, y: newScaleY })
+      // 5. 应用新缩放
+      image.scale({ x: newScaleX, y: newScaleY })
 
-    // 6. 根据“世界坐标在缩放后应对齐同一屏幕位置”的反向公式，计算出图层新的【绝对坐标】
-    const newPos = {
-      x: pointer.x - mousePointTo.x * newScaleX,
-      y: pointer.y - mousePointTo.y * newScaleY,
-    }
+      // 6. 根据“世界坐标在缩放后应对齐同一屏幕位置”的反向公式，计算出图层新的【绝对坐标】
+      const newPos = {
+        x: pointer.x - mousePointTo.x * newScaleX,
+        y: pointer.y - mousePointTo.y * newScaleY,
+      }
 
-    image.position(newPos)
-  }, { passive: true })
+      image.position(newPos)
+    },
+    { passive: true },
+  )
 
   return {
     ready,

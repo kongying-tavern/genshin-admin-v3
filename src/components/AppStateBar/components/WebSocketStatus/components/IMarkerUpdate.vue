@@ -27,25 +27,11 @@ const iconId = computed(() => {
 </script>
 
 <template>
-  <div
-    class="
-    p-2 rounded-lg
-    select-none
-    "
-  >
-    <div class="text-[var(--el-text-color-secondary)] mb-1">
-      编辑点位
-    </div>
+  <div class="p-2 rounded-lg select-none">
+    <div class="text-[var(--el-text-color-secondary)] mb-1">编辑点位</div>
 
     <div
-      class="
-      flex items-center gap-2 p-1 px-2 pr-4 rounded
-      cursor-pointer
-      border-l-[2px] border-[var(--el-color-warning)]
-      bg-[var(--el-color-warning-light-9)]
-      hover:bg-[var(--el-color-warning-light-7)]
-      active:bg-[var(--el-color-warning-light-9)]
-      "
+      class="flex items-center gap-2 p-1 px-2 pr-4 rounded cursor-pointer border-l-[2px] border-[var(--el-color-warning)] bg-[var(--el-color-warning-light-9)] hover:bg-[var(--el-color-warning-light-7)] active:bg-[var(--el-color-warning-light-9)]"
       @click="() => focusMarker(markerInfo)"
     >
       <AppIconTagRenderer

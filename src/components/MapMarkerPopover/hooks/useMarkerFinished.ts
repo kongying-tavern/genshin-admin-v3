@@ -11,13 +11,11 @@ export const useMarkerFinished = (markerInfo: ShallowRef<MarkerVo | null>) => {
 
   const isFinished = computed({
     get: () => {
-      if (markerInfo.value?.id === undefined)
-        return false
+      if (markerInfo.value?.id === undefined) return false
       return archiveStore.currentArchive.body.Data_KYJG.has(markerInfo.value.id)
     },
-    set: (v) => {
-      if (markerInfo.value?.id === undefined)
-        return
+    set: v => {
+      if (markerInfo.value?.id === undefined) return
       const newArchive = new Set(archiveStore.currentArchive.body.Data_KYJG)
       newArchive[v ? 'add' : 'delete'](markerInfo.value.id)
       archiveStore.currentArchive.body.Data_KYJG = newArchive

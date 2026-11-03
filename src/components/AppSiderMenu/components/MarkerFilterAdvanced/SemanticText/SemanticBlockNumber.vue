@@ -16,6 +16,6 @@ defineProps<{
 .sem-number {
   font-style: italic;
   font-size: 1.1rem;
-  margin: 0 .2rem
+  margin: 0 0.2rem;
 }
 </style>

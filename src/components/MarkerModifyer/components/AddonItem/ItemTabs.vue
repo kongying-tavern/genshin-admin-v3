@@ -34,14 +34,11 @@ const itemsGroup = defineModel<Map<AreaVo, InternalItemData[]>>('itemsGroup', {
 
 const deleteItem = (item: ItemVo) => {
   const area = areaStore.areaIdMap.get(item.areaId!)
-  if (!area)
-    return
+  if (!area) return
   const items = itemsGroup.value.get(area)
-  if (!items)
-    return
+  if (!items) return
   const findIndex = items.findIndex(existItem => existItem.itemId === item.id)
-  if (findIndex < 0)
-    return
+  if (findIndex < 0) return
   items.splice(findIndex, 1)
 }
 
@@ -53,29 +50,32 @@ const areaCode = defineModel<string>('areaCode', {
 const { formItem } = useFormItem()
 
 /** 以物品 id 为索引的物品数量映射表，用于物品选择器在切换物品选中状态时的绑定 */
-const itemCountIdMap = computed(() => modelValue.value.reduce((map, item) => {
-  map.set(item.itemId!, item.count ?? 0)
-  return map
-}, new Map<number, number>()))
+const itemCountIdMap = computed(() =>
+  modelValue.value.reduce((map, item) => {
+    map.set(item.itemId!, item.count ?? 0)
+    return map
+  }, new Map<number, number>()),
+)
 
 const itemList = computed({
   get: () => {
     const area = areaStore.areaCodeMap.get(areaCode.value)
-    if (!area)
-      return []
+    if (!area) return []
     return (itemsGroup.value.get(area) ?? []).map(({ _raw }) => _raw)
   },
-  set: (list) => {
+  set: list => {
     const area = areaStore.areaCodeMap.get(areaCode.value)
-    if (!area)
-      return false
+    if (!area) return false
     // 从 itemCountIdMap 中继承物品数量
-    itemsGroup.value.set(area, list.map(item => ({
-      itemId: item.id,
-      count: itemCountIdMap.value.get(item.id!) ?? 1,
-      iconId: item.iconId,
-      _raw: item,
-    })))
+    itemsGroup.value.set(
+      area,
+      list.map(item => ({
+        itemId: item.id,
+        count: itemCountIdMap.value.get(item.id!) ?? 1,
+        iconId: item.iconId,
+        _raw: item,
+      })),
+    )
   },
 })
 
@@ -89,8 +89,7 @@ const isAreaDisabled = computed(() => {
 // 切换地区时使用新地区的同名物品进行替换
 const changeArea = (newAreaCode: string, oldAreaCode: string) => {
   const newArea = areaStore.areaCodeMap.get(newAreaCode)
-  if (!newArea)
-    return
+  if (!newArea) return
 
   const oldArea = areaStore.areaCodeMap.get(oldAreaCode)
 
@@ -102,11 +101,9 @@ const changeArea = (newAreaCode: string, oldAreaCode: string) => {
 
   /** 根据新地区 code 过滤出该地区的物品并构建物品名称映射表 */
   const itemNameMap = itemStore.itemList.reduce((map, item) => {
-    if (item.areaId !== newArea.id)
-      return map
+    if (item.areaId !== newArea.id) return map
     const itemName = item.name ?? ''
-    if (!map.has(itemName))
-      map.set(itemName, [])
+    if (!map.has(itemName)) map.set(itemName, [])
     const items = map.get(itemName)!
     items.push(item)
     return map
@@ -133,15 +130,16 @@ const changeArea = (newAreaCode: string, oldAreaCode: string) => {
 
     items.forEach(({ _raw: { name = '' } }) => {
       const itemsInNewArea = itemNameMap.get(name)
-      if (!itemsInNewArea?.length)
-        return
-      itemsInNewArea.forEach(item => itemsWithSameName.push({
-        _raw: item,
-        itemId: item.id,
-        // 从旧地区的物品名称与数量映射表中继承物品数量
-        count: itemCountNameMap.get(item.name ?? '') ?? 1,
-        iconId: item.iconId,
-      }))
+      if (!itemsInNewArea?.length) return
+      itemsInNewArea.forEach(item =>
+        itemsWithSameName.push({
+          _raw: item,
+          itemId: item.id,
+          // 从旧地区的物品名称与数量映射表中继承物品数量
+          count: itemCountNameMap.get(item.name ?? '') ?? 1,
+          iconId: item.iconId,
+        }),
+      )
     })
 
     newItemsGroup.set(newArea, itemsWithSameName)
@@ -152,8 +150,7 @@ const changeArea = (newAreaCode: string, oldAreaCode: string) => {
 }
 
 const prepareToAddItem = () => {
-  if (isAddonActived.value)
-    return
+  if (isAddonActived.value) return
   formItem?.clearValidate()
   areaCode.value = ''
   isAddonActived.value = true
@@ -170,21 +167,18 @@ const isError = computed(() => formItemContext?.validateState === 'error')
   <div class="item-summary-tabs">
     <div
       v-if="!itemsGroup.size"
-      class="
-        empty-button
-        h-full border rounded
-        grid place-items-center
-        transition-all
-      "
-      :class="isAddonActived
-        ? 'border-[var(--el-color-primary)] \
+      class="empty-button h-full border rounded grid place-items-center transition-all"
+      :class="
+        isAddonActived
+          ? 'border-[var(--el-color-primary)] \
         text-[var(--el-color-primary)]'
-        : 'border-[var(--el-border-color)] \
+          : 'border-[var(--el-border-color)] \
         text-[var(--el-text-color-secondary)] \
         hover:bg-[var(--el-color-primary-light-9)] \
         active:border-[var(--el-color-primary)] \
         active:text-[var(--el-color-primary)] \
-        cursor-pointer'"
+        cursor-pointer'
+      "
       @click="prepareToAddItem"
     >
       添加物品
@@ -206,7 +200,7 @@ const isError = computed(() => formItemContext?.validateState === 'error')
           @tab-click="() => emits('active')"
         >
           <el-tab-pane
-            v-for="([area, items]) in itemsGroup"
+            v-for="[area, items] in itemsGroup"
             :key="area.id"
             :label="area.name"
             :name="area.code"
@@ -217,7 +211,10 @@ const isError = computed(() => formItemContext?.validateState === 'error')
                   <div class="w-full whitespace-nowrap text-ellipsis overflow-hidden">
                     {{ areaStore.areaIdMap.get(area.parentId ?? -1)?.name ?? 'unknown' }}
                   </div>
-                  <div class="w-full whitespace-nowrap text-ellipsis overflow-hidden" :title="area.name">
+                  <div
+                    class="w-full whitespace-nowrap text-ellipsis overflow-hidden"
+                    :title="area.name"
+                  >
                     {{ area.name }}
                   </div>
                 </div>
@@ -225,20 +222,23 @@ const isError = computed(() => formItemContext?.validateState === 'error')
             </template>
 
             <div class="h-[70px]">
-              <div v-if="!items.length" class="text-center px-2">
-                当前地区没有物品
-              </div>
-              <div
-                v-if="!items.length"
-                class="w-full flex items-center justify-center gap-2"
-              >
-                <el-button text type="danger" style="padding: 4px 8px" @click="() => emits('removeArea', area)">
+              <div v-if="!items.length" class="text-center px-2">当前地区没有物品</div>
+              <div v-if="!items.length" class="w-full flex items-center justify-center gap-2">
+                <el-button
+                  text
+                  type="danger"
+                  style="padding: 4px 8px"
+                  @click="() => emits('removeArea', area)"
+                >
                   删除地区
                 </el-button>
-                <div class="text-[var(--el-text-color-secondary)]">
-                  或
-                </div>
-                <el-button text type="primary" style="padding: 4px 8px" @click="() => emits('active')">
+                <div class="text-[var(--el-text-color-secondary)]">或</div>
+                <el-button
+                  text
+                  type="primary"
+                  style="padding: 4px 8px"
+                  @click="() => emits('active')"
+                >
                   添加物品
                 </el-button>
               </div>

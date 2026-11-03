@@ -18,21 +18,14 @@ export const useSocketStore = defineStore('socket', () => {
 
   const notice = (key: WebSocketAPI.WSEventType, ...options: Parameters<typeof ElNotification>) => {
     // 检查用户设置是否允许通知
-    if (!noticeEvents.value.has(key))
-      return
+    if (!noticeEvents.value.has(key)) return
     // 清除同类通知
     isNoticing.value.get(key)?.close()
     // 本次通知
     isNoticing.value.set(key, ElNotification(...options))
   }
 
-  const {
-    context,
-    ipc,
-    socketEvent,
-    open,
-    close,
-  } = useSocket()
+  const { context, ipc, socketEvent, open, close } = useSocket()
 
   ipc.on('AppUpdated', () => {
     ElNotification.warning({
@@ -40,9 +33,12 @@ export const useSocketStore = defineStore('socket', () => {
       message: '应用已更新，页面将在 5 分钟后重载。',
       duration: 0,
     })
-    window.setTimeout(() => {
-      window.location.replace(`${window.location.origin}?t=${Date.now()}`)
-    }, 5 * 60 * 1000)
+    window.setTimeout(
+      () => {
+        window.location.replace(`${window.location.origin}?t=${Date.now()}`)
+      },
+      5 * 60 * 1000,
+    )
   })
 
   ipc.on('UserKickedOut', () => {
@@ -57,11 +53,13 @@ export const useSocketStore = defineStore('socket', () => {
   const { event: appEvent } = useAppEvent(ipc)
   const { messageList, clearMessageList } = useMessageList(appEvent)
 
-  watch(() => userStore.info?.id, (userId) => {
-    if (userId === undefined)
-      return close()
-    open(`${userId}`)
-  })
+  watch(
+    () => userStore.info?.id,
+    userId => {
+      if (userId === undefined) return close()
+      open(`${userId}`)
+    },
+  )
 
   return {
     context,

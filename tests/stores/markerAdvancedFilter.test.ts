@@ -17,9 +17,16 @@ import { useMarkerAdvancedFilter } from '@/stores/mapState/hooks/useMarkerAdvanc
 
 // 仅 mock store 模块本身：本用例只验证纯响应式逻辑，
 // 同时避免 @/stores 索引把组件等重依赖拖进测试环境
-vi.mock('@/stores', () => new Proxy({}, {
-  get: (_target, key) => (key === '__esModule' ? true : () => ({})),
-}))
+vi.mock(
+  '@/stores',
+  () =>
+    new Proxy(
+      {},
+      {
+        get: (_target, key) => (key === '__esModule' ? true : () => ({})),
+      },
+    ),
+)
 
 // @/components 全量 barrel 会引入富文本编辑器等与用例无关的重依赖，
 // 图标索引（@/components/AppIcons）本身很轻且被 MAF_MODEL_META_MAP 初始化取用，保持真实加载
@@ -65,8 +72,16 @@ describe('高级过滤器条目拖拽排序', () => {
   it('将组内条目的新顺序写回缓存，并同步到派生的 composed 结构', () => {
     hook.reorderMAFItems(0, ['c', 'a', 'b'])
 
-    expect(hook.markerAdvancedFilters.value[0].children.map(({ key }) => key)).toEqual(['c', 'a', 'b'])
-    expect(hook.markerAdvancedComposed.value[0].children.map(({ key }) => key)).toEqual(['c', 'a', 'b'])
+    expect(hook.markerAdvancedFilters.value[0].children.map(({ key }) => key)).toEqual([
+      'c',
+      'a',
+      'b',
+    ])
+    expect(hook.markerAdvancedComposed.value[0].children.map(({ key }) => key)).toEqual([
+      'c',
+      'a',
+      'b',
+    ])
   })
 
   it('仅顺序变化时，缓存与已应用条件产生差异（【应用】按钮可用）', () => {
@@ -87,14 +102,26 @@ describe('高级过滤器条目拖拽排序', () => {
 
   it('key 数量不匹配或包含未知 key 时不写回，避免丢失条目', () => {
     hook.reorderMAFItems(0, ['a', 'b'])
-    expect(hook.markerAdvancedFilters.value[0].children.map(({ key }) => key)).toEqual(['a', 'b', 'c'])
+    expect(hook.markerAdvancedFilters.value[0].children.map(({ key }) => key)).toEqual([
+      'a',
+      'b',
+      'c',
+    ])
 
     hook.reorderMAFItems(0, ['x', 'b', 'c'])
-    expect(hook.markerAdvancedFilters.value[0].children.map(({ key }) => key)).toEqual(['a', 'b', 'c'])
+    expect(hook.markerAdvancedFilters.value[0].children.map(({ key }) => key)).toEqual([
+      'a',
+      'b',
+      'c',
+    ])
   })
 
   it('组序号越界时安全忽略', () => {
     expect(() => hook.reorderMAFItems(9, ['a', 'b', 'c'])).not.toThrow()
-    expect(hook.markerAdvancedFilters.value[0].children.map(({ key }) => key)).toEqual(['a', 'b', 'c'])
+    expect(hook.markerAdvancedFilters.value[0].children.map(({ key }) => key)).toEqual([
+      'a',
+      'b',
+      'c',
+    ])
   })
 })

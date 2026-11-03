@@ -29,22 +29,24 @@ const getAllItems = async (context: ManagerContext) => {
   const itemMap = new Map<number, ItemVo>()
   const total = areaIds.length
   let finished = 0
-  await Promise.allSettled(areaIds.map(async (areaId) => {
-    const { data: { record = [] } = {} } = await Apis.item.listItemIdByType({
-      data: {
-        areaIdList: [areaId],
-        current: 1,
-        size: 500,
-      },
-    })
-    const { length } = record
-    for (let i = 0; i < length; i++) {
-      const item = record[i]
-      itemMap.set(item.id!, item)
-    }
-    finished += 1
-    context.message.value = `正在获取物品列表 (${finished}/${total})`
-  }))
+  await Promise.allSettled(
+    areaIds.map(async areaId => {
+      const { data: { record = [] } = {} } = await Apis.item.listItemIdByType({
+        data: {
+          areaIdList: [areaId],
+          current: 1,
+          size: 500,
+        },
+      })
+      const { length } = record
+      for (let i = 0; i < length; i++) {
+        const item = record[i]
+        itemMap.set(item.id!, item)
+      }
+      finished += 1
+      context.message.value = `正在获取物品列表 (${finished}/${total})`
+    }),
+  )
   return Array.from(itemMap.values())
 }
 
@@ -65,13 +67,9 @@ export const useItemStore = defineStore('global-item', () => {
    * @local 更新本地物品
    * - 已包含 version 比较逻辑
    */
-  const updateLocal = (options: {
-    updateList?: ItemVo[]
-    deleteIds?: number[]
-  }) => {
+  const updateLocal = (options: { updateList?: ItemVo[]; deleteIds?: number[] }) => {
     const { updateList = [], deleteIds = [] } = options
-    if (!updateList.length && !deleteIds.length)
-      return
+    if (!updateList.length && !deleteIds.length) return
     const { length: deleteLength } = deleteIds
     for (let i = 0; i < deleteLength; i++) {
       const id = deleteIds[i]
@@ -82,8 +80,7 @@ export const useItemStore = defineStore('global-item', () => {
       const item = updateList[i]
       const { id = 0, version = 0 } = item
       const localItem = localItemMap.value.get(id!)
-      if ((version < (localItem?.version ?? 0)))
-        continue
+      if (version < (localItem?.version ?? 0)) continue
       localItemMap.value.set(id, item)
     }
     triggerRef(localItemMap)
@@ -92,40 +89,35 @@ export const useItemStore = defineStore('global-item', () => {
   /** @server */
   const createItem = async (itemForm: ItemVo) => {
     const { data: itemId } = await Apis.item.createItem({ data: itemForm })
-    if (!itemId)
-      throw new Error('服务器未返回新物品 id')
-    Apis.item
-      .listItemById({ data: [itemId] })
-      .then(({ data: [item] = [] }) => {
-        if (!item)
-          return
-        updateLocal({ updateList: [item] })
-      })
+    if (!itemId) throw new Error('服务器未返回新物品 id')
+    Apis.item.listItemById({ data: [itemId] }).then(({ data: [item] = [] }) => {
+      if (!item) return
+      updateLocal({ updateList: [item] })
+    })
   }
 
   /** @server */
   const updateItem = async (itemForm: ItemVo) => {
-    if (!itemForm.id)
-      throw new Error('物品 id 为空')
+    if (!itemForm.id) throw new Error('物品 id 为空')
     const { data: ids = [] } = await Apis.item.updateItem({
       pathParams: { editSame: 0 },
       data: [itemForm],
     })
-    Apis.item.listItemById({
-      data: ids,
-    }).then(({ data: [item] = [] }) => {
-      if (!item)
-        return
-      updateLocal({ updateList: [item] })
-    })
+    Apis.item
+      .listItemById({
+        data: ids,
+      })
+      .then(({ data: [item] = [] }) => {
+        if (!item) return
+        updateLocal({ updateList: [item] })
+      })
   }
 
   const deleteItem = async (itemId: number) => {
     const { data: isSuccess, message } = await Apis.item.deleteItem({
       pathParams: { itemId },
     })
-    if (!isSuccess)
-      throw new Error(message)
+    if (!isSuccess) throw new Error(message)
     updateLocal({ deleteIds: [itemId] })
   }
 
@@ -133,9 +125,8 @@ export const useItemStore = defineStore('global-item', () => {
 
   const list = computed(() => {
     const res: ItemVo[] = []
-    localItemMap.value.forEach((item) => {
-      if (!accessStore.checkHiddenFlag(item.hiddenFlag))
-        return
+    localItemMap.value.forEach(item => {
+      if (!accessStore.checkHiddenFlag(item.hiddenFlag)) return
       res.push(item)
     })
     return res.sort(({ sortIndex: ia = 0 }, { sortIndex: ib = 0 }) => ib - ia)
@@ -165,8 +156,7 @@ export const useItemStore = defineStore('global-item', () => {
     },
 
     syncState: async (data, context) => {
-      if (!data)
-        return
+      if (!data) return
       if (!data.updateList.length && !data.deleteIds.length) {
         context.message.value = [
           `[${context.tag.value}] `,
@@ -185,9 +175,8 @@ export const useItemStore = defineStore('global-item', () => {
       ].join('')
     },
 
-    commit: (data) => {
-      if (!data || (!data.updateList.length && !data.deleteIds.length))
-        return
+    commit: data => {
+      if (!data || (!data.updateList.length && !data.deleteIds.length)) return
       const worker = new BulkPutWorker({ name: '物品更新线程' })
       worker.addEventListener('message', () => {
         worker.terminate()
@@ -200,7 +189,7 @@ export const useItemStore = defineStore('global-item', () => {
       })
     },
 
-    init: async (context) => {
+    init: async context => {
       context.startTime.value = Date.now()
       context.tag.value = '初始化'
       context.message.value = `[${context.tag.value}] 拉取最新数据...`
@@ -228,8 +217,7 @@ export const useItemStore = defineStore('global-item', () => {
   // ============================== 外部响应 ==============================
   socketStore.appEvent.on('ItemAdded', async (itemInfo, userInfo) => {
     const { id, name, updaterId } = itemInfo
-    if (!id)
-      return
+    if (!id) return
     const { username = `(uid: ${updaterId})`, nickname } = userInfo
     localItemMap.value.set(id, itemInfo)
     triggerRef(localItemMap)
@@ -242,8 +230,7 @@ export const useItemStore = defineStore('global-item', () => {
 
   socketStore.appEvent.on('ItemUpdated', async (itemInfo, userInfo) => {
     const { id, name, updaterId } = itemInfo
-    if (!id)
-      return
+    if (!id) return
     const { username = `(uid: ${updaterId})`, nickname } = userInfo
     localItemMap.value.set(id, itemInfo)
     triggerRef(localItemMap)

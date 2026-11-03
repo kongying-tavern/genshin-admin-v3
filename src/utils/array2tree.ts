@@ -10,7 +10,7 @@ export interface Array2TreeOptions<T, C, I> {
 }
 
 type AddChildrenKeyToObject<T, K extends string> = {
-  [P in keyof T | K]: P extends keyof T ? T[P] : AddChildrenKeyToObject<T, K>[];
+  [P in keyof T | K]: P extends keyof T ? T[P] : AddChildrenKeyToObject<T, K>[]
 }
 
 /**
@@ -21,27 +21,31 @@ export const array2Tree = <T extends object, C extends string, I extends string 
   items: T[],
   options: Array2TreeOptions<T, C, I>,
 ) => {
-  const {
-    childrenKey,
-    getId,
-    getPid,
-    rootId,
-  } = options
+  const { childrenKey, getId, getPid, rootId } = options
 
-  const itemMap = items.reduce((map, item) => map.set(getId(item), {
-    ...item,
-    [childrenKey]: [],
-  } as AddChildrenKeyToObject<T, C>), new Map<I, AddChildrenKeyToObject<T, C>>())
+  const itemMap = items.reduce(
+    (map, item) =>
+      map.set(getId(item), {
+        ...item,
+        [childrenKey]: [],
+      } as AddChildrenKeyToObject<T, C>),
+    new Map<I, AddChildrenKeyToObject<T, C>>(),
+  )
 
-  return items.reduce((result, item) => {
-    const id = getId(item)
-    const pid = getPid(item)
-    const covertItem = itemMap.get(id)!
-    if (pid !== rootId) {
-      void (itemMap.get(pid)?.[childrenKey] as (AddChildrenKeyToObject<T, C>[] | undefined))?.push(covertItem)
+  return items.reduce(
+    (result, item) => {
+      const id = getId(item)
+      const pid = getPid(item)
+      const covertItem = itemMap.get(id)!
+      if (pid !== rootId) {
+        void (itemMap.get(pid)?.[childrenKey] as AddChildrenKeyToObject<T, C>[] | undefined)?.push(
+          covertItem,
+        )
+        return result
+      }
+      result.push(covertItem)
       return result
-    }
-    result.push(covertItem)
-    return result
-  }, [] as AddChildrenKeyToObject<T, C>[])
+    },
+    [] as AddChildrenKeyToObject<T, C>[],
+  )
 }

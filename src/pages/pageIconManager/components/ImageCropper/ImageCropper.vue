@@ -5,30 +5,35 @@ import { ElMessage } from 'element-plus'
 import { getObjectFitSize } from '@/utils'
 import { useImageCropper } from './hooks'
 
-const props = withDefaults(defineProps<{
-  raw?: string
-  showPreview?: boolean
-  disabledDelete?: boolean
-  variant: IconVariant
-  loading?: boolean
-}>(), {
-  showPreview: true,
-  loading: false,
-})
+const props = withDefaults(
+  defineProps<{
+    raw?: string
+    showPreview?: boolean
+    disabledDelete?: boolean
+    variant: IconVariant
+    loading?: boolean
+  }>(),
+  {
+    showPreview: true,
+    loading: false,
+  },
+)
 
 const emits = defineEmits<{
   /** 点击删除按钮 */
   delete: [variant: IconVariant]
   /** 输出尺寸发生变化 */
-  outputChange: [size: { w: number, h: number }]
+  outputChange: [size: { w: number; h: number }]
   /** 裁切器发生图片加载事件 */
-  imageLoad: [meta: {
-    variant: IconVariant
-    bmp: ImageBitmap
-    blob: Blob
-    isRaw: boolean
-    canvas: HTMLCanvasElement
-  }]
+  imageLoad: [
+    meta: {
+      variant: IconVariant
+      bmp: ImageBitmap
+      blob: Blob
+      isRaw: boolean
+      canvas: HTMLCanvasElement
+    },
+  ]
 }>()
 
 /** 裁切器界面 */
@@ -59,8 +64,7 @@ const previewerRef = shallowRef<HTMLCanvasElement>()
 const previewerCtxRef = shallowRef<CanvasRenderingContext2D>()
 /** 预览容器尺寸 */
 const previewerSize = computed(() => {
-  if (!config.value.rawSize || !newImage.value)
-    return { w: 64, h: 64 }
+  if (!config.value.rawSize || !newImage.value) return { w: 64, h: 64 }
   return outputSize.value
 })
 
@@ -87,13 +91,11 @@ const cleanups = ref<(() => void)[]>([])
 
 /** 记录首次加载图片 */
 const imageLoadHook = onImageLoad(({ bmp, blob, isRaw }) => {
-  if (!previewerRef.value)
-    return
+  if (!previewerRef.value) return
   if (isRaw) {
     oldImage.value = bmp
     newImage.value = null
-  }
-  else {
+  } else {
     newImage.value = bmp
   }
   emits('imageLoad', {
@@ -107,7 +109,7 @@ const imageLoadHook = onImageLoad(({ bmp, blob, isRaw }) => {
 cleanups.value.push(imageLoadHook.off)
 
 /** 错误处理 */
-const cropperErrorHook = onCropperError((err) => {
+const cropperErrorHook = onCropperError(err => {
   ElMessage.error(err.message)
 })
 cleanups.value.push(cropperErrorHook.off)
@@ -115,11 +117,9 @@ cleanups.value.push(cropperErrorHook.off)
 /** 连续绘制截取区 */
 const frameHook = onFrame(({ rect, image }) => {
   const ctx = previewerCtxRef.value
-  if (!ctx)
-    return
+  if (!ctx) return
   const raw = newImage.value
-  if (!raw)
-    return
+  if (!raw) return
   const { width: cw, height: ch } = ctx.canvas
   ctx.clearRect(0, 0, cw, ch)
   ctx.save()
@@ -140,10 +140,10 @@ const frameHook = onFrame(({ rect, image }) => {
     const { width: rawW, height: rawH } = raw
     const { x: baseX, y: baseY, width: baseW, height: baseH } = image.getClientRect()
     const { x: rectX, y: rectY, width: rectW, height: rectH } = rect.getClientRect()
-    const x = rawW * (rectX - baseX) / baseW
-    const y = rawH * (rectY - baseY) / baseH
-    const w = Math.round(rawW * rectW / baseW)
-    const h = Math.round(rawH * rectH / baseH)
+    const x = (rawW * (rectX - baseX)) / baseW
+    const y = (rawH * (rectY - baseY)) / baseH
+    const w = Math.round((rawW * rectW) / baseW)
+    const h = Math.round((rawH * rectH) / baseH)
     outputSize.value = { w, h }
     ctx.drawImage(raw, x, y, w, h, 0, 0, w, h)
   }
@@ -153,10 +153,10 @@ const frameHook = onFrame(({ rect, image }) => {
     const { x: baseX, y: baseY, width: baseW, height: baseH } = image.getClientRect()
     const { x: rectX, y: rectY, width: rectW, height: rectH } = rect.getClientRect()
     // 计算裁剪区域在原始图像上的坐标和尺寸
-    const sx = rawW * (rectX - baseX) / baseW
-    const sy = rawH * (rectY - baseY) / baseH
-    const sw = Math.round(rawW * rectW / baseW)
-    const sh = Math.round(rawH * rectH / baseH)
+    const sx = (rawW * (rectX - baseX)) / baseW
+    const sy = (rawH * (rectY - baseY)) / baseH
+    const sw = Math.round((rawW * rectW) / baseW)
+    const sh = Math.round((rawH * rectH) / baseH)
     // 计算在预览画布上的目标尺寸
     const { dx, dy, dw, dh } = getObjectFitSize('contain', cw, ch, sw, sh)
     outputSize.value = { w: dw, h: dh }
@@ -167,9 +167,13 @@ const frameHook = onFrame(({ rect, image }) => {
 cleanups.value.push(frameHook.off)
 
 // 只在尺寸真正变化时才触发 emits
-watch(outputSize, (size) => {
-  emits('outputChange', size)
-}, { deep: true })
+watch(
+  outputSize,
+  size => {
+    emits('outputChange', size)
+  },
+  { deep: true },
+)
 
 // 预览尺寸变化时清除裁剪路径缓存
 watch(previewerSize, () => {
@@ -183,12 +187,15 @@ onMounted(() => {
   previewerCtxRef.value = ctx
 })
 
-watch(() => props.raw, async (url) => {
-  if (!url)
-    return
-  await ready
-  await loadFromSrc(url, { isRaw: true })
-}, { immediate: true })
+watch(
+  () => props.raw,
+  async url => {
+    if (!url) return
+    await ready
+    await loadFromSrc(url, { isRaw: true })
+  },
+  { immediate: true },
+)
 
 onBeforeUnmount(() => {
   cleanups.value.forEach(off => off())
@@ -209,14 +216,23 @@ onBeforeUnmount(() => {
       <div class="flex-1 h-[240px] flex flex-col gap-1">
         <div class="flex gap-1">
           <el-button
-            style="width: 100%" :icon="FolderOpened" :disabled="loading" size="small"
+            style="width: 100%"
+            :icon="FolderOpened"
+            :disabled="loading"
+            size="small"
             @click="() => loadFromFile()"
           >
             选择
           </el-button>
           <el-button
-            v-if="variant !== 'default'" style="margin-left: 0" type="danger" plain :icon="Delete"
-            :disabled="loading || props.disabledDelete" size="small" @click="() => emits('delete', variant)"
+            v-if="variant !== 'default'"
+            style="margin-left: 0"
+            type="danger"
+            plain
+            :icon="Delete"
+            :disabled="loading || props.disabledDelete"
+            size="small"
+            @click="() => emits('delete', variant)"
           />
         </div>
 
@@ -224,11 +240,13 @@ onBeforeUnmount(() => {
         <div class="flex-1 flex flex-col gap-0.5 items-center justify-center select-none">
           <template v-if="oldImage">
             <img
-              class="w-[66px] h-[66px] border border-[var(--el-border-color)] object-contain" :src="props.raw"
-              draggable="false" crossorigin=""
-            >
+              class="w-[66px] h-[66px] border border-[var(--el-border-color)] object-contain"
+              :src="props.raw"
+              draggable="false"
+              crossorigin=""
+            />
             <div class="shrink-0 text-xs">
-              {{ `${(oldImage.width).toFixed(2)} x ${(oldImage.height).toFixed(2)}` }}
+              {{ `${oldImage.width.toFixed(2)} x ${oldImage.height.toFixed(2)}` }}
             </div>
           </template>
           <div
@@ -247,17 +265,31 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- 修改后预览 -->
-        <div v-show="props.showPreview" class="flex-1 flex flex-col gap-0.5 items-center justify-center">
-          <div class="w-[66px] h-[66px] border border-[var(--el-border-color)] relative scale-container">
+        <div
+          v-show="props.showPreview"
+          class="flex-1 flex flex-col gap-0.5 items-center justify-center"
+        >
+          <div
+            class="w-[66px] h-[66px] border border-[var(--el-border-color)] relative scale-container"
+          >
             <canvas
-              v-show="newImage" ref="previewerRef" class="scale-to-container" :style="{
+              v-show="newImage"
+              ref="previewerRef"
+              class="scale-to-container"
+              :style="{
                 '--w': previewerSize.w,
                 '--h': previewerSize.h,
-              }" :class="{
+              }"
+              :class="{
                 'raw-size': config.rawSize,
-              }" :width="previewerSize.w" :height="previewerSize.h"
+              }"
+              :width="previewerSize.w"
+              :height="previewerSize.h"
             />
-            <div v-show="!newImage" class="w-full h-full text-xs grid place-content-center select-none">
+            <div
+              v-show="!newImage"
+              class="w-full h-full text-xs grid place-content-center select-none"
+            >
               无
             </div>
           </div>
@@ -272,15 +304,9 @@ onBeforeUnmount(() => {
     <!-- 底部操作栏 -->
     <div class="h-[32px] flex items-center">
       <div class="shrink-0 flex gap-2 items-center">
-        <el-check-tag v-model:checked="config.clipCircle">
-          圆形裁切
-        </el-check-tag>
-        <el-check-tag v-model:checked="config.rawSize">
-          原始尺寸
-        </el-check-tag>
-        <el-check-tag v-model:checked="config.keepRatio">
-          锁定比例
-        </el-check-tag>
+        <el-check-tag v-model:checked="config.clipCircle"> 圆形裁切 </el-check-tag>
+        <el-check-tag v-model:checked="config.rawSize"> 原始尺寸 </el-check-tag>
+        <el-check-tag v-model:checked="config.keepRatio"> 锁定比例 </el-check-tag>
       </div>
     </div>
   </div>
@@ -291,14 +317,16 @@ onBeforeUnmount(() => {
   --s: 32px;
   --color-a: transparent;
   --color-b: var(--el-fill-color-darker);
-  background: conic-gradient(from 0deg at 50% 50%,
-      var(--color-a) 25%,
-      var(--color-b) 25%,
-      var(--color-b) 50%,
-      var(--color-a) 50%,
-      var(--color-a) 75%,
-      var(--color-b) 75%,
-      var(--color-b) 100%);
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    var(--color-a) 25%,
+    var(--color-b) 25%,
+    var(--color-b) 50%,
+    var(--color-a) 50%,
+    var(--color-a) 75%,
+    var(--color-b) 75%,
+    var(--color-b) 100%
+  );
   background-size: var(--s) var(--s);
 }
 

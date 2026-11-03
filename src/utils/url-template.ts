@@ -18,8 +18,7 @@ export class UrlTemplate {
   toString() {
     return this.#template.replace(/\{\{([\s\S]+?)\}\}/g, (match, key) => {
       const value = this.#variables[key]
-      if (value === undefined || value === null)
-        return match
+      if (value === undefined || value === null) return match
       return value
     })
   }

@@ -49,9 +49,7 @@ const cancel = () => {
     @open="open()"
   >
     <div class="genshin-dark-card flex flex-col overflow-hidden font-['HYWenHei-85W']">
-      <div class="text-xl text-center">
-        选择地图
-      </div>
+      <div class="text-xl text-center">选择地图</div>
       <GSDivider color="#76716A" :height="34" />
 
       <el-scrollbar class="flex-1">
@@ -70,19 +68,8 @@ const cancel = () => {
       <GSDivider color="#76716A" :height="34" />
 
       <div class="flex gap-4">
-        <GSButton
-          class="flex-1"
-          icon="cancel"
-          @click="cancel()"
-        >
-          取消
-        </GSButton>
-        <GSButton
-          class="flex-1"
-          :disabled="!selectedValue"
-          icon="submit"
-          @click="confirm()"
-        >
+        <GSButton class="flex-1" icon="cancel" @click="cancel()"> 取消 </GSButton>
+        <GSButton class="flex-1" :disabled="!selectedValue" icon="submit" @click="confirm()">
           切换
         </GSButton>
       </div>

@@ -45,9 +45,9 @@ declare namespace DTO {
     /** 用于控制快捷输入中可选的字符 */
     quickInputSnippets?: string[]
     /** 用于提供特殊刷新时间的数据对应 */
-    refreshTimeSpecial?: { label: string, value: number }[]
+    refreshTimeSpecial?: { label: string; value: number }[]
     /** 字体资源 */
-    fontResources?: Record<string, { url: string, type: string }>
+    fontResources?: Record<string, { url: string; type: string }>
   }
 
   interface ExtraConfig {
@@ -74,7 +74,7 @@ declare namespace DTO {
         }[]
       }[]
     }
-    'underground'?: {
+    underground?: {
       /** 开启附加图层选项时的提示文本 */
       textActive?: string
       /** 关闭附加图层选项时的提示文本 */
@@ -192,7 +192,7 @@ declare namespace DTO {
 
   interface MarkerExtra {
     /** 非地面区域 */
-    'underground'?: {
+    underground?: {
       is_underground?: boolean
       is_global?: boolean
       region_levels?: string[]
@@ -208,7 +208,7 @@ declare namespace DTO {
     }
 
     /** 覆盖图标 */
-    'iconOverride'?: {
+    iconOverride?: {
       /** `icon.id` */
       id?: number
       /** 最小可见缩放级别，大于该值可见 */
@@ -221,6 +221,6 @@ declare namespace DTO {
      * 洞口关联
      * @deprecated
      */
-    'caves'?: number[]
+    caves?: number[]
   }
 }

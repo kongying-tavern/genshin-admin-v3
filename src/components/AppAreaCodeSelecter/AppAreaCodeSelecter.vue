@@ -4,13 +4,16 @@ import type { AreaVo } from '@/api/alova/globals'
 import { useAreaStore } from '@/stores'
 import { array2Tree } from '@/utils'
 
-const props = withDefaults(defineProps<{
-  /** 子地区 code，必须为 `A:${string}:${string}` 格式 */
-  modelValue?: string
-  isAreaDisabled?: (area: AreaVo) => boolean
-}>(), {
-  modelValue: undefined,
-})
+const props = withDefaults(
+  defineProps<{
+    /** 子地区 code，必须为 `A:${string}:${string}` 格式 */
+    modelValue?: string
+    isAreaDisabled?: (area: AreaVo) => boolean
+  }>(),
+  {
+    modelValue: undefined,
+  },
+)
 
 const emits = defineEmits<{
   'update:modelValue': [code: string]
@@ -27,10 +30,8 @@ const covertCodeToCodes = (childCode: string) => {
 
 const areaCodeList = computed({
   get: () => {
-    if (props.modelValue === undefined)
-      return covertCodeToCodes(internalAreaCode.value)
-    if (!props.modelValue)
-      return []
+    if (props.modelValue === undefined) return covertCodeToCodes(internalAreaCode.value)
+    if (!props.modelValue) return []
     return covertCodeToCodes(props.modelValue)
   },
   set: ([_, childAreaCode]) => {
@@ -44,20 +45,23 @@ const areaCodeList = computed({
 
 const areaOptions = computed(() => {
   const { isAreaDisabled } = props
-  return array2Tree(areaStore.areaList.map(area => ({
-    _raw: area,
-    label: area.name,
-    value: area.code,
-    disabled: isAreaDisabled ? isAreaDisabled(area) : false,
-    id: area.id,
-    pid: area.parentId,
-    isFinal: area.isFinal,
-  })), {
-    childrenKey: 'children',
-    getId: area => area.id!,
-    getPid: area => area.pid!,
-    rootId: -1,
-  })
+  return array2Tree(
+    areaStore.areaList.map(area => ({
+      _raw: area,
+      label: area.name,
+      value: area.code,
+      disabled: isAreaDisabled ? isAreaDisabled(area) : false,
+      id: area.id,
+      pid: area.parentId,
+      isFinal: area.isFinal,
+    })),
+    {
+      childrenKey: 'children',
+      getId: area => area.id!,
+      getPid: area => area.pid!,
+      rootId: -1,
+    },
+  )
 })
 
 const areaCascaderProps: CascaderProps = {

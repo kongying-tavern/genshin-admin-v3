@@ -15,7 +15,9 @@ export const useSelected = (options: SelectedHookOptions = {}) => {
   const { onBatchDeleteSuccess } = options
 
   const selected = ref<SysUserVo[]>([])
-  const selectedText = computed(() => selected.value.length ? `已选择 ${selected.value.length} 个用户` : '')
+  const selectedText = computed(() =>
+    selected.value.length ? `已选择 ${selected.value.length} 个用户` : '',
+  )
   const batchDeleteLoading = ref(false)
 
   const changeSelected = (list: SysUserVo[]) => {
@@ -23,14 +25,14 @@ export const useSelected = (options: SelectedHookOptions = {}) => {
   }
 
   const batchDelete = async () => {
-    if (!selected.value.length)
-      return
-    const res = await ElMessageBox.confirm(`共有 ${selected.value.length} 个用户将被删除，确认操作？`, '批量删除').catch(() => false)
-    if (!res)
-      return
+    if (!selected.value.length) return
+    const res = await ElMessageBox.confirm(
+      `共有 ${selected.value.length} 个用户将被删除，确认操作？`,
+      '批量删除',
+    ).catch(() => false)
+    if (!res) return
     const missions = selected.value.map(async ({ id }) => {
-      if (!id)
-        return undefined
+      if (!id) return undefined
       const res = await Apis.user.deleteUser({
         pathParams: {
           workId: id,
@@ -43,13 +45,11 @@ export const useSelected = (options: SelectedHookOptions = {}) => {
       await Promise.allSettled(missions)
       ElMessage.success('删除成功')
       onBatchDeleteSuccess?.()
-    }
-    catch (err) {
+    } catch (err) {
       ElMessage.error({
         message: `删除用户失败，原因为：${messageFrom(err)}`,
       })
-    }
-    finally {
+    } finally {
       batchDeleteLoading.value = false
     }
   }

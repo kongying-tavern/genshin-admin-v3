@@ -3,7 +3,9 @@ import { GSButton, GSDivider } from '@/components'
 import { SelectList } from '../SelectList'
 
 type ValueType = string | number
-interface ItemType { [key: string]: ValueType }
+interface ItemType {
+  [key: string]: ValueType
+}
 type KeyType = string
 
 defineProps<{
@@ -16,8 +18,8 @@ defineProps<{
 
 const emits = defineEmits<{
   'update:modelValue': [v: ValueType[]]
-  'confirm': [v: ValueType[]]
-  'cancel': []
+  confirm: [v: ValueType[]]
+  cancel: []
 }>()
 
 const modelValue = defineModel<ValueType[]>('modelValue', {
@@ -35,7 +37,9 @@ const cancel = () => {
 </script>
 
 <template>
-  <div class="genshin-dark-card flex flex-col overflow-hidden font-['HYWenHei-85W'] min-w-[500px] h-[600px] max-w-[100dvw] max-h-[100dvh]">
+  <div
+    class="genshin-dark-card flex flex-col overflow-hidden font-['HYWenHei-85W'] min-w-[500px] h-[600px] max-w-[100dvw] max-h-[100dvh]"
+  >
     <template v-if="title">
       <div class="text-xl text-center">
         {{ title }}
@@ -69,19 +73,8 @@ const cancel = () => {
       <GSDivider color="#76716A" :height="34" />
 
       <div class="flex gap-4">
-        <GSButton
-          class="flex-1"
-          icon="cancel"
-          @click="cancel"
-        >
-          取消
-        </GSButton>
-        <GSButton
-          :disabled="modelValue.length <= 0"
-          class="flex-1"
-          icon="submit"
-          @click="confirm"
-        >
+        <GSButton class="flex-1" icon="cancel" @click="cancel"> 取消 </GSButton>
+        <GSButton :disabled="modelValue.length <= 0" class="flex-1" icon="submit" @click="confirm">
           确认
         </GSButton>
       </div>

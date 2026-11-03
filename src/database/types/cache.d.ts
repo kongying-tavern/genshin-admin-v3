@@ -31,14 +31,17 @@ declare namespace DBType {
     /** 所用的 icon 纹理的签名 */
     iconSpriteDigest: string
     /** 点位 key 到纹理坐标的映射 */
-    mapping: Record<string, {
-      x: number
-      y: number
-      width: number
-      height: number
-      anchorX?: number
-      anchorY?: number
-    }>
+    mapping: Record<
+      string,
+      {
+        x: number
+        y: number
+        width: number
+        height: number
+        anchorX?: number
+        anchorY?: number
+      }
+    >
   }
 
   /** dadian json 订阅缓存 */

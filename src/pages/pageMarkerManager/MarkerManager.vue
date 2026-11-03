@@ -16,7 +16,11 @@ const queryForm = ref<MarkerSearchParams>({
 })
 
 // ==================== 分页 ====================
-const { layout, pagination, onChange: onPaginationChange } = usePagination({
+const {
+  layout,
+  pagination,
+  onChange: onPaginationChange,
+} = usePagination({
   units: [PgUnit.TOTAL, PgUnit.SIZE, PgUnit.PREV, PgUnit.PAGER, PgUnit.NEXT],
   module: ManagerModule.Marker,
 })
@@ -43,7 +47,7 @@ const { itemOptions } = useItemList({
 })
 
 // 当已选物品不存在于物品选项中时，重置已选物品
-watch(itemOptions, (options) => {
+watch(itemOptions, options => {
   for (const itemId of queryForm.value.itemIdList) {
     if (!options.find(opt => opt.value === itemId)) {
       queryForm.value.itemIdList = []
@@ -55,12 +59,11 @@ watch(itemOptions, (options) => {
 const { DialogService } = useGlobalDialog()
 
 const handleDeleteMarker = (marker: MarkerVo) => {
-  DialogService
-    .config({
-      alignCenter: true,
-      closeOnClickModal: false,
-      closeOnPressEscape: false,
-    })
+  DialogService.config({
+    alignCenter: true,
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
+  })
     .props({
       title: '删除点位',
       marker,
@@ -74,10 +77,7 @@ const handleDeleteMarker = (marker: MarkerVo) => {
 
 <template>
   <div class="h-full flex-1 flex flex-col overflow-hidden">
-    <MarkerFilter
-      v-model="queryForm"
-      @change="resetCurrentRefresh"
-    />
+    <MarkerFilter v-model="queryForm" @change="resetCurrentRefresh" />
 
     <MarkerTable
       :marker-list="markerList"

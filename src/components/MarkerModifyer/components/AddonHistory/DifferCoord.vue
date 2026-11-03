@@ -1,21 +1,22 @@
 <script setup lang="ts">
-const props = withDefaults(defineProps<{
-  history?: string
-  current?: string
-}>(), {
-  history: '',
-  current: '',
-})
+const props = withDefaults(
+  defineProps<{
+    history?: string
+    current?: string
+  }>(),
+  {
+    history: '',
+    current: '',
+  },
+)
 
 const start = computed(() => {
-  if (!props.history)
-    return [0, 0]
+  if (!props.history) return [0, 0]
   return props.history.split(',').map(Number)
 })
 
 const end = computed(() => {
-  if (!props.current)
-    return [0, 0]
+  if (!props.current) return [0, 0]
   return props.current.split(',').map(Number)
 })
 
@@ -47,7 +48,7 @@ const vector = computed(() => {
       <div :title="current">
         {{ `结束: X ${end[0].toFixed(2)}, Y ${end[1].toFixed(2)}` }}
       </div>
-      <div>{{ `角度: ${(vector.angle * 180 / Math.PI).toFixed(2)}°` }}</div>
+      <div>{{ `角度: ${((vector.angle * 180) / Math.PI).toFixed(2)}°` }}</div>
       <div>{{ `距离: ${vector.length.toFixed(2)}` }}</div>
     </div>
   </div>

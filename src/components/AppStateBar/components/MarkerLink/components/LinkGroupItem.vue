@@ -35,10 +35,7 @@ const focusKey = defineModel<string>('focusKey', {
     }"
     open
   >
-    <summary
-      class="link-group-summary"
-      :title="groupTitle || groupId"
-    >
+    <summary class="link-group-summary" :title="groupTitle || groupId">
       <div>
         <template v-if="groupTitle">
           {{ groupTitle }}
@@ -47,9 +44,7 @@ const focusKey = defineModel<string>('focusKey', {
           组 <span class="text-xs font-mono">{{ groupId.slice(-8) }}</span>
         </template>
       </div>
-      <div class="font-mono">
-        ({{ group.size }})
-      </div>
+      <div class="font-mono">({{ group.size }})</div>
     </summary>
 
     <div>
@@ -79,10 +74,8 @@ const focusKey = defineModel<string>('focusKey', {
 .link-group-item {
   --propmt-color: var(--el-fill-color-darker);
 
-  @apply
-    w-full overflow-hidden my-2 rounded
-    border border-[var(--propmt-color)]
-  ;
+  @apply w-full overflow-hidden my-2 rounded
+    border border-[var(--propmt-color)];
 
   &.is-temp {
     --propmt-color: var(--el-color-warning-light-7);
@@ -94,13 +87,11 @@ const focusKey = defineModel<string>('focusKey', {
 }
 
 .link-group-summary {
-  @apply
-    flex justify-between items-center px-1
+  @apply flex justify-between items-center px-1
     overflow-hidden whitespace-nowrap text-ellipsis
     text-xs text-[var(--el-text-color-primary)] leading-[22px]
     select-none
-    cursor-pointer
-  ;
+    cursor-pointer;
   background-color: var(--propmt-color);
   &:hover {
     filter: brightness(105%);

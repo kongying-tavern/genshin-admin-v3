@@ -18,10 +18,12 @@ const emits = defineEmits<{
   close: []
 }>()
 
-const roleOptions = computed(() => props.roleList.map(role => ({
-  label: role.name,
-  value: role.id,
-})))
+const roleOptions = computed(() =>
+  props.roleList.map(role => ({
+    label: role.name,
+    value: role.id,
+  })),
+)
 
 const formRef = ref<ElFormType | null>(null)
 const formData = ref({
@@ -37,7 +39,12 @@ const rules: ItemFormRules<UnwrapRef<typeof formData>> = {
   roleId: [{ required: true, message: '必须指定一个角色' }],
 }
 
-const { loading, refresh: submit, onSuccess, onError } = useFetchHook({
+const {
+  loading,
+  refresh: submit,
+  onSuccess,
+  onError,
+} = useFetchHook({
   onRequest: () => Apis.user.updateUser({ data: formData.value }),
 })
 
@@ -49,16 +56,17 @@ onSuccess(() => {
   emits('success')
 })
 
-onError(err => ElMessage.error({
-  message: `更新用户信息失败，原因为：${err.message}`,
-}))
+onError(err =>
+  ElMessage.error({
+    message: `更新用户信息失败，原因为：${err.message}`,
+  }),
+)
 
 const editUser = async () => {
   try {
     await formRef.value?.validate()
     await submit()
-  }
-  catch {
+  } catch {
     // validate, no error
   }
 }
@@ -91,13 +99,19 @@ const editUser = async () => {
         <el-form-item label="头像" prop="logo">
           <div
             class="w-20 h-20 border rounded overflow-hidden"
-            style="border-color: var(--el-color-primary-light-8); background-color: var(--el-color-primary-light-9);"
+            style="
+              border-color: var(--el-color-primary-light-8);
+              background-color: var(--el-color-primary-light-9);
+            "
           >
-            <img v-if="formData.logo" :src="formData.logo" class="w-full h-full object-contain" referrerpolicy="no-referrer">
+            <img
+              v-if="formData.logo"
+              :src="formData.logo"
+              class="w-full h-full object-contain"
+              referrerpolicy="no-referrer"
+            />
           </div>
-          <div class="pl-2">
-            功能开发中
-          </div>
+          <div class="pl-2">功能开发中</div>
         </el-form-item>
       </el-form>
     </WinDialogTabPanel>
@@ -106,9 +120,7 @@ const editUser = async () => {
       <el-button :icon="Check" type="primary" :loading="loading" @click="editUser">
         确认
       </el-button>
-      <el-button :icon="Close" :disabled="loading" @click="() => emits('close')">
-        取消
-      </el-button>
+      <el-button :icon="Close" :disabled="loading" @click="() => emits('close')"> 取消 </el-button>
     </WinDialogFooter>
   </WinDialog>
 </template>

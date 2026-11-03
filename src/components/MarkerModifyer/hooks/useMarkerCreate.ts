@@ -8,14 +8,14 @@ import { useMarkerStore, useUserStore } from '@/stores'
 import { usePictureUpload } from './usePictureUpload'
 
 /** 新增点位，已自动处理 version 和 methodType 字段 */
-export const useMarkerCreate = (markerData: Ref<MarkerVo | null>, editorRef: ShallowRef<InstanceType<typeof MarkerForm>>) => {
+export const useMarkerCreate = (
+  markerData: Ref<MarkerVo | null>,
+  editorRef: ShallowRef<InstanceType<typeof MarkerForm>>,
+) => {
   const userStore = useUserStore()
   const markerStore = useMarkerStore()
 
-  const commonKeys: (keyof MarkerVo)[] = [
-    'updateTime',
-    'createTime',
-  ]
+  const commonKeys: (keyof MarkerVo)[] = ['updateTime', 'createTime']
 
   const buildAdminMarkerForm = (marker: MarkerVo): MarkerVo => {
     return {
@@ -32,10 +32,14 @@ export const useMarkerCreate = (markerData: Ref<MarkerVo | null>, editorRef: Sha
    */
   const isSuccess = ref(false)
 
-  const { refresh: submit, onSuccess, onError, ...rest } = useFetchHook({
+  const {
+    refresh: submit,
+    onSuccess,
+    onError,
+    ...rest
+  } = useFetchHook({
     onRequest: async () => {
-      if (!markerData.value)
-        throw new Error('表单数据为空')
+      if (!markerData.value) throw new Error('表单数据为空')
       await editorRef.value?.validate()
       const form = buildAdminMarkerForm(markerData.value)
       await tryUploadPicture(form)
@@ -50,9 +54,11 @@ export const useMarkerCreate = (markerData: Ref<MarkerVo | null>, editorRef: Sha
     })
   })
 
-  onError(err => ElMessage.error({
-    message: `新增点位失败，原因为：${err.message}`,
-  }))
+  onError(err =>
+    ElMessage.error({
+      message: `新增点位失败，原因为：${err.message}`,
+    }),
+  )
 
   return { isSuccess, submit, onSuccess, onError, ...rest }
 }

@@ -22,7 +22,7 @@ const sortType = defineModel<string>('sortType', {
   required: true,
 })
 
-const sortOptions: { role: 'key' | 'type', value: string, name: string, divided?: boolean }[] = [
+const sortOptions: { role: 'key' | 'type'; value: string; name: string; divided?: boolean }[] = [
   { role: 'key', value: 'tag', name: '名称' },
   { role: 'key', value: 'id', name: '图片 id' },
   { role: 'key', value: 'createTime', name: '创建时间' },
@@ -33,16 +33,15 @@ const sortOptions: { role: 'key' | 'type', value: string, name: string, divided?
 
 const handleSortCommand = (command: string) => {
   const [role, value] = command.split(':')
-  if (role === 'key')
-    sortKey.value = value
-
-  else
-    sortType.value = value
+  if (role === 'key') sortKey.value = value
+  else sortType.value = value
 }
 </script>
 
 <template>
-  <div class="col-span-3 flex justify-end items-center p-2 border-b-[1px] border-[var(--el-border-color-lighter)]">
+  <div
+    class="col-span-3 flex justify-end items-center p-2 border-b-[1px] border-[var(--el-border-color-lighter)]"
+  >
     <!-- 搜索输入框 -->
     <el-input
       v-model="queryName"
@@ -79,7 +78,9 @@ const handleSortCommand = (command: string) => {
             <div class="flex items-center gap-2">
               <el-icon
                 class="transition-all"
-                :class="{ 'opacity-0': (option.role === 'key' ? sortKey : sortType) !== option.value }"
+                :class="{
+                  'opacity-0': (option.role === 'key' ? sortKey : sortType) !== option.value,
+                }"
                 :size="12"
               >
                 <CircleCheck />
@@ -94,8 +95,6 @@ const handleSortCommand = (command: string) => {
     <el-divider direction="vertical" />
 
     <!-- 操作栏 -->
-    <el-button text :icon="CirclePlus" @click="() => emits('createIcon')">
-      新建
-    </el-button>
+    <el-button text :icon="CirclePlus" @click="() => emits('createIcon')"> 新建 </el-button>
   </div>
 </template>

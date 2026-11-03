@@ -10,14 +10,23 @@ const archiveStore = useArchiveStore()
 
 const sort = computed({
   get: () => {
-    return archiveStore.currentArchive.body.Preference['notice.setting.sort'] ?? ['isValid-', 'sortIndex-']
+    return (
+      archiveStore.currentArchive.body.Preference['notice.setting.sort'] ?? [
+        'isValid-',
+        'sortIndex-',
+      ]
+    )
   },
-  set: (v) => {
+  set: v => {
     archiveStore.currentArchive.body.Preference['notice.setting.sort'] = v
   },
 })
 
-const { pagination, layout, onChange: onPaginationChange } = usePagination({
+const {
+  pagination,
+  layout,
+  onChange: onPaginationChange,
+} = usePagination({
   units: [PgUnit.TOTAL, PgUnit.SIZE, PgUnit.JUMPER, PgUnit.PREV, PgUnit.PAGER, PgUnit.NEXT],
   module: ManagerModule.Notice,
 })
@@ -50,10 +59,9 @@ onPaginationChange(refresh)
 const { DialogService } = useGlobalDialog()
 
 const handleCreateNotice = () => {
-  DialogService
-    .props({
-      status: 'create',
-    })
+  DialogService.props({
+    status: 'create',
+  })
     .listeners({
       success: refresh,
     })
@@ -61,11 +69,10 @@ const handleCreateNotice = () => {
 }
 
 const handleReviewNotice = (notice: NoticeVo) => {
-  DialogService
-    .props({
-      notice,
-      status: 'update',
-    })
+  DialogService.props({
+    notice,
+    status: 'update',
+  })
     .listeners({
       success: refresh,
     })
@@ -73,11 +80,10 @@ const handleReviewNotice = (notice: NoticeVo) => {
 }
 
 const handleDeleteNotice = (notice: NoticeVo) => {
-  DialogService
-    .props({
-      title: '删除公告',
-      notice,
-    })
+  DialogService.props({
+    title: '删除公告',
+    notice,
+  })
     .listeners({
       success: refresh,
     })

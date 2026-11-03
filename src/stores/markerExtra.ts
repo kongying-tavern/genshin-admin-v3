@@ -15,10 +15,10 @@ export const useMarkerExtraStore = defineStore('global-marker-extra', () => {
     const areaExtraConfigs: Record<string, DTO.ExtraConfig> = {}
     for (const areaCode in plugins) {
       const { extra = [], extraConfig = {} } = plugins[areaCode]
-      const { extra: extraBeta = [], extraConfig: extraConfigBeta = {} } = pluginsBeta[areaCode] ?? {}
+      const { extra: extraBeta = [], extraConfig: extraConfigBeta = {} } =
+        pluginsBeta[areaCode] ?? {}
       const extraKeys = isNegui ? [...extra, ...extraBeta] : extra
-      if (isNegui)
-        defaultsDeep(extraConfig, extraConfigBeta)
+      if (isNegui) defaultsDeep(extraConfig, extraConfigBeta)
       areaExtraConfigs[areaCode] = pick(extraConfig, extraKeys)
     }
 

@@ -5,7 +5,7 @@ import { MarkerFilterButton } from '../../MarkerFilterComponent'
 import { SelectBase } from '../FilterModelComponent'
 
 defineProps<{
-  options: MAFOptionSelect<{ label: string, value: number }>
+  options: MAFOptionSelect<{ label: string; value: number }>
   meta: MAFMetaVisibility
 }>()
 
@@ -20,10 +20,7 @@ const modelValue = defineModel<MAFValueNumberArray>('modelValue', {
 <template>
   <div class="flex-auto flex gap-1 items-center">
     <span class="flex-none">可见范围</span>
-    <SelectBase
-      v-model="modelValue.na"
-      :options="options"
-    >
+    <SelectBase v-model="modelValue.na" :options="options">
       <MarkerFilterButton theme="dark">
         <template #icon>
           <IconEye />

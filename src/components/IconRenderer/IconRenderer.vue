@@ -2,23 +2,25 @@
 import { IconUnknown } from '@/components/AppIcons'
 import { useIconStore } from '@/stores'
 
-const props = withDefaults(defineProps<{
-  /** 图标 id */
-  iconId?: number
-  /** 图标宽度 @default 64 */
-  width?: number
-  /** 图标高度 @default 64 */
-  height?: number
-}>(), {
-  width: 64,
-  height: 64,
-})
+const props = withDefaults(
+  defineProps<{
+    /** 图标 id */
+    iconId?: number
+    /** 图标宽度 @default 64 */
+    width?: number
+    /** 图标高度 @default 64 */
+    height?: number
+  }>(),
+  {
+    width: 64,
+    height: 64,
+  },
+)
 
 const iconStore = useIconStore()
 
 const position = computed(() => {
-  if (!props.iconId)
-    return
+  if (!props.iconId) return
   return iconStore.iconCoordMap.get(props.iconId)
 })
 </script>
@@ -46,13 +48,13 @@ const position = computed(() => {
 
 <style scoped>
 @property --renderer-container-width {
-  syntax: "<length>";
+  syntax: '<length>';
   initial-value: 0px;
   inherits: false;
 }
 
 @property --renderer-container-height {
-  syntax: "<length>";
+  syntax: '<length>';
   initial-value: 0px;
   inherits: false;
 }

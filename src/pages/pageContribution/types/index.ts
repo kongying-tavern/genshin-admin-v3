@@ -6,7 +6,7 @@ export interface TransformedScore {
   }
   count: number
   maxFields: number
-  fields: { key: string, label: string, value: number }[]
+  fields: { key: string; label: string; value: number }[]
   chars: {
     markerTitleChars: number
     contentChars: number

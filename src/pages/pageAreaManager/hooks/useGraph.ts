@@ -67,13 +67,10 @@ export const useGraph = (options: {
 
     // 默认折叠最后一级节点（子节点全为叶子节点的父节点）
     const setDefaultCollapsed = (node: TreeGraphData) => {
-      if (!node.children?.length)
-        return
+      if (!node.children?.length) return
       const allChildrenAreLeaves = node.children.every(child => !child.children?.length)
-      if (allChildrenAreLeaves)
-        node.collapsed = true
-      else
-        node.children.forEach(setDefaultCollapsed)
+      if (allChildrenAreLeaves) node.collapsed = true
+      else node.children.forEach(setDefaultCollapsed)
     }
     tree.forEach(setDefaultCollapsed)
 
@@ -84,17 +81,18 @@ export const useGraph = (options: {
     }
   })
 
-  const areaMap = computed(() => data.value.reduce((map, area) => {
-    map.set(area.id!, area)
-    return map
-  }, new Map<number, AreaVo>()))
+  const areaMap = computed(() =>
+    data.value.reduce((map, area) => {
+      map.set(area.id!, area)
+      return map
+    }, new Map<number, AreaVo>()),
+  )
 
   const graphRef = shallowRef<InstanceType<typeof G6.TreeGraph> | null>(null)
 
   watch(graphData, (newGraphData, oldGraphData) => {
     const graph = graphRef.value
-    if (!graph)
-      return
+    if (!graph) return
     if (!oldGraphData.children?.length) {
       graph.data(newGraphData)
       graph.render()
@@ -104,8 +102,7 @@ export const useGraph = (options: {
 
   const reload = () => {
     const graph = graphRef.value
-    if (!graph)
-      return
+    if (!graph) return
     graph.data(graphData.value)
     graph.render()
     graph.fitView(20)
@@ -208,7 +205,10 @@ export const useGraph = (options: {
         attrs: {
           x: sharedProps.padding,
           y: sharedProps.padding + 36,
-          text: textWidth > (sharedProps.width - 2 * sharedProps.padding) ? `${text.slice(0, 8)}...` : text,
+          text:
+            textWidth > sharedProps.width - 2 * sharedProps.padding
+              ? `${text.slice(0, 8)}...`
+              : text,
           fill: sharedProps.textColorPrimary,
           fontSize: 24,
           lineHeight: 14,
@@ -391,20 +391,28 @@ export const useGraph = (options: {
       const addButton = group!.find(element => element.get('name') === 'add-button')
       if (addButton) {
         // hover
-        addButton.on('mouseenter', () => addButton.attr({
-          fillOpacity: opacityMap.addChildButtonHover,
-          cursor: 'pointer',
-        }))
-        addButton.on('mouseleave', () => addButton.attr({
-          fillOpacity: opacityMap.addChildButton,
-        }))
+        addButton.on('mouseenter', () =>
+          addButton.attr({
+            fillOpacity: opacityMap.addChildButtonHover,
+            cursor: 'pointer',
+          }),
+        )
+        addButton.on('mouseleave', () =>
+          addButton.attr({
+            fillOpacity: opacityMap.addChildButton,
+          }),
+        )
         // active
-        addButton.on('mousedown', () => addButton.attr({
-          fillOpacity: opacityMap.addChildButtonClick,
-        }))
-        addButton.on('mouseup', () => addButton.attr({
-          fillOpacity: opacityMap.addChildButton,
-        }))
+        addButton.on('mousedown', () =>
+          addButton.attr({
+            fillOpacity: opacityMap.addChildButtonClick,
+          }),
+        )
+        addButton.on('mouseup', () =>
+          addButton.attr({
+            fillOpacity: opacityMap.addChildButton,
+          }),
+        )
         // click
         addButton.on('click', () => {
           addHook.trigger([area])
@@ -415,20 +423,28 @@ export const useGraph = (options: {
       const deleteButton = group!.find(element => element.get('name') === 'delete-button')
       if (deleteButton && area) {
         // hover
-        deleteButton.on('mouseenter', () => deleteButton.attr({
-          fillOpacity: opacityMap.deleteButtonHover,
-          cursor: 'pointer',
-        }))
-        deleteButton.on('mouseleave', () => deleteButton.attr({
-          fillOpacity: opacityMap.deleteButton,
-        }))
+        deleteButton.on('mouseenter', () =>
+          deleteButton.attr({
+            fillOpacity: opacityMap.deleteButtonHover,
+            cursor: 'pointer',
+          }),
+        )
+        deleteButton.on('mouseleave', () =>
+          deleteButton.attr({
+            fillOpacity: opacityMap.deleteButton,
+          }),
+        )
         // active
-        deleteButton.on('mousedown', () => deleteButton.attr({
-          fillOpacity: opacityMap.deleteButtonClick,
-        }))
-        deleteButton.on('mouseup', () => deleteButton.attr({
-          fillOpacity: opacityMap.deleteButton,
-        }))
+        deleteButton.on('mousedown', () =>
+          deleteButton.attr({
+            fillOpacity: opacityMap.deleteButtonClick,
+          }),
+        )
+        deleteButton.on('mouseup', () =>
+          deleteButton.attr({
+            fillOpacity: opacityMap.deleteButton,
+          }),
+        )
         // click
         deleteButton.on('click', () => {
           deleteHook.trigger([area])
@@ -439,27 +455,34 @@ export const useGraph = (options: {
       const collapseButton = group!.find(element => element.get('name') === 'collapse-button')
       if (collapseButton) {
         // hover
-        collapseButton.on('mouseenter', () => collapseButton.attr({
-          fillOpacity: opacityMap.collapseButtonHover,
-          cursor: 'pointer',
-        }))
-        collapseButton.on('mouseleave', () => collapseButton.attr({
-          fillOpacity: opacityMap.collapseButton,
-        }))
+        collapseButton.on('mouseenter', () =>
+          collapseButton.attr({
+            fillOpacity: opacityMap.collapseButtonHover,
+            cursor: 'pointer',
+          }),
+        )
+        collapseButton.on('mouseleave', () =>
+          collapseButton.attr({
+            fillOpacity: opacityMap.collapseButton,
+          }),
+        )
         // active
-        collapseButton.on('mousedown', () => collapseButton.attr({
-          fillOpacity: opacityMap.collapseButtonClick,
-        }))
-        collapseButton.on('mouseup', () => collapseButton.attr({
-          fillOpacity: opacityMap.collapseButton,
-        }))
+        collapseButton.on('mousedown', () =>
+          collapseButton.attr({
+            fillOpacity: opacityMap.collapseButtonClick,
+          }),
+        )
+        collapseButton.on('mouseup', () =>
+          collapseButton.attr({
+            fillOpacity: opacityMap.collapseButton,
+          }),
+        )
       }
     },
   })
 
   onMounted(() => {
-    if (!containerRef.value || !minimapRef.value)
-      return
+    if (!containerRef.value || !minimapRef.value) return
 
     const minimap = new G6.Minimap({
       container: minimapRef.value,
@@ -508,8 +531,7 @@ export const useGraph = (options: {
 
     const handler = (ev: IG6GraphEvent) => {
       const { item, shape, originalEvent } = ev
-      if (!item)
-        return
+      if (!item) return
 
       const model = item.getModel()
 
@@ -525,8 +547,7 @@ export const useGraph = (options: {
             break
           }
           const area = model.raw as AreaVo | undefined
-          if (!area)
-            break
+          if (!area) break
           editHook.trigger([area, areaMap.value.get(area.parentId!)])
           break
         }

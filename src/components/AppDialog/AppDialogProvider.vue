@@ -17,7 +17,11 @@ import { context } from './context'
       v-if="context.current.value"
       v-bind="{ ...context.current.value.props }"
       v-on="context.current.value.listeners"
-      @close="(payload: unknown) => context.current.value?.listeners.close?.(payload) ?? context.close(context.current.value?.id, payload)"
+      @close="
+        (payload: unknown) =>
+          context.current.value?.listeners.close?.(payload)
+          ?? context.close(context.current.value?.id, payload)
+      "
     />
   </el-dialog>
 </template>

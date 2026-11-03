@@ -8,7 +8,9 @@ defineProps<{
 
 <template>
   <el-scrollbar height="100%">
-    <div class="feature-grid w-[350px] max-w-full p-3 h-full overflow-hidden flex flex-col gap-4 font-[HYWenHei-85W]">
+    <div
+      class="feature-grid w-[350px] max-w-full p-3 h-full overflow-hidden flex flex-col gap-4 font-[HYWenHei-85W]"
+    >
       <div
         v-for="featureGroup in features"
         :key="featureGroup.label"
@@ -30,7 +32,9 @@ defineProps<{
             <component :is="feature.icon" class="h-full" />
           </div>
           <div class="grid-unit-label">
-            <span class="w-full inline-block whitespace-nowrap text-ellipsis overflow-hidden text-center">
+            <span
+              class="w-full inline-block whitespace-nowrap text-ellipsis overflow-hidden text-center"
+            >
               {{ feature.label }}
             </span>
           </div>
@@ -48,7 +52,7 @@ defineProps<{
   container-name: feature;
 }
 
-@media screen and (max-width: 400px)  {
+@media screen and (max-width: 400px) {
   .feature-grid {
     --base-size: 80px;
   }
@@ -67,12 +71,12 @@ defineProps<{
 }
 
 .grid-unit {
-  --bg: #565F6F;
+  --bg: #565f6f;
   --radius: 4px;
   --border-scale: 0.95;
   --outline-color: transparent;
   --inner-offset: -2px;
-  --border-color: #E4DDD140;
+  --border-color: #e4ddd140;
   --arrow-visible: hidden;
 
   padding: 2.5%;
@@ -84,7 +88,7 @@ defineProps<{
   grid-template-rows: repeat(6, 1fr);
   background: var(--bg);
   position: relative;
-  color: #ECE5D8;
+  color: #ece5d8;
   outline: 2px solid var(--outline-color);
   border-radius: var(--radius);
   user-select: none;
@@ -96,7 +100,7 @@ defineProps<{
   }
 
   &:not(.is-opened):hover {
-    --outline-color: #F4E3C0;
+    --outline-color: #f4e3c0;
     --arrow-visible: visible;
     --inner-offset: 0px;
     filter: drop-shadow(0 0 4px rgb(80 80 80 / 0.6));
@@ -104,19 +108,19 @@ defineProps<{
 
   &:not(.is-opened):active {
     --outline-color: transparent;
-    --bg: #FEFEFD;
-    --border-color: #565F6F40;
+    --bg: #fefefd;
+    --border-color: #565f6f40;
     --arrow-visible: hidden;
-    color: #454F66;
+    color: #454f66;
     filter: drop-shadow(0 0 0 rgb(80 80 80 / 0.6));
   }
 
   &.is-opened {
     --outline-color: transparent;
-    --bg: #FEFEFD;
-    --border-color: #565F6F40;
+    --bg: #fefefd;
+    --border-color: #565f6f40;
     --arrow-visible: hidden;
-    color: #454F66;
+    color: #454f66;
   }
 
   /* hover 选框 */
@@ -142,9 +146,9 @@ defineProps<{
     left: calc(50% - 5px);
     width: 12px;
     aspect-ratio: 1 / 1;
-    background: conic-gradient(from -45deg, #FFF 90deg, transparent 90deg);
+    background: conic-gradient(from -45deg, #fff 90deg, transparent 90deg);
     animation: jump-loop 1s infinite;
-    filter: drop-shadow(0 0 4px #FFF);
+    filter: drop-shadow(0 0 4px #fff);
     pointer-events: none;
   }
 }

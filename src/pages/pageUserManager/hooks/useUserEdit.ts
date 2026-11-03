@@ -11,12 +11,19 @@ export const useUserEdit = (
 ) => {
   const { loading } = options
 
-  const { refresh: submit, onError, onSuccess, ...rest } = useFetchHook({
+  const {
+    refresh: submit,
+    onError,
+    onSuccess,
+    ...rest
+  } = useFetchHook({
     loading,
     onRequest: async () => {
-      const isValid = form.value?.validate().then(() => true).catch(() => false)
-      if (!isValid)
-        throw new Error('表单校验未通过')
+      const isValid = form.value
+        ?.validate()
+        .then(() => true)
+        .catch(() => false)
+      if (!isValid) throw new Error('表单校验未通过')
 
       const {
         id,
@@ -29,8 +36,7 @@ export const useUserEdit = (
         remark = '',
       } = toValue(formData)
 
-      if (id === undefined)
-        throw new Error('表单信息中用户 id 为空')
+      if (id === undefined) throw new Error('表单信息中用户 id 为空')
 
       await Apis.user.updateUser({
         data: {
@@ -53,7 +59,7 @@ export const useUserEdit = (
     })
   })
 
-  onError((err) => {
+  onError(err => {
     ElMessage.error({
       message: `编辑失败，原因为：${err.message}`,
     })

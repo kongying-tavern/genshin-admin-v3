@@ -15,11 +15,9 @@ const markerStore = useMarkerStore()
 
 const markerInfo = computed(() => {
   const { markerId } = props
-  if (markerId === undefined)
-    return
+  if (markerId === undefined) return
   const markerInfo = markerStore.idMap.get(markerId)
-  if (!markerInfo)
-    return
+  if (!markerInfo) return
   const { mainIconId } = pickMainItem(markerInfo, itemStore.itemIdMap)
   return {
     ...markerInfo,
@@ -30,17 +28,13 @@ const markerInfo = computed(() => {
 })
 
 const areas = computed(() => {
-  if (!markerInfo.value?.itemList?.length)
-    return []
+  if (!markerInfo.value?.itemList?.length) return []
   const result = markerInfo.value.itemList.reduce((set, { itemId }) => {
-    if (itemId === undefined)
-      return set
+    if (itemId === undefined) return set
     const item = itemStore.itemIdMap.get(itemId)
-    if (item?.areaId === undefined)
-      return set
+    if (item?.areaId === undefined) return set
     const area = areaStore.areaIdMap.get(item.areaId)
-    if (!area || set.has(area.name!))
-      return set
+    if (!area || set.has(area.name!)) return set
     set.add(area.name!)
     return set
   }, new Set<string>())
@@ -49,10 +43,7 @@ const areas = computed(() => {
 </script>
 
 <template>
-  <div
-    class="overflow-hidden my-1"
-    :class="reverse ? 'pl-1' : 'pr-1'"
-  >
+  <div class="overflow-hidden my-1" :class="reverse ? 'pl-1' : 'pr-1'">
     <template v-if="!markerInfo">
       {{ markerId ?? '-- N/A --' }}
     </template>

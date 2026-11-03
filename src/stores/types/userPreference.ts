@@ -19,7 +19,7 @@ export interface UserPreference {
   // ====================     base     ====================
 
   /** 用户 id */
-  'id'?: number
+  id?: number
 
   // ====================     app      ====================
 

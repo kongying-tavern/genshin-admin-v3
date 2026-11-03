@@ -18,26 +18,47 @@ const oauthInstance = createAlova({
   cacheFor: null,
   requestAdapter: fetchAdapter(),
 
-  responded: async (response) => {
+  responded: async response => {
     const { status } = response
 
-    const errorMessage = (error: { message?: string, error_description?: string, errorData?: unknown, statusText: string }): string => {
+    const errorMessage = (error: {
+      message?: string
+      error_description?: string
+      errorData?: unknown
+      statusText: string
+    }): string => {
       const { message, error_description, errorData, statusText } = error
-      return message ?? error_description ?? (typeof errorData === 'string' ? errorData : undefined) ?? statusText
+      return (
+        message
+        ?? error_description
+        ?? (typeof errorData === 'string' ? errorData : undefined)
+        ?? statusText
+      )
     }
 
     if (status < 200 || status >= 400) {
       // 401/403 视为会话失效，触发登出（若已登录）
-      if (status === 401 || status === 403)
-        useUserStore().logout()
+      if (status === 401 || status === 403) useUserStore().logout()
 
       throw new Error(errorMessage({ statusText: response.statusText }))
     }
 
-    const data = (await response.json()) as { error?: boolean, message?: string, error_description?: string, errorData?: unknown }
+    const data = (await response.json()) as {
+      error?: boolean
+      message?: string
+      error_description?: string
+      errorData?: unknown
+    }
 
     if (data.error)
-      throw new Error(errorMessage({ message: data.message, error_description: data.error_description, errorData: data.errorData, statusText: response.statusText }))
+      throw new Error(
+        errorMessage({
+          message: data.message,
+          error_description: data.error_description,
+          errorData: data.errorData,
+          statusText: response.statusText,
+        }),
+      )
 
     return data as unknown
   },
@@ -55,19 +76,22 @@ export async function token(body: OauthAPI.SysTokenVO) {
   }
   return await oauthInstance.Post<OauthAPI.SysToken>('/oauth/token', form, {
     headers: {
-      'Authorization': basicAuth,
+      Authorization: basicAuth,
     },
   })
 }
 
 export async function refresh(header: OauthAPI.SysRefreshVO) {
   const params = new URLSearchParams()
-  for (const key in header)
-    params.append(key, header[key as keyof OauthAPI.SysRefreshVO])
-  return await oauthInstance.Post<OauthAPI.SysToken>(`/oauth/token?${params.toString()}`, undefined, {
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8',
-      'Authorization': basicAuth,
+  for (const key in header) params.append(key, header[key as keyof OauthAPI.SysRefreshVO])
+  return await oauthInstance.Post<OauthAPI.SysToken>(
+    `/oauth/token?${params.toString()}`,
+    undefined,
+    {
+      headers: {
+        'Content-Type': 'application/json;charset=UTF-8',
+        Authorization: basicAuth,
+      },
     },
-  })
+  )
 }

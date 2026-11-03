@@ -1,7 +1,4 @@
-import type {
-  EventMap,
-  ResponseMessage,
-} from './types'
+import type { EventMap, ResponseMessage } from './types'
 import { isRequest } from './utils'
 
 type Handler<A extends unknown[] = unknown[], T = void> = (...args: A) => MaybePromise<T>
@@ -21,12 +18,10 @@ export class WorkerIPC<
   #createMessageListener = (port: PortLike) => {
     return async (ev: MessageEvent<unknown>) => {
       const { data } = ev
-      if (!isRequest(data))
-        return
+      if (!isRequest(data)) return
       const handler = this.#handlers.get(data.channel)
       try {
-        if (!handler)
-          throw new Error(`Channel ${data.channel} is unhandle`)
+        if (!handler) throw new Error(`Channel ${data.channel} is unhandle`)
         const result = await handler(...data.args)
         const response = {
           type: 'response',
@@ -34,8 +29,7 @@ export class WorkerIPC<
           result,
         } satisfies ResponseMessage
         port.postMessage(response)
-      }
-      catch (err) {
+      } catch (err) {
         const { message, stack } = err as Error
         port.postMessage({
           type: 'response',
@@ -73,10 +67,7 @@ export class WorkerIPC<
   }
 
   /** 向主线程发送事件 */
-  emit = <C extends keyof WorkerEvents>(
-    channel: C,
-    ...args: WorkerEvents[C]['args']
-  ): void => {
+  emit = <C extends keyof WorkerEvents>(channel: C, ...args: WorkerEvents[C]['args']): void => {
     this.#port.postMessage({
       id: crypto.randomUUID(),
       type: 'request',

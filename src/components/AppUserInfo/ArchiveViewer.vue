@@ -23,8 +23,7 @@ const archiveStore = useArchiveStore()
 
 const archiveSlot = ref<ArchiveSlotData>()
 const initDialog = () => {
-  if (previewIndex.value === undefined)
-    return
+  if (previewIndex.value === undefined) return
   archiveSlot.value = archiveStore.archiveSlots[previewIndex.value]
 }
 
@@ -48,13 +47,16 @@ const clearValidate = () => {
   erroeMessage.value = ''
 }
 
-const { refresh: submitNameChanged, loading: renameLoading, onSuccess: onSlotRenameSuccess, onError: onSlotRenameError } = useFetchHook({
+const {
+  refresh: submitNameChanged,
+  loading: renameLoading,
+  onSuccess: onSlotRenameSuccess,
+  onError: onSlotRenameError,
+} = useFetchHook({
   onRequest: async () => {
-    if (!archiveSlot.value)
-      throw new Error('槽位异常')
+    if (!archiveSlot.value) throw new Error('槽位异常')
     cachedArchiveName.value = cachedArchiveName.value.trim()
-    if (!cachedArchiveName.value.length)
-      throw new Error('名称不能为空')
+    if (!cachedArchiveName.value.length) throw new Error('名称不能为空')
     await Apis.archive.renameSlot({
       pathParams: {
         slot_index: archiveSlot.value.slotIndex!,
@@ -70,7 +72,7 @@ onSlotRenameSuccess(async () => {
   cancelNameEdit()
 })
 
-onSlotRenameError((err) => {
+onSlotRenameError(err => {
   erroeMessage.value = err.message
 })
 
@@ -83,12 +85,17 @@ const note = (ev: Event, msg: string) => {
     stopSignal.value = false
     return
   }
-  virtualRef.value = (ev.target as HTMLElement)
+  virtualRef.value = ev.target as HTMLElement
   message.value = msg
 }
 
 // ==================== 存档逻辑 ====================
-const { loading, refresh: saveArchive, onSuccess, onError } = useFetchHook({
+const {
+  loading,
+  refresh: saveArchive,
+  onSuccess,
+  onError,
+} = useFetchHook({
   onRequest: async () => {
     await archiveStore.saveArchiveToSlot(previewIndex.value)
     await archiveStore.fetchArchive()
@@ -97,14 +104,15 @@ const { loading, refresh: saveArchive, onSuccess, onError } = useFetchHook({
 onSuccess(async () => {
   previewIndex.value = undefined
 })
-onError(err => ElMessage.error({
-  message: `存档失败，原因为：${err.message}`,
-}))
+onError(err =>
+  ElMessage.error({
+    message: `存档失败，原因为：${err.message}`,
+  }),
+)
 
 /** 按住 3 秒以确认删除存档 */
 const onAnimationEnd = (ev: AnimationEvent) => {
-  if (!ev.animationName.startsWith('anime-delete-archive'))
-    return
+  if (!ev.animationName.startsWith('anime-delete-archive')) return
   archiveStore.deleteArchiveSlot(previewIndex.value)
   stopSignal.value = true
   previewIndex.value = undefined
@@ -134,8 +142,7 @@ const onDialogClosed = () => {
 }
 
 const beforeClose = (done: () => void) => {
-  if (renameLoading.value || loading.value)
-    return
+  if (renameLoading.value || loading.value) return
   message.value = ''
   erroeMessage.value = ''
   done()
@@ -159,9 +166,7 @@ const beforeClose = (done: () => void) => {
     <GSCard v-else class="gap-4">
       <template #title>
         <div v-if="isNameEditMode" class="w-full flex items-center gap-2">
-          <div class="flex items-center text-base">
-            重命名
-          </div>
+          <div class="flex items-center text-base">重命名</div>
           <el-tooltip
             placement="bottom"
             :content="erroeMessage"
@@ -170,10 +175,16 @@ const beforeClose = (done: () => void) => {
             :popper-class="{
               'font-[\'HYWenHei-85W\']': true,
               'gs-tooltip': true,
-              'error': erroeMessage.length > 0,
+              error: erroeMessage.length > 0,
             }"
           >
-            <GSInput v-model="cachedArchiveName" :disabled="renameLoading" class="flex-1" autofocus @input="clearValidate" />
+            <GSInput
+              v-model="cachedArchiveName"
+              :disabled="renameLoading"
+              class="flex-1"
+              autofocus
+              @input="clearValidate"
+            />
           </el-tooltip>
           <GSButton :loading="renameLoading" icon="submit" @click="submitNameChanged" />
           <GSButton :disabled="renameLoading" icon="cancel" @click="cancelNameEdit" />
@@ -213,15 +224,11 @@ const beforeClose = (done: () => void) => {
           保存到存档
         </GSButton>
 
-        <el-tooltip
-          :visible="Boolean(message)"
-          :content="message"
-          placement="bottom"
-        >
+        <el-tooltip :visible="Boolean(message)" :content="message" placement="bottom">
           <GSButton
             class="hold-and-delete"
             :disabled="loading"
-            @click="(e) => note(e, '持续按住删除按钮以确认删除')"
+            @click="e => note(e, '持续按住删除按钮以确认删除')"
             @animationend="onAnimationEnd"
           >
             <template #icon>
@@ -253,8 +260,12 @@ const beforeClose = (done: () => void) => {
 }
 
 @keyframes anime-delete-archive {
-  10% { --angle: 0deg; }
-  100% { --angle: 360deg; }
+  10% {
+    --angle: 0deg;
+  }
+  100% {
+    --angle: 360deg;
+  }
 }
 
 .hold-and-delete:active::before {
@@ -266,7 +277,7 @@ const beforeClose = (done: () => void) => {
   scale: 1.8;
   position: absolute;
   border-radius: 100%;
-  background: conic-gradient(#FFCC33 var(--angle), transparent var(--angle));
+  background: conic-gradient(#ffcc33 var(--angle), transparent var(--angle));
   mask: radial-gradient(transparent 49%, #000 50%);
   animation: anime-delete-archive 3s linear forwards;
 }

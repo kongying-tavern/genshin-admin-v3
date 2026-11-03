@@ -3,7 +3,12 @@ import { ElMessage } from 'element-plus'
 import { useFetchHook } from '@/hooks'
 
 export const useNoticeUpdate = () => {
-  const { refresh: updateNotice, onSuccess, onError, ...rest } = useFetchHook({
+  const {
+    refresh: updateNotice,
+    onSuccess,
+    onError,
+    ...rest
+  } = useFetchHook({
     onRequest: async (notice: NoticeVo) => {
       await Apis.notice.updateNotice({ data: notice })
     },
@@ -15,7 +20,7 @@ export const useNoticeUpdate = () => {
     })
   })
 
-  onError((err) => {
+  onError(err => {
     ElMessage.error({
       message: `编辑公告失败，原因为：${err.message}`,
     })

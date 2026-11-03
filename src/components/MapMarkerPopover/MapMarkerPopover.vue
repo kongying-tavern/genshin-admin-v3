@@ -26,8 +26,7 @@ const { isMoving, isEnable, position } = useMarkerMove(cachedMarkerVo)
 const { hiddenFlagType, refreshTimeText } = useMarkerExtra(cachedMarkerVo)
 
 const copyId = async () => {
-  if (cachedMarkerVo.value?.id === undefined)
-    return
+  if (cachedMarkerVo.value?.id === undefined) return
   const idStr = `${cachedMarkerVo.value.id}`
   await navigator.clipboard.writeText(idStr)
   ElMessage.success({
@@ -44,10 +43,7 @@ const {
   clear: clearEditting,
 } = mapStateStore.subscribeMission('markerEditting', () => undefined)
 
-const {
-  loading: queryMarkerLoading,
-  refresh: queryMarker,
-} = useFetchHook({
+const { loading: queryMarkerLoading, refresh: queryMarker } = useFetchHook({
   onRequest: async (markerId: number) => {
     const markers = await Apis.marker.listMarkerById({
       data: {
@@ -55,29 +51,26 @@ const {
       },
     })
     const target = markers.data?.[0]
-    if (!target)
-      throw new Error('无法查询到点位信息，点位可能已经被删除')
+    if (!target) throw new Error('无法查询到点位信息，点位可能已经被删除')
     return target
   },
 })
 
 const editMarker = async () => {
-  if (!isEditable.value || !focus.value?.id)
-    return
+  if (!isEditable.value || !focus.value?.id) return
   updateEditting(focus.value.id)
   const marker = await queryMarker(focus.value.id)
   if (!marker) {
     clearEditting()
     return
   }
-  await DialogService
-    .config({
-      width: 'fit-content',
-      alignCenter: true,
-      showClose: false,
-      closeOnClickModal: false,
-      closeOnPressEscape: false,
-    })
+  await DialogService.config({
+    width: 'fit-content',
+    alignCenter: true,
+    showClose: false,
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
+  })
     .props({
       markerInfo: marker,
     })
@@ -91,13 +84,11 @@ const { confirmDeleteMarker } = useMarkerDelete()
 
 // 预览点位视频
 const playBilibiliVideo = (url: string) => {
-  DialogService
-    .props({
-      url,
-      width: 640,
-      height: 360,
-    })
-    .open(AppBilibiliVideoPlayer)
+  DialogService.props({
+    url,
+    width: 640,
+    height: 360,
+  }).open(AppBilibiliVideoPlayer)
 }
 
 /** 当前是否存在地图任务 */
@@ -144,7 +135,7 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
               <template #placeholder>
                 <el-skeleton style="width: 256px; height: 256px" loading animated>
                   <template #template>
-                    <el-skeleton-item variant="image" style="width: 100%; height: 100%;" />
+                    <el-skeleton-item variant="image" style="width: 100%; height: 100%" />
                   </template>
                 </el-skeleton>
               </template>
@@ -153,14 +144,11 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
         </template>
 
         <template #append>
-          <div class="p-1 flex flex-wrap gap-1 text-xs mx-1 rounded bg-[#4A526540] text-[#676D7A] font-[HYWenHei-55S]">
+          <div
+            class="p-1 flex flex-wrap gap-1 text-xs mx-1 rounded bg-[#4A526540] text-[#676D7A] font-[HYWenHei-55S]"
+          >
             <div
-              class="
-                info-tag is-interactive
-                decoration-dashed underline-offset-2
-                hover:underline
-                active:decoration-solid
-              "
+              class="info-tag is-interactive decoration-dashed underline-offset-2 hover:underline active:decoration-solid"
               @click="copyId"
             >
               ID {{ cachedMarkerVo.id }}
@@ -196,9 +184,7 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
 
         <template #footer>
           <template v-if="isSnapshot">
-            <div class="w-full h-[40px] text-sm grid place-content-center">
-              点位快照
-            </div>
+            <div class="w-full h-[40px] text-sm grid place-content-center">点位快照</div>
           </template>
 
           <template v-else>
@@ -221,7 +207,8 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
 
               <GSButton
                 :theme="isFinished ? undefined : 'dark'"
-                class="flex-1" size="small"
+                class="flex-1"
+                size="small"
                 @click="toggleFinished"
               >
                 <template #icon>
@@ -271,12 +258,10 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
 
 <style scoped>
 .info-tag {
-  @apply
-    h-6 px-1 rounded-sm
+  @apply h-6 px-1 rounded-sm
     grid place-content-center
     text-xs
-    bg-[#faf5ed]
-  ;
+    bg-[#faf5ed];
 
   &.is-interactive {
     @apply cursor-pointer;
@@ -296,10 +281,10 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
     border-radius: 5px;
     border: 2px solid var(--card-bg-color);
     cursor: default;
-    background-color: #BFBBB5;
+    background-color: #bfbbb5;
     transition: all ease 150ms;
     &:hover {
-      background-color: #FFFFFF;
+      background-color: #ffffff;
     }
   }
 }

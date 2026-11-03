@@ -14,7 +14,7 @@ enum OptionValue {
   LAYERED_GLOBAL = 2,
 }
 
-type OptionType = MAFOptionSelect<{ label: string, value: number }>
+type OptionType = MAFOptionSelect<{ label: string; value: number }>
 
 export class Underground implements MAFConfig<MAFValueNumberExact, OptionType, MAFMetaUnderground> {
   id = MAFModelId.UNDERGROUND
@@ -46,7 +46,12 @@ export class Underground implements MAFConfig<MAFValueNumberExact, OptionType, M
     return meta
   }
 
-  semantic(_val: MAFValueNumberExact, _opt: OptionType, meta: MAFMetaUnderground, opposite: boolean): (MAFSemanticUnit | null)[] {
+  semantic(
+    _val: MAFValueNumberExact,
+    _opt: OptionType,
+    meta: MAFMetaUnderground,
+    opposite: boolean,
+  ): (MAFSemanticUnit | null)[] {
     return [
       { type: 'text', text: '点位' },
       opposite ? { type: 'opposite-indicator', text: '不' } : null,
@@ -56,7 +61,12 @@ export class Underground implements MAFConfig<MAFValueNumberExact, OptionType, M
     ]
   }
 
-  filter(val: MAFValueNumberExact, _opt: OptionType, _meta: MAFMetaUnderground, marker: MarkerVo): boolean {
+  filter(
+    val: MAFValueNumberExact,
+    _opt: OptionType,
+    _meta: MAFMetaUnderground,
+    marker: MarkerVo,
+  ): boolean {
     const underground = (marker.extra?.underground ?? {}) as MarkerExtraVo['underground']
     switch (val.nx) {
       case OptionValue.UNLAYERED:

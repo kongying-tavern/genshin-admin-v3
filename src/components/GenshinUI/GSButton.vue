@@ -18,8 +18,7 @@ const props = defineProps<GSButtonProps>()
 const emits = defineEmits<GSButtonEmits>()
 
 const onClick = (ev: MouseEvent) => {
-  if (props.disabled || props.loading)
-    return
+  if (props.disabled || props.loading) return
   emits('click', ev)
 }
 </script>
@@ -69,7 +68,7 @@ const onClick = (ev: MouseEvent) => {
   --transition: all ease 150ms;
   // icon
   --icon-bg: #313131;
-  --icon-color: #FAC732;
+  --icon-color: #fac732;
   --icon-opacity: 1;
   --icon-size: calc(var(--height) - 2 * (var(--padding) + var(--border-width)));
   // background
@@ -80,17 +79,17 @@ const onClick = (ev: MouseEvent) => {
   --line-height: auto;
   --text-padding: 8px;
   --text-size: 18px;
-  --text-color: #4A5366;
-  --text-active-color: #FFF;
+  --text-color: #4a5366;
+  --text-active-color: #fff;
   // outline
   --outline-width: 2px;
   --outline-color: transparent;
-  --outline-hover-color: #FFF;
+  --outline-hover-color: #fff;
   --outline-active-color: transparent;
   // border
   --border-width: 2px;
   --border-color: transparent;
-  --border-hover-color: #DAD4CB;
+  --border-hover-color: #dad4cb;
   --border-active-color: transparent;
   // filter
   --filter: drop-shadow(0 0 2px rgb(128 128 128 / 0.4));
@@ -149,21 +148,27 @@ const onClick = (ev: MouseEvent) => {
 
 .gs-button--theme-plain {
   --icon-bg: transparent;
-  --icon-color: #3B4255;
+  --icon-color: #3b4255;
   --border-width: 0px;
   --outline-width: 0px;
   --bg: rgb(236 229 216 / 0.2);
   --bg-hover: transparent;
   --bg-active: transparent;
   --bg-clip: circle(calc(var(--height) / 2 - 4px));
-  --before-bg: radial-gradient(#ECE5D8 calc(var(--height) / 2 - 4px), #FFF calc(var(--height) / 2 - 4px));
+  --before-bg: radial-gradient(
+    #ece5d8 calc(var(--height) / 2 - 4px),
+    #fff calc(var(--height) / 2 - 4px)
+  );
   &:hover {
     --bg-clip: circle(calc(var(--height) / 2 - 2px));
   }
   &:active {
-    --icon-color: #FFFFFF;
-    --before-bg: radial-gradient(rgb(180 167 146 / 0.6) calc(var(--height) / 2 - 0px), #FFF calc(var(--height) / 2 - 0px));
-    --filter-active: drop-shadow(0 0 4px #FFF);
+    --icon-color: #ffffff;
+    --before-bg: radial-gradient(
+      rgb(180 167 146 / 0.6) calc(var(--height) / 2 - 0px),
+      #fff calc(var(--height) / 2 - 0px)
+    );
+    --filter-active: drop-shadow(0 0 4px #fff);
   }
   &::before {
     content: '';
@@ -181,14 +186,14 @@ const onClick = (ev: MouseEvent) => {
 }
 
 .gs-button--theme-dark {
-  --text-color: #ECE5D8;
-  --text-active-color: #5B6272;
+  --text-color: #ece5d8;
+  --text-active-color: #5b6272;
   --border-hover-color: rgb(91 98 114 / 1);
   --bg: #4a5366;
-  --bg-active: #FFF3D1;
-  --outline-hover-color: #FFE6B2;
-  --outline-active-color: #5B6272;
-  --filter-active: drop-shadow(0 0 2px #DAD4CB);
+  --bg-active: #fff3d1;
+  --outline-hover-color: #ffe6b2;
+  --outline-active-color: #5b6272;
+  --filter-active: drop-shadow(0 0 2px #dad4cb);
   &.disabled {
     --border-color: #959597;
     --icon-opacity: 0.5;
@@ -205,7 +210,8 @@ const onClick = (ev: MouseEvent) => {
   overflow: hidden;
   display: grid;
   place-items: center;
-  &::before, &::after {
+  &::before,
+  &::after {
     content: '';
     left: 0;
     top: 0;
@@ -219,8 +225,12 @@ const onClick = (ev: MouseEvent) => {
 
 .gs-button--icon-loading {
   @keyframes anime-rotate {
-    from { rotate: 0deg; }
-    to { rotate: 360deg; }
+    from {
+      rotate: 0deg;
+    }
+    to {
+      rotate: 360deg;
+    }
   }
   .gs-button-icon::before {
     background: repeating-conic-gradient(transparent 0%, var(--icon-color) 33%);
@@ -238,11 +248,12 @@ const onClick = (ev: MouseEvent) => {
 }
 
 .gs-button--icon-cancel {
-  --icon-color: #38A2E4;
+  --icon-color: #38a2e4;
   --icon-scale: calc(var(--icon-size) / var(--height));
   --icon-tr-y: calc(var(--icon-size) / 2 - 2px);
 
-  .gs-button-icon::before, .gs-button-icon::after {
+  .gs-button-icon::before,
+  .gs-button-icon::after {
     background: var(--icon-color);
     border-radius: 2px;
     height: 4px;

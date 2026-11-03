@@ -15,19 +15,17 @@ export class GSOverlayer extends CompositeLayer<GSOverlayerProps> {
   }
 
   renderLayers = (): LayersList => {
-    const {
-      bounds,
-      showOverlayMask,
-      chunkMap,
-      normalChunks,
-      tileLikeChunks,
-    } = this.props
+    const { bounds, showOverlayMask, chunkMap, normalChunks, tileLikeChunks } = this.props
 
     const [xmin, ymin, xmax, ymax] = bounds
 
     return [
-      tileLikeChunks.map((chunkId) => {
-        const { id, url, bounds: [[xmin, ymin], [xmax, ymax]] } = chunkMap.get(chunkId)!
+      tileLikeChunks.map(chunkId => {
+        const {
+          id,
+          url,
+          bounds: [[xmin, ymin], [xmax, ymax]],
+        } = chunkMap.get(chunkId)!
         return new BitmapLayer({
           pickable: this.props.pickable,
           id,
@@ -37,14 +35,16 @@ export class GSOverlayer extends CompositeLayer<GSOverlayerProps> {
       }),
       new SolidPolygonLayer({
         id: 'genshin-overlay-mask',
-        data: [{
-          polygon: [
-            [xmin, ymin],
-            [xmax, ymin],
-            [xmax, ymax],
-            [xmin, ymax],
-          ],
-        }],
+        data: [
+          {
+            polygon: [
+              [xmin, ymin],
+              [xmax, ymin],
+              [xmax, ymax],
+              [xmin, ymax],
+            ],
+          },
+        ],
         getFillColor: () => [0, 0, 0, showOverlayMask ? 0.5 * 255 : 0],
         updateTriggers: {
           getFillColor: showOverlayMask,
@@ -53,8 +53,12 @@ export class GSOverlayer extends CompositeLayer<GSOverlayerProps> {
           getFillColor: 100,
         },
       }),
-      normalChunks.map((chunkId) => {
-        const { id, url, bounds: [[xmin, ymin], [xmax, ymax]] } = chunkMap.get(chunkId)!
+      normalChunks.map(chunkId => {
+        const {
+          id,
+          url,
+          bounds: [[xmin, ymin], [xmax, ymax]],
+        } = chunkMap.get(chunkId)!
         return new BitmapLayer({
           pickable: this.props.pickable,
           id,

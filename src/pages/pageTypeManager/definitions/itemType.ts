@@ -39,11 +39,12 @@ export class ItemTypeManager implements TypeManager<ItemTypeVo> {
     })
   }
 
-  delete = (data: ItemTypeVo) => Apis.item_type.deleteItemType({
-    pathParams: {
-      itemTypeId: data.id!,
-    },
-  })
+  delete = (data: ItemTypeVo) =>
+    Apis.item_type.deleteItemType({
+      pathParams: {
+        itemTypeId: data.id!,
+      },
+    })
 
   update = (data: ItemTypeVo) => Apis.item_type.updateItemType({ data })
 }

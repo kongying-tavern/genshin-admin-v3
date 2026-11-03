@@ -79,30 +79,33 @@ declare const scheduler: {
    *
    * 如果指定了延迟并且大于 0，则任务的执行将延迟至少那么多毫秒。否则，任务将立即安排优先级。
    */
-  postTask: (callback: () => void, options?: {
-    /**
-     * 任务的不可变优先级。以下其中之一:
-     * ```
-     * 'user-blocking' // 用户屏蔽
-     * 'user-visible' // 用户可见
-     * 'background' // 背景
-     * ```
-     * 如果已设置，则此优先级将在任务的生命周期内使用，并且忽略在信号上设置的优先级。
-     */
-    priority?: 'user-blocking' | 'user-visible' | 'background'
-    /**
-     * 如果设置了 `options.priority` 参数，则无法更改任务优先级，
-     * 并且忽略信号上的任何优先级。
-     *
-     * 否则，如果信号是 `TaskSignal`，则其优先级用于设置初始任务优先级，
-     * 信号的控制器稍后可能会使用它来更改任务优先级。
-     */
-    signal?: AbortSignal
-    /**
-     * 将任务添加到调度程序队列后的最短时间，以毫秒为单位。实际延迟可能高于指定值，但不会低于指定值。默认延迟为 0。
-     */
-    delay?: number
-  }) => void
+  postTask: (
+    callback: () => void,
+    options?: {
+      /**
+       * 任务的不可变优先级。以下其中之一:
+       * ```
+       * 'user-blocking' // 用户屏蔽
+       * 'user-visible' // 用户可见
+       * 'background' // 背景
+       * ```
+       * 如果已设置，则此优先级将在任务的生命周期内使用，并且忽略在信号上设置的优先级。
+       */
+      priority?: 'user-blocking' | 'user-visible' | 'background'
+      /**
+       * 如果设置了 `options.priority` 参数，则无法更改任务优先级，
+       * 并且忽略信号上的任何优先级。
+       *
+       * 否则，如果信号是 `TaskSignal`，则其优先级用于设置初始任务优先级，
+       * 信号的控制器稍后可能会使用它来更改任务优先级。
+       */
+      signal?: AbortSignal
+      /**
+       * 将任务添加到调度程序队列后的最短时间，以毫秒为单位。实际延迟可能高于指定值，但不会低于指定值。默认延迟为 0。
+       */
+      delay?: number
+    },
+  ) => void
 
   /**
    * 调度器接口的 `yield()` 方法用于在任务期间向主线程让步，并在以后继续执行，
@@ -121,7 +124,21 @@ declare const scheduler: {
   yield: () => Promise<void>
 }
 
-interface PaintRenderingContext2D extends CanvasCompositing, CanvasDrawImage, CanvasDrawPath, CanvasFillStrokeStyles, CanvasFilters, CanvasImageSmoothing, CanvasPath, CanvasPathDrawingStyles, CanvasRect, CanvasSettings, CanvasShadowStyles, CanvasState, CanvasTransform {}
+interface PaintRenderingContext2D
+  extends
+    CanvasCompositing,
+    CanvasDrawImage,
+    CanvasDrawPath,
+    CanvasFillStrokeStyles,
+    CanvasFilters,
+    CanvasImageSmoothing,
+    CanvasPath,
+    CanvasPathDrawingStyles,
+    CanvasRect,
+    CanvasSettings,
+    CanvasShadowStyles,
+    CanvasState,
+    CanvasTransform {}
 
 /**
  * 表示绘制输出位图的尺寸。
@@ -163,7 +180,7 @@ interface IPaintClass {
     ctx: PaintRenderingContext2D,
     size: PaintSize,
     properties: StylePropertyMapReadOnly,
-    args: CSSStyleValue[]
+    args: CSSStyleValue[],
   ): void
 }
 
@@ -185,6 +202,8 @@ interface PaintClass {
   readonly contextOptions?: PaintRenderingContext2DSettings
 }
 
-declare const registerPaint: {
-  (name: string, classRef: PaintClass): void
-} | undefined
+declare const registerPaint:
+  | {
+      (name: string, classRef: PaintClass): void
+    }
+  | undefined

@@ -25,7 +25,7 @@ export const useIconTextureRender = () => {
   const positionMap = computed(() => {
     const res: Record<string, [number, number]> = {}
     positionList.value.forEach(({ ids: tags, pos }) => {
-      tags.forEach((tag) => {
+      tags.forEach(tag => {
         res[tag] = pos
       })
     })
@@ -33,25 +33,27 @@ export const useIconTextureRender = () => {
   })
 
   /** 位置索引表 */
-  const coordMap = computed(() => positionList.value.reduce((map, { ids, pos }) => {
-    ids.forEach(id => map.set(id, pos))
-    return map
-  }, new Map<number, [x: number, y: number]>()))
+  const coordMap = computed(() =>
+    positionList.value.reduce((map, { ids, pos }) => {
+      ids.forEach(id => map.set(id, pos))
+      return map
+    }, new Map<number, [x: number, y: number]>()),
+  )
 
   /** 预渲染标签精灵图 */
   const refresh = async (list: IconVo[]) => {
-    const iconList = list.flatMap((icon) => {
-      if (!icon.id || !icon.url)
-        return []
+    const iconList = list.flatMap(icon => {
+      if (!icon.id || !icon.url) return []
       try {
         const url = new URL(icon.url)
         url.searchParams.set('with_origin', '1')
-        return [{
-          id: icon.id,
-          src: url.toString(),
-        }]
-      }
-      catch {
+        return [
+          {
+            id: icon.id,
+            src: url.toString(),
+          },
+        ]
+      } catch {
         // 跳过不符合 url 格式的图标，避免中断整个预渲染流程
         console.warn(`[useIconTextureRender] 图标 url 无效，已跳过：${icon.id}`, icon.url)
         return []

@@ -17,8 +17,7 @@ export const injectAssetsManifest = (): Plugin => {
       base = config.base
     },
     transformIndexHtml(html, { bundle }) {
-      if (!bundle)
-        return html
+      if (!bundle) return html
 
       const assets = Object.values(bundle)
         .filter(chunk => !chunk.fileName.endsWith('.wasm'))

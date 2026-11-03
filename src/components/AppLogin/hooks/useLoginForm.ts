@@ -25,26 +25,27 @@ export const useLoginForm = () => {
     username: {
       required: true,
       validator: (_, v: string, callback) => {
-        if (!v.length)
-          return callback('不能为空')
-        if (v.match(/\s/))
-          return callback('不能包含空白字符')
+        if (!v.length) return callback('不能为空')
+        if (v.match(/\s/)) return callback('不能包含空白字符')
         callback()
       },
     },
     password: {
       required: true,
       validator: (_, v: string, callback) => {
-        if (!v.length)
-          return callback('不能为空')
-        if (v.match(/\s/))
-          return callback('不能包含空白字符')
+        if (!v.length) return callback('不能为空')
+        if (v.match(/\s/)) return callback('不能包含空白字符')
         callback()
       },
     },
   }
 
-  const { refresh: submit, onSuccess, onError, ...rest } = useFetchHook({
+  const {
+    refresh: submit,
+    onSuccess,
+    onError,
+    ...rest
+  } = useFetchHook({
     onRequest: () => userStore.login(loginForm.value),
   })
 
@@ -52,13 +53,12 @@ export const useLoginForm = () => {
     try {
       await formRef.value?.validate()
       await submit()
-    }
-    catch {
+    } catch {
       // cancel, no error
     }
   }
 
-  onSuccess((auth) => {
+  onSuccess(auth => {
     ElMessage({
       type: auth?.message ? 'warning' : 'success',
       message: auth?.message || '登录成功',
@@ -66,7 +66,7 @@ export const useLoginForm = () => {
     })
   })
 
-  onError((err) => {
+  onError(err => {
     // 报错信息优化
     switch (err.message) {
       // 账号或密码错误

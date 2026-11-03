@@ -15,7 +15,7 @@ defineProps<{
 <style lang="scss" scoped>
 .sem-regex {
   font-weight: bolder;
-  margin: .2rem;
+  margin: 0.2rem;
 
   .text {
     color: #2d65cc;
@@ -24,7 +24,7 @@ defineProps<{
   &::before,
   &::after {
     content: '/';
-    padding: 0 .1rem;
+    padding: 0 0.1rem;
     color: #808080;
   }
 }

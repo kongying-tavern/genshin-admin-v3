@@ -18,18 +18,14 @@ export const usePresetImport = (options: PresetImportOptions) => {
   const { savePreset } = usePresetSave({ name })
 
   const importCode = () => {
-    if (userStore.info?.id === undefined)
-      return
-    if (!unref(code))
-      return
-    if (!name.value)
-      return
+    if (userStore.info?.id === undefined) return
+    if (!unref(code)) return
+    if (!name.value) return
 
     try {
       savePreset(importConditions.value)
       importCallback?.(true)
-    }
-    catch {
+    } catch {
       importCallback?.(false)
     }
   }

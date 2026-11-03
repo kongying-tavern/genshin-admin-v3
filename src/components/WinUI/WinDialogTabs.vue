@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const props = defineProps<{
-  options: { key: string, name: string }[]
+  options: { key: string; name: string }[]
   disabled?: boolean
 }>()
 
@@ -9,8 +9,7 @@ const activedTabKey = defineModel<string>('modelValue', {
 })
 
 const setTabKey = (tabKey: string) => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
   activedTabKey.value = tabKey
 }
 </script>
@@ -43,17 +42,15 @@ const setTabKey = (tabKey: string) => {
 .tab-item {
   border-width: 1px 0 1px 1px;
 
-  @apply
-    py-1 px-2 mt-0.5
+  @apply py-1 px-2 mt-0.5
     border-[var(--el-border-color)]
     bg-[var(--el-fill-color)]
     select-none
-    relative
-  ;
+    relative;
 
   &.actived {
     border-width: 1px;
-    +.tab-item {
+    + .tab-item {
       border-width: 1px 0px 1px 0px;
       &:last-of-type {
         border-width: 1px 1px 1px 0px;
@@ -68,12 +65,10 @@ const setTabKey = (tabKey: string) => {
 
   &.actived::before {
     content: '';
-    @apply
-      w-full h-[1px]
+    @apply w-full h-[1px]
       absolute left-0 bottom-0
       bg-[var(--el-bg-color)]
-      translate-y-[1px]
-    ;
+      translate-y-[1px];
   }
 
   &:not(.actived):hover {

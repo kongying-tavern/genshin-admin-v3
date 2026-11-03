@@ -19,7 +19,11 @@ const { DialogService } = useGlobalDialog()
 const tableRef = ref<HTMLElement>()
 const { height } = useElementSize(tableRef)
 
-const { pagination, layout, onChange: onPaginationChange } = usePagination({
+const {
+  pagination,
+  layout,
+  onChange: onPaginationChange,
+} = usePagination({
   units: [PgUnit.TOTAL, PgUnit.SIZE, PgUnit.JUMPER, PgUnit.PREV, PgUnit.PAGER, PgUnit.NEXT],
   module: ManagerModule.Invitation,
 })
@@ -47,18 +51,19 @@ const { data, loading, refresh, onSuccess } = useFetchHook({
     const { key: filterKey, value: filterValue = '' } = filter.value
     const { key: sortKey, type: sortType } = sorts.value
     const trimedFilterValue = filterValue.trim()
-    const { data: { record = [], total = 0 } = {}, users = {} } = await Apis.invitation.listInvitation({
-      data: {
-        sort: [`${sortKey}${sortType}`],
-        current,
-        size,
-        ...(trimedFilterValue.length
-          ? {
-              [filterKey]: trimedFilterValue,
-            }
-          : {}),
-      },
-    })
+    const { data: { record = [], total = 0 } = {}, users = {} } =
+      await Apis.invitation.listInvitation({
+        data: {
+          sort: [`${sortKey}${sortType}`],
+          current,
+          size,
+          ...(trimedFilterValue.length
+            ? {
+                [filterKey]: trimedFilterValue,
+              }
+            : {}),
+        },
+      })
     const userMap = Object.entries(users).reduce((map, [userId, userInfo]) => {
       return map.set(Number(userId), userInfo)
     }, new Map<number, SysUserSmallVo>())
@@ -71,10 +76,9 @@ onSuccess(({ total }) => {
 onPaginationChange(refresh)
 
 const openInvitationCreator = () => {
-  DialogService
-    .config({
-      width: 300,
-    })
+  DialogService.config({
+    width: 300,
+  })
     .props({
       title: '新增邀请码',
     })
@@ -85,10 +89,9 @@ const openInvitationCreator = () => {
 }
 
 const openInvitationEditor = (data: SysUserInvitationVo) => {
-  DialogService
-    .config({
-      width: 300,
-    })
+  DialogService.config({
+    width: 300,
+  })
     .props({
       title: '编辑邀请码',
       data,
@@ -100,10 +103,9 @@ const openInvitationEditor = (data: SysUserInvitationVo) => {
 }
 
 const openInvitationDeleteConfirm = (data: SysUserInvitationVo) => {
-  DialogService
-    .config({
-      width: 300,
-    })
+  DialogService.config({
+    width: 300,
+  })
     .props({
       data,
     })
@@ -114,24 +116,24 @@ const openInvitationDeleteConfirm = (data: SysUserInvitationVo) => {
 }
 
 const copyInvitationCode = async (data: SysUserInvitationVo) => {
-  if (!data.code)
-    return
+  if (!data.code) return
   await navigator.clipboard.writeText(data.code)
   ElMessage.success('已复制邀请码到剪贴板')
 }
 
 const handleRowClick = (data: SysUserInvitationVo, col: { property?: string } = {}) => {
   const { property = '' } = col
-  return ({
-    username: () => openInvitationEditor(data),
-    code: () => copyInvitationCode(data),
-  } as Record<string, () => void>)[property]?.()
+  return (
+    {
+      username: () => openInvitationEditor(data),
+      code: () => copyInvitationCode(data),
+    } as Record<string, () => void>
+  )[property]?.()
 }
 
 const getCellClassName = (cell: { column: { property?: string } }) => {
   const { property } = cell.column
-  if (!property)
-    return ''
+  if (!property) return ''
   return `prop-${property}`
 }
 
@@ -182,7 +184,12 @@ const userFormatter = (...{ 2: uid = -1 }) => {
 
         <el-table-column prop="creatorId" label="创建人" :width="100" :formatter="userFormatter" />
 
-        <el-table-column prop="createTime" label="创建时间" :width="150" :formatter="timeFormatter" />
+        <el-table-column
+          prop="createTime"
+          label="创建时间"
+          :width="150"
+          :formatter="timeFormatter"
+        />
 
         <el-table-column fixed="right" label="操作" :width="100">
           <template #default="{ row }">

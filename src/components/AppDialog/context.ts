@@ -13,8 +13,7 @@ export const context = new (class GlobalDialogContext {
   afterClosed = () => {
     this.current.value = undefined
     const nextDialog = this.queue.shift()
-    if (!nextDialog)
-      return
+    if (!nextDialog) return
     this.open(nextDialog)
   }
 
@@ -30,8 +29,7 @@ export const context = new (class GlobalDialogContext {
   }
 
   close = (targetId: string | undefined, payload: unknown) => {
-    if (targetId === undefined)
-      return
+    if (targetId === undefined) return
     if (targetId === this.current.value?.id) {
       this.resolves.get(targetId)?.forEach(callback => callback(payload))
       this.resolves.delete(targetId)
@@ -39,8 +37,7 @@ export const context = new (class GlobalDialogContext {
       return
     }
     const index = this.queue.findIndex(instance => instance._getId() === targetId)
-    if (index < 0)
-      return
+    if (index < 0) return
     this.queue.splice(index, 1)
   }
 })()

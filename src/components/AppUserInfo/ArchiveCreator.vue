@@ -34,14 +34,17 @@ const onCloseDialog = () => {
   index.value = undefined
 }
 
-const { loading, refresh: createArchive, onSuccess, onError } = useFetchHook({
+const {
+  loading,
+  refresh: createArchive,
+  onSuccess,
+  onError,
+} = useFetchHook({
   onRequest: async () => {
     errMsg.value = ''
     archiveName.value = archiveName.value.trim()
-    if (index.value === undefined)
-      throw new Error('无效的存档槽位')
-    if (archiveName.value.length < 1)
-      throw new Error('存档名称长度不能小于 1 个字符')
+    if (index.value === undefined) throw new Error('无效的存档槽位')
+    if (archiveName.value.length < 1) throw new Error('存档名称长度不能小于 1 个字符')
     await archiveStore.createArchiveSlot(archiveName.value, index.value, saveCurrent.value)
     await archiveStore.fetchArchive()
     archiveStore.loadArchiveSlot(index.value)
@@ -52,7 +55,7 @@ onSuccess(() => {
   index.value = undefined
 })
 
-onError((err) => {
+onError(err => {
   errMsg.value = err.message
 })
 
@@ -96,9 +99,7 @@ onUnmounted(() => {
         <GSButton icon="submit" class="flex-1" :loading="loading" @click="createArchive">
           确定
         </GSButton>
-        <GSButton icon="cancel" class="flex-1" @click="index = undefined">
-          取消
-        </GSButton>
+        <GSButton icon="cancel" class="flex-1" @click="index = undefined"> 取消 </GSButton>
       </div>
     </GSCard>
   </el-dialog>
@@ -106,6 +107,6 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .err-msg {
-  color: #CF5945;
+  color: #cf5945;
 }
 </style>

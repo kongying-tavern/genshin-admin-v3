@@ -12,7 +12,11 @@ import { useAreaStore, useMarkerExtraStore } from '@/stores'
 
 type OptionType = MAFOptionSelect<AreaWithExtraConfig>
 
-export class UndergroundLayer implements MAFConfig<MAFValueStringArray, OptionType, MAFMetaUndergroundLayer> {
+export class UndergroundLayer implements MAFConfig<
+  MAFValueStringArray,
+  OptionType,
+  MAFMetaUndergroundLayer
+> {
   id = MAFModelId.UNDERGROUND_LAYER
   name = MAF_MODEL_META_MAP[MAFModelId.UNDERGROUND_LAYER].name
   option: ComputedRef<OptionType> = computed(() => {
@@ -21,14 +25,12 @@ export class UndergroundLayer implements MAFConfig<MAFValueStringArray, OptionTy
 
     const undergroundOptions: AreaWithExtraConfig[] = []
     for (const areaCode in mergedAreaExtraConfigs) {
-      if (!areaCodeMap.has(areaCode))
-        continue
+      if (!areaCodeMap.has(areaCode)) continue
       const area = areaCodeMap.get(areaCode) as AreaWithExtraConfig
 
       const { underground = {} } = mergedAreaExtraConfigs[areaCode]
       const { levels = [] } = underground
-      if (levels.length <= 0)
-        continue
+      if (levels.length <= 0) continue
       undergroundOptions.push({
         ...area,
         extraConfig: { underground },
@@ -61,25 +63,14 @@ export class UndergroundLayer implements MAFConfig<MAFValueStringArray, OptionTy
 
     // 处理层级键映射
     // 处理层级名称映射
-    opt.options.forEach((area) => {
-      const {
-        id: areaId = 0,
-        name: areaName = '',
-        extraConfig = {},
-      } = area
+    opt.options.forEach(area => {
+      const { id: areaId = 0, name: areaName = '', extraConfig = {} } = area
       const { underground = {} } = extraConfig
       const { levels = [] } = underground
-      levels.forEach((group) => {
-        const {
-          value: groupKey = '',
-          label: groupName = '',
-          children: groupLevels = [],
-        } = group
-        groupLevels.forEach((item) => {
-          const {
-            value: itemKey = '',
-            label: itemName = '',
-          } = item
+      levels.forEach(group => {
+        const { value: groupKey = '', label: groupName = '', children: groupLevels = [] } = group
+        groupLevels.forEach(item => {
+          const { value: itemKey = '', label: itemName = '' } = item
           // 层级键映射
           meta.layerKeyMap[itemKey] = [
             ...(meta.layerKeyMap[itemKey] ?? []),
@@ -97,29 +88,36 @@ export class UndergroundLayer implements MAFConfig<MAFValueStringArray, OptionTy
     })
 
     // 处理标签名
-    meta.tagList = val.sa
-      .map(v => meta.layerNameMap[v])
-      .filter(v => v)
+    meta.tagList = val.sa.map(v => meta.layerNameMap[v]).filter(v => v)
     meta.tag = meta.tagList.join(',')
 
     return meta
   }
 
-  semantic(_val: MAFValueStringArray, _opt: OptionType, meta: MAFMetaUndergroundLayer, opposite: boolean): (MAFSemanticUnit | null)[] {
+  semantic(
+    _val: MAFValueStringArray,
+    _opt: OptionType,
+    meta: MAFMetaUndergroundLayer,
+    opposite: boolean,
+  ): (MAFSemanticUnit | null)[] {
     return [
       { type: 'text', text: '分层层级' },
       opposite ? { type: 'opposite-indicator', text: '不' } : null,
       { type: 'text', text: '属于' },
-      ...meta.tagList.map<MAFSemanticUnit>(tag => ({ type: 'tag', text: tag } as const)),
+      ...meta.tagList.map<MAFSemanticUnit>(tag => ({ type: 'tag', text: tag }) as const),
     ]
   }
 
-  filter(val: MAFValueStringArray, _opt: OptionType, _meta: MAFMetaUndergroundLayer, marker: MarkerVo): boolean {
+  filter(
+    val: MAFValueStringArray,
+    _opt: OptionType,
+    _meta: MAFMetaUndergroundLayer,
+    marker: MarkerVo,
+  ): boolean {
     const extra = (marker.extra?.underground ?? {}) as MarkerExtraVo['underground']
     const regionLevels = extra?.region_levels ?? []
     for (const regionLevel of regionLevels) {
-      if (val.sa.includes(regionLevel))
-        return true
+      if (val.sa.includes(regionLevel)) return true
     }
     return false
   }

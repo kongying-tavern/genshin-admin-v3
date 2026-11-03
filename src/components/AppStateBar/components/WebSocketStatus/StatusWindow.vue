@@ -17,8 +17,7 @@ const { refresh: clearMessageList, loading: clearLoading } = useFetchHook({
 const wrapperRef = shallowRef<HTMLDivElement>()
 
 const scrollToBottom = useDebounceFn(() => {
-  if (!wrapperRef.value)
-    return
+  if (!wrapperRef.value) return
   wrapperRef.value.scrollTo({
     behavior: 'smooth',
     top: wrapperRef.value.scrollHeight,
@@ -46,12 +45,7 @@ const scrollToBottom = useDebounceFn(() => {
     </div>
 
     <div
-      class="
-        shrink-0 p-1
-        flex justify-end
-        border-t-[1px] border-[var(--el-border-color)]
-        bg-[var(--el-fill-color)]
-      "
+      class="shrink-0 p-1 flex justify-end border-t-[1px] border-[var(--el-border-color)] bg-[var(--el-fill-color)]"
     >
       <el-button
         type="danger"

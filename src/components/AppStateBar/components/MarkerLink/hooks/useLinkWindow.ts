@@ -19,8 +19,7 @@ export const useLinkWindow = (options: LinkWindowHookOptions) => {
       return true
     },
     beforeClose: () => {
-      if (loading.value)
-        return false
+      if (loading.value) return false
       close$.next()
       return true
     },

@@ -15,10 +15,7 @@ export interface LimitPromiseAllOptions<T> {
 export const limitPromiseAll = async <D, T>(
   data: D[],
   toPromise: (item: D, index: number) => Promise<T | null>,
-  {
-    maxRequests = 10,
-    initResult = [],
-  }: LimitPromiseAllOptions<T> = {},
+  { maxRequests = 10, initResult = [] }: LimitPromiseAllOptions<T> = {},
 ) => {
   const results = await lastValueFrom(
     from(data).pipe(

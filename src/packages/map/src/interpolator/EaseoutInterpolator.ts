@@ -2,20 +2,25 @@ import { LinearInterpolator } from 'deck.gl'
 
 /** 缓动插值器 */
 export class EaseoutInterpolator extends LinearInterpolator {
-  protected easeOut = (a: number | number[], b: number | number[], t: number): number | number[] => {
+  protected easeOut = (
+    a: number | number[],
+    b: number | number[],
+    t: number,
+  ): number | number[] => {
     // 3 阶缓动
     t = 1 - (1 - t) ** 3
 
     if (Array.isArray(a)) {
-      if (!Array.isArray(b))
-        throw new Error('b is not a array')
+      if (!Array.isArray(b)) throw new Error('b is not a array')
       return a.map((ai, i) => this.easeOut(ai, b[i], t) as number)
     }
 
     return t * (b as number) + (1 - t) * (a as number)
   }
 
-  interpolateProps = (...[startProps, endProps, t]: Parameters<LinearInterpolator['interpolateProps']>) => {
+  interpolateProps = (
+    ...[startProps, endProps, t]: Parameters<LinearInterpolator['interpolateProps']>
+  ) => {
     const propsInTransition: Record<string, number | number[]> = {}
 
     for (const key of this._propsToExtract)

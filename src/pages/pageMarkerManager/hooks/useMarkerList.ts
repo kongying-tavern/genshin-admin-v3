@@ -31,7 +31,11 @@ export const useSearchMarkerList = (options: MarkerSearchHookOptions) => {
   const lastQueryFlag = shallowRef<string>('')
   const lastQueryCache = shallowRef<MarkerVo[]>([])
 
-  const { refresh: updateMarkerList, onSuccess, ...rest } = useFetchHook({
+  const {
+    refresh: updateMarkerList,
+    onSuccess,
+    ...rest
+  } = useFetchHook({
     immediate: true,
     initialValue: {
       markers: [],
@@ -51,49 +55,46 @@ export const useSearchMarkerList = (options: MarkerSearchHookOptions) => {
       const itemIds = new Set(itemIdList)
       const markerIds = new Set(markerIdList)
 
-      const result = dirtyFlag === lastQueryFlag.value
-        ? lastQueryCache.value
-        : markerList.filter(({ id: markerId, itemList = [] }) => {
-            const items = itemList.reduce((seed, { itemId = -1 }) => {
-              const item = itemIdMap.get(itemId) ?? { id: itemId }
-              seed.push(item)
-              return seed
-            }, [] as ItemVo[])
+      const result =
+        dirtyFlag === lastQueryFlag.value
+          ? lastQueryCache.value
+          : markerList.filter(({ id: markerId, itemList = [] }) => {
+              const items = itemList.reduce((seed, { itemId = -1 }) => {
+                const item = itemIdMap.get(itemId) ?? { id: itemId }
+                seed.push(item)
+                return seed
+              }, [] as ItemVo[])
 
-            // 1. 筛选包含地区
-            if (areaIds.size > 0) {
-              for (const { areaId } of items) {
-                if (areaId === undefined || !areaIds.has(areaId!))
-                  return false
+              // 1. 筛选包含地区
+              if (areaIds.size > 0) {
+                for (const { areaId } of items) {
+                  if (areaId === undefined || !areaIds.has(areaId!)) return false
+                }
               }
-            }
 
-            // 2. 筛选物品类型
-            if (typeIds.size > 0) {
-              const itemTypeIds = items.reduce((set, { typeIdList = [] }) => {
-                typeIdList.forEach(id => set.add(id!))
-                return set
-              }, new Set<number>())
-              if (itemTypeIds.isDisjointFrom(typeIds))
-                return false
-            }
-
-            // 3. 筛选物品
-            if (itemIds.size > 0) {
-              for (const { id } of items) {
-                if (!itemIds.has(id!))
-                  return false
+              // 2. 筛选物品类型
+              if (typeIds.size > 0) {
+                const itemTypeIds = items.reduce((set, { typeIdList = [] }) => {
+                  typeIdList.forEach(id => set.add(id!))
+                  return set
+                }, new Set<number>())
+                if (itemTypeIds.isDisjointFrom(typeIds)) return false
               }
-            }
 
-            // 4. 筛选 id
-            if (markerIds.size > 0) {
-              if (!markerIds.has(markerId!))
-                return false
-            }
+              // 3. 筛选物品
+              if (itemIds.size > 0) {
+                for (const { id } of items) {
+                  if (!itemIds.has(id!)) return false
+                }
+              }
 
-            return true
-          })
+              // 4. 筛选 id
+              if (markerIds.size > 0) {
+                if (!markerIds.has(markerId!)) return false
+              }
+
+              return true
+            })
 
       if (result.length > 0) {
         lastQueryFlag.value = dirtyFlag
@@ -113,25 +114,33 @@ export const useSearchMarkerList = (options: MarkerSearchHookOptions) => {
   const cachedUserIds = ref(new Set<number>())
 
   const fetchUserInfo = async (markers: MarkerVo[]) => {
-    const userIds = new Set(markers.map(({ creatorId }) => creatorId!)).difference(cachedUserIds.value)
+    const userIds = new Set(markers.map(({ creatorId }) => creatorId!)).difference(
+      cachedUserIds.value,
+    )
 
-    await Promise.allSettled([...userIds].map(async (userId) => {
-      const { data = {} } = await Apis.user
-        .getUserInfo({ pathParams: { userId } })
-        .catch(() => ({ data: {} }))
-      cachedUserIds.value.add(userId)
-      cacheUserInfo.value.set(userId, data)
-    }))
+    await Promise.allSettled(
+      [...userIds].map(async userId => {
+        const { data = {} } = await Apis.user
+          .getUserInfo({ pathParams: { userId } })
+          .catch(() => ({ data: {} }))
+        cachedUserIds.value.add(userId)
+        cacheUserInfo.value.set(userId, data)
+      }),
+    )
   }
 
-  watchDebounced(() => [
-    markerStore.markerList,
-    areaStore.areaList,
-    itemStore.itemList,
-    itemTypeStore.itemTypeList,
-  ], updateMarkerList, {
-    debounce: 300,
-  })
+  watchDebounced(
+    () => [
+      markerStore.markerList,
+      areaStore.areaList,
+      itemStore.itemList,
+      itemTypeStore.itemTypeList,
+    ],
+    updateMarkerList,
+    {
+      debounce: 300,
+    },
+  )
 
   onSuccess(({ markers, total }) => {
     markerList.value = markers

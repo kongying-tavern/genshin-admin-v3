@@ -11,7 +11,7 @@ import { SettingBar, SettingGroup, SettingPanel } from '../components'
 const socketStore = useSocketStore()
 const preferenceStore = usePreferenceStore()
 
-const wsEvents: { label: string, value: WebSocketAPI.WSEventType, divider?: boolean }[] = [
+const wsEvents: { label: string; value: WebSocketAPI.WSEventType; divider?: boolean }[] = [
   // 物品
   { label: '物品新增', value: 'ItemAdded' },
   { label: '物品删除', value: 'ItemDeleted' },
@@ -45,9 +45,11 @@ const wsLogs = shallowRef({
   list: [] as WS.Log[],
 })
 
-useSubscription(liveQuery(() => wsdb.logs.toArray()).subscribe((logs) => {
-  wsLogs.value = { total: logs.length, list: logs.slice(-10) }
-}))
+useSubscription(
+  liveQuery(() => wsdb.logs.toArray()).subscribe(logs => {
+    wsLogs.value = { total: logs.length, list: logs.slice(-10) }
+  }),
+)
 
 const { refresh: exportLogs, loading: exportLoading } = useFetchHook({
   onRequest: async () => {
@@ -77,7 +79,10 @@ const { refresh: clearLogs, loading: clearLoading } = useFetchHook({
 <template>
   <SettingPanel>
     <SettingGroup name="Web Socket">
-      <SettingBar label="响应时延" :note="`检测间隔: ${WEBSOCKET_WORKER_CONFIG.HEARTBEAT.INTERVAL / 1000}s`">
+      <SettingBar
+        label="响应时延"
+        :note="`检测间隔: ${WEBSOCKET_WORKER_CONFIG.HEARTBEAT.INTERVAL / 1000}s`"
+      >
         <template #setting>
           {{ socketStore.context.status }}
         </template>
@@ -85,23 +90,22 @@ const { refresh: clearLogs, loading: clearLoading } = useFetchHook({
 
       <SettingBar label="日志" :note="`latest 10 of ${wsLogs.total}`">
         <template #setting>
-          <el-button :disabled="exportLoading" @click="exportLogs">
-            导出日志
-          </el-button>
+          <el-button :disabled="exportLoading" @click="exportLogs"> 导出日志 </el-button>
         </template>
         <template #detail>
-          <div v-if="!wsLogs.total" class="text-[var(--el-text-color-secondary)]">
-            无内容
-          </div>
-          <div
-            v-for="log in wsLogs.list"
-            :key="log.id"
-            class="text-xs"
-          >
+          <div v-if="!wsLogs.total" class="text-[var(--el-text-color-secondary)]">无内容</div>
+          <div v-for="log in wsLogs.list" :key="log.id" class="text-xs">
             <b>{{ `[${new Date(log.t).toLocaleString()}]` }}</b> {{ log.msg }}
           </div>
           <div class="mt-2">
-            <el-button type="danger" plain size="small" :loading="clearLoading" :disabled="!wsLogs.total" @click="clearLogs">
+            <el-button
+              type="danger"
+              plain
+              size="small"
+              :loading="clearLoading"
+              :disabled="!wsLogs.total"
+              @click="clearLogs"
+            >
               清空日志
             </el-button>
           </div>

@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import type { SysUserVo } from '@/api/alova/globals'
 import { Check, Close } from '@element-plus/icons-vue'
-import {
-  WinDialog,
-  WinDialogFooter,
-  WinDialogTitleBar,
-} from '@/components'
+import { WinDialog, WinDialogFooter, WinDialogTitleBar } from '@/components'
 import { useUserDelete } from '../hooks'
 
 const props = defineProps<{
@@ -46,12 +42,10 @@ onSuccess(() => {
     }"
   >
     <WinDialog>
-      <WinDialogTitleBar :loading="loading" @close="action = ''">
-        删除用户
-      </WinDialogTitleBar>
+      <WinDialogTitleBar :loading="loading" @close="action = ''"> 删除用户 </WinDialogTitleBar>
 
       <div class="w-[300px] p-2 grid grid-rows-[auto_1fr] grid-cols-[auto_1fr] gap-2">
-        <div class=" row-span-2">
+        <div class="row-span-2">
           <el-icon class="p-1" size="40" color="var(--el-color-danger)">
             <Delete />
           </el-icon>
@@ -64,13 +58,9 @@ onSuccess(() => {
       </div>
 
       <WinDialogFooter>
-        <el-button :icon="Check" :loading="loading" type="danger" @click="submit">
-          是
-        </el-button>
+        <el-button :icon="Check" :loading="loading" type="danger" @click="submit"> 是 </el-button>
 
-        <el-button :icon="Close" :disabled="loading" @click="action = ''">
-          否
-        </el-button>
+        <el-button :icon="Close" :disabled="loading" @click="action = ''"> 否 </el-button>
       </WinDialogFooter>
     </WinDialog>
   </el-dialog>

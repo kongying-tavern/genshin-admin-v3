@@ -42,8 +42,12 @@ const RESTTIME_PRECISION = 4
 /** 计算到期时间 */
 const getExpiressTime = (expiressIn: number) => Date.now() + expiressIn * 1000
 
-const toCamelCaseObject = <T extends Record<string, unknown>>(obj: T): SnakeCaseKeysToCamelCase<T> => {
-  return Object.fromEntries(Object.entries(obj).map(([key, value]) => [camelCase(key), value])) as SnakeCaseKeysToCamelCase<T>
+const toCamelCaseObject = <T extends Record<string, unknown>>(
+  obj: T,
+): SnakeCaseKeysToCamelCase<T> => {
+  return Object.fromEntries(
+    Object.entries(obj).map(([key, value]) => [camelCase(key), value]),
+  ) as SnakeCaseKeysToCamelCase<T>
 }
 
 export const useUserStore = defineStore('global-user', () => {
@@ -52,8 +56,7 @@ export const useUserStore = defineStore('global-user', () => {
 
   const isTokenValid = () => {
     const { accessToken, refreshToken, expiresTime = 0 } = auth.value
-    if (!accessToken || !refreshToken)
-      return false
+    if (!accessToken || !refreshToken) return false
     return expiresTime > Date.now()
   }
 
@@ -73,19 +76,18 @@ export const useUserStore = defineStore('global-user', () => {
   const roleList = shallowRef<SysRoleVo[]>([])
   const userInfo = shallowRef<AppUserInfo | null>(null)
 
-  const {
-    loading: roleListLoading,
-    refresh: refreshRoleList,
-  } = useFetchHook({
+  const { loading: roleListLoading, refresh: refreshRoleList } = useFetchHook({
     onRequest: async () => {
       const { data = [] } = await Apis.role.listRole()
       roleList.value = data
     },
   })
 
-  const roleMap = computed(() => roleList.value.reduce((map, role) => {
-    return map.set(role.id!, role)
-  }, new Map<number, SysRoleVo>()))
+  const roleMap = computed(() =>
+    roleList.value.reduce((map, role) => {
+      return map.set(role.id!, role)
+    }, new Map<number, SysRoleVo>()),
+  )
 
   // ==================== 用户信息 ====================
   const {
@@ -94,11 +96,9 @@ export const useUserStore = defineStore('global-user', () => {
     onError: onFetchInfoError,
   } = useFetchHook({
     onRequest: async (userId: number | undefined = auth.value.userId) => {
-      if (!userId)
-        return null
+      if (!userId) return null
 
-      if (!roleList.value.length)
-        await refreshRoleList()
+      if (!roleList.value.length) await refreshRoleList()
 
       const { data = {} } = await Apis.user.getUserInfo({
         pathParams: {
@@ -125,8 +125,7 @@ export const useUserStore = defineStore('global-user', () => {
   })
 
   const isLogin = computed(() => {
-    if (!auth.value.accessToken)
-      return false
+    if (!auth.value.accessToken) return false
     return userInfo.value !== null
   })
 
@@ -153,8 +152,7 @@ export const useUserStore = defineStore('global-user', () => {
   const beforeLogout = createEventHook<void>()
 
   const logout = async () => {
-    if (!auth.value.accessToken)
-      return
+    if (!auth.value.accessToken) return
     beforeLogout.trigger()
     clearLoginState()
     logoutMessageHandler.value = ElMessage({
@@ -168,10 +166,9 @@ export const useUserStore = defineStore('global-user', () => {
     })
   }
 
-  onFetchInfoError((err) => {
+  onFetchInfoError(err => {
     // 纯网络错误不触发登出，避免因 VPN / 网络波动导致用户被误踢下线
-    if (isNetworkError(err))
-      return
+    if (isNetworkError(err)) return
     logout()
   })
 
@@ -183,15 +180,17 @@ export const useUserStore = defineStore('global-user', () => {
       return
     }
     // 刷新时间如果大于阈值，跳过并等待下一轮刷新
-    if ((auth.value.expiresTime! - Date.now()) > (REFRESH_INTERVAL + RESTTIME_PRECISION))
-      return
-    const res = await lastValueFrom(defer(() => Oauth.oauth.refresh({
-      grant_type: 'refresh_token',
-      refresh_token: refershToken,
-    })).pipe(retry({ count: 3, delay: 1000 }))).catch(() => null)
+    if (auth.value.expiresTime! - Date.now() > REFRESH_INTERVAL + RESTTIME_PRECISION) return
+    const res = await lastValueFrom(
+      defer(() =>
+        Oauth.oauth.refresh({
+          grant_type: 'refresh_token',
+          refresh_token: refershToken,
+        }),
+      ).pipe(retry({ count: 3, delay: 1000 })),
+    ).catch(() => null)
     // 如果刷新失败，跳过并等待下一轮刷新
-    if (!res)
-      return
+    if (!res) return
     logger.info('token 已刷新')
     setAuth(res)
   }
@@ -219,17 +218,21 @@ export const useUserStore = defineStore('global-user', () => {
     }
 
     // 启用/暂停 token 自动刷新
-    watch(() => auth.value.refreshToken, async (newToken, oldToken) => {
-      if (!newToken) {
-        pauseRefreshToken()
-        logger.info('token 刷新已暂停')
-        return
-      }
-      if (!oldToken) {
-        logger.info('token 刷新已启用')
-        resumeRefreshToken()
-      }
-    }, { immediate: true })
+    watch(
+      () => auth.value.refreshToken,
+      async (newToken, oldToken) => {
+        if (!newToken) {
+          pauseRefreshToken()
+          logger.info('token 刷新已暂停')
+          return
+        }
+        if (!oldToken) {
+          logger.info('token 刷新已启用')
+          resumeRefreshToken()
+        }
+      },
+      { immediate: true },
+    )
 
     // 自动更新用户信息
     watch(() => auth.value.userId, refreshUserInfo, { immediate: true })

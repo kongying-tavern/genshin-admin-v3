@@ -16,7 +16,7 @@ const enumValue = computed<T>({
   get: () => {
     return modelValue.value.value as T
   },
-  set: (value) => {
+  set: value => {
     modelValue.value = {
       ...modelValue.value,
       value: value as object,

@@ -15,12 +15,10 @@ const markerIds = ref(modelValue.value.markerIdList.join(','))
 
 const changeMarkerIds = (value: string) => {
   const ids = new Set<number>()
-  value.split(',').forEach((char) => {
-    if (!char)
-      return
+  value.split(',').forEach(char => {
+    if (!char) return
     const num = Number(char)
-    if (Number.isInteger(num))
-      ids.add(num)
+    if (Number.isInteger(num)) ids.add(num)
   })
   modelValue.value.markerIdList = [...ids]
   emits('change')
@@ -28,9 +26,10 @@ const changeMarkerIds = (value: string) => {
 
 // ==================== 地区 ====================
 const areaStore = useAreaStore()
-const areaList = computed(() => areaStore.areaList
-  .filter(area => area.isFinal)
-  .toSorted(({ sortIndex: ia = 0 }, { sortIndex: ib = 0 }) => ib - ia),
+const areaList = computed(() =>
+  areaStore.areaList
+    .filter(area => area.isFinal)
+    .toSorted(({ sortIndex: ia = 0 }, { sortIndex: ib = 0 }) => ib - ia),
 )
 
 // ==================== 类型 ====================
@@ -45,7 +44,7 @@ const { itemOptions } = useItemList({
 })
 
 // 当已选物品不存在于物品选项中时，重置已选物品
-watch(itemOptions, (options) => {
+watch(itemOptions, options => {
   for (const itemId of modelValue.value.itemIdList) {
     if (!options.find(opt => opt.value === itemId)) {
       modelValue.value.itemIdList = []
@@ -56,7 +55,10 @@ watch(itemOptions, (options) => {
 </script>
 
 <template>
-  <el-form class="w-full p-2 border-b-[1px] border-[var(--el-border-color-lighter)]" label-width="70px">
+  <el-form
+    class="w-full p-2 border-b-[1px] border-[var(--el-border-color-lighter)]"
+    label-width="70px"
+  >
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6">
       <el-form-item label="点位ID" style="margin-bottom: 0">
         <el-input
@@ -73,7 +75,9 @@ watch(itemOptions, (options) => {
           v-model="modelValue.areaIdList"
           placeholder="请选择地区"
           clearable
-          multiple collapse-tags collapse-tags-tooltip
+          multiple
+          collapse-tags
+          collapse-tags-tooltip
           filterable
           style="width: 100%"
           :options="areaList"
@@ -87,7 +91,11 @@ watch(itemOptions, (options) => {
           v-model="modelValue.typeIdList"
           placeholder="请选择点位类型"
           node-key="id"
-          collapse-tags collapse-tags-tooltip clearable filterable multiple
+          collapse-tags
+          collapse-tags-tooltip
+          clearable
+          filterable
+          multiple
           style="width: 100%"
           :options="itemTypeOptions"
           @change="() => $emit('change')"
@@ -99,7 +107,11 @@ watch(itemOptions, (options) => {
           v-model="modelValue.itemIdList"
           placeholder="请选择物品"
           node-key="id"
-          collapse-tags collapse-tags-tooltip clearable filterable multiple
+          collapse-tags
+          collapse-tags-tooltip
+          clearable
+          filterable
+          multiple
           style="width: 100%"
           :options="itemOptions"
           @change="() => $emit('change')"

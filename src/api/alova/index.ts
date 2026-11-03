@@ -31,7 +31,7 @@ export const alovaInstance = createAlova({
   cacheFor: null,
   requestAdapter: fetchAdapter(),
 
-  beforeRequest: onAuthRequired((method) => {
+  beforeRequest: onAuthRequired(method => {
     const { headers } = method.config
     const { auth } = useUserStore()
     const { accessToken, tokenType = 'bearer' } = auth
@@ -49,21 +49,18 @@ export const alovaInstance = createAlova({
       logger.error('Response Error:', { response, method })
 
       // 处理 401/403 错误，调用 logout
-      if (status === 401 || status === 403)
-        useUserStore().logout()
+      if (status === 401 || status === 403) useUserStore().logout()
 
       throw new Error(statusText)
     }
 
     // 解析响应数据
     const contentType = response.headers.get('Content-Type')
-    if (contentType !== 'application/json')
-      return response
+    if (contentType !== 'application/json') return response
 
-    if (method.config.meta?.raw)
-      return response
+    if (method.config.meta?.raw) return response
 
-    const data = (await response.json())
+    const data = await response.json()
 
     if (data.error)
       throw new Error(data.message || data.error_description || data.errorData || statusText)
@@ -75,7 +72,7 @@ export const alovaInstance = createAlova({
 export const $$userConfigMap = withConfigType({
   'marker_doc.listMarkersByBinary': {
     meta: { raw: true },
-    transform: async (res) => {
+    transform: async res => {
       const buffer = await (res as unknown as Response).arrayBuffer()
       const decompressedData = await Zip.decompress(new Uint8Array(buffer))
       const data = compiled.protobuf.MarkerVoList.decode(decompressedData)
@@ -96,7 +93,13 @@ export const $$userConfigMap = withConfigType({
           markerStamp: marker.markerStamp ?? undefined,
           markerTitle: marker.markerTitle ?? undefined,
           position: marker.position ?? undefined,
-          itemList: itemList ? itemList.map(item => ({ itemId: item.itemId, iconId: item.iconId, count: item.count ?? undefined })) : undefined,
+          itemList: itemList
+            ? itemList.map(item => ({
+                itemId: item.itemId,
+                iconId: item.iconId,
+                count: item.count ?? undefined,
+              }))
+            : undefined,
           content: marker.content ?? undefined,
           picture: marker.picture ?? undefined,
           markerCreatorId: marker.markerCreatorId,
@@ -115,8 +118,7 @@ export const $$userConfigMap = withConfigType({
           const iconOverride = extra.iconOverride
           if (v16 || v28 || underground || iconOverride) {
             const extra: MarkerExtraVo = {}
-            if (v16)
-              extra['1_6_island'] = v16
+            if (v16) extra['1_6_island'] = v16
             if (v28) {
               extra['2_8_island'] = {
                 island_name: v28.islandName ?? undefined,
@@ -131,7 +133,11 @@ export const $$userConfigMap = withConfigType({
               }
             }
             if (iconOverride)
-              extra.iconOverride = { id: iconOverride.id, minZoom: iconOverride.minZoom ?? undefined, maxZoom: iconOverride.maxZoom ?? undefined }
+              extra.iconOverride = {
+                id: iconOverride.id,
+                minZoom: iconOverride.minZoom ?? undefined,
+                maxZoom: iconOverride.maxZoom ?? undefined,
+              }
             rewrite.extra = extra
           }
         }
@@ -142,7 +148,7 @@ export const $$userConfigMap = withConfigType({
   },
   'marker_doc.listMarkerDiffSnapshotByBinary': {
     meta: { raw: true },
-    transform: async (res) => {
+    transform: async res => {
       const buffer = await (res as unknown as Response).arrayBuffer()
       const data = compiled.protobuf.MarkerDiffSnapshotVoList.decode(new Uint8Array(buffer))
       return data

@@ -10,9 +10,13 @@ export const useCountDown = () => {
 
     WorkerInterval.clear(id)
 
-    WorkerInterval.set(id, () => {
-      count.value -= 1
-    }, 1000)
+    WorkerInterval.set(
+      id,
+      () => {
+        count.value -= 1
+      },
+      1000,
+    )
   }
 
   onUnmounted(() => {

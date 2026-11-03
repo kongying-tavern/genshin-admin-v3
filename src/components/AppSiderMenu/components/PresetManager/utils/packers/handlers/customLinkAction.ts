@@ -28,8 +28,7 @@ const encode = (value: MAFValue): Uint8Array => {
   const writer = new ByteWriter().writeUint16LE(0).moveTo(0)
 
   for (const [action, bit] of LINK_ACTION_BITS) {
-    if (saSet.has(action))
-      writer.setBit(0b1, bit, bit)
+    if (saSet.has(action)) writer.setBit(0b1, bit, bit)
   }
 
   return writer.toUint8Array()
@@ -40,8 +39,7 @@ const decode = (bytes: Uint8Array): MAFValueStringArray => {
   const sa: string[] = []
 
   for (const [action, bit] of LINK_ACTION_BITS) {
-    if (reader.readBit(bit, bit, 'blank'))
-      sa.push(action)
+    if (reader.readBit(bit, bit, 'blank')) sa.push(action)
   }
 
   return { sa }

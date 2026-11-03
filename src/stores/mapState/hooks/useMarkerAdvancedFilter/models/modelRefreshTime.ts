@@ -10,7 +10,7 @@ import type {
 import { useRefreshTimeOptions } from '@/hooks'
 import { MAF_MODEL_META_MAP, MAFModelId } from '@/shared'
 
-type OptionType = MAFOptionRange & MAFOptionSelect<{ label: string, value: number }>
+type OptionType = MAFOptionRange & MAFOptionSelect<{ label: string; value: number }>
 
 export class RefreshTime implements MAFConfig<MAFValueNumberRange, OptionType, MAFMetaRefreshTime> {
   id = MAFModelId.REFRESH_TIME
@@ -47,7 +47,12 @@ export class RefreshTime implements MAFConfig<MAFValueNumberRange, OptionType, M
     }
 
     // 处理是否自定义
-    meta.isCustom = !(Number.isFinite(val.nMin) && Number(val.nMin) <= 0 && Number.isFinite(val.nMax) && Number(val.nMax) <= 0)
+    meta.isCustom = !(
+      Number.isFinite(val.nMin)
+      && Number(val.nMin) <= 0
+      && Number.isFinite(val.nMax)
+      && Number(val.nMax) <= 0
+    )
 
     // 处理名称映射
     const { refreshTimeTypeNameMap } = useRefreshTimeOptions()
@@ -56,7 +61,12 @@ export class RefreshTime implements MAFConfig<MAFValueNumberRange, OptionType, M
     return meta
   }
 
-  semantic(val: MAFValueNumberRange, _opt: OptionType, meta: MAFMetaRefreshTime, opposite: boolean): (MAFSemanticUnit | null)[] {
+  semantic(
+    val: MAFValueNumberRange,
+    _opt: OptionType,
+    meta: MAFMetaRefreshTime,
+    opposite: boolean,
+  ): (MAFSemanticUnit | null)[] {
     return [
       { type: 'text', text: '刷新时间' },
       opposite ? { type: 'opposite-indicator', text: '不' } : null,
@@ -67,9 +77,22 @@ export class RefreshTime implements MAFConfig<MAFValueNumberRange, OptionType, M
     ]
   }
 
-  filter(val: MAFValueNumberRange, _opt: OptionType, meta: MAFMetaRefreshTime, marker: MarkerVo): boolean {
-    const minVal: number = meta.isCustom ? (val.nMin === undefined || val.nMin === null ? Number.NEGATIVE_INFINITY : val.nMin * 3600 * 1000) : (val.nMin as number)
-    const maxVal: number = meta.isCustom ? (val.nMax === undefined || val.nMax === null ? Number.POSITIVE_INFINITY : val.nMax * 3600 * 1000) : (val.nMin as number)
+  filter(
+    val: MAFValueNumberRange,
+    _opt: OptionType,
+    meta: MAFMetaRefreshTime,
+    marker: MarkerVo,
+  ): boolean {
+    const minVal: number = meta.isCustom
+      ? val.nMin === undefined || val.nMin === null
+        ? Number.NEGATIVE_INFINITY
+        : val.nMin * 3600 * 1000
+      : (val.nMin as number)
+    const maxVal: number = meta.isCustom
+      ? val.nMax === undefined || val.nMax === null
+        ? Number.POSITIVE_INFINITY
+        : val.nMax * 3600 * 1000
+      : (val.nMin as number)
     return marker.refreshTime! >= minVal && marker.refreshTime! <= maxVal
   }
 }

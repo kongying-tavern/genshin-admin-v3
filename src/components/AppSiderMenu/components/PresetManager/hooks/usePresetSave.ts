@@ -26,10 +26,8 @@ export const usePresetSave = (options: PresetSaveOptions) => {
     }
 
     const findIndex = presetList.findIndex(preset => preset.name === name.value)
-    if (findIndex < 0)
-      presetList.push(object)
-    else
-      presetList.splice(findIndex, 1, object)
+    if (findIndex < 0) presetList.push(object)
+    else presetList.splice(findIndex, 1, object)
 
     preferenceStore.presets = presetList
     name.value = ''
@@ -46,10 +44,8 @@ export const usePresetSave = (options: PresetSaveOptions) => {
     }
 
     const findIndex = presetList.findIndex(preset => preset.name === name.value)
-    if (findIndex < 0)
-      presetList.push(object)
-    else
-      presetList.splice(findIndex, 1, object)
+    if (findIndex < 0) presetList.push(object)
+    else presetList.splice(findIndex, 1, object)
 
     preferenceStore.presets = presetList
     name.value = ''
@@ -57,15 +53,11 @@ export const usePresetSave = (options: PresetSaveOptions) => {
 
   /** 保存预设 */
   const savePreset = (customConditions?: FilterConditions) => {
-    if (userStore.info?.id === undefined)
-      return
+    if (userStore.info?.id === undefined) return
 
     const conditions = customConditions ?? conditionGetter?.value
-    if (!conditions)
-      return
-    isAdvancedFilter(conditions)
-      ? saveAdvancedPreset(conditions)
-      : saveBasePreset(conditions)
+    if (!conditions) return
+    isAdvancedFilter(conditions) ? saveAdvancedPreset(conditions) : saveBasePreset(conditions)
   }
 
   return {

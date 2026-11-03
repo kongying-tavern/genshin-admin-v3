@@ -8,21 +8,24 @@ import ItemPreviewButton from './ItemPreviewButton.vue'
 import ItemSelectButton from './ItemSelectButton.vue'
 import TypeSelectButton from './TypeSelectButton.vue'
 
-const props = withDefaults(defineProps<{
-  modelValue: ItemVo[]
-  areaCode?: string
-  title?: string
-  totalDirection?: 'row' | 'column'
-  height?: string
-  width?: string
-  showTotal?: boolean
-  showAreaSelector?: boolean
-  isAreaDisabled?: (area: AreaVo) => boolean
-}>(), {
-  showTotal: true,
-  showAreaSelector: true,
-  totalDirection: 'row',
-})
+const props = withDefaults(
+  defineProps<{
+    modelValue: ItemVo[]
+    areaCode?: string
+    title?: string
+    totalDirection?: 'row' | 'column'
+    height?: string
+    width?: string
+    showTotal?: boolean
+    showAreaSelector?: boolean
+    isAreaDisabled?: (area: AreaVo) => boolean
+  }>(),
+  {
+    showTotal: true,
+    showAreaSelector: true,
+    totalDirection: 'row',
+  },
+)
 
 const emits = defineEmits<{
   'update:modelValue': [ItemVo[]]
@@ -39,7 +42,7 @@ const internalAreaCode = ref('')
 
 const modelAreaCode = computed({
   get: () => props.areaCode ?? internalAreaCode.value,
-  set: (code) => {
+  set: code => {
     if (props.areaCode === undefined) {
       internalAreaCode.value = code
       return
@@ -62,14 +65,13 @@ const queryText = ref('')
 const itemTypeList = computed(() => {
   const queryKeyword = queryText.value.trim()
   const result = itemTypeStore.itemTypeList.filter(({ isFinal }) => isFinal)
-  if (!queryKeyword)
-    return result
+  if (!queryKeyword) return result
   return [{ id: -1, name: '搜索结果' }, ...result]
 })
 
 const selectedTypeId = ref<number>()
 
-watch(queryText, (text) => {
+watch(queryText, text => {
   const queryKeyword = text.trim()
   if (!queryKeyword) {
     selectedTypeId.value = itemTypeList.value[0]?.id
@@ -83,50 +85,53 @@ const itemList = computed(() => {
   const queryTypeId = selectedTypeId.value
   const queryKeyword = queryText.value.trim()
   const queryAreaId = areaId.value
-  if (queryTypeId === undefined)
-    return []
-  const items = itemStore.itemList
-    .filter(({ name = '', areaId = -1, typeIdList = [] }) => {
-      if (queryTypeId !== -1 && !new Set(typeIdList).has(queryTypeId))
-        return false
-      const isQueryMatch = !queryKeyword || (name.includes(queryKeyword) ?? false)
-      if (!isQueryMatch)
-        return false
-      return areaId === queryAreaId
-    })
+  if (queryTypeId === undefined) return []
+  const items = itemStore.itemList.filter(({ name = '', areaId = -1, typeIdList = [] }) => {
+    if (queryTypeId !== -1 && !new Set(typeIdList).has(queryTypeId)) return false
+    const isQueryMatch = !queryKeyword || (name.includes(queryKeyword) ?? false)
+    if (!isQueryMatch) return false
+    return areaId === queryAreaId
+  })
   return items
 })
 
 // ==================== 已选物品 ====================
-const selectionsMap = computed(() => props.modelValue.reduce((seed, item) => {
-  return seed.set(item.id!, item)
-}, new Map<number, ItemVo>()))
+const selectionsMap = computed(() =>
+  props.modelValue.reduce((seed, item) => {
+    return seed.set(item.id!, item)
+  }, new Map<number, ItemVo>()),
+)
 
 const selectionItems = computed({
   get: () => props.modelValue,
   set: items => emits('update:modelValue', items),
 })
 
-const groupedItems = computed(() => selectionItems.value.reduce((seed, item) => {
-  item.typeIdList?.forEach((typeId) => {
-    if (!seed[typeId])
-      seed[typeId] = []
-    seed[typeId].push(item)
-  })
-  return seed
-}, {} as { [typeId: string]: ItemVo[] }))
+const groupedItems = computed(() =>
+  selectionItems.value.reduce(
+    (seed, item) => {
+      item.typeIdList?.forEach(typeId => {
+        if (!seed[typeId]) seed[typeId] = []
+        seed[typeId].push(item)
+      })
+      return seed
+    },
+    {} as { [typeId: string]: ItemVo[] },
+  ),
+)
 
 const toggleItem = (item: ItemVo) => {
   const map = new Map(selectionsMap.value)
-  if (map.has(item.id!))
-    map.delete(item.id!)
-  else
-    map.set(item.id!, item)
+  if (map.has(item.id!)) map.delete(item.id!)
+  else map.set(item.id!, item)
   selectionItems.value = [...map].map(([_, item]) => item)
 }
 
 const scrollbarRef = ref<InstanceType<typeof ElScrollbar> | null>(null)
-watch(() => itemList.value, () => scrollbarRef.value?.setScrollTop(0))
+watch(
+  () => itemList.value,
+  () => scrollbarRef.value?.setScrollTop(0),
+)
 </script>
 
 <template>
@@ -178,10 +183,10 @@ watch(() => itemList.value, () => scrollbarRef.value?.setScrollTop(0))
         </ElScrollbar>
       </div>
 
-      <div class="w-full h-full flex flex-col overflow-hidden pl-1 border-l-[1px] border-dashed border-[var(--el-border-color)]">
-        <div v-if="!modelAreaCode" class="w-full h-full grid place-items-center">
-          请选择地区
-        </div>
+      <div
+        class="w-full h-full flex flex-col overflow-hidden pl-1 border-l-[1px] border-dashed border-[var(--el-border-color)]"
+      >
+        <div v-if="!modelAreaCode" class="w-full h-full grid place-items-center">请选择地区</div>
         <ElScrollbar v-else ref="scrollbarRef">
           <div class="grid grid-cols-2 gap-1">
             <ItemSelectButton
@@ -206,9 +211,7 @@ watch(() => itemList.value, () => scrollbarRef.value?.setScrollTop(0))
         <el-text v-if="title" size="small">
           {{ title }}
         </el-text>
-        <el-text type="info" size="small">
-          已选 {{ selectionItems.length }} 个物品
-        </el-text>
+        <el-text type="info" size="small"> 已选 {{ selectionItems.length }} 个物品 </el-text>
       </div>
 
       <div class="flex-1 overflow-hidden">
@@ -220,7 +223,9 @@ watch(() => itemList.value, () => scrollbarRef.value?.setScrollTop(0))
             class="mb-1 overflow-hidden border border-[var(--el-border-color)] rounded"
           >
             <summary class="p-1 px-2 text-xs select-none bg-[var(--el-color-primary-light-8)]">
-              {{ `${itemTypeStore.itemTypeIdMap.get(Number(key))?.name ?? 'unknown'} (${items.length})` }}
+              {{
+                `${itemTypeStore.itemTypeIdMap.get(Number(key))?.name ?? 'unknown'} (${items.length})`
+              }}
             </summary>
             <div class="flex flex-wrap gap-1 p-1">
               <ItemPreviewButton

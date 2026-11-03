@@ -16,7 +16,7 @@ export interface ResponseMessage<Result = unknown> {
   type: 'response'
   id: string
   result?: Result
-  error?: { message: string, stack?: string }
+  error?: { message: string; stack?: string }
 }
 
 export interface Resolver {
@@ -30,8 +30,24 @@ export interface Resolver {
 export interface PortLike {
   postMessage(message: unknown, transfer: Transferable[]): void
   postMessage(message: unknown, options?: StructuredSerializeOptions): void
-  addEventListener<K extends keyof MessagePortEventMap>(type: K, listener: (this: MessagePort, ev: MessagePortEventMap[K]) => void, options?: boolean | AddEventListenerOptions): void
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void
-  removeEventListener<K extends keyof MessagePortEventMap>(type: K, listener: (this: MessagePort, ev: MessagePortEventMap[K]) => void, options?: boolean | EventListenerOptions): void
-  removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void
+  addEventListener<K extends keyof MessagePortEventMap>(
+    type: K,
+    listener: (this: MessagePort, ev: MessagePortEventMap[K]) => void,
+    options?: boolean | AddEventListenerOptions,
+  ): void
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions,
+  ): void
+  removeEventListener<K extends keyof MessagePortEventMap>(
+    type: K,
+    listener: (this: MessagePort, ev: MessagePortEventMap[K]) => void,
+    options?: boolean | EventListenerOptions,
+  ): void
+  removeEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | EventListenerOptions,
+  ): void
 }

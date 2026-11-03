@@ -4,12 +4,13 @@ import { useTypeList } from '@/hooks'
 export const useItemType = () => {
   const { typeList } = useTypeList({ immediate: true })
 
-  const typeOptions = computed(() => typeList.value
-    .filter(itemType => itemType.isFinal)
-    .map(itemType => ({
-      label: `${itemType.name}`,
-      value: itemType.id,
-    })),
+  const typeOptions = computed(() =>
+    typeList.value
+      .filter(itemType => itemType.isFinal)
+      .map(itemType => ({
+        label: `${itemType.name}`,
+        value: itemType.id,
+      })),
   )
 
   return { typeList, typeOptions }

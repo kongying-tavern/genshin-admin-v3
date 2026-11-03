@@ -14,39 +14,37 @@ const emits = defineEmits<{
   delete: [v: NoticeVo]
 }>()
 
-const covertNoticeList = computed(() => props.data.map(notice => ({
-  ...notice,
-  time: {
-    start: notice.validTimeStart ? new Date(notice.validTimeStart).getTime() : undefined,
-    end: notice.validTimeEnd ? new Date(notice.validTimeEnd).getTime() : undefined,
-  },
-})))
+const covertNoticeList = computed(() =>
+  props.data.map(notice => ({
+    ...notice,
+    time: {
+      start: notice.validTimeStart ? new Date(notice.validTimeStart).getTime() : undefined,
+      end: notice.validTimeEnd ? new Date(notice.validTimeEnd).getTime() : undefined,
+    },
+  })),
+)
 
 const stateList = computed(() => {
   const nowTime = now.value
   return covertNoticeList.value.map(({ time: { start, end } }) => {
-    let state: { label: string, type: 'success' | 'warning' | 'info' } = {
+    let state: { label: string; type: 'success' | 'warning' | 'info' } = {
       label: '生效中',
       type: 'success',
     }
-    if (start && start > nowTime)
-      state = state = { label: '待生效', type: 'warning' }
-    if (end && end < nowTime)
-      state = state = { label: '已失效', type: 'info' }
+    if (start && start > nowTime) state = state = { label: '待生效', type: 'warning' }
+    if (end && end < nowTime) state = state = { label: '已失效', type: 'info' }
     return state
   })
 })
 
-const getCellClassName = (cell: { column: { property?: string }, rowIndex: number }) => {
+const getCellClassName = (cell: { column: { property?: string }; rowIndex: number }) => {
   const { property } = cell.column
-  if (!property)
-    return ''
+  if (!property) return ''
   return `is-${property} is-${stateList.value[cell.rowIndex].type}`
 }
 
 const handleCellClick = (row: NoticeVo, col: { property?: string }) => {
-  if (col.property !== 'title')
-    return
+  if (col.property !== 'title') return
   emits('review', row)
 }
 
@@ -84,12 +82,7 @@ const { height } = useElementSize(tableRef)
         </template>
       </el-table-column>
 
-      <el-table-column
-        prop="title"
-        label="标题"
-        :min-width="150"
-        show-overflow-tooltip
-      />
+      <el-table-column prop="title" label="标题" :min-width="150" show-overflow-tooltip />
 
       <el-table-column
         prop="content"
@@ -109,11 +102,7 @@ const { height } = useElementSize(tableRef)
         </template>
       </el-table-column>
 
-      <el-table-column
-        prop="sortIndex"
-        label="排序"
-        :width="80"
-      />
+      <el-table-column prop="sortIndex" label="排序" :width="80" />
 
       <el-table-column
         prop="validTimeStart"

@@ -23,8 +23,7 @@ export class TextModifier extends Modifier<TextModifierProps> {
       replace: {
         label: '文本替换',
         modify: (data, { test = '', replace = '' }) => {
-          if (!test)
-            return data
+          if (!test) return data
           const { field } = this.options
           return { ...data, [field]: `${data[field]}`.replaceAll(test, replace) }
         },
@@ -34,8 +33,7 @@ export class TextModifier extends Modifier<TextModifierProps> {
       replaceRegex: {
         label: '正则替换',
         modify: (data, { test = '', replace = '' }) => {
-          if (!test)
-            return data
+          if (!test) return data
           const { field } = this.options
           return { ...data, [field]: `${data[field]}`.replaceAll(new RegExp(test, 'g'), replace) }
         },
@@ -62,7 +60,7 @@ export class TextModifier extends Modifier<TextModifierProps> {
 
       trimLeft: {
         label: '去除开头空白字符',
-        modify: (data) => {
+        modify: data => {
           const { field } = this.options
           return { ...data, [field]: `${data[field]}`.trimStart() }
         },
@@ -71,7 +69,7 @@ export class TextModifier extends Modifier<TextModifierProps> {
 
       trimRight: {
         label: '去除结尾空白字符',
-        modify: (data) => {
+        modify: data => {
           const { field } = this.options
           return { ...data, [field]: `${data[field]}`.trimEnd() }
         },
@@ -81,8 +79,7 @@ export class TextModifier extends Modifier<TextModifierProps> {
       removeLeft: {
         label: '从开头移除文本',
         modify: (data, { test = '' }) => {
-          if (!test)
-            return data
+          if (!test) return data
           const { field } = this.options
           return { ...data, [field]: `${data[field]}`.replace(test, '') }
         },
@@ -92,13 +89,11 @@ export class TextModifier extends Modifier<TextModifierProps> {
       removeRight: {
         label: '从结尾移除文本',
         modify: (data, { test = '' }) => {
-          if (!test)
-            return data
+          if (!test) return data
           const { field } = this.options
           const str = `${data[field]}`
           const lastIndex = str.lastIndexOf(test)
-          if (lastIndex < 0)
-            return data
+          if (lastIndex < 0) return data
           return { ...data, [field]: str.slice(0, lastIndex) + str.slice(lastIndex + test.length) }
         },
         cardComp: () => import('../CardImpls/TextMatch.vue'),

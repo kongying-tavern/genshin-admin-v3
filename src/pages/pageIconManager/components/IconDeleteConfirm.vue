@@ -1,12 +1,7 @@
 <script setup lang="ts">
 import type { IconVo } from '@/api/alova/globals'
 import { Check, Close } from '@element-plus/icons-vue'
-import {
-  IconRenderer,
-  WinDialog,
-  WinDialogFooter,
-  WinDialogTitleBar,
-} from '@/components'
+import { IconRenderer, WinDialog, WinDialogFooter, WinDialogTitleBar } from '@/components'
 import { useIconDelete } from '../hooks'
 
 const props = defineProps<{
@@ -51,13 +46,9 @@ const confirm = async () => {
     </div>
 
     <WinDialogFooter>
-      <el-button :icon="Check" :loading="loading" type="danger" @click="confirm">
-        是
-      </el-button>
+      <el-button :icon="Check" :loading="loading" type="danger" @click="confirm"> 是 </el-button>
 
-      <el-button :icon="Close" :disabled="loading" @click="cancel">
-        否
-      </el-button>
+      <el-button :icon="Close" :disabled="loading" @click="cancel"> 否 </el-button>
     </WinDialogFooter>
   </WinDialog>
 </template>

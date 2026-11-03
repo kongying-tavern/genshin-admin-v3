@@ -26,7 +26,10 @@ const handleTitleSelect = (notice: NoticeVo) => {
 <template>
   <div class="card-body">
     <div class="card-header">
-      <div v-if="isMobileScreen" class="absolute left-0 top-0 w-[60px] h-[60px] flex items-center p-4">
+      <div
+        v-if="isMobileScreen"
+        class="absolute left-0 top-0 w-[60px] h-[60px] flex items-center p-4"
+      >
         <GSButton theme="plain" @click="isSiderCollapsed = !isSiderCollapsed">
           <template #icon>
             <el-icon color="var(--icon-color)" :size="20">
@@ -36,9 +39,7 @@ const handleTitleSelect = (notice: NoticeVo) => {
         </GSButton>
       </div>
 
-      <div class="title">
-        公告
-      </div>
+      <div class="title">公告</div>
 
       <div class="absolute top-1/2 right-[16px] -translate-y-1/2">
         <GSButton theme="plain" @click="() => context.close()">
@@ -93,9 +94,9 @@ const handleTitleSelect = (notice: NoticeVo) => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #454D5C;
-  color: #ECE5D8;
-  outline: 2px solid #FFFFFF20;
+  background: #454d5c;
+  color: #ece5d8;
+  outline: 2px solid #ffffff20;
   outline-offset: -6px;
   padding: 8px 16px;
   filter: drop-shadow(0 0 6px #00000060);
@@ -115,12 +116,12 @@ const handleTitleSelect = (notice: NoticeVo) => {
     bottom: -2px;
     width: 100%;
     height: 2px;
-    background: #DE7961;
+    background: #de7961;
   }
 }
 
 .card-content {
-  background: #EBE7DF;
+  background: #ebe7df;
   flex: 1;
   flex-shrink: 0;
   display: flex;
@@ -146,7 +147,7 @@ const handleTitleSelect = (notice: NoticeVo) => {
   transition: transform ease 150ms;
   z-index: 1;
   @media screen and (max-width: 400px) {
-    background-color: #EBE7DFA0;
+    background-color: #ebe7dfa0;
     filter: drop-shadow(0 0 8px #33333380);
     &.is-collapsed {
       transform: translateX(-100%);
@@ -155,16 +156,16 @@ const handleTitleSelect = (notice: NoticeVo) => {
   }
   &::-webkit-scrollbar {
     width: 8px;
-    background-color: #D8D7D5;
+    background-color: #d8d7d5;
     border-radius: 8px;
   }
   &::-webkit-scrollbar-thumb {
-    background-color: #FFF;
+    background-color: #fff;
     border-radius: 8px;
-    border: 1px solid #D8D7D5;
+    border: 1px solid #d8d7d5;
   }
   &::-webkit-scrollbar-thumb:hover {
-    background-color: color-mix(in srgb, #FFF 90%, transparent 10%);
+    background-color: color-mix(in srgb, #fff 90%, transparent 10%);
   }
 }
 </style>

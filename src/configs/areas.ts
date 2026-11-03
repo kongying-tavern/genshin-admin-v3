@@ -391,9 +391,7 @@ export const AREA_ADDITIONAL_CONFIG_MAP: Record<string, AreaAdditionalConfig> = 
   },
   /** 枫丹 - 诺思托伊区 */
   'A:FD:FENGDAN4': {
-    tags: [
-      ['诺思托伊区', [-5130, -2292], 1],
-    ],
+    tags: [['诺思托伊区', [-5130, -2292], 1]],
   },
   /** 旧日之海 */
   'A:FD:ANCIENT_SEA': {
@@ -429,9 +427,7 @@ export const AREA_ADDITIONAL_CONFIG_MAP: Record<string, AreaAdditionalConfig> = 
   },
   /** 镜璧山、翘枝崖、奥奇卡纳塔 */
   'A:NT:NATA2': {
-    tags: [
-      ['奥奇卡纳塔', [-12678, -465], 1],
-    ],
+    tags: [['奥奇卡纳塔', [-12678, -465], 1]],
   },
   /** 安饶之野 */
   'A:NT:NATA3': {
@@ -509,8 +505,7 @@ export const AREA_ADDITIONAL_CONFIG_MAP: Record<string, AreaAdditionalConfig> = 
   },
   /** 挪德卡莱 - 3 */
   'A:NDKL:NDKL3': {
-    tags: [
-    ],
+    tags: [],
   },
   /** 挪德卡莱 - 霜月 */
   'A:NDKL:SY': {
@@ -520,10 +515,10 @@ export const AREA_ADDITIONAL_CONFIG_MAP: Record<string, AreaAdditionalConfig> = 
 
 /** 使用静态配置中的图标 */
 export const fallbackToStaticIcon = (area?: AreaVo) => {
-  if (!area)
-    return ''
+  if (!area) return ''
   const { code } = area
   const { 1: areaTag } = code!.split(':')
-  const fallbackIcon = AREA_ADDITIONAL_CONFIG_MAP[code!]?.icon ?? AREA_ADDITIONAL_CONFIG_MAP[`C:${areaTag}`]?.icon
+  const fallbackIcon =
+    AREA_ADDITIONAL_CONFIG_MAP[code!]?.icon ?? AREA_ADDITIONAL_CONFIG_MAP[`C:${areaTag}`]?.icon
   return fallbackIcon
 }

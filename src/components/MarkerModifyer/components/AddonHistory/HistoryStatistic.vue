@@ -34,9 +34,7 @@ useHistoryChart(containerRef, {
     }"
   >
     <WinDialog>
-      <WinDialogTitleBar @close="visible = false">
-        历史记录统计图表
-      </WinDialogTitleBar>
+      <WinDialogTitleBar @close="visible = false"> 历史记录统计图表 </WinDialogTitleBar>
 
       <WinDialogTabPanel class="w-[512px] h-[384px] mb-2 flex flex-col overflow-hidden">
         <div ref="containerRef" class="flex-1 w-full" />

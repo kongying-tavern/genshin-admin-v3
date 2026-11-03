@@ -3,13 +3,16 @@ import { Right } from '@element-plus/icons-vue'
 import { ElIcon } from 'element-plus'
 import { useRefreshTime } from '@/hooks'
 
-const props = withDefaults(defineProps<{
-  history?: number
-  current?: number
-}>(), {
-  history: 0,
-  current: 0,
-})
+const props = withDefaults(
+  defineProps<{
+    history?: number
+    current?: number
+  }>(),
+  {
+    history: 0,
+    current: 0,
+  },
+)
 
 const { humanFriendlyTimeText: currentTime } = useRefreshTime(computed(() => props.current))
 
@@ -34,12 +37,10 @@ const { humanFriendlyTimeText: historyTime } = useRefreshTime(computed(() => pro
 
 <style scoped>
 .time-tag {
-  @apply
-    flex-1 p-1
+  @apply flex-1 p-1
     flex justify-center
     rounded-sm
     text-xs
-    bg-[var(--el-color-info-light-9)]
-  ;
+    bg-[var(--el-color-info-light-9)];
 }
 </style>

@@ -18,18 +18,16 @@ const searchText = computed({
   get: () => {
     return errorCache.value ?? modelValue.value.test ?? ''
   },
-  set: (test) => {
+  set: test => {
     try {
       errorCache.value = undefined
       const reg = new RegExp(test, 'g')
-      if (!reg)
-        return false
+      if (!reg) return false
       modelValue.value = {
         ...modelValue.value,
         test,
       }
-    }
-    catch {
+    } catch {
       errorCache.value = test
       return false
     }
@@ -40,7 +38,7 @@ const text = computed<string>({
   get: () => {
     return modelValue.value.replace ?? ''
   },
-  set: (replace) => {
+  set: replace => {
     modelValue.value = {
       ...modelValue.value,
       replace,

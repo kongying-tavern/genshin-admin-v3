@@ -26,11 +26,13 @@ const initFormData = (): MarkerVo => {
     hiddenFlag: 0,
     position: `${x},${y}`,
     itemList: props.defaultItem
-      ? [{
-          count: props.defaultItem.defaultCount ?? 1,
-          iconId: props.defaultItem.iconId,
-          itemId: props.defaultItem.id,
-        }]
+      ? [
+          {
+            count: props.defaultItem.defaultCount ?? 1,
+            iconId: props.defaultItem.iconId,
+            itemId: props.defaultItem.id,
+          },
+        ]
       : [],
     videoPath: '',
     refreshTime: props.defaultItem?.defaultRefreshTime ?? 0,
@@ -42,7 +44,10 @@ const initFormData = (): MarkerVo => {
 const form = ref(initFormData())
 const editorRef = useTemplateRef('editorRef')
 
-const { loading, isSuccess, submit, onSuccess } = useMarkerCreate(form, editorRef as ShallowRef<InstanceType<typeof MarkerForm>>)
+const { loading, isSuccess, submit, onSuccess } = useMarkerCreate(
+  form,
+  editorRef as ShallowRef<InstanceType<typeof MarkerForm>>,
+)
 
 onSuccess(() => emits('close'))
 </script>
@@ -57,7 +62,13 @@ onSuccess(() => emits('close'))
   >
     <template #footer>
       <div class="w-full flex justify-end">
-        <el-button :icon="Check" :loading="loading" :disabled="isSuccess" type="primary" @click="submit">
+        <el-button
+          :icon="Check"
+          :loading="loading"
+          :disabled="isSuccess"
+          type="primary"
+          @click="submit"
+        >
           添加
         </el-button>
         <el-button :icon="Close" :disabled="loading" @click="() => emits('close')">

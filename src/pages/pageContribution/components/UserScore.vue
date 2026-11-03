@@ -30,12 +30,11 @@ const { isDark } = useTheme()
 
 const containerRef = useTemplateRef('container')
 
-const timeRange = ref(((): [number, number] => {
-  return [
-    DATA_START_TIME,
-    DATA_START_TIME + 365 * 24 * 60 * 60 * 1000,
-  ]
-})())
+const timeRange = ref(
+  ((): [number, number] => {
+    return [DATA_START_TIME, DATA_START_TIME + 365 * 24 * 60 * 60 * 1000]
+  })(),
+)
 
 const note = ref('就绪')
 const sortKey = ref('markerTitle')
@@ -43,7 +42,13 @@ const sortType = ref<'ASC' | 'DESC'>('DESC')
 
 const abortController = shallowRef<AbortController>()
 
-const { data: rawData, loading, refresh, onSuccess, onError } = useScoreData({
+const {
+  data: rawData,
+  loading,
+  refresh,
+  onSuccess,
+  onError,
+} = useScoreData({
   note,
   timeRange,
   abortController,
@@ -53,7 +58,7 @@ onSuccess(() => {
   note.value = '完成'
 })
 
-onError((error) => {
+onError(error => {
   note.value = error.message
 })
 
@@ -141,9 +146,8 @@ const sheetOptions: S2Options = {
     {
       icons: ['Minus'],
       belongsCell: 'colCell',
-      displayCondition: (meta) => {
-        if (meta.level !== 1)
-          return false
+      displayCondition: meta => {
+        if (meta.level !== 1) return false
         return meta.field !== sortKey.value
       },
       onClick: ({ meta }) => {
@@ -154,9 +158,8 @@ const sheetOptions: S2Options = {
     {
       icons: ['SortUpSelected'],
       belongsCell: 'colCell',
-      displayCondition: (meta) => {
-        if (meta.level !== 1)
-          return false
+      displayCondition: meta => {
+        if (meta.level !== 1) return false
         return meta.field === sortKey.value && sortType.value === 'ASC'
       },
       onClick: () => {
@@ -166,9 +169,8 @@ const sheetOptions: S2Options = {
     {
       icons: ['SortDownSelected'],
       belongsCell: 'colCell',
-      displayCondition: (meta) => {
-        if (meta.level !== 1)
-          return false
+      displayCondition: meta => {
+        if (meta.level !== 1) return false
         return meta.field === sortKey.value && sortType.value === 'DESC'
       },
       onClick: () => {
@@ -191,8 +193,7 @@ const sheetTheme: S2Theme = {
 }
 
 onMounted(() => {
-  if (!containerRef.value)
-    return
+  if (!containerRef.value) return
 
   const sheet = new TableSheet(containerRef.value, buildDataConfig(rawData.value), sheetOptions)
 
@@ -211,23 +212,26 @@ onBeforeUnmount(() => {
   sheetRef.value?.destroy()
 })
 
-useResizeObserver(containerRef, useDebounceFn(([entry]) => {
-  const { width, height } = entry.contentRect
-  sheetRef.value?.changeSheetSize(width, height)
-  sheetRef.value?.render(false)
-}, 200))
+useResizeObserver(
+  containerRef,
+  useDebounceFn(([entry]) => {
+    const { width, height } = entry.contentRect
+    sheetRef.value?.changeSheetSize(width, height)
+    sheetRef.value?.render(false)
+  }, 200),
+)
 
 watch([sortKey, sortType], () => {
   sheetRef.value?.setDataCfg(buildDataConfig(rawData.value), false)
   sheetRef.value?.render(true)
 })
 
-watch(rawData, (data) => {
+watch(rawData, data => {
   sheetRef.value?.setDataCfg(buildDataConfig(data), true)
   sheetRef.value?.render(true)
 })
 
-watch(isDark, (dark) => {
+watch(isDark, dark => {
   sheetRef.value?.setThemeCfg({
     name: dark ? 'dark' : 'default',
     theme: sheetTheme,
@@ -251,26 +255,16 @@ watch(isDark, (dark) => {
         :teleported="false"
         :empty-values="[false]"
         :shortcuts="shortcuts"
-        style="max-width: 400px;"
+        style="max-width: 400px"
       />
 
-      <el-button :loading="loading" @click="refresh">
-        开始统计
-      </el-button>
+      <el-button :loading="loading" @click="refresh"> 开始统计 </el-button>
     </div>
 
-    <div
-      ref="container"
-      v-loading="loading"
-      class="w-full flex-1 flex flex-wrap overflow-auto"
-    />
+    <div ref="container" v-loading="loading" class="w-full flex-1 flex flex-wrap overflow-auto" />
 
     <div
-      class="
-      py-1 px-2
-      text-xs text-[var(--el-text-color-secondary)]
-      bg-[var(--el-color-info-light-9)]
-      "
+      class="py-1 px-2 text-xs text-[var(--el-text-color-secondary)] bg-[var(--el-color-info-light-9)]"
     >
       {{ note }}
     </div>

@@ -100,10 +100,10 @@ export declare namespace MapWindow {
     setInteractionState: (id: string, state?: InteractionState) => void
 
     /** 移动窗口 */
-    move: (id: string, pos: { x: number, y: number }) => void
+    move: (id: string, pos: { x: number; y: number }) => void
 
     /** 调整窗口尺寸 */
-    resize: (id: string, rect: ResizeProps,) => void
+    resize: (id: string, rect: ResizeProps) => void
 
     /** 优化窗口位置，使其返回可见区域 */
     optimizeWindowPosition: (box?: ResizeObserverSize) => void

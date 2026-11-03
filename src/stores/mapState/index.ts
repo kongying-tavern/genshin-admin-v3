@@ -101,7 +101,6 @@ export const useMapStateStore = defineStore('global-map-state', () => {
     ...markerFilterHook,
 
     ...missionHook,
-
   }
 })
 

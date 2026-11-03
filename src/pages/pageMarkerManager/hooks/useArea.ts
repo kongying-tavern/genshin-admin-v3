@@ -2,12 +2,18 @@ import { useFetchHook } from '@/hooks'
 
 /** 拉取地区列表 */
 export const useArea = () => {
-  const areaList = ref<{
-    label: string
-    value: number
-  }[]>([])
+  const areaList = ref<
+    {
+      label: string
+      value: number
+    }[]
+  >([])
 
-  const { refresh: getArea, onSuccess, ...rest } = useFetchHook({
+  const {
+    refresh: getArea,
+    onSuccess,
+    ...rest
+  } = useFetchHook({
     immediate: true,
     onRequest: async () => {
       return Apis.area.listArea({

@@ -1,11 +1,14 @@
 <script lang="ts" setup>
 import { GSMessage, GSMessageService } from '@/components'
 
-withDefaults(defineProps<{
-  index?: number
-}>(), {
-  index: 4000,
-})
+withDefaults(
+  defineProps<{
+    index?: number
+  }>(),
+  {
+    index: 4000,
+  },
+)
 </script>
 
 <template>

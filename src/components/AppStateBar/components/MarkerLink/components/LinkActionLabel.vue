@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import type { LinkActionEnum } from '@/shared'
-import {
-  LINK_ACTION_CONFIG,
-  LINK_ACTION_NAME_MAP,
-} from '@/shared'
+import { LINK_ACTION_CONFIG, LINK_ACTION_NAME_MAP } from '@/shared'
 
 defineProps<{
   value: LinkActionEnum

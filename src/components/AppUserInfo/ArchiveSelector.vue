@@ -27,8 +27,7 @@ const AREA_IMG_URLS: Record<string, string> = {
 const lastestMarkerArea = computed(() => {
   const areas: Record<number, string> = {}
   const setUrl = (slotIndex?: number, url = AREA_IMG_URLS.NA) => {
-    if (slotIndex === undefined)
-      return
+    if (slotIndex === undefined) return
     areas[slotIndex] = url
   }
   for (const key in archiveStore.archiveSlots) {
@@ -45,8 +44,7 @@ const lastestMarkerArea = computed(() => {
       continue
     }
     const firstItemId = marker.itemList?.[0]?.itemId
-    if (!firstItemId)
-      continue
+    if (!firstItemId) continue
     const item = itemStore.idMap.get(firstItemId)
     if (!item) {
       setUrl(archiveSlot?.slotIndex)
@@ -65,16 +63,12 @@ const lastestMarkerArea = computed(() => {
 const archiveCreateIndex = ref<number>()
 const archiveViewIndex = ref<number>()
 
-const timeFormater = (time?: string) => time
-  ? dayjs(time).format('YYYY-MM-DD HH:mm:ss')
-  : ''
+const timeFormater = (time?: string) => (time ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : '')
 </script>
 
 <template>
   <div class="flex h-full flex-col justify-between py-2 px-4">
-    <div v-if="archiveStore.fetchLoading">
-      正在加载存档...
-    </div>
+    <div v-if="archiveStore.fetchLoading">正在加载存档...</div>
 
     <template v-else>
       <template v-for="(archiveSlot, index) of archiveSlots">
@@ -83,7 +77,7 @@ const timeFormater = (time?: string) => time
           :key="archiveSlot.id"
           :class="{
             'has-slot': archiveSlot !== undefined,
-            'actived': `${index}` === `${archiveStore.currentArchive.slotIndex}`,
+            actived: `${index}` === `${archiveStore.currentArchive.slotIndex}`,
           }"
           class="archive-item outline-card item-enter-anime"
           @click="archiveViewIndex = archiveSlot.slotIndex"
@@ -110,7 +104,7 @@ const timeFormater = (time?: string) => time
             <div
               v-show="`${index}` === `${archiveStore.currentArchive.slotIndex}`"
               class="absolute left-3 top-3 w-10 h-10 rounded-full border-2 grid place-items-center"
-              style="border-color: #5dffa3;"
+              style="border-color: #5dffa3"
             >
               <el-icon :size="32" color="#5dffa3">
                 <Flag />
@@ -118,7 +112,9 @@ const timeFormater = (time?: string) => time
             </div>
           </div>
 
-          <div class="archive-name flex justify-between items-center gap-4 whitespace-nowrap overflow-hidden">
+          <div
+            class="archive-name flex justify-between items-center gap-4 whitespace-nowrap overflow-hidden"
+          >
             <div class="text-ellipsis overflow-hidden" :title="archiveSlot.name">
               {{ index }}. {{ archiveSlot.name }}
             </div>
@@ -133,9 +129,7 @@ const timeFormater = (time?: string) => time
           @click="archiveCreateIndex = Number(index)"
         >
           <div class="archive-banner" />
-          <div class="archive-name">
-            {{ index }}. &lt;新建存档&gt;
-          </div>
+          <div class="archive-name">{{ index }}. &lt;新建存档&gt;</div>
         </div>
       </template>
     </template>
@@ -153,8 +147,14 @@ const timeFormater = (time?: string) => time
 }
 
 @keyframes gs-slide-in {
-  from { translate: -30px 0; opacity: 0; }
-  to { translate: 0 0; opacity: 1; }
+  from {
+    translate: -30px 0;
+    opacity: 0;
+  }
+  to {
+    translate: 0 0;
+    opacity: 1;
+  }
 }
 
 .item-enter-anime {
@@ -182,11 +182,11 @@ const timeFormater = (time?: string) => time
 
 // TODO active 效果不是很好看，待优化
 .archive-item {
-  --bg-color-left: #D99242;
-  --bg-color-right: #AD7E4D;
+  --bg-color-left: #d99242;
+  --bg-color-right: #ad7e4d;
   --banner-background: linear-gradient(to right, var(--bg-color-left), var(--bg-color-right));
   --add-icon-visible: none;
-  --title-bg-color: #E9E5DC;
+  --title-bg-color: #e9e5dc;
 
   user-select: none;
   overflow: hidden;
@@ -197,33 +197,33 @@ const timeFormater = (time?: string) => time
     --bg-color-left ease 500ms,
     background-color ease 300ms,
     color ease 300ms,
-    scale linear 100ms,
-  ;
+    scale linear 100ms;
   position: relative;
 
   &:hover {
     scale: 1.02;
-    outline-color: #FFF;
+    outline-color: #fff;
   }
   &:active {
     scale: 1;
   }
 
   &.empty {
-    --banner-background: #7A7B7E;
+    --banner-background: #7a7b7e;
     --add-icon-visible: block;
   }
   &.actived {
     outline: 2px solid #26cd6f;
   }
   &.has-slot {
-    --title-bg-color: #E9E5DC;
+    --title-bg-color: #e9e5dc;
   }
 }
 
 // 加号的剪切图案
 @mixin clip-shape-plus() {
-  clip-path: path('M 2 19 \
+  clip-path: path(
+    'M 2 19 \
     L 19 19 \
     L 19 2 \
     Q 19 0 21 0 \
@@ -245,7 +245,8 @@ const timeFormater = (time?: string) => time
     L 0 21 \
     Q 0 19 2 19 \
     Z \
-  ');
+  '
+  );
 }
 
 .archive-banner {
@@ -258,7 +259,7 @@ const timeFormater = (time?: string) => time
     content: '';
     width: 50px;
     height: 50px;
-    background: #CCCCCD;
+    background: #cccccd;
     position: absolute;
     left: calc(50% - 25px);
     top: 5px;

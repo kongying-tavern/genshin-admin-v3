@@ -31,9 +31,7 @@ const props = defineProps<{
     </template>
 
     <slot v-else name="placeholder">
-      <div class="w-full h-full grid place-content-center">
-        内容被派蒙吃掉了！
-      </div>
+      <div class="w-full h-full grid place-content-center">内容被派蒙吃掉了！</div>
     </slot>
   </div>
 </template>
@@ -41,14 +39,14 @@ const props = defineProps<{
 <style scoped>
 .detail {
   --padding: 2px;
-  --line-color: #F5F0EA;
+  --line-color: #f5f0ea;
   --link-underline-color: #8cb4ff;
   --link-bg-color: #f5edd5;
   --link-bg-color-hover: #d5e0f7;
 
   flex: 1;
   flex-shrink: 0;
-  background: #F9F6F2;
+  background: #f9f6f2;
   position: relative;
   padding: 16px;
   overflow: auto;
@@ -69,7 +67,7 @@ const props = defineProps<{
   font-size: 24px;
   line-height: 1.2em;
   padding-bottom: 12px;
-  border-bottom: 2px solid #CBC2B040;
+  border-bottom: 2px solid #cbc2b040;
   margin-bottom: 16px;
   color: #656565;
 }

@@ -2,7 +2,11 @@ import type { FormItemRule } from 'element-plus'
 
 export type Trigger = 'blur' | 'change' | 'active'
 
-export const lengthCheck = (name: string, len: number, trigger: Trigger = 'blur'): FormItemRule => ({
+export const lengthCheck = (
+  name: string,
+  len: number,
+  trigger: Trigger = 'blur',
+): FormItemRule => ({
   required: true,
   message: `${name}至少需要 ${len} 个字符`,
   pattern: new RegExp(`\\S{${len}}`),

@@ -5,17 +5,20 @@ import { KEYBOARD_ALIAS } from '@/shared'
 import { ShortcutKeyUtil } from '@/utils'
 import ShortcutConfiger from './ShortcutConfiger.vue'
 
-const props = withDefaults(defineProps<{
-  defaultValue?: string
-  /**
-   * 只有传入了聚焦判断元素属性，此功能才可以设置不需要触发按键的快捷键组合
-   * @警告 未约束快捷键实现时是否处于 focus，需要自行处理
-   */
-  focusElement?: HTMLElement
-}>(), {
-  defaultValue: undefined,
-  focusElement: undefined,
-})
+const props = withDefaults(
+  defineProps<{
+    defaultValue?: string
+    /**
+     * 只有传入了聚焦判断元素属性，此功能才可以设置不需要触发按键的快捷键组合
+     * @警告 未约束快捷键实现时是否处于 focus，需要自行处理
+     */
+    focusElement?: HTMLElement
+  }>(),
+  {
+    defaultValue: undefined,
+    focusElement: undefined,
+  },
+)
 
 const modelValue = defineModel<string>('modelValue', {
   required: false,
@@ -37,15 +40,9 @@ const showConfiger = () => {
     :class="!keys.length ? 'text-[var(--el-text-color-secondary)]' : ''"
     @click="showConfiger"
   >
-    <div v-if="!keys.length" class="text-xs px-2">
-      未设置快捷键
-    </div>
+    <div v-if="!keys.length" class="text-xs px-2">未设置快捷键</div>
 
-    <div
-      v-for="key in keys"
-      :key="key"
-      class="key-item"
-    >
+    <div v-for="key in keys" :key="key" class="key-item">
       {{ KEYBOARD_ALIAS.get(key) }}
     </div>
 

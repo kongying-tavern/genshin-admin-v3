@@ -76,7 +76,7 @@ const archiveApi = {
 }
 
 /** 记录用例内注册的全局事件监听，便于在结束后移除 */
-const trackedListeners: { target: EventTarget, type: string, listener: EventListener }[] = []
+const trackedListeners: { target: EventTarget; type: string; listener: EventListener }[] = []
 
 const trackListeners = (target: EventTarget) => {
   const original = target.addEventListener.bind(target)
@@ -88,8 +88,7 @@ const trackListeners = (target: EventTarget) => {
 
 /** 清空挂起的 Vue 微任务，让同步链继续推进 */
 const flushMicrotasks = async (times = 12) => {
-  for (let index = 0; index < times; index += 1)
-    await Promise.resolve()
+  for (let index = 0; index < times; index += 1) await Promise.resolve()
 }
 
 /** 读取远程写入的存档内容 */
@@ -122,7 +121,9 @@ describe('存档同步 store', () => {
   })
 
   afterEach(() => {
-    trackedListeners.forEach(({ target, type, listener }) => target.removeEventListener(type, listener))
+    trackedListeners.forEach(({ target, type, listener }) =>
+      target.removeEventListener(type, listener),
+    )
     trackedListeners.length = 0
     vi.useRealTimers()
   })
@@ -180,9 +181,10 @@ describe('存档同步 store', () => {
 
       let releaseFirst!: () => void
       mocks.saveArchive.mockImplementationOnce(
-        () => new Promise<void>((resolve) => {
-          releaseFirst = resolve
-        }),
+        () =>
+          new Promise<void>(resolve => {
+            releaseFirst = resolve
+          }),
       )
 
       store.currentArchive.body.Data_KYJG.add(1)
@@ -321,8 +323,14 @@ describe('存档同步 store', () => {
       mocks.put.mockClear()
       mocks.saveArchive.mockClear()
 
-      const originalVisibility = Object.getOwnPropertyDescriptor(Document.prototype, 'visibilityState')
-      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' })
+      const originalVisibility = Object.getOwnPropertyDescriptor(
+        Document.prototype,
+        'visibilityState',
+      )
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => 'hidden',
+      })
 
       try {
         store.currentArchive.body.Data_KYJG.add(22)
@@ -333,8 +341,7 @@ describe('存档同步 store', () => {
 
         expect(mocks.put).toHaveBeenCalledTimes(1)
         expect(lastRemoteBody().Data_KYJG).toEqual([22])
-      }
-      finally {
+      } finally {
         if (originalVisibility)
           Object.defineProperty(Document.prototype, 'visibilityState', originalVisibility)
         delete (document as unknown as Record<string, unknown>).visibilityState

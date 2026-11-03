@@ -10,11 +10,14 @@ const emits = defineEmits<{
 
 const userStore = useUserStore()
 
-whenever(() => !userStore.info, () => {
-  emits('close')
-})
+whenever(
+  () => !userStore.info,
+  () => {
+    emits('close')
+  },
+)
 
-const tabs: { title: string, value: string }[] = [
+const tabs: { title: string; value: string }[] = [
   { title: '云存档', value: 'archive' },
   { title: '编辑信息', value: 'info' },
   { title: '修改密码', value: 'password' },
@@ -25,7 +28,12 @@ const tab = ref('archive')
 <template>
   <div class="user-info-dialog overflow-hidden">
     <div class="absolute right-[-48px] top-[2px]">
-      <GSButton icon="cancel" theme="plain" style="--icon-color: #816D51" @click="() => emits('close')" />
+      <GSButton
+        icon="cancel"
+        theme="plain"
+        style="--icon-color: #816d51"
+        @click="() => emits('close')"
+      />
     </div>
 
     <div class="user-info-card">
@@ -52,13 +60,21 @@ const tab = ref('archive')
 
 <style scoped>
 @keyframes user-card-anime-in {
-  from { rotate: 3deg }
-  to { rotate: 0deg }
+  from {
+    rotate: 3deg;
+  }
+  to {
+    rotate: 0deg;
+  }
 }
 
 @keyframes user-card-bg-anime-in {
-  from { rotate: 5deg }
-  to { rotate: -1.5deg }
+  from {
+    rotate: 5deg;
+  }
+  to {
+    rotate: -1.5deg;
+  }
 }
 
 @keyframes user-action-anime-in {
@@ -71,18 +87,16 @@ const tab = ref('archive')
 }
 
 .user-info-dialog {
-  @apply
-    relative overflow-visible
-    font-[HYWenHei-85W] text-[#424F65]
-  ;
+  @apply relative overflow-visible
+    font-[HYWenHei-85W] text-[#424F65];
   --paint-padding: 2;
   width: 1150px;
   height: 720px;
   background: paint(user-card-border);
   @supports not (background: paint(user-card-border)) {
-    background: #F0EBE3;
+    background: #f0ebe3;
     border-radius: 6px;
-    outline: 2px solid #DFD2C0;
+    outline: 2px solid #dfd2c0;
     outline-offset: -8px;
   }
   &::before {
@@ -93,7 +107,7 @@ const tab = ref('archive')
     width: 540px;
     height: 100%;
     border-radius: 4px;
-    background: #F0EBE3;
+    background: #f0ebe3;
     filter: drop-shadow(0 0 12px #66666640);
     animation: user-card-bg-anime-in 400ms forwards;
   }
@@ -110,9 +124,9 @@ const tab = ref('archive')
   left: 32px;
   top: 0;
   @supports not (background: paint(user-card-border)) {
-    background: #F0EBE3;
+    background: #f0ebe3;
     border-radius: 6px;
-    outline: 4px solid #E4D8C1;
+    outline: 4px solid #e4d8c1;
     outline-offset: -8px;
   }
 }

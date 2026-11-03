@@ -3,7 +3,14 @@ import type { ItemQueryForm } from './hooks'
 import type { ItemVo } from '@/api/alova/globals'
 import { PgUnit, useGlobalDialog, usePagination } from '@/hooks'
 import { ManagerModule } from '@/shared'
-import { ItemCreator, ItemDeleteConfirm, ItemEditor, ItemFilter, ItemGridExplorer, ItemTable } from './components'
+import {
+  ItemCreator,
+  ItemDeleteConfirm,
+  ItemEditor,
+  ItemFilter,
+  ItemGridExplorer,
+  ItemTable,
+} from './components'
 import { useItemList } from './hooks'
 import { ExplorerType } from './shared'
 
@@ -17,7 +24,11 @@ const COMMON_CONFIG = {
 }
 
 // ==================== 筛选信息 ====================
-const { pagination, layout, onChange: onPaginationChange } = usePagination({
+const {
+  pagination,
+  layout,
+  onChange: onPaginationChange,
+} = usePagination({
   units: [PgUnit.TOTAL, PgUnit.SIZE, PgUnit.PREV, PgUnit.PAGER, PgUnit.NEXT],
   module: ManagerModule.Item,
 })
@@ -29,7 +40,13 @@ const queryForm = ref<ItemQueryForm>({
 })
 
 // ==================== 物品列表 ====================
-const { itemList, loading: itemLoading, userMap, updateItemList, resetCurrent } = useItemList({
+const {
+  itemList,
+  loading: itemLoading,
+  userMap,
+  updateItemList,
+  resetCurrent,
+} = useItemList({
   pagination,
   getParams: () => toValue(queryForm),
 })
@@ -41,16 +58,12 @@ const explorerType = ref<ExplorerType>(ExplorerType.Grid)
 
 // ==================== 新增物品 ====================
 const openItemCreatorDialog = () => {
-  DialogService
-    .config(COMMON_CONFIG)
-    .listeners({ success: updateItemList })
-    .open(ItemCreator)
+  DialogService.config(COMMON_CONFIG).listeners({ success: updateItemList }).open(ItemCreator)
 }
 
 // ==================== 编辑物品 ====================
 const openItemEditorDialog = (item: ItemVo) => {
-  DialogService
-    .config(COMMON_CONFIG)
+  DialogService.config(COMMON_CONFIG)
     .props({ item })
     .listeners({ success: updateItemList })
     .open(ItemEditor)
@@ -59,8 +72,7 @@ const openItemEditorDialog = (item: ItemVo) => {
 // ==================== 删除物品 ====================
 
 const confirmDelete = (item: ItemVo) => {
-  DialogService
-    .config(COMMON_CONFIG)
+  DialogService.config(COMMON_CONFIG)
     .props({ item })
     .listeners({ success: updateItemList })
     .open(ItemDeleteConfirm)

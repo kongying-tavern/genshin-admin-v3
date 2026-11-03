@@ -1,7 +1,13 @@
 <script
   setup
   lang="ts"
-  generic="T extends Record<string, any>, LK extends keyof T, VK extends keyof T, V extends T[VK], VV extends V[]"
+  generic="
+    T extends Record<string, any>,
+    LK extends keyof T,
+    VK extends keyof T,
+    V extends T[VK],
+    VV extends V[]
+  "
 >
 import { Finished } from '@element-plus/icons-vue'
 import { CheckboxItem } from '.'
@@ -54,10 +60,8 @@ const patchValue = (patchOpt: T) => {
   else {
     const shallowCopyValue = [...modelMultipleValue.value]
     const findIndex = shallowCopyValue.findIndex(value => value === patchOpt[props.valueKey])
-    if (findIndex > -1)
-      shallowCopyValue.splice(findIndex, 1)
-    else
-      shallowCopyValue.push(patchOpt[props.valueKey])
+    if (findIndex > -1) shallowCopyValue.splice(findIndex, 1)
+    else shallowCopyValue.push(patchOpt[props.valueKey])
     modelMultipleValue.value = shallowCopyValue as VV
     emits('change', shallowCopyValue as VV)
   }
@@ -66,25 +70,23 @@ const patchValue = (patchOpt: T) => {
 const isAllSelected = computed(() => {
   const set = new Set(modelMultipleValue.value)
   for (const item of props.options) {
-    if (!set.has(item[props.valueKey]))
-      return false
+    if (!set.has(item[props.valueKey])) return false
   }
   return true
 })
 
 const toggleAllSelect = () => {
-  if (!props.multiple)
-    return
-  const toggledValue = ((() => {
+  if (!props.multiple) return
+  const toggledValue = (() => {
     const existValues = new Set(modelMultipleValue.value)
     isAllSelected.value
       ? props.options.forEach(item => existValues.delete(item[props.valueKey]))
-      : props.options.forEach((item) => {
+      : props.options.forEach(item => {
           const value = item[props.valueKey]
           !existValues.has(value) && existValues.add(value)
         })
     return [...existValues]
-  })())
+  })()
 
   modelMultipleValue.value = toggledValue as VV
   emits('change', toggledValue as VV)
@@ -92,8 +94,7 @@ const toggleAllSelect = () => {
 
 // ==================== 拖拽控制 ====================
 const handleDragStart = (ev: DragEvent, row: T) => {
-  if (!props.draggable || !ev.dataTransfer)
-    return
+  if (!props.draggable || !ev.dataTransfer) return
   ev.dataTransfer.setData('text', JSON.stringify(row))
 }
 </script>
@@ -152,7 +153,7 @@ const handleDragStart = (ev: DragEvent, row: T) => {
 .checkbox-group-scrollbar {
   --el-scrollbar-opacity: 1;
   :deep(.el-scrollbar__thumb) {
-    background-color: #D3BC8E;
+    background-color: #d3bc8e;
   }
 }
 </style>

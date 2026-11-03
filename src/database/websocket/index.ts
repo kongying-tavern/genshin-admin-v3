@@ -12,8 +12,6 @@ export class WebsocketDatabase extends Dexie {
 
   constructor() {
     super('websocket')
-    this
-      .version(this.VERSION)
-      .stores(this.STORES)
+    this.version(this.VERSION).stores(this.STORES)
   }
 }

@@ -11,8 +11,7 @@ const iconStore = useIconStore()
 
 const previewIconId = shallowRef<number>()
 const previewIcon = computed(() => {
-  if (!previewIconId.value)
-    return
+  if (!previewIconId.value) return
   return iconStore.idMap.get(previewIconId.value)
 })
 
@@ -51,25 +50,26 @@ const filteredIconList = computed(() => {
     const valueA = pre[localSortKey]
     const valueB = next[localSortKey]
 
-    if (valueA === undefined)
-      return 0
+    if (valueA === undefined) return 0
 
-    if (Array.isArray(valueA))
-      return 0
+    if (Array.isArray(valueA)) return 0
 
     if (typeof valueA === 'number')
-      return isAscending ? (valueA - (valueB as number)) : ((valueB as number) - valueA)
+      return isAscending ? valueA - (valueB as number) : (valueB as number) - valueA
 
     if (typeof valueA === 'string') {
       // 时间戳
       if (localSortKey.endsWith('Time')) {
         const timeA = new Date(valueA).getTime()
         const timeB = new Date(valueB as string).getTime()
-        return isAscending ? (timeA - timeB) : (timeB - timeA)
+        return isAscending ? timeA - timeB : timeB - timeA
       }
       return isAscending
         ? valueA.localeCompare(valueB as string, undefined, { numeric: true, sensitivity: 'base' })
-        : (valueB as string).localeCompare(valueA, undefined, { numeric: true, sensitivity: 'base' })
+        : (valueB as string).localeCompare(valueA, undefined, {
+            numeric: true,
+            sensitivity: 'base',
+          })
     }
 
     return 0
@@ -85,8 +85,7 @@ const { load: loadIconType } = useIconType(true)
 
 const { DialogService } = useGlobalDialog()
 const openIconCreator = () => {
-  DialogService
-    .open(IconCreator)
+  DialogService.open(IconCreator)
 }
 </script>
 
@@ -104,7 +103,9 @@ const openIconCreator = () => {
     />
 
     <div class="h-full border-r-[1px] border-[var(--el-border-color-lighter)] flex flex-col">
-      <div class="flex items-center justify-between p-2 border-b-[1px] border-[var(--el-border-color-lighter)]">
+      <div
+        class="flex items-center justify-between p-2 border-b-[1px] border-[var(--el-border-color-lighter)]"
+      >
         <span v-show="!sidebarCollapsed" class="font-medium">图标分类</span>
         <el-button
           :icon="sidebarCollapsed ? Expand : Fold"
@@ -132,10 +133,7 @@ const openIconCreator = () => {
       />
     </div>
 
-    <IconExplorer
-      v-model:actived-item="previewIconId"
-      :data="filteredIconList"
-    />
+    <IconExplorer v-model:actived-item="previewIconId" :data="filteredIconList" />
 
     <IconPreviewer
       v-model:icon-id="previewIconId"
@@ -148,7 +146,12 @@ const openIconCreator = () => {
         <template v-if="previewIcon">
           <el-divider direction="vertical" />
           图标原始地址：
-          <a :href="previewIcon.url" class="hover:underline underline-offset-4" target="_blank" rel="noopener">
+          <a
+            :href="previewIcon.url"
+            class="hover:underline underline-offset-4"
+            target="_blank"
+            rel="noopener"
+          >
             {{ decodeURIComponent(previewIcon.url ?? '') }}
           </a>
         </template>

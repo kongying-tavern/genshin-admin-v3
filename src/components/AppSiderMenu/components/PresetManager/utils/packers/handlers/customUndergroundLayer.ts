@@ -11,11 +11,13 @@ const encode = (value: MAFValue): Uint8Array => {
   const writer = new ByteWriter()
   for (const code of sa) {
     const hash = md5ToBigInt(code, 1, 3)
-    writer.writeBytes(new Uint8Array([
-      Number(hash & 0xFFn),
-      Number((hash >> 8n) & 0xFFn),
-      Number((hash >> 16n) & 0xFFn),
-    ]))
+    writer.writeBytes(
+      new Uint8Array([
+        Number(hash & 0xffn),
+        Number((hash >> 8n) & 0xffn),
+        Number((hash >> 16n) & 0xffn),
+      ]),
+    )
   }
   return writer.toUint8Array()
 }
@@ -30,8 +32,7 @@ const decode = (bytes: Uint8Array, context: PresetPackContext): MAFValueStringAr
     const [b0, b1, b2] = reader.readBytes(3, 'blank')
     const hash = BigInt(b0) | (BigInt(b1) << 8n) | (BigInt(b2) << 16n)
     const code = undergroundHashToCodeMap.get(hash)
-    if (code)
-      sa.push(code)
+    if (code) sa.push(code)
   }
   return { sa }
 }

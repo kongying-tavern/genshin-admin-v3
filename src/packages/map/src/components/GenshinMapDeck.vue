@@ -51,20 +51,16 @@ const { instanceRef } = useGenshinMap(canvasRef, {
     },
   },
   getCursor: ({ isDragging, isHovering }) => {
-    if (props.cursor?.trim().length)
-      return props.cursor
-    if (isHovering)
-      return 'pointer'
-    if (isDragging)
-      return 'grabbing'
+    if (props.cursor?.trim().length) return props.cursor
+    if (isHovering) return 'pointer'
+    if (isDragging) return 'grabbing'
     return 'inherit'
   },
-  getTooltip: (info) => {
+  getTooltip: info => {
     return props.getTooltip?.(info) ?? null
   },
-  onViewStateChange: (params) => {
-    if (props.disableViewStateChange)
-      return params.oldViewState
+  onViewStateChange: params => {
+    if (props.disableViewStateChange) return params.oldViewState
     const { zoom, target } = params.viewState
     viewState.value.zoom = zoom as number
     viewState.value.target = target as [number, number]
@@ -86,18 +82,23 @@ const { instanceRef } = useGenshinMap(canvasRef, {
     emits('click', info, event)
   },
   onLoad: () => {
-    if (!instanceRef.value)
-      return
+    if (!instanceRef.value) return
     emits('load', instanceRef.value)
   },
 })
 
-watch(() => viewState.value, (initialViewState) => {
-  instanceRef.value?.setProps({ initialViewState })
-})
-watch(() => props.layers, (layers) => {
-  instanceRef.value?.setProps({ layers })
-})
+watch(
+  () => viewState.value,
+  initialViewState => {
+    instanceRef.value?.setProps({ initialViewState })
+  },
+)
+watch(
+  () => props.layers,
+  layers => {
+    instanceRef.value?.setProps({ layers })
+  },
+)
 </script>
 
 <template>

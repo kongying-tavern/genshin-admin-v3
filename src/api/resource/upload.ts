@@ -22,17 +22,17 @@ export const getOrUploadImage = async ({ file, filePath }: GetOrUploadImageParam
   // 1. 尝试复用已存在的资源
   try {
     const { data: existing } = await Apis.resource.getResource({ params: { filePath } })
-    if (existing?.fileUrl)
-      return existing.fileUrl
-  }
-  catch {
+    if (existing?.fileUrl) return existing.fileUrl
+  } catch {
     // 查询失败不阻断上传流程，直接尝试上传，后端会对重复路径再次校验
   }
 
   // 2. 资源不存在，上传资源
-  const { data: { fileUrl = '' } = {}, message = `上传 ${filePath} 失败` } = await upload({ file, filePath })
-  if (!fileUrl)
-    throw new Error(message)
+  const { data: { fileUrl = '' } = {}, message = `上传 ${filePath} 失败` } = await upload({
+    file,
+    filePath,
+  })
+  if (!fileUrl) throw new Error(message)
 
   return fileUrl
 }

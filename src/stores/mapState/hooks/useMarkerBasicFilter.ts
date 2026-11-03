@@ -12,12 +12,7 @@ interface MarkerBasicFilterHookOptions {
 let cache: ReturnType<typeof _useMarkerBasicFilter>
 
 const _useMarkerBasicFilter = (options: MarkerBasicFilterHookOptions) => {
-  const {
-    archiveStore,
-    areaStore,
-    itemTypeStore,
-    itemStore,
-  } = options
+  const { archiveStore, areaStore, itemTypeStore, itemStore } = options
 
   const { areaIdMap } = storeToRefs(areaStore)
   const { itemTypeIdMap } = storeToRefs(itemTypeStore)
@@ -33,15 +28,12 @@ const _useMarkerBasicFilter = (options: MarkerBasicFilterHookOptions) => {
     const typeMap = itemTypeIdMap.value
     return archiveItemIds.value.reduce((map, itemId) => {
       const item = itemMap.get(itemId)
-      if (!item)
-        return map
+      if (!item) return map
       const area = areaMap.get(item.areaId!)
-      if (!area)
-        return map
-      item.typeIdList?.forEach((itemTypeId) => {
+      if (!area) return map
+      item.typeIdList?.forEach(itemTypeId => {
         const type = typeMap.get(itemTypeId!)
-        if (!type)
-          return
+        if (!type) return
         const id = `${area.code!}-${itemTypeId}`
         const existCondition = map.get(id)
         if (!existCondition) {
@@ -64,7 +56,6 @@ const _useMarkerBasicFilter = (options: MarkerBasicFilterHookOptions) => {
 }
 
 export const useMarkerBasicFilter = (options: MarkerBasicFilterHookOptions) => {
-  if (!cache)
-    cache = _useMarkerBasicFilter(options)
+  if (!cache) cache = _useMarkerBasicFilter(options)
   return cache
 }

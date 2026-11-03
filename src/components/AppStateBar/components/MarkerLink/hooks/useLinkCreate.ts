@@ -11,9 +11,8 @@ export const useLinkCreate = () => {
   const { onSuccess, onError, ...rest } = useFetchHook({
     onRequest: async (links: MarkerLinkMission[], modifyLinks: Map<string, ModifyLinkOptions>) => {
       const deleteLinks: MarkerLinkageVo[] = []
-      modifyLinks.forEach((group) => {
-        if (!group.isDelete)
-          return
+      modifyLinks.forEach(group => {
+        if (!group.isDelete) return
         deleteLinks.push(group.raw)
       })
       await markerLinkStore.linkMarker(links, deleteLinks)
@@ -26,7 +25,7 @@ export const useLinkCreate = () => {
     })
   })
 
-  onError((err) => {
+  onError(err => {
     ElMessage.error({
       message: `关联操作失败，原因为：${err.message}`,
     })

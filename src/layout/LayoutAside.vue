@@ -16,7 +16,9 @@
   grid-row-start: span 2;
   box-shadow: var(--c-aside-shadow);
   background-color: var(--el-bg-color);
-  transition: width 0.2s ease, background-color 0.2s;
+  transition:
+    width 0.2s ease,
+    background-color 0.2s;
   display: flex;
   flex-direction: column;
   overflow: hidden;

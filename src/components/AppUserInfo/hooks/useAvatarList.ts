@@ -28,20 +28,24 @@ export const useAvatarList = () => {
     onRequest: async () => {
       // TODO 米游社接口，不保证后续可用性
       const res = await fetch('https://bbs-api-static.miyoushe.com/misc/wapi/avatar_set')
-      const { data: { list: groups = [] } = {} } = await res.json() as MiyousheAvatarResponse
+      const { data: { list: groups = [] } = {} } = (await res.json()) as MiyousheAvatarResponse
 
       // 仅使用原神系列头像
       const source = groups.find(({ name = '' }) => name === '原神')?.list ?? []
 
       const avatars = source
         .sort(({ sort_order: sa = 0 }, { sort_order: sb = 0 }) => sa - sb)
-        .map((avatar) => {
+        .map(avatar => {
           // 匹配所有汉字作为 name
-          const name = avatar.name?.match(/[\u4E00-\u9FA5]/g)?.join('').replace(/社区|头像/g, '') || '<?>'
-          return ({
+          const name =
+            avatar.name
+              ?.match(/[\u4E00-\u9FA5]/g)
+              ?.join('')
+              .replace(/社区|头像/g, '') || '<?>'
+          return {
             ...avatar,
             name,
-          })
+          }
         })
 
       return avatars
@@ -52,7 +56,7 @@ export const useAvatarList = () => {
     !cachedAvatars.value.length && refresh()
   })
 
-  onSuccess((avatars) => {
+  onSuccess(avatars => {
     cachedAvatars.value = avatars
     window.clearTimeout(autoResetTimer.value)
     autoResetTimer.value = window.setTimeout(refresh, 60 * 3600 * 1000)

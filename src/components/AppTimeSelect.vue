@@ -22,18 +22,18 @@ const parseredTime = computed({
   },
 })
 
-const naturalNumberComputed = <T extends keyof (typeof parseredTime.value)>(key: T) => computed({
-  get: () => `${parseredTime.value[key]}`,
-  set: (v) => {
-    const num = Number(v.trim())
-    if (!Number.isInteger(num) || num < 0)
-      return
-    parseredTime.value = {
-      ...parseredTime.value,
-      [key]: Number(v.trim()),
-    }
-  },
-})
+const naturalNumberComputed = <T extends keyof typeof parseredTime.value>(key: T) =>
+  computed({
+    get: () => `${parseredTime.value[key]}`,
+    set: v => {
+      const num = Number(v.trim())
+      if (!Number.isInteger(num) || num < 0) return
+      parseredTime.value = {
+        ...parseredTime.value,
+        [key]: Number(v.trim()),
+      }
+    },
+  })
 
 const days = naturalNumberComputed('days')
 const hours = naturalNumberComputed('hours')
@@ -42,14 +42,10 @@ const hours = naturalNumberComputed('hours')
 <template>
   <div v-bind="$attrs" class="app-time-select">
     <el-input v-model="days" :disabled="disabled" class="time-input">
-      <template #append>
-        天
-      </template>
+      <template #append> 天 </template>
     </el-input>
     <el-input v-model="hours" :disabled="disabled" class="time-input">
-      <template #append>
-        时
-      </template>
+      <template #append> 时 </template>
     </el-input>
   </div>
 </template>

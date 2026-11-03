@@ -4,7 +4,12 @@ import { useFetchHook } from '@/hooks'
 export const useAreaList = () => {
   const error = ref('')
 
-  const { refresh: updateAreaList, onSuccess, onError, ...rest } = useFetchHook({
+  const {
+    refresh: updateAreaList,
+    onSuccess,
+    onError,
+    ...rest
+  } = useFetchHook({
     immediate: true,
     initialValue: [],
     onRequest: async () => {
@@ -18,9 +23,11 @@ export const useAreaList = () => {
     },
   })
 
-  onError(err => ElMessage.error({
-    message: `获取地区列表失败，原因为：${err.message}`,
-  }))
+  onError(err =>
+    ElMessage.error({
+      message: `获取地区列表失败，原因为：${err.message}`,
+    }),
+  )
 
   return { error, updateAreaList, onSuccess, ...rest }
 }

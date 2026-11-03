@@ -3,10 +3,14 @@ import { ElMessage } from 'element-plus'
 import { useFetchHook } from '@/hooks'
 
 export const useNoticeDelete = () => {
-  const { refresh: deleteNotice, onSuccess, onError, ...rest } = useFetchHook({
+  const {
+    refresh: deleteNotice,
+    onSuccess,
+    onError,
+    ...rest
+  } = useFetchHook({
     onRequest: async (notice: NoticeVo) => {
-      if (notice.id === undefined)
-        throw new Error('公告 id 为空')
+      if (notice.id === undefined) throw new Error('公告 id 为空')
 
       await Apis.notice.deleteNotice({
         pathParams: {
@@ -24,7 +28,7 @@ export const useNoticeDelete = () => {
     })
   })
 
-  onError((err) => {
+  onError(err => {
     ElMessage.error({
       message: `删除公告失败，原因为：${err.message}`,
     })

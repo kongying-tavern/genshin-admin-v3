@@ -22,9 +22,8 @@ export const useItemTypeStore = defineStore('global-item-type', () => {
   const list = computed(() => {
     const result: ItemTypeVo[] = []
     hashGroupMap.value.forEach(({ list: scopeList }) => {
-      scopeList.forEach((itemType) => {
-        if (!accessStore.checkHiddenFlag(itemType.hiddenFlag))
-          return
+      scopeList.forEach(itemType => {
+        if (!accessStore.checkHiddenFlag(itemType.hiddenFlag)) return
         result.push(itemType)
       })
     })
@@ -34,19 +33,31 @@ export const useItemTypeStore = defineStore('global-item-type', () => {
   const total = computed(() => list.value.length)
 
   /** @deprecated 使用 `itemTypeIdMap` 代替 */
-  const itemTypeMap = computed(() => (Object.fromEntries(list.value.map(itemType => [
-    itemType.id as number,
-    itemType,
-  ])) as Record<string, ItemTypeVo>))
+  const itemTypeMap = computed(
+    () =>
+      Object.fromEntries(list.value.map(itemType => [itemType.id as number, itemType])) as Record<
+        string,
+        ItemTypeVo
+      >,
+  )
 
-  const idMap = computed(() => list.value.reduce((seed, itemType) => {
-    seed.set(itemType.id!, itemType)
-    return seed
-  }, new Map<number, ItemTypeVo>()))
+  const idMap = computed(() =>
+    list.value.reduce((seed, itemType) => {
+      seed.set(itemType.id!, itemType)
+      return seed
+    }, new Map<number, ItemTypeVo>()),
+  )
 
   // ==================== 数据更新 ====================
 
-  const { context, isActive, error: managerError, nextUpdateTime, loading: updateLoading, update } = useManager({
+  const {
+    context,
+    isActive,
+    error: managerError,
+    nextUpdateTime,
+    loading: updateLoading,
+    update,
+  } = useManager({
     timeoutPull: {
       time: 20 * 60 * 1000,
       condition: () => userStore.info?.roleId !== undefined,
@@ -74,9 +85,11 @@ export const useItemTypeStore = defineStore('global-item-type', () => {
       message.value = '获取签名'
       const source = new TextEncoder().encode(JSON.stringify(data))
       const binaryHash = await crypto.subtle.digest('SHA-1', source)
-      const hash = [...new Uint8Array(binaryHash)].map(num => num.toString(16).padStart(2, '0')).join('')
+      const hash = [...new Uint8Array(binaryHash)]
+        .map(num => num.toString(16).padStart(2, '0'))
+        .join('')
 
-      const newData = data.map((newOne) => {
+      const newData = data.map(newOne => {
         return { ...newOne, __hash: hash }
       })
 
@@ -94,7 +107,10 @@ export const useItemTypeStore = defineStore('global-item-type', () => {
       const { resolve, promise } = Promise.withResolvers<WorkerOutput>()
       const worker = new BulkPutWorker({ name: '物品类型更新线程' })
       worker.addEventListener('message', (ev: MessageEvent<WorkerOutput>) => resolve(ev.data))
-      worker.postMessage({ tableName: 'itemType', ...options } as WorkerInput<number, Hash<ItemTypeVo>>)
+      worker.postMessage({ tableName: 'itemType', ...options } as WorkerInput<
+        number,
+        Hash<ItemTypeVo>
+      >)
       const { error, message: workerMsg } = await promise
       worker.terminate()
       if (error) {
@@ -105,7 +121,7 @@ export const useItemTypeStore = defineStore('global-item-type', () => {
     },
   })
 
-  liveQuery(() => db.itemType.toArray()).subscribe((dbList) => {
+  liveQuery(() => db.itemType.toArray()).subscribe(dbList => {
     hashGroupMap.value = createHashGroupMap(dbList)
     triggerRef(hashGroupMap)
   })

@@ -13,7 +13,10 @@ const semUnitAndLogic: MAFSemanticUnit = { type: 'logic-operator', text: '且' }
 const semUnitOrLogic: MAFSemanticUnit = { type: 'logic-operator', text: '或' }
 const semUnitNotLogic: MAFSemanticUnit = { type: 'opposite-indicator', text: '非' }
 
-const semanticAppend = (blocks: MAFSemanticUnit[], ...args: (MAFSemanticUnit | null | undefined)[]) => {
+const semanticAppend = (
+  blocks: MAFSemanticUnit[],
+  ...args: (MAFSemanticUnit | null | undefined)[]
+) => {
   const blockSize = blocks.length
   const refinedArgs = args.filter(block => block) as MAFSemanticUnit[]
   blocks.splice(blockSize, 0, ...refinedArgs)
@@ -24,11 +27,7 @@ const semBlocks = computed<MAFSemanticUnit[]>(() => {
 
   // 处理分组数据
   markerAdvancedComposed.value.forEach((group, groupIndex) => {
-    const {
-      operator: groupOperator = true,
-      opposite: groupOpposite = false,
-      children = [],
-    } = group
+    const { operator: groupOperator = true, opposite: groupOpposite = false, children = [] } = group
     if (groupIndex > 0)
       semanticAppend(blocks, cloneDeep(groupOperator ? semUnitAndLogic : semUnitOrLogic))
     semanticAppend(
@@ -50,7 +49,7 @@ const semBlocks = computed<MAFSemanticUnit[]>(() => {
       if (childIndex > 0)
         semanticAppend(blocks, cloneDeep(itemOperator ? semUnitAndLogic : semUnitOrLogic))
       if (semantic && typeof semantic === 'function') {
-        const semanticParts = (semantic(value, toValue(option), meta, itemOpposite)).filter(v => v)
+        const semanticParts = semantic(value, toValue(option), meta, itemOpposite).filter(v => v)
         semanticAppend(blocks, ...semanticParts)
       }
     })
@@ -62,15 +61,8 @@ const semBlocks = computed<MAFSemanticUnit[]>(() => {
 </script>
 
 <template>
-  <div
-    v-if="markerAdvancedCacheCount > 0"
-    class="semantic-text"
-  >
-    <SemanticBlock
-      v-for="(block, index) in semBlocks"
-      :key="index"
-      :block="block"
-    />
+  <div v-if="markerAdvancedCacheCount > 0" class="semantic-text">
+    <SemanticBlock v-for="(block, index) in semBlocks" :key="index" :block="block" />
   </div>
 </template>
 

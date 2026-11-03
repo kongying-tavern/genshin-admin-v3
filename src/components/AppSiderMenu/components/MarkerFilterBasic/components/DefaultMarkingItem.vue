@@ -21,20 +21,17 @@ const markingItemId = defineModel<number | undefined>('itemId', {
 })
 
 const markingItem = computed(() => {
-  if (markingItemId.value === undefined)
-    return
+  if (markingItemId.value === undefined) return
   return itemStore.itemIdMap.get(markingItemId.value)
 })
 
 const area = computed(() => {
-  if (!markingItem.value)
-    return
+  if (!markingItem.value) return
   return areaStore.areaIdMap.get(markingItem.value.areaId!)
 })
 
 const parentArea = computed(() => {
-  if (!area.value)
-    return
+  if (!area.value) return
   return areaStore.areaIdMap.get(area.value.parentId!)
 })
 
@@ -46,20 +43,16 @@ const removeDefaultMarkingItem = () => {
 }
 
 const handleDragItem = (ev: DragEvent) => {
-  if (!ev.dataTransfer)
-    return
+  if (!ev.dataTransfer) return
   // 数据来源搜索 dataTransfer.setData
   const str = ev.dataTransfer.getData('text')
-  if (!str)
-    return
+  if (!str) return
   try {
     const data = JSON.parse(str)
-    if (!isItemVo(data))
-      return
+    if (!isItemVo(data)) return
     ev.preventDefault()
     markingItemId.value = data.id!
-  }
-  catch {
+  } catch {
     // no valid
   }
 }
@@ -71,7 +64,7 @@ const handleDragItem = (ev: DragEvent) => {
     class="marking-item"
     :class="{
       'over-drop': isOverDropZone,
-      'checked': Boolean(markingItem),
+      checked: Boolean(markingItem),
     }"
     @drop="handleDragItem"
   >
@@ -86,7 +79,7 @@ const handleDragItem = (ev: DragEvent) => {
           :mapping="iconStore.iconCoordMap.get(area?.iconId || parentArea?.iconId || -1)"
           class="row-span-2 w-12 h-12 p-1"
         >
-          <img v-if="area" draggable="false" :src="fallbackToStaticIcon(area)">
+          <img v-if="area" draggable="false" :src="fallbackToStaticIcon(area)" />
         </AppIconTagRenderer>
         <div class="overflow-hidden whitespace-nowrap text-ellipsis" :title="parentArea?.name">
           {{ parentArea?.name ?? '--' }}
@@ -96,7 +89,12 @@ const handleDragItem = (ev: DragEvent) => {
         </div>
       </div>
 
-      <CheckboxItem is-actived :label="markingItem.name" style="margin: 0; width: 100%" @click="removeDefaultMarkingItem">
+      <CheckboxItem
+        is-actived
+        :label="markingItem.name"
+        style="margin: 0; width: 100%"
+        @click="removeDefaultMarkingItem"
+      >
         <template #icon>
           <AppIconTagRenderer
             :src="iconStore.iconTextureUrl"
@@ -112,7 +110,10 @@ const handleDragItem = (ev: DragEvent) => {
               :total-num="itemTotalMap.get(markingItem.id!)"
               actived
             />
-            <div class="grid px-2 place-items-center" style="background-color: var(--gs-color-danger);">
+            <div
+              class="grid px-2 place-items-center"
+              style="background-color: var(--gs-color-danger)"
+            >
               <ElIcon :size="20" color="#FFF">
                 <DeleteFilled />
               </ElIcon>
@@ -126,17 +127,17 @@ const handleDragItem = (ev: DragEvent) => {
 
 <style scoped>
 .marking-item {
-  border: 2px dashed #C6C2BA;
+  border: 2px dashed #c6c2ba;
   border-radius: 8px;
   margin: 8px;
   height: 48px;
   display: grid;
   place-items: center;
-  color: #C6C2BA;
+  color: #c6c2ba;
 
   &.over-drop {
     border-style: solid;
-    border-color: #FFF;
+    border-color: #fff;
   }
 
   &.checked {

@@ -6,7 +6,9 @@ export class WindowContext implements MapWindow.Context {
   readonly MIN_WIDTH = 300
   readonly MIN_HEIGHT = 300
 
-  readonly dragHookId = [...crypto.getRandomValues(new Uint8Array(4))].map(num => num.toString(16).padStart(2, '0')).join('')
+  readonly dragHookId = [...crypto.getRandomValues(new Uint8Array(4))]
+    .map(num => num.toString(16).padStart(2, '0'))
+    .join('')
 
   #transitionId = ref('')
   get transitionId() {
@@ -21,7 +23,7 @@ export class WindowContext implements MapWindow.Context {
 
   protected topOrder = computed(() => {
     let order = 0
-    this.panels.value.forEach((panel) => {
+    this.panels.value.forEach(panel => {
       order = Math.max(order, panel.order)
     })
     return order
@@ -29,8 +31,7 @@ export class WindowContext implements MapWindow.Context {
 
   isTop = (id: string) => {
     const panel = this.panels.value.get(id)
-    if (!panel)
-      return false
+    if (!panel) return false
     return panel.order === this.topOrder.value
   }
 
@@ -43,17 +44,12 @@ export class WindowContext implements MapWindow.Context {
   }
 
   openWindow = async (params: MapWindow.WindowOpenParams) => {
-    if (this.panels.value.has(params.id))
-      return
+    if (this.panels.value.has(params.id)) return
 
     const openable = params.beforeOpen ? params.beforeOpen() : true
-    if (!openable)
-      return
+    if (!openable) return
 
-    const {
-      center = false,
-      container = document.body,
-    } = params
+    const { center = false, container = document.body } = params
 
     let {
       x: initX = 0,
@@ -91,9 +87,9 @@ export class WindowContext implements MapWindow.Context {
     }
 
     this.#transitionId.value = params.id
-    await document.startViewTransition?.(() => {
+    ;(await document.startViewTransition?.(() => {
       this.panels.value.set(params.id, info)
-    })?.ready ?? this.panels.value.set(params.id, info)
+    })?.ready) ?? this.panels.value.set(params.id, info)
     this.#transitionId.value = ''
 
     this.cachedInfos.set(params.id, info)
@@ -101,8 +97,7 @@ export class WindowContext implements MapWindow.Context {
   }
 
   updateWindow = (id: string, params: Partial<Omit<MapWindow.WindowOpenParams, 'id'>>) => {
-    if (!this.panels.value.has(id))
-      return
+    if (!this.panels.value.has(id)) return
 
     const currentInfo = this.panels.value.get(id)!
 
@@ -126,33 +121,28 @@ export class WindowContext implements MapWindow.Context {
 
   setSizeState = (id: string, state: MapWindow.SizeState = 'default') => {
     const panel = this.panels.value.get(id)
-    if (!panel)
-      return
+    if (!panel) return
     panel.sizeState = state === panel.sizeState ? 'default' : state
     this.optimizeWindowPosition()
   }
 
   setInteractionState = (id: string, state: MapWindow.InteractionState = 'default') => {
     const panel = this.panels.value.get(id)
-    if (!panel)
-      return
+    if (!panel) return
     panel.interactionState = state
     this.optimizeWindowPosition()
   }
 
   closeWindow = async (id: string) => {
     const panel = this.panels.value.get(id)
-    if (!panel)
-      return
+    if (!panel) return
 
     const closable = panel.beforeClose ? panel.beforeClose() : true
-    if (!closable)
-      return
+    if (!closable) return
 
     const { order } = panel
-    this.panels.value.forEach((iPanel) => {
-      if (iPanel.order <= order)
-        return
+    this.panels.value.forEach(iPanel => {
+      if (iPanel.order <= order) return
       iPanel.order -= 1
     })
 
@@ -166,13 +156,11 @@ export class WindowContext implements MapWindow.Context {
 
   topping = (id: string) => {
     const target = this.panels.value.get(id)
-    if (!target || target.order === this.topOrder.value)
-      return
+    if (!target || target.order === this.topOrder.value) return
 
     let moveOrder = 0
-    this.panels.value.forEach((panel) => {
-      if (panel.order <= target.order)
-        return
+    this.panels.value.forEach(panel => {
+      if (panel.order <= target.order) return
       panel.order -= 1
       moveOrder += 1
     })
@@ -180,45 +168,28 @@ export class WindowContext implements MapWindow.Context {
     target.order += moveOrder
   }
 
-  move = (id: string, pos: { x: number, y: number }) => {
+  move = (id: string, pos: { x: number; y: number }) => {
     const target = this.panels.value.get(id)
-    if (!target)
-      return
+    if (!target) return
 
     target.translate = pos
     const cache = this.cachedInfos.get(id)
-    if (!cache)
-      return
+    if (!cache) return
     cache.translate = pos
   }
 
-  resize = (
-    id: string,
-    rect: MapWindow.ResizeProps,
-  ) => {
+  resize = (id: string, rect: MapWindow.ResizeProps) => {
     const cache = this.cachedInfos.get(id)
-    if (!cache)
-      return
+    if (!cache) return
 
     const target = this.panels.value.get(id)
-    if (!target)
-      return
+    if (!target) return
 
     const { clientWidth, clientHeight } = document.body
 
-    const {
-      translate,
-      size,
-      minWidth = this.MIN_WIDTH,
-      minHeight = this.MIN_HEIGHT,
-    } = target
+    const { translate, size, minWidth = this.MIN_WIDTH, minHeight = this.MIN_HEIGHT } = target
 
-    const {
-      x = translate.x,
-      y = translate.y,
-      width = size.width,
-      height = size.height,
-    } = rect
+    const { x = translate.x, y = translate.y, width = size.width, height = size.height } = rect
 
     const resizeWidth = Math.min(Math.max(width, minWidth), clientWidth)
     const resizeheight = Math.min(Math.max(height, minHeight), clientHeight)
@@ -241,18 +212,19 @@ export class WindowContext implements MapWindow.Context {
     const { clientWidth, clientHeight } = document.body
 
     const { inlineSize = clientWidth, blockSize = clientHeight } = box ?? {}
-    this.panels.value.forEach((info) => {
+    this.panels.value.forEach(info => {
       const { width, height } = info.size
       const { x, y } = info.translate
-      info.translate = info.sizeState === 'minimize'
-        ? {
-            x: clamp(x, 0, Math.max(0, inlineSize - this.MIN_WIDTH)),
-            y: clamp(y, 0, Math.max(0, blockSize - this.HEADER_HEIGHT)),
-          }
-        : {
-            x: clamp(x, 0, Math.max(0, inlineSize - width)),
-            y: clamp(y, 0, Math.max(0, blockSize - height)),
-          }
+      info.translate =
+        info.sizeState === 'minimize'
+          ? {
+              x: clamp(x, 0, Math.max(0, inlineSize - this.MIN_WIDTH)),
+              y: clamp(y, 0, Math.max(0, blockSize - this.HEADER_HEIGHT)),
+            }
+          : {
+              x: clamp(x, 0, Math.max(0, inlineSize - width)),
+              y: clamp(y, 0, Math.max(0, blockSize - height)),
+            }
       info.size = {
         width: Math.min(clientWidth, info.size.width),
         height: Math.min(clientHeight, info.size.height),

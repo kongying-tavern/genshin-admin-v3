@@ -26,14 +26,24 @@ export class Image implements MAFConfig<MAFValueBoolean, MAFOptionSwitch, MAFMet
     return {}
   }
 
-  semantic(val: MAFValueBoolean, opt: MAFOptionSwitch, _meta: MAFMetaDummy, opposite: boolean): (MAFSemanticUnit | null)[] {
+  semantic(
+    val: MAFValueBoolean,
+    opt: MAFOptionSwitch,
+    _meta: MAFMetaDummy,
+    opposite: boolean,
+  ): (MAFSemanticUnit | null)[] {
     return [
       { type: 'text', text: '点位图片' },
       { type: 'tag', text: val.b === opposite ? opt.textInactive : opt.textActive },
     ]
   }
 
-  filter(val: MAFValueBoolean, _opt: MAFOptionSwitch, _meta: MAFMetaDummy, marker: MarkerVo): boolean {
+  filter(
+    val: MAFValueBoolean,
+    _opt: MAFOptionSwitch,
+    _meta: MAFMetaDummy,
+    marker: MarkerVo,
+  ): boolean {
     return val.b ? !!marker.picture : !marker.picture
   }
 }

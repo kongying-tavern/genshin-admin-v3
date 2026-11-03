@@ -1,12 +1,15 @@
 import dayjs from 'dayjs'
 
-export const splitTimeRange = (startTime: number, endTime: number, unit: 'year' | 'month'): { startTime: number, endTime: number }[] => {
+export const splitTimeRange = (
+  startTime: number,
+  endTime: number,
+  unit: 'year' | 'month',
+): { startTime: number; endTime: number }[] => {
   const start = dayjs(startTime)
   const end = dayjs(endTime)
-  const result: { startTime: number, endTime: number }[] = []
+  const result: { startTime: number; endTime: number }[] = []
 
-  if (!start.isValid() || !end.isValid())
-    throw new Error('Invalid start or end time')
+  if (!start.isValid() || !end.isValid()) throw new Error('Invalid start or end time')
 
   if (unit === 'year') {
     let current = start.startOf('year')
@@ -20,8 +23,7 @@ export const splitTimeRange = (startTime: number, endTime: number, unit: 'year' 
       })
       current = current.add(1, 'year').startOf('year')
     }
-  }
-  else if (unit === 'month') {
+  } else if (unit === 'month') {
     let current = start.startOf('month')
     const endOfMonth = end.endOf('month')
 
@@ -33,8 +35,7 @@ export const splitTimeRange = (startTime: number, endTime: number, unit: 'year' 
       })
       current = current.add(1, 'month').startOf('month')
     }
-  }
-  else {
+  } else {
     throw new Error('Invalid unit. Use "year" or "month".')
   }
 

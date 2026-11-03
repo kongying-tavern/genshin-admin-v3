@@ -13,8 +13,7 @@ import { describe, expect, it } from 'vitest'
  * - `revparse` 返回的是**已去除首尾空白**的字符串（否则注入的常量会带换行）
  * - 命令失败时必须 reject，并把 git 的 stderr 透出到错误信息里
  */
-const gitCli = (...args: string[]) =>
-  execFileSync('git', args, { encoding: 'utf8' })
+const gitCli = (...args: string[]) => execFileSync('git', args, { encoding: 'utf8' })
 
 /** 取 git 命令失败时的 stderr，作为 simple-git 错误信息的对照基准 */
 const gitCliStderr = (...args: string[]) =>

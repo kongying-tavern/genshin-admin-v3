@@ -55,7 +55,7 @@ const decompressFile = async (options: WorkerInput, logger: Logger): Promise<Uin
 
   const zip = await SevenZip({
     wasmBinary: wasm,
-    stdout: (code) => {
+    stdout: code => {
       const char = String.fromCharCode(code)
       logs.push(char)
     },
@@ -99,8 +99,7 @@ globalThis.addEventListener('message', async (ev: MessageEvent<WorkerInput>) => 
         send(res, [res.buffer])
         break
     }
-  }
-  catch (err) {
+  } catch (err) {
     logger.error(err instanceof Error ? err.message : `${err}`)
     send(err instanceof Error ? err.message : `${err}`)
   }

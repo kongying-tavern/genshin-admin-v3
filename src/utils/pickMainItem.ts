@@ -13,8 +13,7 @@ export const pickMainItem = ({ itemList, extra }: MarkerVo, itemIdMap: Map<numbe
 
   itemList?.forEach(({ itemId = -1 }) => {
     const item = itemIdMap.get(itemId)
-    if (!item)
-      return
+    if (!item) return
 
     if (!mainItem) {
       mainItem = item
@@ -24,8 +23,7 @@ export const pickMainItem = ({ itemList, extra }: MarkerVo, itemIdMap: Map<numbe
 
     // 将 sortIndex 更大的作为主渲染图标
     const { sortIndex = -1 } = item
-    if (sortIndex <= index)
-      return
+    if (sortIndex <= index) return
 
     mainItem = item
     index = sortIndex

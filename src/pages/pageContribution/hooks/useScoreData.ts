@@ -24,11 +24,9 @@ export const useScoreData = (options: ScoreDataHookOptions) => {
       const [rangeStartTime, rangeEndTime] = timeRange.value
 
       const start = dayjs(rangeStartTime)
-      if (!start.isValid())
-        throw new Error(`开始时间 "${rangeStartTime}" 不是一个合法的时间`)
+      if (!start.isValid()) throw new Error(`开始时间 "${rangeStartTime}" 不是一个合法的时间`)
       const end = dayjs(rangeEndTime)
-      if (!end.isValid())
-        throw new Error(`结束时间 "${rangeEndTime}" 不是一个合法的时间`)
+      if (!end.isValid()) throw new Error(`结束时间 "${rangeEndTime}" 不是一个合法的时间`)
 
       note.value = ''
 
@@ -48,7 +46,7 @@ export const useScoreData = (options: ScoreDataHookOptions) => {
           const rangeId = `${startTime}-${endTime}`
           // 查询区间是否已经生成过，是则跳过生成
           if (cachedScoreSet.has(rangeId)) {
-            note.value = `正在生成评分: ${(100 * ++generatedCount / result.length).toFixed(2)}%`
+            note.value = `正在生成评分: ${((100 * ++generatedCount) / result.length).toFixed(2)}%`
             return
           }
           const { data: status, message = '' } = await Apis.score.generate({
@@ -60,14 +58,12 @@ export const useScoreData = (options: ScoreDataHookOptions) => {
             },
             signal: newAbortController.signal,
           })
-          if (`${status}` !== 'ok')
-            throw new Error(message)
+          if (`${status}` !== 'ok') throw new Error(message)
           const splitedEndtime = dayjs(endTime)
           const endOfMonth = splitedEndtime.endOf('month')
           // 只缓存完整的月份生成记录，如果结束时间不是每月最后一天的结束时刻，则跳过此区间的缓存
-          if (!splitedEndtime.isSame(endOfMonth))
-            return
-          note.value = `正在生成评分: ${(100 * ++generatedCount / result.length).toFixed(2)}%`
+          if (!splitedEndtime.isSame(endOfMonth)) return
+          note.value = `正在生成评分: ${((100 * ++generatedCount) / result.length).toFixed(2)}%`
           return rangeId
         }
       })
@@ -122,13 +118,11 @@ export const useScoreData = (options: ScoreDataHookOptions) => {
       // 查询点位创建数据
       const markerList = markerStore.markerList
 
-      markerList.forEach((markerInfo) => {
+      markerList.forEach(markerInfo => {
         const { createTime, creatorId } = markerInfo
-        if (createTime === undefined || creatorId === undefined)
-          return
+        if (createTime === undefined || creatorId === undefined) return
         const time = dayjs(createTime)
-        if (time.isBefore(start) || time.isAfter(end))
-          return
+        if (time.isBefore(start) || time.isAfter(end)) return
         const query = userScoreMap.get(creatorId)
         if (!query) {
           userScoreMap.set(creatorId, {

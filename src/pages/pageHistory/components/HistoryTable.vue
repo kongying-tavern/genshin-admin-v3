@@ -32,11 +32,7 @@ const { IDENTIFICATION_SYMBOL, triggerRef, userData, trigger, close } = useUserP
   >
     <AppUserPopover :trigger-ref="triggerRef" :data="userData" />
 
-    <el-table
-      :data="data"
-      :height="height"
-      :border="true"
-    >
+    <el-table :data="data" :height="height" :border="true">
       <el-table-column type="expand" :width="40">
         <template #default="{ row }">
           <pre class="px-2">{{ JSON.parse(row.content) }}</pre>

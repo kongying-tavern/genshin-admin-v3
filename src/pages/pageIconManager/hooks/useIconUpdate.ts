@@ -36,15 +36,7 @@ export const useIconUpdate = (form: Ref<IconVo>, options: IconUpdateOptions = {}
     onSuccess,
   } = useFetchHook({
     onRequest: async () => {
-      const {
-        description,
-        id,
-        tag,
-        typeIdList,
-        url,
-        urlVariants = {},
-        version,
-      } = form.value
+      const { description, id, tag, typeIdList, url, urlVariants = {}, version } = form.value
 
       // 如果没有传递 icon，跳过图片上传
       if (!isChanged.value || !toValue(iconEditable)) {
@@ -61,8 +53,7 @@ export const useIconUpdate = (form: Ref<IconVo>, options: IconUpdateOptions = {}
       }
 
       const mission = Object.entries(stash.value).map(async ([variant, canvas]) => {
-        if (!canvas)
-          return { variant, url: null }
+        if (!canvas) return { variant, url: null }
         const blob = await toBlob(canvas)
         const hash = await getDigest(blob, 'SHA-256')
         const time = dayjs()
@@ -70,19 +61,25 @@ export const useIconUpdate = (form: Ref<IconVo>, options: IconUpdateOptions = {}
         const folderName = time.format('YYYY-MM-DD')
         /** @example '2025-09-09/abcdefg.png' */
         const filePath = `${folderName}/${fileName}`
-        const url = await getOrUploadImage({ file: new File([blob], fileName, { type: blob.type }), filePath })
+        const url = await getOrUploadImage({
+          file: new File([blob], fileName, { type: blob.type }),
+          filePath,
+        })
         return { variant, url }
       })
 
       const urls = await Promise.all(mission)
 
       // default 变体不进入 urlVariants 字段
-      const { default: defaultVariant = url, ...newUrlVariants } = urls.reduce((acc, cur) => {
-        // HACK: 通过赋予 null 值来删除某个变体
-        // default 变体不允许删除
-        acc[cur.variant] = cur.url as unknown as string
-        return acc
-      }, {} as Record<string, string>)
+      const { default: defaultVariant = url, ...newUrlVariants } = urls.reduce(
+        (acc, cur) => {
+          // HACK: 通过赋予 null 值来删除某个变体
+          // default 变体不允许删除
+          acc[cur.variant] = cur.url as unknown as string
+          return acc
+        },
+        {} as Record<string, string>,
+      )
 
       await iconStore.updateIcon({
         description,
@@ -99,7 +96,7 @@ export const useIconUpdate = (form: Ref<IconVo>, options: IconUpdateOptions = {}
     },
   })
 
-  onError((err) => {
+  onError(err => {
     ElMessage.error(`更新图标失败，原因为：${err.message}`)
   })
 

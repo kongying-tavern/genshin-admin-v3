@@ -42,8 +42,7 @@ if (!globalThis.Worker) {
 const nativeFetch = globalThis.fetch
 globalThis.fetch = ((input: Parameters<typeof fetch>[0], init?: RequestInit) => {
   const { body } = init ?? {}
-  if (body instanceof FormData || body instanceof Blob)
-    return nativeFetch(new Request(input, init))
+  if (body instanceof FormData || body instanceof Blob) return nativeFetch(new Request(input, init))
   return nativeFetch(input, init)
 }) as typeof globalThis.fetch
 

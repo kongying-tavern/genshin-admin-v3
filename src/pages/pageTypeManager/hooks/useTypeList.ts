@@ -12,16 +12,12 @@ export interface TypeListHookOptions {
 }
 
 type ExtractListType<K extends TypeManagerKeys> = NonNullable<
-  NonNullable<
-    Awaited<
-      ReturnType<
-        TypeManagerMap[K]['list']
-      >
-    >['data']
-  >['record']
+  NonNullable<Awaited<ReturnType<TypeManagerMap[K]['list']>>['data']>['record']
 >
 
-export const useTypeList = <K extends keyof typeof TYPE_MANAGER_KEY_MAP>(options: TypeListHookOptions) => {
+export const useTypeList = <K extends keyof typeof TYPE_MANAGER_KEY_MAP>(
+  options: TypeListHookOptions,
+) => {
   const { manager, pagination, getParams } = options
 
   const params = computed(() => getParams())
@@ -29,7 +25,11 @@ export const useTypeList = <K extends keyof typeof TYPE_MANAGER_KEY_MAP>(options
   const typeList = shallowRef<ExtractListType<K>>([])
   const userMap = shallowRef<Record<string, SysUserSmallVo>>({})
 
-  const { refresh: updateTypeList, onSuccess, ...rest } = useFetchHook({
+  const {
+    refresh: updateTypeList,
+    onSuccess,
+    ...rest
+  } = useFetchHook({
     immediate: true,
     onRequest: () => {
       const { current, pageSize: size } = pagination.value

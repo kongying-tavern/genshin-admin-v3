@@ -32,53 +32,56 @@ const handleRefresh = async () => {
 }
 
 // ==================== 新增地区 ====================
-const openAreaCreator = (parent?: AreaVo) => DialogService
-  .config(getDialogConfig())
-  .props({ parent })
-  .listeners({
-    success: (form: AreaVo) => {
-      graph.value?.addChild({
-        id: `${form.id}`,
-        pid: `${form.parentId}`,
-        label: form.name,
-        raw: form,
-      }, `${form.parentId}`)
-      updateAreaList()
-    },
-  })
-  .open(AreaCreator)
+const openAreaCreator = (parent?: AreaVo) =>
+  DialogService.config(getDialogConfig())
+    .props({ parent })
+    .listeners({
+      success: (form: AreaVo) => {
+        graph.value?.addChild(
+          {
+            id: `${form.id}`,
+            pid: `${form.parentId}`,
+            label: form.name,
+            raw: form,
+          },
+          `${form.parentId}`,
+        )
+        updateAreaList()
+      },
+    })
+    .open(AreaCreator)
 
 // ==================== 编辑地区 ====================
-const openAreaEditor = (area: AreaVo, parent?: AreaVo) => DialogService
-  .config(getDialogConfig())
-  .props({ area, parent })
-  .listeners({
-    success: (form: AreaVo) => {
-      graph.value?.update(`${form.id}`, {
-        id: `${form.id}`,
-        pid: `${form.parentId}`,
-        label: form.name,
-        raw: form,
-      })
-      updateAreaList()
-    },
-  })
-  .open(AreaEditor)
+const openAreaEditor = (area: AreaVo, parent?: AreaVo) =>
+  DialogService.config(getDialogConfig())
+    .props({ area, parent })
+    .listeners({
+      success: (form: AreaVo) => {
+        graph.value?.update(`${form.id}`, {
+          id: `${form.id}`,
+          pid: `${form.parentId}`,
+          label: form.name,
+          raw: form,
+        })
+        updateAreaList()
+      },
+    })
+    .open(AreaEditor)
 
 // ==================== 删除地区 ====================
-const deleteArea = (area: AreaVo) => DialogService
-  .config(getDialogConfig())
-  .props({
-    title: '删除地区',
-    area,
-  })
-  .listeners({
-    success: (form: AreaVo) => {
-      graph.value?.removeChild(`${form.id}`)
-      updateAreaList()
-    },
-  })
-  .open(AreaDeleteConfirm)
+const deleteArea = (area: AreaVo) =>
+  DialogService.config(getDialogConfig())
+    .props({
+      title: '删除地区',
+      area,
+    })
+    .listeners({
+      success: (form: AreaVo) => {
+        graph.value?.removeChild(`${form.id}`)
+        updateAreaList()
+      },
+    })
+    .open(AreaDeleteConfirm)
 
 onEditClick(([area, parent]) => openAreaEditor(area, parent))
 onAddClick(([parent]) => openAreaCreator(parent))
@@ -88,7 +91,10 @@ onDeleteClick(([area]) => deleteArea(area))
 <template>
   <div class="h-full overflow-hidden relative">
     <div ref="containerRef" class="w-full h-full select-none" />
-    <div ref="minimapRef" class="absolute left-4 bottom-4 border border-[var(--el-border-color)] bg-[var(--el-bg-color)]" />
+    <div
+      ref="minimapRef"
+      class="absolute left-4 bottom-4 border border-[var(--el-border-color)] bg-[var(--el-bg-color)]"
+    />
     <AreaGraphSkeleton v-if="loading && !data.length" />
     <el-tooltip content="刷新" placement="bottom">
       <el-button

@@ -112,7 +112,10 @@ describe('共享 alova 实例的响应处理', () => {
   it('正常业务响应直接透传数据', async () => {
     http.respond = () => jsonResponse({ error: false, data: [{ id: 1, name: '管理员' }] })
 
-    await expect(Apis.role.listRole({})).resolves.toEqual({ error: false, data: [{ id: 1, name: '管理员' }] })
+    await expect(Apis.role.listRole({})).resolves.toEqual({
+      error: false,
+      data: [{ id: 1, name: '管理员' }],
+    })
   })
 
   it('业务错误以 HTTP 200 + error:true 返回时转为异常', async () => {
@@ -121,7 +124,7 @@ describe('共享 alova 实例的响应处理', () => {
     await expect(Apis.role.listRole({})).rejects.toThrow('用户不存在')
   })
 
-  it.each([401, 403])('响应状态 %i 触发登出并清空登录态', async (status) => {
+  it.each([401, 403])('响应状态 %i 触发登出并清空登录态', async status => {
     mocks.store.setAuth(makeToken('AT-1'))
     http.respond = () => new Response('', { status, headers: { 'Content-Type': 'text/plain' } })
 

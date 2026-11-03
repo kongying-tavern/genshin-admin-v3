@@ -18,9 +18,7 @@ const handleLoad = () => {
       <el-icon size="36">
         <IconLoading />
       </el-icon>
-      <div>
-        正在加载文档
-      </div>
+      <div>正在加载文档</div>
     </div>
     <iframe
       v-show="isLoaded"

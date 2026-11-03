@@ -21,15 +21,15 @@ export const useMarkerEdit = (
    */
   const checkPictureChange = (marker: MarkerVo) => {
     const { picture = '' } = marker
-    if (!picture)
-      return false
+    if (!picture) return false
 
     const pictureURL = new URL(picture)
     const params = pictureURL.searchParams
     const timestamp = Number(params.get('timestamp'))
     const lastModified = Number(params.get('last-modified'))
 
-    const isChanged = (!Number.isNaN(timestamp) && !Number.isNaN(lastModified)) && timestamp > lastModified
+    const isChanged =
+      !Number.isNaN(timestamp) && !Number.isNaN(lastModified) && timestamp > lastModified
 
     if (isChanged) {
       !lastModified && params.set('last-modified', `${new Date().getTime()}`)
@@ -40,10 +40,7 @@ export const useMarkerEdit = (
     return isChanged
   }
 
-  const commonKeys: (keyof MarkerVo)[] = [
-    'updateTime',
-    'createTime',
-  ]
+  const commonKeys: (keyof MarkerVo)[] = ['updateTime', 'createTime']
 
   const buildAdminMarkerForm = (marker: MarkerVo): MarkerVo => {
     const isPictureChanged = checkPictureChange(marker)
@@ -55,11 +52,15 @@ export const useMarkerEdit = (
 
   const { tryUploadPicture } = usePictureUpload()
 
-  const { refresh: submit, onSuccess, onError, ...rest } = useFetchHook({
+  const {
+    refresh: submit,
+    onSuccess,
+    onError,
+    ...rest
+  } = useFetchHook({
     onRequest: async () => {
       const localMarker = markerData.value
-      if (!localMarker)
-        throw new Error('表单数据为空')
+      if (!localMarker) throw new Error('表单数据为空')
       await editorRef.value?.validate()
       const form = buildAdminMarkerForm(localMarker)
       await tryUploadPicture(form)
@@ -73,7 +74,7 @@ export const useMarkerEdit = (
     })
   })
 
-  onError((error) => {
+  onError(error => {
     ElMessage.error({
       message: `编辑点位失败，原因为：${error.message}`,
     })

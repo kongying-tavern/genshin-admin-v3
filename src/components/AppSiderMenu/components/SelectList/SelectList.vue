@@ -1,4 +1,8 @@
-<script lang="ts" setup generic="T extends Record<string, any>, LK extends string, V extends unknown">
+<script
+  lang="ts"
+  setup
+  generic="T extends Record<string, any>, LK extends string, V extends unknown"
+>
 import { get } from 'lodash'
 
 const props = defineProps<{
@@ -17,15 +21,16 @@ const modelValue = defineModel<V | V[] | null>('modelValue', {
   default: null,
 })
 
-const isValueEqual = (v: V, obj: T) => JSON.stringify(v) === JSON.stringify(get(obj, props.valueKey))
+const isValueEqual = (v: V, obj: T) =>
+  JSON.stringify(v) === JSON.stringify(get(obj, props.valueKey))
 
-const isActived = (targetOpt: T) => !props.multiple
-  ? isValueEqual(modelValue.value as V, targetOpt)
-  : ((modelValue.value ?? []) as V[]).findIndex(value => isValueEqual(value, targetOpt)) > -1
+const isActived = (targetOpt: T) =>
+  !props.multiple
+    ? isValueEqual(modelValue.value as V, targetOpt)
+    : ((modelValue.value ?? []) as V[]).findIndex(value => isValueEqual(value, targetOpt)) > -1
 
 const patchValue = (patchOpt: T) => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
 
   // 单选
   if (!props.multiple) {
@@ -38,10 +43,8 @@ const patchValue = (patchOpt: T) => {
     const shallowCopyValue = [...((modelValue.value ?? []) as V[])]
     const optValue = get(patchOpt, props.valueKey)
     const findIndex = shallowCopyValue.findIndex(value => value === optValue)
-    if (findIndex > -1)
-      shallowCopyValue.splice(findIndex, 1)
-    else
-      shallowCopyValue.push(optValue)
+    if (findIndex > -1) shallowCopyValue.splice(findIndex, 1)
+    else shallowCopyValue.push(optValue)
     modelValue.value = shallowCopyValue
     emits('change', shallowCopyValue)
   }
@@ -69,8 +72,8 @@ const patchValue = (patchOpt: T) => {
 .condition-row {
   display: flex;
   padding: 16px;
-  background: #202D3F;
-  outline: 2px solid #363F4A;
+  background: #202d3f;
+  outline: 2px solid #363f4a;
   outline-offset: -4px;
   display: flex;
   border-radius: 8px;
@@ -80,7 +83,7 @@ const patchValue = (patchOpt: T) => {
   cursor: pointer;
 
   &:not(.actived):hover {
-    outline-color: #FFF;
+    outline-color: #fff;
     outline-offset: -2px;
   }
 
@@ -89,8 +92,8 @@ const patchValue = (patchOpt: T) => {
   }
 
   &.actived {
-    background: #F3E2BF;
-    color: #202D3F;
+    background: #f3e2bf;
+    color: #202d3f;
   }
 }
 </style>

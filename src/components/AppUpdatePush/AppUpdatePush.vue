@@ -9,14 +9,12 @@ const { loading, refresh: pushUpdate } = useFetchHook({
 })
 
 const confirmPush = async () => {
-  const isConfirm = await DialogService
-    .config({
-      alignCenter: true,
-    })
+  const isConfirm = await DialogService.config({
+    alignCenter: true,
+  })
     .open(PushConfirm)
     .afterClosed<boolean>()
-  if (!isConfirm)
-    return
+  if (!isConfirm) return
   await pushUpdate()
 }
 </script>
@@ -26,7 +24,7 @@ const confirmPush = async () => {
     class="app-setting-button"
     text
     size="large"
-    style="--el-border-radius-base: 8px; padding: 8px 12px;"
+    style="--el-border-radius-base: 8px; padding: 8px 12px"
     :loading="loading"
     @click="confirmPush"
   >

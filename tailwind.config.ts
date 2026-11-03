@@ -52,7 +52,8 @@ const config: Config = {
         9: '9 9 0%',
       },
       backgroundImage: {
-        alpha: 'conic-gradient(from -0.25turn, var(--el-fill-color-darker) 25%, transparent 25%, transparent 50%, var(--el-fill-color-darker) 50%, var(--el-fill-color-darker) 75%, transparent 75%)',
+        alpha:
+          'conic-gradient(from -0.25turn, var(--el-fill-color-darker) 25%, transparent 25%, transparent 50%, var(--el-fill-color-darker) 50%, var(--el-fill-color-darker) 75%, transparent 75%)',
       },
     },
   },

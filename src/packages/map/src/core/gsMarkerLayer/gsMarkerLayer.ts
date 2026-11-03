@@ -21,10 +21,8 @@ export class GSMarkerLayer extends CompositeLayer<GSMarkerLayerProps> {
   static layerName = 'GenshinMarkerLayer'
 
   static isInstance = (v?: Layer | null): v is GSMarkerLayer => {
-    if (!v)
-      return false
-    if (!(v instanceof this))
-      return false
+    if (!v) return false
+    if (!(v instanceof this)) return false
     return (v.constructor as typeof Layer).layerName === this.layerName
   }
 
@@ -36,15 +34,16 @@ export class GSMarkerLayer extends CompositeLayer<GSMarkerLayerProps> {
     })
   }
 
-  shouldUpdateState(params: UpdateParameters<Layer<GSMarkerLayerProps & Required<CompositeLayerProps>>>): boolean {
+  shouldUpdateState(
+    params: UpdateParameters<Layer<GSMarkerLayerProps & Required<CompositeLayerProps>>>,
+  ): boolean {
     const { propsOrDataChanged, viewportChanged } = params.changeFlags
     return propsOrDataChanged || viewportChanged
   }
 
   renderLayers = (): LayersList => {
     const { iconAtlas } = this.props
-    if (!iconAtlas)
-      return []
+    if (!iconAtlas) return []
 
     const { zoom } = this.context.viewport
     const {
@@ -82,8 +81,7 @@ export class GSMarkerLayer extends CompositeLayer<GSMarkerLayerProps> {
       if (typeof iconMapping === 'object') {
         for (const key in iconMapping) {
           const { x, y } = iconMapping[key]
-          if (x !== 0 || y !== ICON_SIZE)
-            continue
+          if (x !== 0 || y !== ICON_SIZE) continue
           cachedFallbackIconId = key
           break
         }
@@ -91,17 +89,17 @@ export class GSMarkerLayer extends CompositeLayer<GSMarkerLayerProps> {
     }
     const fallbackMappingKey = `${cachedFallbackIconId ?? FALLBACK_ICON_ID}`
 
-    const getIcon = typeof iconMapping === 'object'
-      ? (info: GSMarkerInfo) => {
-          const iconId = info.extra?.iconOverride?.id ?? info.render.mainIconId
-          if (iconId <= 0)
-            return fallbackMappingKey
-          return iconMapping[iconId] ? `${iconId}` : fallbackMappingKey
-        }
-      : (info: GSMarkerInfo) => {
-          const iconId = info.extra?.iconOverride?.id ?? info.render.mainIconId
-          return `${iconId}`
-        }
+    const getIcon =
+      typeof iconMapping === 'object'
+        ? (info: GSMarkerInfo) => {
+            const iconId = info.extra?.iconOverride?.id ?? info.render.mainIconId
+            if (iconId <= 0) return fallbackMappingKey
+            return iconMapping[iconId] ? `${iconId}` : fallbackMappingKey
+          }
+        : (info: GSMarkerInfo) => {
+            const iconId = info.extra?.iconOverride?.id ?? info.render.mainIconId
+            return `${iconId}`
+          }
 
     const getPosition = (info: GSMarkerInfo) => {
       return rewritePositions?.get(info.id!) ?? info.render.position
@@ -123,7 +121,12 @@ export class GSMarkerLayer extends CompositeLayer<GSMarkerLayerProps> {
         getIconFlag,
         getPosition,
         getSize: 40,
-        getColor: ({ id }) => [0, 0, 0, isInteraction(id!) ? 0 : isMarked(id!) ? markeredOpacity : 255],
+        getColor: ({ id }) => [
+          0,
+          0,
+          0,
+          isInteraction(id!) ? 0 : isMarked(id!) ? markeredOpacity : 255,
+        ],
         sizeScale: 1,
         sizeMaxPixels,
         sizeMinPixels: 4,

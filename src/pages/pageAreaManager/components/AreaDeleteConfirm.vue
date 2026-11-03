@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import type { AreaVo } from '@/api/alova/globals'
 import { Check, Close, Delete } from '@element-plus/icons-vue'
-import {
-  WinDialog,
-  WinDialogFooter,
-  WinDialogTitleBar,
-} from '@/components'
+import { WinDialog, WinDialogFooter, WinDialogTitleBar } from '@/components'
 import { useAreaDelete } from '../hooks'
 
 const props = defineProps<{
@@ -39,7 +35,7 @@ const confirm = async () => {
     </WinDialogTitleBar>
 
     <div class="w-[300px] p-2 grid grid-rows-[auto_1fr] grid-cols-[auto_1fr] gap-2">
-      <div class=" row-span-2">
+      <div class="row-span-2">
         <el-icon class="p-1" size="40" color="var(--el-color-danger)">
           <Delete />
         </el-icon>
@@ -52,13 +48,9 @@ const confirm = async () => {
     </div>
 
     <WinDialogFooter>
-      <el-button :icon="Check" :loading="loading" type="danger" @click="confirm">
-        是
-      </el-button>
+      <el-button :icon="Check" :loading="loading" type="danger" @click="confirm"> 是 </el-button>
 
-      <el-button :icon="Close" :disabled="loading" @click="cancel">
-        否
-      </el-button>
+      <el-button :icon="Close" :disabled="loading" @click="cancel"> 否 </el-button>
     </WinDialogFooter>
   </WinDialog>
 </template>

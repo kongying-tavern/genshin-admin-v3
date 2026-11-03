@@ -2,33 +2,29 @@ import type { ValuePacker } from '../types'
 import type { MAFValue, MAFValueString } from '@/stores/types'
 import { ByteReader, ByteWriter } from '@/utils'
 
-const isValidNumber = (num: number): boolean => (
-  Number.isInteger(num)
-  && num > 0
-  && num <= (2 ** 32 - 1)
-)
+const isValidNumber = (num: number): boolean =>
+  Number.isInteger(num) && num > 0 && num <= 2 ** 32 - 1
 
 type IdRangeItem = number | [number, number]
 
 /** 与 modelIdRange.prepare 一致的解析逻辑 */
 const parse = (s: string): IdRangeItem[] => {
   const items: IdRangeItem[] = []
-  if (!s)
-    return items
-  s.split(',').filter(v => v).forEach((group) => {
-    if (group.includes('-')) {
-      const nums = group.split('-')
-      const num1 = Number(nums.shift())
-      const num2 = Number(nums.join('-'))
-      if (isValidNumber(num1) && isValidNumber(num2) && num2 > num1 && num2 - num1 < 1e6)
-        items.push([num1, num2])
-    }
-    else {
-      const num = Number(group)
-      if (isValidNumber(num))
-        items.push(num)
-    }
-  })
+  if (!s) return items
+  s.split(',')
+    .filter(v => v)
+    .forEach(group => {
+      if (group.includes('-')) {
+        const nums = group.split('-')
+        const num1 = Number(nums.shift())
+        const num2 = Number(nums.join('-'))
+        if (isValidNumber(num1) && isValidNumber(num2) && num2 > num1 && num2 - num1 < 1e6)
+          items.push([num1, num2])
+      } else {
+        const num = Number(group)
+        if (isValidNumber(num)) items.push(num)
+      }
+    })
   return items
 }
 
@@ -46,11 +42,7 @@ const encode = (value: MAFValue): Uint8Array => {
 
   // 类型位图：依次写每组的类型，不移动指针，超过 8 组自动跨字节
   for (let i = 0; i < count; i++) {
-    writer.setBit(
-      Array.isArray(items[i]) ? 0b1 : 0b0,
-      i + 1,
-      i + 1,
-    )
+    writer.setBit(Array.isArray(items[i]) ? 0b1 : 0b0, i + 1, i + 1)
   }
   writer.moveBy(bitmapBytes)
 
@@ -60,8 +52,7 @@ const encode = (value: MAFValue): Uint8Array => {
     if (Array.isArray(item)) {
       writer.writeUint32LE(item[0], 'clamp')
       writer.writeUint32LE(item[1], 'clamp')
-    }
-    else {
+    } else {
       writer.writeUint32LE(item, 'clamp')
     }
   }
@@ -75,8 +66,7 @@ const decode = (bytes: Uint8Array): MAFValueString => {
 
   // 读取类型位图
   const isRanges: boolean[] = []
-  for (let i = 0; i < count; i++)
-    isRanges.push(Boolean(reader.readBit(i + 1, i + 1, 'blank')))
+  for (let i = 0; i < count; i++) isRanges.push(Boolean(reader.readBit(i + 1, i + 1, 'blank')))
   reader.moveBy(bitmapBytes)
 
   // 读取数据区
@@ -85,13 +75,10 @@ const decode = (bytes: Uint8Array): MAFValueString => {
     if (isRanges[i]) {
       const num1 = Number(reader.readUint32LE('blank'))
       const num2 = Number(reader.readUint32LE('blank'))
-      if (isValidNumber(num1) && isValidNumber(num2) && num2 > num1)
-        parts.push(`${num1}-${num2}`)
-    }
-    else {
+      if (isValidNumber(num1) && isValidNumber(num2) && num2 > num1) parts.push(`${num1}-${num2}`)
+    } else {
       const num = Number(reader.readUint32LE('blank'))
-      if (isValidNumber(num))
-        parts.push(`${num}`)
+      if (isValidNumber(num)) parts.push(`${num}`)
     }
   }
   return { s: parts.join(',') }

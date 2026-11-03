@@ -25,23 +25,22 @@ export const useSocket = () => {
   })
 
   const messagePort = (() => {
-    if (socketWorker instanceof Worker)
-      return socketWorker
+    if (socketWorker instanceof Worker) return socketWorker
     socketWorker.port.start()
     return socketWorker.port
   })()
 
   const ipc = new PageIPC<AppSocket.MainEventMap, AppSocket.WorkerEventMap>(messagePort)
 
-  ipc.on('init', (id) => {
+  ipc.on('init', id => {
     context.value.id = id
   })
 
-  ipc.on('delayChange', (delay) => {
+  ipc.on('delayChange', delay => {
     context.value.delay = delay
   })
 
-  ipc.on('statusChange', (status) => {
+  ipc.on('statusChange', status => {
     context.value.status = status
   })
 

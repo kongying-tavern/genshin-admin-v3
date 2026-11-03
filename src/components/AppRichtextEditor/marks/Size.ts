@@ -21,9 +21,8 @@ export const Size = Mark.create<{
     return [
       {
         tag: 'size',
-        getAttrs: (node) => {
-          if (typeof node === 'string' || !node.hasAttribute('style'))
-            return false
+        getAttrs: node => {
+          if (typeof node === 'string' || !node.hasAttribute('style')) return false
           return {}
         },
       },
@@ -34,13 +33,14 @@ export const Size = Mark.create<{
   },
   addCommands() {
     return {
-      removeEmptyTextStyle: () => ({ state, commands }) => {
-        const attributes = getMarkAttributes(state, this.type)
-        const hasStyles = Object.entries(attributes).some(([, value]) => value !== undefined)
-        if (hasStyles)
-          return true
-        return commands.unsetMark(this.name)
-      },
+      removeEmptyTextStyle:
+        () =>
+        ({ state, commands }) => {
+          const attributes = getMarkAttributes(state, this.type)
+          const hasStyles = Object.entries(attributes).some(([, value]) => value !== undefined)
+          if (hasStyles) return true
+          return commands.unsetMark(this.name)
+        },
     }
   },
 })

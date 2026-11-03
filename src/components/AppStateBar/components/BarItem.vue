@@ -12,8 +12,7 @@ const emits = defineEmits<{
 }>()
 
 const handleClick = (ev: MouseEvent) => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
   emits('click', ev)
 }
 
@@ -89,7 +88,7 @@ onClickOutside(contextmenuRef, () => {
       background: linear-gradient(
         90deg,
         transparent 0 calc(50% - 0.5px),
-        #FFFFFF40 calc(50% - 0.5px) calc(50% + 0.5px),
+        #ffffff40 calc(50% - 0.5px) calc(50% + 0.5px),
         transparent calc(50% + 0.5px) 100%
       );
       right: calc(0px - var(--divider-gap));
@@ -124,11 +123,11 @@ onClickOutside(contextmenuRef, () => {
   }
 
   &:hover {
-    --mask-color: #FFFFFF20;
+    --mask-color: #ffffff20;
   }
 
   &:active {
-    --mask-color: #FFFFFF40;
+    --mask-color: #ffffff40;
   }
 }
 

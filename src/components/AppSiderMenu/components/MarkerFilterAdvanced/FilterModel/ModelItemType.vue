@@ -21,10 +21,7 @@ const modelValue = defineModel<MAFValueNumberArray>('modelValue', {
 <template>
   <div class="flex-auto flex gap-1 items-center">
     <span class="flex-none">类别</span>
-    <SelectBase
-      v-model="modelValue.na"
-      :options="options"
-    >
+    <SelectBase v-model="modelValue.na" :options="options">
       <MarkerFilterButton theme="dark">
         <template #icon>
           <IconApplication />

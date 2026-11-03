@@ -9,8 +9,7 @@ export class Zip {
   static #zipWasmBinary: ArrayBuffer
 
   static getWasmBinary = async () => {
-    if (this.#zipWasmBinary)
-      return this.#zipWasmBinary
+    if (this.#zipWasmBinary) return this.#zipWasmBinary
     const cachedFile = await cache.file.get('7zz.wasm')
     if (cachedFile) {
       this.#zipWasmBinary = cachedFile.buffer
@@ -32,16 +31,22 @@ export class Zip {
 
     const copyZipWasm = wasm.slice(0)
 
-    const process = createWorkerHelper<WorkerInput, Uint8Array>(new ZipWorker({ name: '压缩线程' }), {
-      cacheWorker: false,
-    })
+    const process = createWorkerHelper<WorkerInput, Uint8Array>(
+      new ZipWorker({ name: '压缩线程' }),
+      {
+        cacheWorker: false,
+      },
+    )
 
-    const compressedData = await process({
-      type: 'compress',
-      data: file,
-      name,
-      wasm: copyZipWasm,
-    }, [file.buffer, copyZipWasm])
+    const compressedData = await process(
+      {
+        type: 'compress',
+        data: file,
+        name,
+        wasm: copyZipWasm,
+      },
+      [file.buffer, copyZipWasm],
+    )
 
     return compressedData
   }
@@ -65,16 +70,22 @@ export class Zip {
 
     const copyZipWasm = wasm.slice(0)
 
-    const process = createWorkerHelper<WorkerInput, Uint8Array>(new ZipWorker({ name: '解压线程' }), {
-      cacheWorker: false,
-    })
+    const process = createWorkerHelper<WorkerInput, Uint8Array>(
+      new ZipWorker({ name: '解压线程' }),
+      {
+        cacheWorker: false,
+      },
+    )
 
-    const decompressedData = await process({
-      type: 'decompress',
-      data: file,
-      name,
-      wasm: copyZipWasm,
-    }, [file.buffer, copyZipWasm])
+    const decompressedData = await process(
+      {
+        type: 'decompress',
+        data: file,
+        name,
+        wasm: copyZipWasm,
+      },
+      [file.buffer, copyZipWasm],
+    )
 
     return decompressedData
   }

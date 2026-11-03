@@ -27,14 +27,7 @@ const variantTabs = [
 ] as const
 
 /** 更新逻辑封装 */
-const {
-  stash,
-  loading,
-  onSuccess,
-  stashIcon,
-  createIcon,
-  clearStash,
-} = useIconCreate(form)
+const { stash, loading, onSuccess, stashIcon, createIcon, clearStash } = useIconCreate(form)
 
 const variantLabelRecord: Record<IconVariant, string> = {
   default: '默认',
@@ -47,19 +40,15 @@ const variantStatusRecord = computed(() => {
   variantTabs.forEach(({ name }) => {
     if (name === 'default')
       status.default = stash.value.default ? '待上传' : form.value.url ? '' : '未配置'
-    else if (stash.value[name] === null)
-      status[name] = '待移除'
+    else if (stash.value[name] === null) status[name] = '待移除'
     else
-      status[name] = stash.value[name] ? '待上传' : (form.value.urlVariants?.[name] ? '' : '未配置')
+      status[name] = stash.value[name] ? '待上传' : form.value.urlVariants?.[name] ? '' : '未配置'
   })
   return status
 })
 
 /** 图标类型 */
-const {
-  props: typeTreeProps,
-  load: loadIconType,
-} = useIconType()
+const { props: typeTreeProps, load: loadIconType } = useIconType()
 
 /** 校验规则 */
 const { rules } = useIconFormRules(form)
@@ -67,8 +56,7 @@ const { rules } = useIconFormRules(form)
 /** 确认按钮可用性 */
 const disabledConfirm = computed(() => {
   const { tag = '' } = form.value
-  if (!tag.trim().length)
-    return true
+  if (!tag.trim().length) return true
   return Object.keys(stash.value).length === 0
 })
 
@@ -78,7 +66,11 @@ onSuccess(() => {
 })
 
 /** 记录图标变更情况 */
-const handleImageLoad = ({ canvas, isRaw, variant }: {
+const handleImageLoad = ({
+  canvas,
+  isRaw,
+  variant,
+}: {
   canvas: HTMLCanvasElement
   isRaw: boolean
   variant: IconVariant
@@ -101,23 +93,13 @@ const cancel = () => {
 
 <template>
   <WinDialog>
-    <WinDialogTitleBar
-      class="gap-2"
-      :disabled="loading"
-      @close="cancel"
-    >
+    <WinDialogTitleBar class="gap-2" :disabled="loading" @close="cancel">
       新建图标
     </WinDialogTitleBar>
 
     <WinDialogTabPanel class="w-[384px] mb-0 flex flex-col">
       <div class="w-full shrink-0 overflow-hidden flex">
-        <el-form
-          :rules="rules"
-          :disabled="loading"
-          :model="form"
-          label-width="60px"
-          class="flex-1"
-        >
+        <el-form :rules="rules" :disabled="loading" :model="form" label-width="60px" class="flex-1">
           <el-form-item label="名称" prop="tag" style="margin-bottom: 16px">
             <el-input v-model="form.tag" />
           </el-form-item>
@@ -142,11 +124,7 @@ const cancel = () => {
 
       <div class="h-[336px] overflow-visible transition-all">
         <el-divider style="margin: 8px 0" />
-        <el-tabs
-          v-model="variant"
-          class="custom-tabs"
-          type="border-card"
-        >
+        <el-tabs v-model="variant" class="custom-tabs" type="border-card">
           <el-tab-pane
             v-for="tab in variantTabs"
             :key="tab.name"
@@ -178,13 +156,7 @@ const cancel = () => {
       >
         确认
       </el-button>
-      <el-button
-        :icon="Close"
-        :disabled="loading"
-        @click="cancel"
-      >
-        取消
-      </el-button>
+      <el-button :icon="Close" :disabled="loading" @click="cancel"> 取消 </el-button>
     </WinDialogFooter>
   </WinDialog>
 </template>

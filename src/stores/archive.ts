@@ -39,8 +39,15 @@ const SYNC_RETRY_DELAY = 2000
 /** 单次同步的最大尝试次数 */
 const SYNC_RETRY_LIMIT = 3
 
-const parserArchive = ({ archive = '', time = '', historyIndex }: SysArchiveVo, options: { slotIndex: number, userId: number }): ArchiveData => {
-  const { Data_KYJG: datas = [], Time_KYJG: times = {}, Preference: preference = {} } = JSON.parse(archive) as {
+const parserArchive = (
+  { archive = '', time = '', historyIndex }: SysArchiveVo,
+  options: { slotIndex: number; userId: number },
+): ArchiveData => {
+  const {
+    Data_KYJG: datas = [],
+    Time_KYJG: times = {},
+    Preference: preference = {},
+  } = JSON.parse(archive) as {
     Data_KYJG?: (string | number)[]
     Time_KYJG?: Record<number, string>
     Preference?: Partial<UserPreference>
@@ -58,9 +65,8 @@ const parserArchive = ({ archive = '', time = '', historyIndex }: SysArchiveVo, 
   }
 }
 
-const initArchiveList = (): Record<number, ArchiveSlotData | undefined> => Object.fromEntries(
-  Array.from({ length: 5 }).map((_, index) => [index + 1, undefined]),
-)
+const initArchiveList = (): Record<number, ArchiveSlotData | undefined> =>
+  Object.fromEntries(Array.from({ length: 5 }).map((_, index) => [index + 1, undefined]))
 
 const initArchive = (): ArchiveData => ({
   id: -1,
@@ -84,14 +90,17 @@ export const useArchiveStore = defineStore('global-archive', () => {
   const hash = asyncComputed(async () => {
     const res = [...currentArchive.value.body.Data_KYJG.values()].join('')
     const digest = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(res))
-    return [...new Uint8Array(digest)].map(num => num.toString(16).padStart(2, '0').toUpperCase()).join('')
+    return [...new Uint8Array(digest)]
+      .map(num => num.toString(16).padStart(2, '0').toUpperCase())
+      .join('')
   }, '')
 
-  const getJSONArchive = () => JSON.stringify({
-    Data_KYJG: [...currentArchive.value.body.Data_KYJG],
-    Time_KYJG: currentArchive.value.body.Time_KYJG,
-    Preference: currentArchive.value.body.Preference,
-  })
+  const getJSONArchive = () =>
+    JSON.stringify({
+      Data_KYJG: [...currentArchive.value.body.Data_KYJG],
+      Time_KYJG: currentArchive.value.body.Time_KYJG,
+      Preference: currentArchive.value.body.Preference,
+    })
 
   // ==================== 同步队列 ====================
   /** 最近一次成功同步（本地 + 远程）的存档内容快照，用于跳过无变化的同步 */
@@ -126,10 +135,8 @@ export const useArchiveStore = defineStore('global-archive', () => {
           data: json,
         })
         return
-      }
-      catch (err) {
-        if (attempt >= SYNC_RETRY_LIMIT)
-          throw err
+      } catch (err) {
+        if (attempt >= SYNC_RETRY_LIMIT) throw err
         await sleep(SYNC_RETRY_DELAY * attempt)
       }
     }
@@ -144,19 +151,16 @@ export const useArchiveStore = defineStore('global-archive', () => {
   const performSync = async (force: boolean, slotIndex: number) => {
     const { json, timestamp } = captureSnapshot()
     // 内容未变化且非强制时跳过，避免重复写入
-    if (!force && json === syncedSnapshot)
-      return true
+    if (!force && json === syncedSnapshot) return true
     try {
       await persistLocalArchive(json, timestamp)
       // 仅登录且目标为有效远程槽位时才写入远程
       if (slotIndex > 0 && slotIndex <= 5 && userStore.validateToken())
         await saveRemoteArchive(slotIndex, json)
       // 仅当同步期间内容未再变化时，才将该快照标记为已同步，避免覆盖加载后的新快照
-      if (captureSnapshot().json === json)
-        syncedSnapshot = json
+      if (captureSnapshot().json === json) syncedSnapshot = json
       return true
-    }
-    catch (err) {
+    } catch (err) {
       logger.error(`槽位 ${slotIndex} 同步失败：${messageFrom(err)}`)
       return false
     }
@@ -185,8 +189,7 @@ export const useArchiveStore = defineStore('global-archive', () => {
 
   /** 延迟执行自动同步（去抖合并连续变更） */
   const scheduleSync = (delay = SYNC_DEBOUNCE_DELAY) => {
-    if (syncTimer !== undefined)
-      clearTimeout(syncTimer)
+    if (syncTimer !== undefined) clearTimeout(syncTimer)
     syncTimer = setTimeout(() => {
       syncTimer = undefined
       enqueueSync(false)
@@ -202,38 +205,40 @@ export const useArchiveStore = defineStore('global-archive', () => {
     syncedSnapshot = getJSONArchive()
   }
 
-  const { data: archiveSlots, loading: fetchLoading, refresh: fetchArchive } = useFetchHook({
+  const {
+    data: archiveSlots,
+    loading: fetchLoading,
+    refresh: fetchArchive,
+  } = useFetchHook({
     onRequest: async () => {
       const slots = initArchiveList()
-      if (!userStore.validateToken())
-        return slots
+      if (!userStore.validateToken()) return slots
       const { data = [] } = await Apis.archive.getAllHistoryArchive({})
-      data.forEach(({ archive: historyArchives = [], slotIndex = -1, updateTime, ...rest } = {}) => {
-        const archive: ArchiveSlotData = {
-          ...rest,
-          updateTime,
-          slotIndex,
-          timestamp: (updateTime ? new Date(updateTime) : new Date()).getTime(),
-          archiveList: historyArchives
-            .map(body => parserArchive(body, { slotIndex, userId: userStore.auth.userId! }))
-            .sort(({ timestamp: a }, { timestamp: b }) => b - a),
-        }
-        slots[slotIndex] = archive
-      })
+      data.forEach(
+        ({ archive: historyArchives = [], slotIndex = -1, updateTime, ...rest } = {}) => {
+          const archive: ArchiveSlotData = {
+            ...rest,
+            updateTime,
+            slotIndex,
+            timestamp: (updateTime ? new Date(updateTime) : new Date()).getTime(),
+            archiveList: historyArchives
+              .map(body => parserArchive(body, { slotIndex, userId: userStore.auth.userId! }))
+              .sort(({ timestamp: a }, { timestamp: b }) => b - a),
+          }
+          slots[slotIndex] = archive
+        },
+      )
       return slots
     },
   })
 
   /** 加载指定槽位的最新存档 */
   const loadArchiveSlot = (slotIndex = -1) => {
-    if (slotIndex < 0)
-      return
+    if (slotIndex < 0) return
     const archiveSlot = archiveSlots.value[slotIndex]
-    if (!archiveSlot)
-      throw new Error(`槽位 ${slotIndex} 没有存档`)
+    if (!archiveSlot) throw new Error(`槽位 ${slotIndex} 没有存档`)
     const latestArchive = archiveSlot.archiveList[0]
-    if (!latestArchive)
-      throw new Error(`槽位 ${slotIndex} 没有存档历史`)
+    if (!latestArchive) throw new Error(`槽位 ${slotIndex} 没有存档历史`)
     setArchive(latestArchive)
   }
 
@@ -241,13 +246,8 @@ export const useArchiveStore = defineStore('global-archive', () => {
    * 创建新的存档槽位
    * - `saveCurrent` 同时保存当前应用状态为存档
    */
-  const createArchiveSlot = async (
-    name: string,
-    slotIndex: number,
-    saveCurrent = true,
-  ) => {
-    if (slotIndex < 0 || slotIndex >= 5)
-      throw new Error(`无效的存档槽位 ${slotIndex}`)
+  const createArchiveSlot = async (name: string, slotIndex: number, saveCurrent = true) => {
+    if (slotIndex < 0 || slotIndex >= 5) throw new Error(`无效的存档槽位 ${slotIndex}`)
     const data = saveCurrent
       ? getJSONArchive()
       : JSON.stringify({ Data_KYJG: [], Time_KYJG: {}, Preference: {} })
@@ -268,10 +268,8 @@ export const useArchiveStore = defineStore('global-archive', () => {
 
   /** 删除指定槽位的存档 */
   const deleteArchiveSlot = async (slotIndex = -1) => {
-    if (slotIndex < 0 || !userStore.validateToken())
-      return
-    if (slotIndex === currentArchive.value.slotIndex)
-      currentArchive.value.slotIndex = -1
+    if (slotIndex < 0 || !userStore.validateToken()) return
+    if (slotIndex === currentArchive.value.slotIndex) currentArchive.value.slotIndex = -1
     await Apis.archive.removeArchive({
       pathParams: { slot_index: slotIndex },
     })
@@ -280,11 +278,9 @@ export const useArchiveStore = defineStore('global-archive', () => {
 
   /** 加载指定槽位的历史存档 */
   const loadHistoryArchive = (slotIndex: number, timestamp: number) => {
-    if (slotIndex < 0)
-      return
+    if (slotIndex < 0) return
     const archiveSlot = archiveSlots.value[slotIndex]
-    if (!archiveSlot)
-      throw new Error(`槽位 ${slotIndex} 没有存档`)
+    if (!archiveSlot) throw new Error(`槽位 ${slotIndex} 没有存档`)
     const historyArchive = archiveSlot.archiveList.find(history => history.timestamp === timestamp)
     if (!historyArchive)
       throw new Error(`时间为 ${new Date(timestamp).toLocaleString()} 的存档历史为空`)
@@ -297,21 +293,18 @@ export const useArchiveStore = defineStore('global-archive', () => {
 
     for (const slotIndex in archiveSlots.value) {
       const slotArchive = archiveSlots.value[slotIndex]
-      if (!slotArchive)
-        continue
+      if (!slotArchive) continue
       if (!latestArchive || slotArchive.timestamp > latestArchive.timestamp)
         latestArchive = slotArchive
     }
 
     const { userId } = userStore.auth
-    if (userId === undefined)
-      return
+    if (userId === undefined) return
 
     // 如果没有存档，则读取用户的本地数据库存档。
     if (!latestArchive) {
       const localArchive = await db.userArchive.get(userId)
-      if (!localArchive)
-        return
+      if (!localArchive) return
       const { id, body, timestamp } = localArchive
       setArchive({
         id,
@@ -326,8 +319,7 @@ export const useArchiveStore = defineStore('global-archive', () => {
       return
     }
 
-    if (!latestArchive)
-      return
+    if (!latestArchive) return
 
     loadArchiveSlot(latestArchive.slotIndex)
   }
@@ -348,16 +340,23 @@ export const useArchiveStore = defineStore('global-archive', () => {
         timestamp,
       })
     }
-    watch(() => userStore.auth.userId, async () => {
-      await fetchArchive()
-      await loadLatestArchive()
-    }, { immediate: true })
+    watch(
+      () => userStore.auth.userId,
+      async () => {
+        await fetchArchive()
+        await loadLatestArchive()
+      },
+      { immediate: true },
+    )
     // 监听存档内容变化并去抖同步；仅监听 body，避免 slotIndex / timestamp 造成无意义同步
-    watch(() => currentArchive.value.body, () => scheduleSync(), { deep: true, immediate: true })
+    watch(
+      () => currentArchive.value.body,
+      () => scheduleSync(),
+      { deep: true, immediate: true },
+    )
     // 页面隐藏 / 关闭前尽力同步一次，避免去抖窗口内的变更丢失
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden')
-        flush()
+      if (document.visibilityState === 'hidden') flush()
     })
     window.addEventListener('pagehide', () => flush())
   }

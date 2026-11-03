@@ -4,33 +4,35 @@ import type { GSMarkerInfo } from '@/packages/map'
 import { AppIconTagRenderer } from '@/components'
 import { useAreaStore, useIconStore, useItemStore } from '@/stores'
 
-const props = withDefaults(defineProps<{
-  marker?: GSMarkerInfo
-  placeholder?: string
-  reverse?: boolean
-}>(), {
-  placeholder: '--N/A--',
-})
+const props = withDefaults(
+  defineProps<{
+    marker?: GSMarkerInfo
+    placeholder?: string
+    reverse?: boolean
+  }>(),
+  {
+    placeholder: '--N/A--',
+  },
+)
 
 const areaStore = useAreaStore()
 const itemStore = useItemStore()
 const iconStore = useIconStore()
 
 const areas = computed(() => {
-  if (!props.marker)
-    return []
+  if (!props.marker) return []
   const areaIds = new Set<number>()
-  return props.marker.itemList?.reduce((seed, { itemId }) => {
-    const item = itemStore.itemIdMap.get(itemId!)
-    if (!item)
+  return (
+    props.marker.itemList?.reduce((seed, { itemId }) => {
+      const item = itemStore.itemIdMap.get(itemId!)
+      if (!item) return seed
+      const area = areaStore.areaIdMap.get(item.areaId!)
+      if (!area || areaIds.has(area.id!)) return seed
+      seed.push(area)
+      areaIds.add(area.id!)
       return seed
-    const area = areaStore.areaIdMap.get(item.areaId!)
-    if (!area || areaIds.has(area.id!))
-      return seed
-    seed.push(area)
-    areaIds.add(area.id!)
-    return seed
-  }, [] as AreaVo[]) ?? []
+    }, [] as AreaVo[]) ?? []
+  )
 })
 </script>
 
@@ -38,23 +40,14 @@ const areas = computed(() => {
   <div class="w-full h-full overflow-hidden p-2">
     <div
       v-if="!marker"
-      class="
-        h-[48px] rounded px-2
-        grid place-content-center
-        bg-[var(--el-fill-color)]
-        text-[var(--el-text-color-secondary)]
-      "
+      class="h-[48px] rounded px-2 grid place-content-center bg-[var(--el-fill-color)] text-[var(--el-text-color-secondary)]"
     >
       {{ placeholder }}
     </div>
 
     <div
       v-else
-      class="
-        h-[48px] rounded p-1
-        flex items-center gap-1
-        bg-[var(--el-fill-color)]
-      "
+      class="h-[48px] rounded p-1 flex items-center gap-1 bg-[var(--el-fill-color)]"
       :class="reverse ? 'flex-row-reverse' : ''"
     >
       <AppIconTagRenderer
@@ -64,9 +57,7 @@ const areas = computed(() => {
       />
 
       <div class="flex-1 flex flex-col overflow-hidden" :class="reverse ? 'text-right' : ''">
-        <div
-          class="whitespace-nowrap overflow-hidden text-ellipsis"
-        >
+        <div class="whitespace-nowrap overflow-hidden text-ellipsis">
           {{ marker.markerTitle }}
         </div>
         <div class="flex gap-1" :class="reverse ? 'flex-row-reverse' : ''">

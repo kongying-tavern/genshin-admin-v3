@@ -22,7 +22,7 @@ const sortInfo = defineModel<Record<string, string>>('sortInfo', {
   required: true,
 })
 
-const sortOptions: { role: 'key' | 'type', value: string, name: string, divided?: boolean }[] = [
+const sortOptions: { role: 'key' | 'type'; value: string; name: string; divided?: boolean }[] = [
   { role: 'key', value: 'id', name: 'id' },
   { role: 'key', value: 'nickname', name: '昵称' },
   { role: 'key', value: 'createTime', name: '创建时间' },
@@ -38,9 +38,19 @@ const handleSortCommand = (command: string) => {
 </script>
 
 <template>
-  <div class="col-span-3 flex justify-end items-center p-2 border-b-[1px] border-[var(--el-border-color-lighter)]">
+  <div
+    class="col-span-3 flex justify-end items-center p-2 border-b-[1px] border-[var(--el-border-color-lighter)]"
+  >
     <div class="flex gap-1">
-      <el-select v-model="filterRoleIds" multiple clearable collapse-tags placeholder="角色" style="width: 320px" @change="() => $emit('change')">
+      <el-select
+        v-model="filterRoleIds"
+        multiple
+        clearable
+        collapse-tags
+        placeholder="角色"
+        style="width: 320px"
+        @change="() => $emit('change')"
+      >
         <el-option
           v-for="role in userStore.roleList"
           :key="role.id!"
@@ -54,7 +64,12 @@ const handleSortCommand = (command: string) => {
         <el-option label="用户名" value="username" />
       </el-select>
 
-      <el-input v-model="filterValue" placeholder="搜索..." clearable @change="() => $emit('change')">
+      <el-input
+        v-model="filterValue"
+        placeholder="搜索..."
+        clearable
+        @change="() => $emit('change')"
+      >
         <template #prefix>
           <el-icon>
             <Search />
@@ -82,7 +97,11 @@ const handleSortCommand = (command: string) => {
             :divided="option.divided"
           >
             <div class="flex items-center gap-2">
-              <el-icon class="transition-all" :class="{ 'opacity-0': sortInfo[option.role] !== option.value }" :size="12">
+              <el-icon
+                class="transition-all"
+                :class="{ 'opacity-0': sortInfo[option.role] !== option.value }"
+                :size="12"
+              >
                 <CircleCheck />
               </el-icon>
               <div>{{ option.name }}</div>

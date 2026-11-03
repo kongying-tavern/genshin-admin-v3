@@ -14,17 +14,17 @@ const selectedNotice = shallowRef<NoticeVo>()
 
 <style scoped>
 @property --dialog-backdrop-scale {
-  syntax: "<number>";
+  syntax: '<number>';
   inherits: false;
   initial-value: 1;
 }
 
 .app-notice-provider {
   --opacity: 0;
-  --duration: .2s;
+  --duration: 0.2s;
   --dialog-body-scale: 0.8;
   --dialog-body-tr-timing: ease;
-  --dialog-body-tr-duration: .2s;
+  --dialog-body-tr-duration: 0.2s;
 
   display: grid;
   place-items: center;
@@ -41,7 +41,9 @@ const selectedNotice = shallowRef<NoticeVo>()
   outline: none;
   opacity: var(--opacity);
   pointer-events: none;
-  transition: opacity ease .2s, background-color ease .2s;
+  transition:
+    opacity ease 0.2s,
+    background-color ease 0.2s;
 
   &[open] {
     --opacity: 1;

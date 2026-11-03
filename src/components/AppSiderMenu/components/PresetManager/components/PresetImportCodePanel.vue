@@ -1,11 +1,7 @@
 <script lang="ts" setup>
 import { ElMessage } from 'element-plus'
 import { GSButton, GSDivider, GSInput } from '@/components'
-import {
-  usePresetImport,
-  usePresetLoad,
-  usePresetName,
-} from '../hooks'
+import { usePresetImport, usePresetLoad, usePresetName } from '../hooks'
 
 const emit = defineEmits<{
   load: []
@@ -21,8 +17,7 @@ const importCallback = (success: boolean) => {
     })
     code.value = ''
     presetName.value = ''
-  }
-  else {
+  } else {
     ElMessage.error({
       message: '导入失败，分享码无效',
     })
@@ -43,8 +38,7 @@ const loadCallback = (success: boolean) => {
     code.value = ''
     presetName.value = ''
     emit('load')
-  }
-  else {
+  } else {
     ElMessage.error({
       message: '加载失败，分享码无效',
     })
@@ -80,7 +74,12 @@ const { loadPreset } = usePresetLoad({
       >
         加载
       </GSButton>
-      <GSButton :disabled="!code || !presetName" class="flex-1 box-border" icon="submit" @click="importCode()">
+      <GSButton
+        :disabled="!code || !presetName"
+        class="flex-1 box-border"
+        icon="submit"
+        @click="importCode()"
+      >
         导入
       </GSButton>
     </div>
@@ -97,21 +96,21 @@ const { loadPreset } = usePresetLoad({
     height: 100%;
     padding: 12px;
     border-radius: 8px;
-    background: #2A3444;
-    border: 1px solid #6B7A92;
+    background: #2a3444;
+    border: 1px solid #6b7a92;
     box-shadow: none;
-    color: #D3BC8E;
+    color: #d3bc8e;
     font-family: 'HYWenHei-85W';
     font-size: 14px;
     line-height: 1.6;
     font-variant-emoji: text;
 
     &::placeholder {
-      color: #6B7A92;
+      color: #6b7a92;
     }
 
     &:focus {
-      border-color: #6B7A92;
+      border-color: #6b7a92;
       box-shadow: none;
     }
   }

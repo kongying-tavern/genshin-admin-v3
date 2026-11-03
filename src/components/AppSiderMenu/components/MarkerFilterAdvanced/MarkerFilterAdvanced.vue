@@ -2,13 +2,7 @@
 import { DeleteFilled, MapLocation, Plus, QuestionFilled } from '@element-plus/icons-vue'
 import { GSButton } from '@/components'
 import { useMapStateStore } from '@/stores'
-import {
-  MapTilePicker,
-  ModelComponent,
-  ModelGroup,
-  ModelPicker,
-  SemanticText,
-} from '.'
+import { MapTilePicker, ModelComponent, ModelGroup, ModelPicker, SemanticText } from '.'
 import { FilterModel } from './FilterModel'
 
 const mapStateStore = useMapStateStore()
@@ -46,8 +40,7 @@ const openPicker = (groupIndex: number) => {
 }
 
 const handleModelPickerSelected = (id: number) => {
-  if (!Number.isFinite(modelPickerGroupIndex.value) || modelPickerGroupIndex.value <= -1)
-    return
+  if (!Number.isFinite(modelPickerGroupIndex.value) || modelPickerGroupIndex.value <= -1) return
 
   appendMAFItem(modelPickerGroupIndex.value, id)
   modelPickerGroupIndex.value = -1
@@ -59,17 +52,18 @@ const handleModelPickerSelected = (id: number) => {
     <!-- 条件列表 -->
     <div class="flex-auto flex gap-1 items-center">
       条件列表
-      <el-tooltip placement="top-start" effect="light" content="筛选条件不会即时生效，点击【应用】按钮应用当前筛选条件。">
+      <el-tooltip
+        placement="top-start"
+        effect="light"
+        content="筛选条件不会即时生效，点击【应用】按钮应用当前筛选条件。"
+      >
         <el-icon :size="16">
           <QuestionFilled />
         </el-icon>
       </el-tooltip>
     </div>
     <div class="flex-none flex gap-1">
-      <GSButton
-        size="small"
-        @click="openMapTilePicker()"
-      >
+      <GSButton size="small" @click="openMapTilePicker()">
         <template #icon>
           <el-icon color="var(--gs-color-success)">
             <MapLocation />
@@ -85,10 +79,7 @@ const handleModelPickerSelected = (id: number) => {
       >
         应用
       </GSButton>
-      <GSButton
-        size="small"
-        @click="appendMAFGroup()"
-      >
+      <GSButton size="small" @click="appendMAFGroup()">
         <template #icon>
           <el-icon color="var(--gs-color-cancel)">
             <Plus />
@@ -102,9 +93,19 @@ const handleModelPickerSelected = (id: number) => {
     <el-scrollbar class="px-2" height="100%">
       <ModelGroup
         v-model="mapStateStore.markerAdvancedComposed"
-        @append-item="(groupIndex) => openPicker(groupIndex)"
+        @append-item="groupIndex => openPicker(groupIndex)"
       >
-        <template #default="{ groupIndex, item, itemIndex, isFirstItem, isLastItem, isItemGrabbing, isItemDragging }">
+        <template
+          #default="{
+            groupIndex,
+            item,
+            itemIndex,
+            isFirstItem,
+            isLastItem,
+            isItemGrabbing,
+            isItemDragging,
+          }"
+        >
           <ModelComponent
             class="sort-item"
             :class="{
@@ -120,10 +121,7 @@ const handleModelPickerSelected = (id: number) => {
             @toggle-opposite="() => toggleMAFItemOpposite(groupIndex, itemIndex)"
             @delete-item="() => deleteMAFItem(groupIndex, itemIndex)"
           >
-            <FilterModel
-              v-model="item.value"
-              :composed-condition="item"
-            />
+            <FilterModel v-model="item.value" :composed-condition="item" />
           </ModelComponent>
         </template>
       </ModelGroup>
@@ -131,9 +129,7 @@ const handleModelPickerSelected = (id: number) => {
   </div>
 
   <!-- 条件语义化 -->
-  <div class="flex-none px-2 py-1 text-white">
-    条件语义化
-  </div>
+  <div class="flex-none px-2 py-1 text-white">条件语义化</div>
   <div class="py-1 max-h-60">
     <el-scrollbar class="px-2" height="100%">
       <SemanticText />
@@ -159,11 +155,6 @@ const handleModelPickerSelected = (id: number) => {
     <slot name="append" />
   </div>
 
-  <MapTilePicker
-    v-model="mapTilePickerVisible"
-  />
-  <ModelPicker
-    v-model="modelPickerVisible"
-    @select="handleModelPickerSelected"
-  />
+  <MapTilePicker v-model="mapTilePickerVisible" />
+  <ModelPicker v-model="modelPickerVisible" @select="handleModelPickerSelected" />
 </template>

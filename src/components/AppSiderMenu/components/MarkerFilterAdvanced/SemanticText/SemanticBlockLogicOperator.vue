@@ -16,7 +16,7 @@ defineProps<{
 .sem-logic-operator {
   vertical-align: middle;
   color: #2283a7;
-  margin: 0 .2rem;
+  margin: 0 0.2rem;
   font-size: 1.2rem;
 }
 </style>

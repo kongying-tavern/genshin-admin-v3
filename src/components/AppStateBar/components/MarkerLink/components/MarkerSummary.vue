@@ -12,9 +12,7 @@ const iconStore = useIconStore()
 
 <template>
   <div class="overflow-hidden flex-1 rounded-full border bg-[var(--el-color-primary-light-7)]">
-    <div v-if="!data">
-      --/--
-    </div>
+    <div v-if="!data">--/--</div>
 
     <div v-else class="flex gap-1 items-center overflow-hidden">
       <AppIconTagRenderer

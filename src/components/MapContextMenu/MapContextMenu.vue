@@ -33,23 +33,23 @@ const closeContextmenu = () => {
 
 watch(() => mapStateStore.mission, closeContextmenu)
 
-useSubscription(MapSubject.click.subscribe(({ info, event }) => {
-  if (!event.rightButton || mapStateStore.mission)
-    return closeContextmenu()
-  coordinate.value = info.coordinate as DTO.Coordinate2D
-}))
+useSubscription(
+  MapSubject.click.subscribe(({ info, event }) => {
+    if (!event.rightButton || mapStateStore.mission) return closeContextmenu()
+    coordinate.value = info.coordinate as DTO.Coordinate2D
+  }),
+)
 
 const { DialogService } = useGlobalDialog()
 
 const openMarkerCreator = async () => {
-  DialogService
-    .config({
-      width: 'fit-content',
-      alignCenter: true,
-      showClose: false,
-      closeOnClickModal: false,
-      closeOnPressEscape: false,
-    })
+  DialogService.config({
+    width: 'fit-content',
+    alignCenter: true,
+    showClose: false,
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
+  })
     .props({
       coordinate: tileStore.toMarkerCoordinate(coordinate.value as DTO.Coordinate2D),
       defaultItem: markingItem.value,
@@ -64,12 +64,10 @@ const copyCoordinate = (coord: DTO.Coordinate2D) => {
 }
 
 const openSettingDialog = () => {
-  DialogService
-    .config({
-      alignCenter: true,
-      width: 'fit-content',
-    })
-    .open(AppSettings)
+  DialogService.config({
+    alignCenter: true,
+    width: 'fit-content',
+  }).open(AppSettings)
   closeContextmenu()
 }
 </script>
@@ -78,10 +76,7 @@ const openSettingDialog = () => {
   <Transition name="fade">
     <MapAffix v-if="coordinate" :pos="coordinate" pickable no-covert-coord>
       <div class="context-menu ml-2 mt-2 flex flex-col gap-1 relative" @contextmenu.prevent="">
-        <GSButton
-          v-if="accessStore.get('MARKER_CREATE')"
-          @click="openMarkerCreator"
-        >
+        <GSButton v-if="accessStore.get('MARKER_CREATE')" @click="openMarkerCreator">
           <template #icon>
             <el-icon color="var(--gs-color-confirm)">
               <Plus />
@@ -95,7 +90,13 @@ const openSettingDialog = () => {
         </GSButton>
 
         <GSButton v-if="isDev" @click="copyCoordinate(tileStore.toMarkerCoordinate(coordinate!))">
-          标记坐标: {{ `[${tileStore.toMarkerCoordinate(coordinate).map(x => x.toFixed(0)).join(', ')}]` }}
+          标记坐标:
+          {{
+            `[${tileStore
+              .toMarkerCoordinate(coordinate)
+              .map(x => x.toFixed(0))
+              .join(', ')}]`
+          }}
         </GSButton>
 
         <GSButton @click="openSettingDialog">
@@ -125,8 +126,20 @@ const openSettingDialog = () => {
     width: 100px;
     height: 100px;
     background:
-      linear-gradient(to bottom, transparent calc(50% - 0.5px), red calc(50% - 0.5px), red calc(50% + 0.5px), transparent calc(50% + 0.5px)),
-      linear-gradient(to right, transparent calc(50% - 0.5px), red calc(50% - 0.5px), red calc(50% + 0.5px), transparent calc(50% + 0.5px));
+      linear-gradient(
+        to bottom,
+        transparent calc(50% - 0.5px),
+        red calc(50% - 0.5px),
+        red calc(50% + 0.5px),
+        transparent calc(50% + 0.5px)
+      ),
+      linear-gradient(
+        to right,
+        transparent calc(50% - 0.5px),
+        red calc(50% - 0.5px),
+        red calc(50% + 0.5px),
+        transparent calc(50% + 0.5px)
+      );
     translate: -50% -50%;
     pointer-events: none;
     z-index: -1;

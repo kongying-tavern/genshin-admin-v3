@@ -9,14 +9,7 @@
       stroke="currentColor"
       stroke-opacity="0.2"
     />
-    <circle
-      cx="50"
-      cy="50"
-      r="45"
-      fill="transparent"
-      stroke-width="10px"
-      stroke="currentColor"
-    >
+    <circle cx="50" cy="50" r="45" fill="transparent" stroke-width="10px" stroke="currentColor">
       <animate
         attributeName="stroke-dasharray"
         values="40 249; 249 40; 40 249"

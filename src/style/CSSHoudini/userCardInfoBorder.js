@@ -48,7 +48,7 @@ class UserCardInfoBorder {
     ctx.stroke()
 
     const angle = Math.PI / 2
-    ;[width, height, width, height].forEach((tx) => {
+    ;[width, height, width, height].forEach(tx => {
       ctx.translate(tx, 0)
       ctx.rotate(angle)
       this.drawAddonCorner(ctx)

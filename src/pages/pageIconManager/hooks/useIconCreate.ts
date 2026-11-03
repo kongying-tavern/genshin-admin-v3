@@ -14,10 +14,8 @@ export const useIconCreate = (form: Ref<IconVo>, options: IconCreateOptions = {}
   const stash = shallowRef<Record<string, HTMLCanvasElement>>({})
 
   const stashIcon = (variant: string, canvas: HTMLCanvasElement | null) => {
-    if (!canvas)
-      delete stash.value[variant]
-    else
-      stash.value[variant] = canvas
+    if (!canvas) delete stash.value[variant]
+    else stash.value[variant] = canvas
     triggerRef(stash)
   }
 
@@ -33,15 +31,9 @@ export const useIconCreate = (form: Ref<IconVo>, options: IconCreateOptions = {}
     onSuccess,
   } = useFetchHook({
     onRequest: async () => {
-      if (!stash.value.default)
-        throw new Error('默认图标变体不能为空')
+      if (!stash.value.default) throw new Error('默认图标变体不能为空')
 
-      const {
-        description,
-        id,
-        tag,
-        typeIdList,
-      } = form.value
+      const { description, id, tag, typeIdList } = form.value
 
       const mission = Object.entries(stash.value).map(async ([variant, canvas]) => {
         const blob = await toBlob(canvas)
@@ -51,17 +43,23 @@ export const useIconCreate = (form: Ref<IconVo>, options: IconCreateOptions = {}
         const folderName = time.format('YYYY-MM-DD')
         /** @example '2025-09-09/abcdefg.png' */
         const filePath = `${folderName}/${fileName}`
-        const fileUrl = await getOrUploadImage({ file: new File([blob], fileName, { type: blob.type }), filePath })
+        const fileUrl = await getOrUploadImage({
+          file: new File([blob], fileName, { type: blob.type }),
+          filePath,
+        })
         return { variant, url: fileUrl }
       })
 
       const urls = await Promise.all(mission)
 
       // default 变体不进入 urlVariants 字段
-      const { default: defaultVariant = '', ...urlVariants } = urls.reduce((acc, cur) => {
-        acc[cur.variant] = cur.url
-        return acc
-      }, {} as Record<string, string>)
+      const { default: defaultVariant = '', ...urlVariants } = urls.reduce(
+        (acc, cur) => {
+          acc[cur.variant] = cur.url
+          return acc
+        },
+        {} as Record<string, string>,
+      )
 
       await iconStore.createIcon({
         description,
@@ -74,7 +72,7 @@ export const useIconCreate = (form: Ref<IconVo>, options: IconCreateOptions = {}
     },
   })
 
-  onError((err) => {
+  onError(err => {
     ElMessage.error(`创建图标失败，原因为：${err.message}`)
   })
 

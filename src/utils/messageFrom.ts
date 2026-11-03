@@ -13,11 +13,8 @@
  * ```
  */
 export const messageFrom = (v: unknown, defaultMsg = ''): string => {
-  if (typeof v === 'string')
-    return v
-  if (v instanceof Error)
-    return v.message
-  if (v === null || v === undefined)
-    return defaultMsg
+  if (typeof v === 'string') return v
+  if (v instanceof Error) return v.message
+  if (v === null || v === undefined) return defaultMsg
   return `${v}`
 }

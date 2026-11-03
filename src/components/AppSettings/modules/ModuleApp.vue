@@ -25,7 +25,9 @@ const defaultPreference = getDefaultPreference()
       <SettingBar label="批量编辑点位" :icon="Crop">
         <template #setting>
           <ShortcutKey
-            v-model="archiveStore.currentArchive.body.Preference['app.shortcutKey.multiselectMarker']"
+            v-model="
+              archiveStore.currentArchive.body.Preference['app.shortcutKey.multiselectMarker']
+            "
             :default-value="defaultPreference['app.shortcutKey.multiselectMarker']"
           />
         </template>
@@ -34,7 +36,9 @@ const defaultPreference = getDefaultPreference()
       <SettingBar label="批量标记点位" :icon="Grape">
         <template #setting>
           <ShortcutKey
-            v-model="archiveStore.currentArchive.body.Preference['app.shortcutKey.toggleMarkerState']"
+            v-model="
+              archiveStore.currentArchive.body.Preference['app.shortcutKey.toggleMarkerState']
+            "
             :default-value="defaultPreference['app.shortcutKey.toggleMarkerState']"
           />
         </template>

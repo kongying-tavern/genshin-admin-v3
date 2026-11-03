@@ -3,37 +3,48 @@ import type { MarkerItemLinkVo } from '@/api/alova/globals'
 import { AppIconTagRenderer } from '@/components'
 import { useIconStore, useItemStore } from '@/stores'
 
-const props = withDefaults(defineProps<{
-  history?: MarkerItemLinkVo[]
-  current?: MarkerItemLinkVo[]
-}>(), {
-  history: () => [],
-  current: () => [],
-})
+const props = withDefaults(
+  defineProps<{
+    history?: MarkerItemLinkVo[]
+    current?: MarkerItemLinkVo[]
+  }>(),
+  {
+    history: () => [],
+    current: () => [],
+  },
+)
 
 const itemStore = useItemStore()
 const iconStore = useIconStore()
 
 const diffItems = computed(() => {
   const oldIds = props.history.reduce((set, { itemId }) => set.add(itemId!), new Set<number>())
-  const oldCountMap = props.history.reduce((map, { itemId, count = 0 }) => map.set(itemId!, count), new Map<number, number>())
+  const oldCountMap = props.history.reduce(
+    (map, { itemId, count = 0 }) => map.set(itemId!, count),
+    new Map<number, number>(),
+  )
 
   const newIds = props.current.reduce((set, { itemId }) => set.add(itemId!), new Set<number>())
-  const newCountMap = props.current.reduce((map, { itemId, count = 0 }) => map.set(itemId!, count), new Map<number, number>())
+  const newCountMap = props.current.reduce(
+    (map, { itemId, count = 0 }) => map.set(itemId!, count),
+    new Map<number, number>(),
+  )
 
   const bothIds = newIds.union(oldIds)
 
-  return [...bothIds].map((id) => {
-    const item = itemStore.itemIdMap.get(id)
-    return {
-      id,
-      item,
-      count: newCountMap.get(id) ?? oldCountMap.get(id) ?? 0,
-      isCountChanged: newCountMap.get(id) !== oldCountMap.get(id),
-      isCreated: !oldIds.has(id),
-      isRemoved: !newIds.has(id),
-    }
-  }).toSorted(({ id: idA }, { id: idB }) => idA - idB)
+  return [...bothIds]
+    .map(id => {
+      const item = itemStore.itemIdMap.get(id)
+      return {
+        id,
+        item,
+        count: newCountMap.get(id) ?? oldCountMap.get(id) ?? 0,
+        isCountChanged: newCountMap.get(id) !== oldCountMap.get(id),
+        isCreated: !oldIds.has(id),
+        isRemoved: !newIds.has(id),
+      }
+    })
+    .toSorted(({ id: idA }, { id: idB }) => idA - idB)
 })
 </script>
 
@@ -56,16 +67,12 @@ const diffItems = computed(() => {
           :mapping="iconStore.iconCoordMap.get(item?.iconId ?? -1)"
         />
         <div class="flex-1">
-          <div>
-            id: {{ id }}
-          </div>
+          <div>id: {{ id }}</div>
           <div>
             {{ item?.name }}
           </div>
         </div>
-        <div class="grid place-items-center">
-          数量：{{ count }}
-        </div>
+        <div class="grid place-items-center">数量：{{ count }}</div>
       </div>
     </div>
   </div>

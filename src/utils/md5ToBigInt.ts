@@ -10,7 +10,6 @@ export function md5ToBigInt(input: string, byteStart: number, byteEnd: number): 
   const bytes = new Uint8Array(md5.arrayBuffer(input))
   const end = Math.min(byteEnd, bytes.length)
   let value = 0n
-  for (let i = end - 1; i >= byteStart - 1; i--)
-    value = (value << 8n) | BigInt(bytes[i])
+  for (let i = end - 1; i >= byteStart - 1; i--) value = (value << 8n) | BigInt(bytes[i])
   return value
 }

@@ -4,10 +4,12 @@ export class RouteQuery {
   static readonly Invitation = {
     getKey: () => 'invitation',
     stringify: ({ code, username }: RouteQueryInvitation) => {
-      return window.btoa(JSON.stringify({
-        code,
-        username,
-      }))
+      return window.btoa(
+        JSON.stringify({
+          code,
+          username,
+        }),
+      )
     },
     parse: (value: string) => {
       return JSON.parse(window.atob(value)) as RouteQueryInvitation

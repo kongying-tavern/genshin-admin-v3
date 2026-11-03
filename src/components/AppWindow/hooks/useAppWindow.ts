@@ -15,15 +15,13 @@ export interface WindowContextHookReturnType {
 let context: WindowContext
 
 export function useAppWindow(): WindowContext
-export function useAppWindow(options: MaybeRef<Omit<MapWindow.WindowOpenParams, 'id'>>): WindowContextHookReturnType
 export function useAppWindow(
-  options?: MaybeRef<Omit<MapWindow.WindowOpenParams, 'id'>>,
-) {
-  if (!context)
-    context = new WindowContext()
+  options: MaybeRef<Omit<MapWindow.WindowOpenParams, 'id'>>,
+): WindowContextHookReturnType
+export function useAppWindow(options?: MaybeRef<Omit<MapWindow.WindowOpenParams, 'id'>>) {
+  if (!context) context = new WindowContext()
 
-  if (!options)
-    return context
+  if (!options) return context
 
   const id = crypto.randomUUID()
 

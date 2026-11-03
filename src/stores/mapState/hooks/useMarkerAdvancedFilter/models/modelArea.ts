@@ -43,13 +43,13 @@ export class Area implements MAFConfig<MAFValueNumberArray, OptionType, MAFMetaA
 
     const { areaIdMap, childrenAreaList } = useAreaStore()
     // 处理标签名
-    meta.tagList = val.na
-      .map(areaId => (areaIdMap.get(areaId) ?? {}).name!)
-      .filter(v => v)
+    meta.tagList = val.na.map(areaId => (areaIdMap.get(areaId) ?? {}).name!).filter(v => v)
     meta.tag = meta.tagList.join(',')
 
     // 处理地区父ID映射
-    meta.areaParentIdMap = Object.fromEntries(childrenAreaList.map(({ id: childId = 0, parentId = -1 }) => [childId, parentId]))
+    meta.areaParentIdMap = Object.fromEntries(
+      childrenAreaList.map(({ id: childId = 0, parentId = -1 }) => [childId, parentId]),
+    )
 
     // 处理物品ID
     if (val.na && val.na.length > 0) {
@@ -64,7 +64,12 @@ export class Area implements MAFConfig<MAFValueNumberArray, OptionType, MAFMetaA
     return meta
   }
 
-  semantic(_val: MAFValueNumberArray, _opt: OptionType, meta: MAFMetaArea, opposite: boolean): (MAFSemanticUnit | null)[] {
+  semantic(
+    _val: MAFValueNumberArray,
+    _opt: OptionType,
+    meta: MAFMetaArea,
+    opposite: boolean,
+  ): (MAFSemanticUnit | null)[] {
     return [
       { type: 'text', text: '地区' },
       opposite ? { type: 'opposite-indicator', text: '不' } : null,
@@ -73,11 +78,15 @@ export class Area implements MAFConfig<MAFValueNumberArray, OptionType, MAFMetaA
     ]
   }
 
-  filter(_val: MAFValueNumberArray, _opt: OptionType, meta: MAFMetaArea, marker: MarkerVo): boolean {
+  filter(
+    _val: MAFValueNumberArray,
+    _opt: OptionType,
+    meta: MAFMetaArea,
+    marker: MarkerVo,
+  ): boolean {
     const itemIds: number[] = (marker.itemList ?? []).map(v => v.itemId!).filter(v => v)
     for (const itemId of itemIds) {
-      if (meta.itemIds.has(itemId))
-        return true
+      if (meta.itemIds.has(itemId)) return true
     }
     return false
   }

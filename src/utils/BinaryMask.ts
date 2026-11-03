@@ -1,8 +1,7 @@
 /** 掩码操作工具类 */
 export class BinaryMask<T extends string = string> {
   constructor(maskKeys: T[]) {
-    if (maskKeys.length < 0)
-      throw new Error('掩码配置数组不能为空')
+    if (maskKeys.length < 0) throw new Error('掩码配置数组不能为空')
     this.#indexMap = maskKeys.reduce((map, key, index) => {
       return map.set(key, index)
     }, new Map<T, number>())
@@ -11,16 +10,14 @@ export class BinaryMask<T extends string = string> {
   #indexMap: Map<T, number>
 
   #assertInteger = (mask: number) => {
-    if (!Number.isInteger(mask))
-      throw new Error(`掩码必须是整数`)
+    if (!Number.isInteger(mask)) throw new Error(`掩码必须是整数`)
   }
 
   /** 判断某个 key 在给定的二进制掩码上是否处于激活状态 */
   isActive = (mask: number, key: T): boolean => {
     this.#assertInteger(mask)
     const index = this.#indexMap.get(key)
-    if (index === undefined)
-      return false
+    if (index === undefined) return false
     return (mask & (1 << index)) !== 0
   }
 
@@ -31,8 +28,7 @@ export class BinaryMask<T extends string = string> {
   active = (mask: number, key: T): number => {
     this.#assertInteger(mask)
     const index = this.#indexMap.get(key)
-    if (index === undefined)
-      return mask
+    if (index === undefined) return mask
     return mask | (1 << index)
   }
 
@@ -43,8 +39,7 @@ export class BinaryMask<T extends string = string> {
   inactive = (mask: number, key: T): number => {
     this.#assertInteger(mask)
     const index = this.#indexMap.get(key)
-    if (index === undefined)
-      return mask
+    if (index === undefined) return mask
     return mask & ~(1 << index)
   }
 

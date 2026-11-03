@@ -7,13 +7,14 @@ const preferenceStore = usePreferenceStore()
 
 const pageSizeMap = computed(() => new Map(preferenceStore.pageSize))
 
-const usePageSize = (module: ManagerModule) => computed({
-  get: () => pageSizeMap.value.get(module) ?? 10,
-  set: (size) => {
-    const result = new Map(pageSizeMap.value).set(module, size).entries()
-    preferenceStore.pageSize = [...result]
-  },
-})
+const usePageSize = (module: ManagerModule) =>
+  computed({
+    get: () => pageSizeMap.value.get(module) ?? 10,
+    set: size => {
+      const result = new Map(pageSizeMap.value).set(module, size).entries()
+      preferenceStore.pageSize = [...result]
+    },
+  })
 
 const itemPageSize = usePageSize(ManagerModule.Item)
 const markerPageSize = usePageSize(ManagerModule.Marker)
@@ -29,7 +30,12 @@ const historyPageSize = usePageSize(ManagerModule.History)
     <SettingGroup name="点位编辑">
       <SettingBar label="可同时移动的点位数量" note="未填或为 0 时表示不限制">
         <template #setting>
-          <el-input-number v-model="preferenceStore.markerDraggingCount" :min="0" :max="10000" :step="1" />
+          <el-input-number
+            v-model="preferenceStore.markerDraggingCount"
+            :min="0"
+            :max="10000"
+            :step="1"
+          />
         </template>
       </SettingBar>
     </SettingGroup>

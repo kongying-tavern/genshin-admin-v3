@@ -12,10 +12,14 @@ export interface GSMessageProps {
 /** 全局消息提示，单例模式 */
 export class GSMessageService {
   static #props = ref<GSMessageProps | null>(null)
-  static get props() { return this.#props.value }
+  static get props() {
+    return this.#props.value
+  }
 
   static #visible = ref(false)
-  static get visible() { return this.#visible.value }
+  static get visible() {
+    return this.#visible.value
+  }
 
   static close = () => {
     this.#visible.value = false

@@ -22,8 +22,7 @@ export const useInteractionInfo = () => {
   const addInteraction = (interaction: 'focus' | 'hover') => {
     const elements = interaction === 'focus' ? focusElements.value : hoverElements.value
     return <T>(type: string, value: T, single = false) => {
-      if (isPaused.value[interaction][type] || value === undefined || value === null)
-        return
+      if (isPaused.value[interaction][type] || value === undefined || value === null) return
       if (single) {
         elements.clear()
         elements.set(type, new Set([value]))
@@ -34,8 +33,7 @@ export const useInteractionInfo = () => {
         elements.set(type, new Set([value]))
         return updateTime()
       }
-      if (set.has(value))
-        return
+      if (set.has(value)) return
       set.add(value)
       return updateTime()
     }
@@ -44,8 +42,7 @@ export const useInteractionInfo = () => {
   const setInteraction = (interaction: 'focus' | 'hover') => {
     const elements = interaction === 'focus' ? focusElements.value : hoverElements.value
     return <T>(type: string, value: Set<T>) => {
-      if (isPaused.value[interaction][type])
-        return
+      if (isPaused.value[interaction][type]) return
       elements.set(type, value)
       return updateTime()
     }
@@ -54,21 +51,17 @@ export const useInteractionInfo = () => {
   const removeInteraction = (interaction: 'focus' | 'hover') => {
     const elements = interaction === 'focus' ? focusElements.value : hoverElements.value
     return <T>(type: string, value?: T) => {
-      if (isPaused.value[interaction][type] || !elements.has(type))
-        return
+      if (isPaused.value[interaction][type] || !elements.has(type)) return
 
       const set = elements.get(type)!
       if (value === undefined) {
         set.clear()
-      }
-      else {
-        if (!set.has(value))
-          return
+      } else {
+        if (!set.has(value)) return
         set.delete(value)
       }
 
-      if (set.size === 0)
-        elements.delete(type)
+      if (set.size === 0) elements.delete(type)
       return updateTime()
     }
   }
@@ -76,8 +69,7 @@ export const useInteractionInfo = () => {
   const clearInteraction = (interaction: 'focus' | 'hover') => {
     const elements = interaction === 'focus' ? focusElements.value : hoverElements.value
     return () => {
-      if (elements.size === 0)
-        return
+      if (elements.size === 0) return
       elements.clear()
       return updateTime()
     }

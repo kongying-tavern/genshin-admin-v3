@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import type { IconOverride, MarkerExtraVo, MarkerItemLinkVo, Underground, V2_8_Island } from '@/api/alova/globals'
+import type {
+  IconOverride,
+  MarkerExtraVo,
+  MarkerItemLinkVo,
+  Underground,
+  V2_8_Island,
+} from '@/api/alova/globals'
 import { Setting } from '@element-plus/icons-vue'
 import { useIconStore } from '@/stores'
 import { AddonTeleporter } from '..'
@@ -29,7 +35,7 @@ const regionMap = computed(() => {
       map.set(value, { label, value, parent: { label: pl, value: pv } })
     })
     return map
-  }, new Map<string, { label: string, value: string, parent: { label: string, value: string } }>())
+  }, new Map<string, { label: string; value: string; parent: { label: string; value: string } }>())
 })
 
 const regionIsland28Map = computed(() => {
@@ -39,7 +45,7 @@ const regionIsland28Map = computed(() => {
     children.forEach(({ label: cl, value: cv }) => childrenMap.set(cv, cl))
     map.set(value, { label, value, children: childrenMap })
     return map
-  }, new Map<string, { label: string, value: string, children: Map<string, string> }>())
+  }, new Map<string, { label: string; value: string; children: Map<string, string> }>())
 })
 
 const regionIsland16Map = computed(() => {
@@ -48,39 +54,31 @@ const regionIsland16Map = computed(() => {
 })
 
 const tagParser: Record<string, (data: unknown) => TagInfo | TagInfo[]> = {
-  'iconOverride': (data: unknown) => {
-    if (typeof data !== 'object' || !data)
-      return [] as TagInfo[]
+  iconOverride: (data: unknown) => {
+    if (typeof data !== 'object' || !data) return [] as TagInfo[]
     const { id } = (data as IconOverride) ?? {}
-    if (!id)
-      return [] as TagInfo[]
+    if (!id) return [] as TagInfo[]
     const icon = useIconStore().idMap.get(id)
-    if (!icon)
-      return [] as TagInfo[]
+    if (!icon) return [] as TagInfo[]
     return {
       type: '覆盖图标',
       label: icon.tag,
     } as TagInfo
   },
 
-  'underground': (data: unknown) => {
-    if (typeof data !== 'object' || !data)
-      return []
+  underground: (data: unknown) => {
+    if (typeof data !== 'object' || !data) return []
     const {
       region_levels: levels = [],
       is_underground: isUnderground,
       is_global: isGlobal,
     } = (data as Underground) ?? {}
-    if (!isUnderground)
-      return []
+    if (!isUnderground) return []
     const defaultInfo = { type: '非地面', label: 'unknown' }
     const undergroundConfig = props.config.underground
-    if (!undergroundConfig)
-      return defaultInfo
-    if (isGlobal)
-      return { type: '非地面', label: '无层级' }
-    if (!levels.length)
-      return { type: defaultInfo.type, label: '未设置层级' }
+    if (!undergroundConfig) return defaultInfo
+    if (isGlobal) return { type: '非地面', label: '无层级' }
+    if (!levels.length) return { type: defaultInfo.type, label: '未设置层级' }
     const map = toValue(regionMap)
     return levels.reduce((seed, value) => {
       const region = map.get(value)
@@ -90,18 +88,14 @@ const tagParser: Record<string, (data: unknown) => TagInfo | TagInfo[]> = {
   },
 
   '2_8_island': (data: unknown) => {
-    if (typeof data !== 'object' || !data)
-      return []
+    if (typeof data !== 'object' || !data) return []
     const { island_name: parentValue, island_state: children } = (data as V2_8_Island) ?? {}
-    if (!parentValue)
-      return []
+    if (!parentValue) return []
     const defaultInfo = { type: '2.8 海岛', label: 'unknown' }
     const island28Config = props.config['2_8_island']?.stages
-    if (!island28Config)
-      return defaultInfo
+    if (!island28Config) return defaultInfo
     const parent = toValue(regionIsland28Map).get(parentValue!)
-    if (!parent)
-      return defaultInfo
+    if (!parent) return defaultInfo
     return {
       type: defaultInfo.type,
       label: `${parent.label}${children?.length ? `-{${children?.map(child => parent.children.get(child!) ?? '').join(',\n')}}` : ''}`,
@@ -109,15 +103,12 @@ const tagParser: Record<string, (data: unknown) => TagInfo | TagInfo[]> = {
   },
 
   '1_6_island': (data: unknown) => {
-    if (typeof data !== 'object' || !data)
-      return []
+    if (typeof data !== 'object' || !data) return []
     const levels = (data as string[]) ?? []
-    if (!levels.length)
-      return []
+    if (!levels.length) return []
     const defaultInfo = { type: '1.6 海岛', label: 'unknown' }
     const island16Config = props.config['1_6_island']?.stages
-    if (!island16Config)
-      return defaultInfo
+    if (!island16Config) return defaultInfo
     const map = toValue(regionIsland16Map)
     return {
       type: defaultInfo.type,
@@ -126,24 +117,26 @@ const tagParser: Record<string, (data: unknown) => TagInfo | TagInfo[]> = {
   },
 }
 
-const parseTags = (data: MarkerExtraVo) => Object.entries(data).reduce((seed, [key, value]) => {
-  const parser = tagParser[key]
-  if (!parser)
+const parseTags = (data: MarkerExtraVo) =>
+  Object.entries(data).reduce((seed, [key, value]) => {
+    const parser = tagParser[key]
+    if (!parser) return seed
+    const res = parser(value)
+    if (Array.isArray(res)) res.forEach(item => seed.push(item))
+    else seed.push(res)
     return seed
-  const res = parser(value)
-  if (Array.isArray(res))
-    res.forEach(item => seed.push(item))
-  else
-    seed.push(res)
-  return seed
-}, [] as TagInfo[])
+  }, [] as TagInfo[])
 
 // 将 extra 数据转换为可视 tag
 const tags = ref(parseTags(toValue(modelValue)))
 
-watch(modelValue, (data) => {
-  tags.value = parseTags(data)
-}, { deep: true })
+watch(
+  modelValue,
+  data => {
+    tags.value = parseTags(data)
+  },
+  { deep: true },
+)
 
 const addonId = defineModel<string>('addonId', { required: true })
 const isAddonActive = useAddonActive(addonId, 'extra')
@@ -151,19 +144,17 @@ const isAddonActive = useAddonActive(addonId, 'extra')
 
 <template>
   <div class="w-full flex gap-1 overflow-hidden">
-    <div
-      class="h-full min-h-[32px] flex-1 rounded text-sm flex flex-wrap gap-1 overflow-hidden"
-    >
+    <div class="h-full min-h-[32px] flex-1 rounded text-sm flex flex-wrap gap-1 overflow-hidden">
       <div
-        class="
-          flex-1 overflow-hidden
-          p-1 rounded flex flex-col items-start gap-1
-          border
-          text-xs
+        class="flex-1 overflow-hidden p-1 rounded flex flex-col items-start gap-1 border text-xs"
+        :class="
+          isAddonActive ? 'border-[var(--el-color-primary)]' : 'border-[var(--el-border-color)]'
         "
-        :class="isAddonActive ? 'border-[var(--el-color-primary)]' : 'border-[var(--el-border-color)]'"
       >
-        <div v-if="!tags.length" class="px-1 text-[var(--el-text-color-secondary)] text-xs leading-5">
+        <div
+          v-if="!tags.length"
+          class="px-1 text-[var(--el-text-color-secondary)] text-xs leading-5"
+        >
           无
         </div>
 
@@ -171,33 +162,16 @@ const isAddonActive = useAddonActive(addonId, 'extra')
           v-for="tag in tags"
           :key="tag.label"
           :title="tag.label"
-          class="
-            max-w-full overflow-hidden
-            flex items-center rounded-[3px]
-            border border-transparent
-            hover:border-[var(--el-color-primary-light-5)]
-            select-none cursor-pointer
-          "
+          class="max-w-full overflow-hidden flex items-center rounded-[3px] border border-transparent hover:border-[var(--el-color-primary-light-5)] select-none cursor-pointer"
           @click="isAddonActive = true"
         >
           <div
-            class="
-              flex-shrink-0
-              p-0.5 px-1.5 rounded-[2px_0_0_2px]
-              bg-[var(--el-color-warning-light-9)]
-              text-[var(--el-color-warning)]
-              whitespace-nowrap overflow-hidden text-ellipsis
-            "
+            class="flex-shrink-0 p-0.5 px-1.5 rounded-[2px_0_0_2px] bg-[var(--el-color-warning-light-9)] text-[var(--el-color-warning)] whitespace-nowrap overflow-hidden text-ellipsis"
           >
             {{ tag.type }}
           </div>
           <div
-            class="
-              p-0.5 px-1.5 rounded-[0_2px_2px_0]
-              bg-[var(--el-color-primary-light-9)]
-              text-[var(--el-color-primary)]
-              whitespace-nowrap overflow-hidden text-ellipsis
-            "
+            class="p-0.5 px-1.5 rounded-[0_2px_2px_0] bg-[var(--el-color-primary-light-9)] text-[var(--el-color-primary)] whitespace-nowrap overflow-hidden text-ellipsis"
           >
             {{ tag.label }}
           </div>
@@ -215,29 +189,13 @@ const isAddonActive = useAddonActive(addonId, 'extra')
 
       <AddonTeleporter :active="isAddonActive">
         <div class="w-full h-full flex flex-col overflow-x-hidden overflow-y-auto">
-          <RegionCommon
-            v-if="config.underground"
-            v-model="modelValue.underground"
-            :config
-          />
+          <RegionCommon v-if="config.underground" v-model="modelValue.underground" :config />
 
-          <RegionIsland16
-            v-if="config['1_6_island']"
-            v-model="modelValue['1_6_island']"
-            :config
-          />
+          <RegionIsland16 v-if="config['1_6_island']" v-model="modelValue['1_6_island']" :config />
 
-          <RegionIsland28
-            v-if="config['2_8_island']"
-            v-model="modelValue['2_8_island']"
-            :config
-          />
+          <RegionIsland28 v-if="config['2_8_island']" v-model="modelValue['2_8_island']" :config />
 
-          <OverrideIcon
-            v-if="isIconOverridable"
-            v-model="modelValue.iconOverride"
-            :config
-          />
+          <OverrideIcon v-if="isIconOverridable" v-model="modelValue.iconOverride" :config />
         </div>
       </AddonTeleporter>
     </div>

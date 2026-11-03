@@ -42,7 +42,11 @@ class DarkCardBorder {
     ctx.fill(new Path2D('M 4 31L 4 14Q 4 4 14 4L 31 4Q 4 4 4 31Z'))
 
     ctx.fillStyle = '#FCF1B3'
-    ctx.fill(new Path2D('M 8.5 8.5 L 17.5 12.5 L 26.5 8.5 L 22.5 17.5 L 26.5 26.5 L 17.5 22.5 L 8.5 26.5 L 12.5 17.5 Z'))
+    ctx.fill(
+      new Path2D(
+        'M 8.5 8.5 L 17.5 12.5 L 26.5 8.5 L 22.5 17.5 L 26.5 26.5 L 17.5 22.5 L 8.5 26.5 L 12.5 17.5 Z',
+      ),
+    )
   }
 
   /**
@@ -70,7 +74,7 @@ class DarkCardBorder {
     ctx.stroke(path)
 
     const angle = Math.PI / 2
-    ;[width, height, width, height].forEach((tx) => {
+    ;[width, height, width, height].forEach(tx => {
       ctx.translate(tx, 0)
       ctx.rotate(angle)
       this.#drawCorner(ctx)

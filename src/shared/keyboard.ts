@@ -52,7 +52,7 @@ export const STANDARD_KEYBOARD_KEYS = new Set<string>([
   'k',
   'l',
   ';',
-  '\'',
+  "'",
   'enter',
 
   /** 主键区第 4 行 (12) */
@@ -116,7 +116,7 @@ export const STANDARD_KEYBOARD_KEYS = new Set<string>([
 /**
  * 键盘 key 值的别名
  */
-export const KEYBOARD_ALIAS = new class KeyboardAlias extends Map<string, string> {
+export const KEYBOARD_ALIAS = new (class KeyboardAlias extends Map<string, string> {
   private alias = new Map([
     ['control', 'Ctrl'],
     [' ', 'Space'],
@@ -134,7 +134,7 @@ export const KEYBOARD_ALIAS = new class KeyboardAlias extends Map<string, string
   get = (key: string) => {
     return this.alias.get(key) ?? upperFirst(key)
   }
-}()
+})()
 
 /** 不能用于快捷键结尾的 key 值 */
 export const CONTROL_KEYS = new Set(['control', 'shift', 'alt'])

@@ -27,10 +27,10 @@ export const TextColor = Extension.create<ColorOptions>({
         attributes: {
           color: {
             default: null,
-            parseHTML: (element) => {
+            parseHTML: element => {
               return element.style.getPropertyValue('--color')
             },
-            renderHTML: (attributes) => {
+            renderHTML: attributes => {
               return !attributes.color
                 ? {}
                 : {
@@ -44,17 +44,16 @@ export const TextColor = Extension.create<ColorOptions>({
   },
   addCommands() {
     return {
-      setColor: color => ({ chain }) => {
-        return chain()
-          .setMark('color', { color })
-          .run()
-      },
-      unsetColor: () => ({ chain }) => {
-        return chain()
-          .setMark('color', { color: null })
-          .removeEmptyTextStyle()
-          .run()
-      },
+      setColor:
+        color =>
+        ({ chain }) => {
+          return chain().setMark('color', { color }).run()
+        },
+      unsetColor:
+        () =>
+        ({ chain }) => {
+          return chain().setMark('color', { color: null }).removeEmptyTextStyle().run()
+        },
     }
   },
 })

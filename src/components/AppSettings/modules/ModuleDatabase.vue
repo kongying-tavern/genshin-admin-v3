@@ -3,7 +3,14 @@ import { Refresh, RefreshLeft, WarnTriangleFilled } from '@element-plus/icons-vu
 import { ElMessageBox } from 'element-plus'
 import db from '@/database'
 import { now } from '@/shared'
-import { useAreaStore, useIconStore, useItemStore, useItemTypeStore, useMarkerLinkStore, useMarkerStore } from '@/stores'
+import {
+  useAreaStore,
+  useIconStore,
+  useItemStore,
+  useItemTypeStore,
+  useMarkerLinkStore,
+  useMarkerStore,
+} from '@/stores'
 import { SettingBar, SettingGroup, SettingPanel } from '../components'
 
 const areaStore = useAreaStore()
@@ -96,8 +103,7 @@ const deleteDatabase = async () => {
       confirmButtonClass: 'el-button--info is-text',
       confirmButtonText: '取消',
       beforeClose: async (action, instance, done) => {
-        if (action !== 'cancel')
-          return done()
+        if (action !== 'cancel') return done()
         instance.cancelButtonLoading = true
         await db.delete().catch(() => false)
         instance.cancelButtonLoading = false
@@ -105,8 +111,7 @@ const deleteDatabase = async () => {
         location.reload()
       },
     })
-  }
-  catch {
+  } catch {
     // cancel, no error
   }
 }
@@ -115,11 +120,7 @@ const deleteDatabase = async () => {
 <template>
   <SettingPanel>
     <SettingGroup name="存储详情">
-      <SettingBar
-        v-for="store in dbList"
-        :key="store.label"
-        :label="store.label"
-      >
+      <SettingBar v-for="store in dbList" :key="store.label" :label="store.label">
         <template #note>
           <div class="text-xs text-[var(--el-text-color-regular)] mb-0.5">
             共 {{ store.total.value }} 项{{
@@ -139,7 +140,7 @@ const deleteDatabase = async () => {
             :striped="store.loading.value"
             :striped-flow="store.loading.value"
             :status="store.error.value ? 'exception' : store.loading.value ? '' : 'success'"
-            style="height: 16px; --progress-radius: 2px; container-type: size;"
+            style="height: 16px; --progress-radius: 2px; container-type: size"
           >
             <div class="text-left w-[100cqw]">
               {{ store.error.value || store.message.value }}
@@ -150,14 +151,19 @@ const deleteDatabase = async () => {
         <template #setting>
           <div class="flex flex-col">
             <el-button
-              text type="primary" :icon="RefreshLeft"
+              text
+              type="primary"
+              :icon="RefreshLeft"
               :loading="store.loading.value"
               @click="store.updateDiff"
             >
               差异更新
             </el-button>
             <el-button
-              text type="warning" :icon="Refresh" style="margin-left: 0;"
+              text
+              type="warning"
+              :icon="Refresh"
+              style="margin-left: 0"
               :loading="store.loading.value"
               @click="store.updateFull"
             >

@@ -18,10 +18,13 @@ const props = withDefaults(defineProps<GenshinMapAffixProps>(), {
   zIndex: 1,
 })
 
-const viewState = inject(mapViewStateKey, ref<GenshinMapViewState>({
-  target: [0, 0],
-  zoom: 0,
-}))
+const viewState = inject(
+  mapViewStateKey,
+  ref<GenshinMapViewState>({
+    target: [0, 0],
+    zoom: 0,
+  }),
+)
 
 const { position, scaleRatio } = useMapProjection({
   coord: computed(() => props.pos),
@@ -30,7 +33,7 @@ const { position, scaleRatio } = useMapProjection({
 })
 
 /** 如果选择随地图缩放，则使用缩放比例，否则不变 */
-const switchScaleRatio = computed(() => props.zoomWithMap ? scaleRatio.value : 1)
+const switchScaleRatio = computed(() => (props.zoomWithMap ? scaleRatio.value : 1))
 
 const affixVisible = computed(() => props.pos !== undefined && props.visible !== false)
 </script>
@@ -51,11 +54,7 @@ const affixVisible = computed(() => props.pos !== undefined && props.visible !==
     }"
     @contextmenu.prevent=""
   >
-    <slot
-      name="default"
-      :scale="switchScaleRatio"
-      :zoom="viewState.zoom"
-    />
+    <slot name="default" :scale="switchScaleRatio" :zoom="viewState.zoom" />
   </div>
 </template>
 

@@ -84,38 +84,50 @@ const viewState: Ref<GenshinMapViewState> = ref({
 })
 
 // 将 viewState 变更事件响应到绑定对象上
-useSubscription(MapSubject.viewState.subscribe((newViewState) => {
-  viewState.value = {
-    ...viewState.value,
-    ...newViewState,
-  }
-}))
+useSubscription(
+  MapSubject.viewState.subscribe(newViewState => {
+    viewState.value = {
+      ...viewState.value,
+      ...newViewState,
+    }
+  }),
+)
 
 // 切换地区时，使用地区配置的初始视口状态
-watch(() => tileStore.currentTileConfig, (currentTileConfig) => {
-  if (!currentTileConfig)
-    return
-  const { target: [x, y], zoom } = currentTileConfig.initViewState
-  const [ox, oy] = currentTileConfig.tile.center
-  viewState.value = {
-    ...viewState.value,
-    target: [x + ox, y + oy],
-    zoom,
-    transitionDuration: 1000,
-    transitionInterpolator: new EaseoutInterpolator(['target', 'zoom']),
-  }
-}, { immediate: true })
+watch(
+  () => tileStore.currentTileConfig,
+  currentTileConfig => {
+    if (!currentTileConfig) return
+    const {
+      target: [x, y],
+      zoom,
+    } = currentTileConfig.initViewState
+    const [ox, oy] = currentTileConfig.tile.center
+    viewState.value = {
+      ...viewState.value,
+      target: [x + ox, y + oy],
+      zoom,
+      transitionDuration: 1000,
+      transitionInterpolator: new EaseoutInterpolator(['target', 'zoom']),
+    }
+  },
+  { immediate: true },
+)
 
 // ================ 地图管理 ================
 // 地图 focus 清理
-useSubscription(MapSubject.click.pipe(
-  filter(({ info }) => !info.layer),
-).subscribe(() => mapStateStore.interaction.clearFocus()))
+useSubscription(
+  MapSubject.click
+    .pipe(filter(({ info }) => !info.layer))
+    .subscribe(() => mapStateStore.interaction.clearFocus()),
+)
 
 // 地图 hover 清理
-useSubscription(MapSubject.hover.pipe(
-  filter(({ info }) => !info.layer),
-).subscribe(() => mapStateStore.interaction.clearHover()))
+useSubscription(
+  MapSubject.hover
+    .pipe(filter(({ info }) => !info.layer))
+    .subscribe(() => mapStateStore.interaction.clearHover()),
+)
 
 // ================ 图层管理 ================
 const { layers } = useMapLayers()
@@ -132,16 +144,12 @@ const router = useRouter()
 
 onMounted(() => {
   const { pathMatch } = route.params
-  if (pathMatch)
-    router.replace('/')
+  if (pathMatch) router.replace('/')
 })
 </script>
 
 <template>
-  <div
-    ref="containerRef"
-    class="w-full h-full overflow-hidden relative"
-  >
+  <div ref="containerRef" class="w-full h-full overflow-hidden relative">
     <GenshinMapDeck
       v-model:canvas-ref="mapCanvasRef"
       v-model:view-state="viewState"
@@ -151,7 +159,7 @@ onMounted(() => {
       class="bg-black"
       @focus="event => MapSubject.focus.next(event)"
       @blur="event => MapSubject.blur.next(event)"
-      @load="(instance) => (genshinDeck = instance)"
+      @load="instance => (genshinDeck = instance)"
       @click="(info, event) => MapSubject.click.next({ info, event })"
       @hover="(info, event) => MapSubject.hover.next({ info, event })"
       @drag="(info, event) => MapSubject.drag.next({ info, event })"
@@ -184,7 +192,7 @@ onMounted(() => {
       :close-on-press-escape="false"
       header-class="hidden"
       body-class="bg-transparent"
-      style="--el-dialog-bg-color: transparent;"
+      style="--el-dialog-bg-color: transparent"
       append-to-body
       width="fit-content"
     >

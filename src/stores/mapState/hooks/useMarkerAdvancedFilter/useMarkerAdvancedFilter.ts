@@ -57,7 +57,10 @@ const configList = [
   new ItemCount(),
 ]
 
-const configMap: Record<MAFModelId, MAFConfig> = keyBy(configList as unknown as MAFConfig[], 'id') as Record<MAFModelId, MAFConfig>
+const configMap: Record<MAFModelId, MAFConfig> = keyBy(
+  configList as unknown as MAFConfig[],
+  'id',
+) as Record<MAFModelId, MAFConfig>
 
 const createEmptyGroup = (): MAFGroup => ({
   key: crypto.randomUUID(),
@@ -80,27 +83,30 @@ const _useMarkerAdvancedFilter = (options: MarkerAdvancedFilterHookOptions) => {
   const { archiveStore } = options
 
   const advancedFilter = computed({
-    get: () => archiveStore.currentArchive.body.Preference['markerFilter.filter.advancedFilter'] ?? [],
-    set: (filter) => {
+    get: () =>
+      archiveStore.currentArchive.body.Preference['markerFilter.filter.advancedFilter'] ?? [],
+    set: filter => {
       archiveStore.currentArchive.body.Preference['markerFilter.filter.advancedFilter'] = filter
     },
   })
 
   const advancedFilterCache = computed({
-    get: () => archiveStore.currentArchive.body.Preference['markerFilter.filter.advancedFilterCache'] ?? [],
-    set: (cache) => {
+    get: () =>
+      archiveStore.currentArchive.body.Preference['markerFilter.filter.advancedFilterCache'] ?? [],
+    set: cache => {
       archiveStore.currentArchive.body.Preference['markerFilter.filter.advancedFilterCache'] = cache
     },
   })
 
-  const getMAFConfig = (id: MAFModelId): MAFConfig => configMap[id] ?? {
-    id: 0 as MAFModelId,
-    name: '',
-    option: {},
-    defaultVal: {},
-    semantic: () => '',
-    filter: () => true,
-  }
+  const getMAFConfig = (id: MAFModelId): MAFConfig =>
+    configMap[id] ?? {
+      id: 0 as MAFModelId,
+      name: '',
+      option: {},
+      defaultVal: {},
+      semantic: () => '',
+      filter: () => true,
+    }
 
   const getCount = (filter: MAFGroup[] = []) => {
     return filter.reduce((sum, group) => {
@@ -114,7 +120,7 @@ const _useMarkerAdvancedFilter = (options: MarkerAdvancedFilterHookOptions) => {
       const filters = advancedFilterCache.value
 
       // 处理组
-      filters.forEach((filter) => {
+      filters.forEach(filter => {
         const {
           key: groupKey,
           operator: groupOperator = true,
@@ -124,7 +130,7 @@ const _useMarkerAdvancedFilter = (options: MarkerAdvancedFilterHookOptions) => {
         const itemComposed: MAFItemComposed[] = []
 
         // 处理子项
-        children.forEach((child) => {
+        children.forEach(child => {
           const {
             key,
             id = 0 as MAFModelId,
@@ -132,15 +138,9 @@ const _useMarkerAdvancedFilter = (options: MarkerAdvancedFilterHookOptions) => {
             opposite: itemOpposite,
             value = {},
           } = child
-          const {
-            option,
-            prepare,
-            semantic,
-            filter,
-          } = getMAFConfig(id)
+          const { option, prepare, semantic, filter } = getMAFConfig(id)
           let meta: MAFMeta = {}
-          if (prepare && typeof prepare === 'function')
-            meta = prepare(value, toValue(option))
+          if (prepare && typeof prepare === 'function') meta = prepare(value, toValue(option))
           const obj = {
             key,
             id,
@@ -167,14 +167,14 @@ const _useMarkerAdvancedFilter = (options: MarkerAdvancedFilterHookOptions) => {
     },
     set: (list: MAFGroupComposed[]) => {
       const convertedData: MAFGroup[] = []
-      list.forEach((group) => {
+      list.forEach(group => {
         const {
           key: groupKey,
           operator: groupOperator = true,
           opposite: groupOpposite = false,
           children = [],
         } = group
-        const convertedChildren: MAFItem[] = children.map((child) => {
+        const convertedChildren: MAFItem[] = children.map(child => {
           const {
             id = 0 as MAFModelId,
             key,
@@ -209,28 +209,23 @@ const _useMarkerAdvancedFilter = (options: MarkerAdvancedFilterHookOptions) => {
   const conditionSame = computed(() => {
     const cache = advancedFilterCache.value
     const filter = advancedFilter.value
-    if (cache.length !== filter.length)
-      return false
-    else if (conditionCacheCount.value !== conditionCount.value)
-      return false
+    if (cache.length !== filter.length) return false
+    else if (conditionCacheCount.value !== conditionCount.value) return false
     return JSON.stringify(cache) === JSON.stringify(filter)
   })
 
   const initCondition = () => {
-    if (advancedFilterCache.value.length <= 0)
-      advancedFilterCache.value.push(createEmptyGroup())
+    if (advancedFilterCache.value.length <= 0) advancedFilterCache.value.push(createEmptyGroup())
   }
 
   const toggleConditionGroupOperator = (groupIndex: number) => {
     const group = advancedFilterCache.value[groupIndex]
-    if (group)
-      group.operator = !(group.operator ?? true)
+    if (group) group.operator = !(group.operator ?? true)
   }
 
   const toggleConditionGroupOpposite = (groupIndex: number) => {
     const group = advancedFilterCache.value[groupIndex]
-    if (group)
-      group.opposite = !(group.opposite ?? false)
+    if (group) group.opposite = !(group.opposite ?? false)
   }
 
   const appendConditionGroup = () => {
@@ -242,8 +237,7 @@ const _useMarkerAdvancedFilter = (options: MarkerAdvancedFilterHookOptions) => {
       appendConditionGroup()
       return
     }
-    if (groupIndex < 0)
-      groupIndex = 0
+    if (groupIndex < 0) groupIndex = 0
     advancedFilterCache.value.splice(groupIndex, 0, createEmptyGroup())
   }
 
@@ -257,21 +251,18 @@ const _useMarkerAdvancedFilter = (options: MarkerAdvancedFilterHookOptions) => {
   }
 
   const deleteConditionGroup = (groupIndex: number) => {
-    if (advancedFilterCache.value[groupIndex])
-      advancedFilterCache.value.splice(groupIndex, 1)
+    if (advancedFilterCache.value[groupIndex]) advancedFilterCache.value.splice(groupIndex, 1)
     initCondition()
   }
 
   const toggleConditionOperator = (groupIndex: number, itemIndex: number) => {
     const item = advancedFilterCache.value[groupIndex]?.children[itemIndex]
-    if (item)
-      item.operator = !(item.operator ?? true)
+    if (item) item.operator = !(item.operator ?? true)
   }
 
   const toggleConditionOpposite = (groupIndex: number, itemIndex: number) => {
     const item = advancedFilterCache.value[groupIndex]?.children[itemIndex]
-    if (item)
-      item.opposite = !(item.opposite ?? false)
+    if (item) item.opposite = !(item.opposite ?? false)
   }
 
   const appendCondition = (groupIndex: number, id: MAFModelId = 0 as MAFModelId) => {
@@ -284,16 +275,18 @@ const _useMarkerAdvancedFilter = (options: MarkerAdvancedFilterHookOptions) => {
     }
   }
 
-  const insertCondition = (groupIndex: number, itemIndex: number, id: MAFModelId = 0 as MAFModelId) => {
-    if (!advancedFilterCache.value[groupIndex])
-      return
+  const insertCondition = (
+    groupIndex: number,
+    itemIndex: number,
+    id: MAFModelId = 0 as MAFModelId,
+  ) => {
+    if (!advancedFilterCache.value[groupIndex]) return
 
     if (itemIndex > advancedFilterCache.value[groupIndex].children.length) {
       appendCondition(groupIndex, id)
       return
     }
-    if (itemIndex < 0)
-      itemIndex = 0
+    if (itemIndex < 0) itemIndex = 0
     const conditionModel = getMAFConfig(id)
     const newItem = createEmptyItem()
     newItem.id = id
@@ -302,8 +295,7 @@ const _useMarkerAdvancedFilter = (options: MarkerAdvancedFilterHookOptions) => {
   }
 
   const swapCondition = (groupIndex: number, itemIndexLeft: number, itemIndexRight: number) => {
-    if (!advancedFilterCache.value[groupIndex])
-      return
+    if (!advancedFilterCache.value[groupIndex]) return
 
     const left = advancedFilterCache.value[groupIndex].children[itemIndexLeft]
     const right = advancedFilterCache.value[groupIndex].children[itemIndexRight]
@@ -324,19 +316,15 @@ const _useMarkerAdvancedFilter = (options: MarkerAdvancedFilterHookOptions) => {
 
   const reorderCondition = (groupIndex: number, orderedKeys: string[]) => {
     const group = advancedFilterCache.value[groupIndex]
-    if (!group?.children.length)
-      return
+    if (!group?.children.length) return
     const { children } = group
-    if (!orderedKeys.length || orderedKeys.length !== children.length)
-      return
+    if (!orderedKeys.length || orderedKeys.length !== children.length) return
     // 拖拽未改变顺序时跳过，避免触发无意义的缓存写入
-    if (orderedKeys.every((key, index) => children[index].key === key))
-      return
+    if (orderedKeys.every((key, index) => children[index].key === key)) return
     const childMap = new Map(children.map(child => [child.key, child]))
     const reordered = orderedKeys.map(key => childMap.get(key))
     // 存在无法匹配的 key 时放弃写回，避免拖拽态与缓存不一致时丢失条目
-    if (reordered.some(child => !child))
-      return
+    if (reordered.some(child => !child)) return
     group.children = reordered as MAFItem[]
   }
 
@@ -378,7 +366,6 @@ const _useMarkerAdvancedFilter = (options: MarkerAdvancedFilterHookOptions) => {
 }
 
 export const useMarkerAdvancedFilter = (options: MarkerAdvancedFilterHookOptions) => {
-  if (!cache)
-    cache = _useMarkerAdvancedFilter(options)
+  if (!cache) cache = _useMarkerAdvancedFilter(options)
   return cache
 }

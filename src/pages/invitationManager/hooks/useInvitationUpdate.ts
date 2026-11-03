@@ -16,8 +16,7 @@ export const useInvitationUpdate = (options: InvitationUpdateHookOptions) => {
     shallow: true,
     onRequest: async () => {
       const isValid = await validate()
-      if (!isValid)
-        throw new Error('校验未通过', { cause: 'validate' })
+      if (!isValid) throw new Error('校验未通过', { cause: 'validate' })
       const { id, code, username, accessPolicy, roleId, remark } = form.value
       return await Apis.invitation.updateInvitation({
         data: {
@@ -36,9 +35,8 @@ export const useInvitationUpdate = (options: InvitationUpdateHookOptions) => {
     ElMessage.success('更新邀请码成功')
   })
 
-  onError((err) => {
-    if (err.cause === 'validate')
-      return
+  onError(err => {
+    if (err.cause === 'validate') return
     ElMessage.error(`更新邀请码失败，原因为：${err.message}`)
   })
 

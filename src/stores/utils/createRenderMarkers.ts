@@ -26,7 +26,7 @@ export const createRenderMarkers = (
   } = options
 
   /** 缓存从物品 id 查询到的地区信息和底图配置，减少索引时间复杂度 */
-  const cacheMap = new Map<number, { area: AreaVo, tileConfig: AreaTileConfig }>()
+  const cacheMap = new Map<number, { area: AreaVo; tileConfig: AreaTileConfig }>()
 
   const normalizedMarkers: GSMarkerInfo[] = []
 
@@ -40,26 +40,23 @@ export const createRenderMarkers = (
 
     // TODO 从第一个物品查询地区，后续点位可能存在属于多个地区的情况，需要加以改进
     const [firstItemLink] = marker.itemList ?? []
-    if (!firstItemLink)
-      continue
+    if (!firstItemLink) continue
 
-    const config = cacheMap.get(firstItemLink.itemId!) ?? (() => {
-      const item = itemIdMap.get(firstItemLink.itemId!)
-      if (!item)
-        return
-      const area = areaIdMap.get(item.areaId!)
-      if (!area)
-        return
-      const tileConfig = tileConfigs[area.code!]
-      if (!tileConfig)
-        return
-      const config = { area, tileConfig }
-      cacheMap.set(item.id!, config)
-      return config
-    })()
+    const config =
+      cacheMap.get(firstItemLink.itemId!)
+      ?? (() => {
+        const item = itemIdMap.get(firstItemLink.itemId!)
+        if (!item) return
+        const area = areaIdMap.get(item.areaId!)
+        if (!area) return
+        const tileConfig = tileConfigs[area.code!]
+        if (!tileConfig) return
+        const config = { area, tileConfig }
+        cacheMap.set(item.id!, config)
+        return config
+      })()
 
-    if (!config)
-      continue
+    if (!config) continue
 
     const { area, tileConfig } = config
     const [ox, oy] = tileConfig.tile.center

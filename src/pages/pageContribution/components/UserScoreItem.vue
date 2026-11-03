@@ -17,8 +17,7 @@ const { isDark } = useTheme()
 const chartRef = shallowRef<Chart>()
 
 const init = async () => {
-  if (!containerRef.value)
-    return
+  if (!containerRef.value) return
 
   const chart = new Chart({
     container: containerRef.value,
@@ -40,10 +39,7 @@ const init = async () => {
     .label({
       text: (data: TransformedScore['fields'][number]) => `${data.label}\n${data.value}`,
       position: 'spider',
-      transform: [
-        { type: 'exceedAdjust' },
-        { type: 'overlapDodgeY' },
-      ],
+      transform: [{ type: 'exceedAdjust' }, { type: 'overlapDodgeY' }],
     })
     .style('radius', 4)
     .style('stroke', '#fff')
@@ -61,14 +57,17 @@ const init = async () => {
   await chart.render()
 }
 
-watch(isDark, (dark) => {
+watch(isDark, dark => {
   chartRef.value?.theme({ type: dark ? 'classicDark' : 'classic' })
   chartRef.value?.render()
 })
 
-watch(() => props.data, () => {
-  chartRef.value?.changeData(props.data.fields)
-})
+watch(
+  () => props.data,
+  () => {
+    chartRef.value?.changeData(props.data.fields)
+  },
+)
 
 onBeforeUnmount(() => {
   chartRef.value?.destroy()
@@ -76,8 +75,7 @@ onBeforeUnmount(() => {
 
 const { stop } = useIntersectionObserver(containerRef, ([entry]) => {
   const isVisible = entry?.isIntersecting ?? false
-  if (!isVisible)
-    return
+  if (!isVisible) return
 
   init()
   stop()
@@ -85,7 +83,9 @@ const { stop } = useIntersectionObserver(containerRef, ([entry]) => {
 </script>
 
 <template>
-  <div class="w-[420px] h-[420px] m-2 border border-[var(--el-border-color)] rounded p-2 pb-0 flex flex-col gap-2">
+  <div
+    class="w-[420px] h-[420px] m-2 border border-[var(--el-border-color)] rounded p-2 pb-0 flex flex-col gap-2"
+  >
     <div class="shrink-0 flex gap-2">
       <el-image
         :src="data.user.logo"
@@ -111,17 +111,20 @@ const { stop } = useIntersectionObserver(containerRef, ([entry]) => {
       </el-image>
 
       <div class="flex-1">
-        <div class="w-[320px] text-[var(--el-color-primary)] text-sm whitespace-nowrap overflow-hidden text-ellipsis">
-          {{ data.user.nickname }} <span class="text-xs text-[var(--el-text-color-secondary)]">{{ `UID: ${data.user.id}` }}</span>
+        <div
+          class="w-[320px] text-[var(--el-color-primary)] text-sm whitespace-nowrap overflow-hidden text-ellipsis"
+        >
+          {{ data.user.nickname }}
+          <span class="text-xs text-[var(--el-text-color-secondary)]">{{
+            `UID: ${data.user.id}`
+          }}</span>
         </div>
         <div class="text-[var(--el-text-color-secondary)] text-xs flex gap-3">
           {{ data.count }} 次提交
         </div>
       </div>
 
-      <div class="shrink-0 text-[var(--el-text-color-secondary)] text-xs">
-        # {{ index }}
-      </div>
+      <div class="shrink-0 text-[var(--el-text-color-secondary)] text-xs"># {{ index }}</div>
     </div>
 
     <div ref="container" class="flex-1" />

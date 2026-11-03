@@ -40,15 +40,19 @@ describe.skipIf(!enabled)('集成：用户体系', () => {
       await loginAsTestAccount()
       const user = await createTestUser()
 
-      await expect(Apis.user.registerUser({
-        data: { username: user.username, password: user.password },
-      })).rejects.toThrow('用户已存在，请检查是否输入正确')
+      await expect(
+        Apis.user.registerUser({
+          data: { username: user.username, password: user.password },
+        }),
+      ).rejects.toThrow('用户已存在，请检查是否输入正确')
     })
 
     it('查询不存在的用户被拒绝', async () => {
       await loginAsTestAccount()
 
-      await expect(Apis.user.getUserInfo({ pathParams: { userId: 999999 } })).rejects.toThrow('用户不存在')
+      await expect(Apis.user.getUserInfo({ pathParams: { userId: 999999 } })).rejects.toThrow(
+        '用户不存在',
+      )
     })
   })
 
@@ -71,9 +75,11 @@ describe.skipIf(!enabled)('集成：用户体系', () => {
       const user = await createTestUser()
       await loginAs(user.username, user.password)
 
-      await expect(Apis.user.updateUserPassword({
-        data: { userId: admin.userId, password: 'apitest-hacked' },
-      })).rejects.toThrow('无法更改其他用户的密码')
+      await expect(
+        Apis.user.updateUserPassword({
+          data: { userId: admin.userId, password: 'apitest-hacked' },
+        }),
+      ).rejects.toThrow('无法更改其他用户的密码')
     })
 
     it('管理员重置密码后，用户可用新密码登录', async () => {
@@ -99,7 +105,9 @@ describe.skipIf(!enabled)('集成：用户体系', () => {
       const { data } = await Apis.user.deleteUser({ pathParams: { workId: user.userId } })
       expect(data).toBe(true)
 
-      await expect(Apis.user.getUserInfo({ pathParams: { userId: user.userId } })).rejects.toThrow('用户不存在')
+      await expect(Apis.user.getUserInfo({ pathParams: { userId: user.userId } })).rejects.toThrow(
+        '用户不存在',
+      )
     })
 
     it('踢出用户仅失效其会话，不删除账号', async () => {

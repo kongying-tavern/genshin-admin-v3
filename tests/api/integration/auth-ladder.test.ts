@@ -56,9 +56,11 @@ describe.skipIf(!enabled)('集成：鉴权与权限阶梯', () => {
     const user = await createTestUser()
     await loginAs(user.username, user.password)
 
-    await expect(Apis.user.registerUser({
-      data: { username: `${TEST_USER_PREFIX}denied`, password: TEST_USER_PASSWORD },
-    })).rejects.toThrow('Forbidden')
+    await expect(
+      Apis.user.registerUser({
+        data: { username: `${TEST_USER_PREFIX}denied`, password: TEST_USER_PASSWORD },
+      }),
+    ).rejects.toThrow('Forbidden')
   })
 
   it('管理员可注册新用户', async () => {

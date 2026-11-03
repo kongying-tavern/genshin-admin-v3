@@ -52,7 +52,10 @@ export type WorkerOutput =
   | WorkerSuccessOutput
 
 /** 获取画布的绘制结果 */
-const createSnapshot = ([width, height]: [number, number], draw: (ctx: OffscreenCanvasRenderingContext2D) => void) => {
+const createSnapshot = (
+  [width, height]: [number, number],
+  draw: (ctx: OffscreenCanvasRenderingContext2D) => void,
+) => {
   const canvas = new OffscreenCanvas(width, height)
   const ctx = canvas.getContext('2d')!
   draw(ctx)
@@ -140,7 +143,7 @@ Z
 `)
 
 /** 分层层级图标预绘制 */
-const UG_ICON = createSnapshot([64, 64], (ctx) => {
+const UG_ICON = createSnapshot([64, 64], ctx => {
   ctx.clearRect(0, 0, 64, 64)
   ctx.fillStyle = '#333333'
   ctx.fill(UG_OUTER_PATH)
@@ -152,7 +155,14 @@ const UG_ICON = createSnapshot([64, 64], (ctx) => {
  * 编排画板并生成 mapping，具体思路如下：
  * 1. 第一行预留给状态纹理+附加纹理，正常情况下够用了，
  */
-const calculate = ({ positionList, states, attachs, iconSize, gap, textureSizeLimit }: {
+const calculate = ({
+  positionList,
+  states,
+  attachs,
+  iconSize,
+  gap,
+  textureSizeLimit,
+}: {
   /** 图标布局信息 */
   positionList: WorkerInput['positionList']
   /** 可切换状态 */
@@ -212,7 +222,7 @@ const calculate = ({ positionList, states, attachs, iconSize, gap, textureSizeLi
   })
 
   positionList.forEach(({ ids: iconIds }, index) => {
-    iconIds.forEach((iconId) => {
+    iconIds.forEach(iconId => {
       const row = Math.floor(index / cols)
       const col = index - row * cols
       const startX = col * size
@@ -250,12 +260,13 @@ const render = async (options: WorkerInput, logger: Logger): Promise<WorkerSucce
 
   const iconSpriteDigest = await getDigest(iconTexture, 'SHA-256')
 
-  const attachs: AttachOption[] = [
-    { key: 'underground', icon: UG_ICON },
-  ]
+  const attachs: AttachOption[] = [{ key: 'underground', icon: UG_ICON }]
 
   const gl = new OffscreenCanvas(0, 0).getContext('webgl2')!
-  const textureSizeLimit = Math.min(MAX_TEXTURE_LIMIT, gl.getParameter(gl.MAX_TEXTURE_SIZE) ?? DEFAULT_TEXTURE_LIMIT)
+  const textureSizeLimit = Math.min(
+    MAX_TEXTURE_LIMIT,
+    gl.getParameter(gl.MAX_TEXTURE_SIZE) ?? DEFAULT_TEXTURE_LIMIT,
+  )
 
   // 计算画板尺寸
   const { cols, rows, canvasW, canvasH, mapping, totalRenders, totalIcons } = calculate({
@@ -277,21 +288,21 @@ const render = async (options: WorkerInput, logger: Logger): Promise<WorkerSucce
     try {
       const [result] = await cacheDb.markerSprite.toArray()
       cacheMarkerSprite = result
-    }
-    catch (err) {
+    } catch (err) {
       // 数据库操作失败，不清空缓存
       logger.warn(err instanceof Error ? err.message : JSON.stringify(err))
       return
     }
 
     // 2. 校验缓存内容（失败时清空无效缓存）
-    if (!cacheMarkerSprite)
-      return // 无缓存，正常进入渲染流程
+    if (!cacheMarkerSprite) return // 无缓存，正常进入渲染流程
 
     try {
       if (cacheMarkerSprite.iconSpriteDigest !== iconSpriteDigest)
         throw new Error('点位预渲染纹理缓存所使用的图标缓存已过期')
-      const { width, height } = await createImageBitmap(new Blob([cacheMarkerSprite.texture], { type: 'image/png' }))
+      const { width, height } = await createImageBitmap(
+        new Blob([cacheMarkerSprite.texture], { type: 'image/png' }),
+      )
       if (width > textureSizeLimit || height > textureSizeLimit)
         throw new Error('缓存的纹理不符合限制要求')
       if (width !== canvasW || height !== canvasH)
@@ -299,8 +310,7 @@ const render = async (options: WorkerInput, logger: Logger): Promise<WorkerSucce
       if (Object.keys(cacheMarkerSprite.mapping).length !== totalRenders)
         throw new Error('状态总数不统一')
       return cacheMarkerSprite
-    }
-    catch (err) {
+    } catch (err) {
       await cacheDb.markerSprite.clear().catch(() => {})
       logger.warn(err instanceof Error ? err.message : JSON.stringify(err))
     }
@@ -321,18 +331,25 @@ const render = async (options: WorkerInput, logger: Logger): Promise<WorkerSucce
   ctx.translate(gap, gap)
 
   // 绘制 outline
-  ctx.fillStyle = ctx.createPattern(createSnapshot([size, size], (scopedCtx) => {
-    scopedCtx.fillStyle = outlineColor
-    scopedCtx.fill(OUTLINE_PATH)
-  }), 'repeat')!
+  ctx.fillStyle = ctx.createPattern(
+    createSnapshot([size, size], scopedCtx => {
+      scopedCtx.fillStyle = outlineColor
+      scopedCtx.fill(OUTLINE_PATH)
+    }),
+    'repeat',
+  )!
   ctx.fillRect(0, size, canvasW, canvasH - size)
 
   // 绘制 border
   states.forEach(({ color }, index) => {
-    ctx.drawImage(createSnapshot([size, size], (scopedCtx) => {
-      scopedCtx.fillStyle = color
-      scopedCtx.fill(BORDER_PATH)
-    }), index * size, 0)
+    ctx.drawImage(
+      createSnapshot([size, size], scopedCtx => {
+        scopedCtx.fillStyle = color
+        scopedCtx.fill(BORDER_PATH)
+      }),
+      index * size,
+      0,
+    )
   })
 
   // 绘制附加层
@@ -397,8 +414,7 @@ globalThis.addEventListener('message', async (ev: MessageEvent<WorkerInput>) => 
   try {
     const res = await render(ev.data, logger)
     send(res, [res.texture])
-  }
-  catch (err) {
+  } catch (err) {
     logger.error(err instanceof Error ? err.message : `${err}`)
     send(err instanceof Error ? err.message : `${err}`)
   }

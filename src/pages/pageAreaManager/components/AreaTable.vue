@@ -13,7 +13,7 @@ const props = defineProps<{
 }>()
 
 const emits = defineEmits<{
-  'selectionChange': [selections: AreaVo[]]
+  selectionChange: [selections: AreaVo[]]
   'update:parentPath': [path: AreaVo[]]
 }>()
 
@@ -63,7 +63,11 @@ const typeAssert = (row: unknown) => row as AreaVo
 
       <el-table-column prop="name" label="名称" :width="150">
         <template #default="{ row }">
-          <el-link v-if="parentPath.length < 1" type="primary" @click="() => emits('update:parentPath', [row])">
+          <el-link
+            v-if="parentPath.length < 1"
+            type="primary"
+            @click="() => emits('update:parentPath', [row])"
+          >
             {{ row.name }}
           </el-link>
           <template v-else>

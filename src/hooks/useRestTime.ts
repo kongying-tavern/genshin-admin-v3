@@ -13,12 +13,21 @@ export const useRestTime = (targetTime: Ref<number | undefined>) => {
     WorkerInterval.clear(id)
   })
 
-  watch(targetTime, () => {
-    WorkerInterval.clear(id)
-    WorkerInterval.set(id, () => {
-      restTime.value = targetTime.value === undefined ? 0 : targetTime.value - new Date().getTime()
-    }, 1000)
-  }, { immediate: true })
+  watch(
+    targetTime,
+    () => {
+      WorkerInterval.clear(id)
+      WorkerInterval.set(
+        id,
+        () => {
+          restTime.value =
+            targetTime.value === undefined ? 0 : targetTime.value - new Date().getTime()
+        },
+        1000,
+      )
+    },
+    { immediate: true },
+  )
 
   return { restTime }
 }

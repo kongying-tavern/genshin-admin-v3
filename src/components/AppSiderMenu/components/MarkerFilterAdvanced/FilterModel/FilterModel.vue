@@ -61,7 +61,7 @@ const modelOptions = computed(() => toValue(props.composedCondition.option))
   <component
     :is="modelTemplate"
     v-if="modelTemplate"
-    v-model="(modelValue as any)"
+    v-model="modelValue as any"
     :options="modelOptions"
     :meta="composedCondition.meta"
   />

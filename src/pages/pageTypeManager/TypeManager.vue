@@ -17,7 +17,11 @@ const getDialogConfig = () => ({
 })
 
 // ==================== 分页参数 ====================
-const { pagination, layout, onChange: onPaginationChange } = usePagination({
+const {
+  pagination,
+  layout,
+  onChange: onPaginationChange,
+} = usePagination({
   units: [PgUnit.TOTAL, PgUnit.SIZE, PgUnit.PREV, PgUnit.PAGER, PgUnit.NEXT],
   module: ManagerModule.Type,
 })
@@ -68,35 +72,35 @@ const handleNodeSelect = (data?: unknown) => {
 }
 
 // ==================== 添加分类 ====================
-const openTypeCreator = () => DialogService
-  .config(getDialogConfig())
-  .props({
-    parent: parent.value,
-    manager: manager.value,
-  })
-  .listeners({ success: updateTypeList })
-  .open(TypeCreator)
+const openTypeCreator = () =>
+  DialogService.config(getDialogConfig())
+    .props({
+      parent: parent.value,
+      manager: manager.value,
+    })
+    .listeners({ success: updateTypeList })
+    .open(TypeCreator)
 
 // ==================== 编辑分类 ====================
-const openTypeEditor = (data: unknown) => DialogService
-  .config(getDialogConfig())
-  .props({
-    data,
-    parent: parent.value,
-    manager: manager.value,
-  })
-  .listeners({ success: updateTypeList })
-  .open(TypeEditor)
+const openTypeEditor = (data: unknown) =>
+  DialogService.config(getDialogConfig())
+    .props({
+      data,
+      parent: parent.value,
+      manager: manager.value,
+    })
+    .listeners({ success: updateTypeList })
+    .open(TypeEditor)
 
 // ==================== 删除分类 ====================
-const confirmDelete = (data: unknown) => DialogService
-  .config(getDialogConfig())
-  .props({
-    data,
-    manager: manager.value,
-  })
-  .listeners({ success: updateTypeList })
-  .open(TypeDeleteConfirm)
+const confirmDelete = (data: unknown) =>
+  DialogService.config(getDialogConfig())
+    .props({
+      data,
+      manager: manager.value,
+    })
+    .listeners({ success: updateTypeList })
+    .open(TypeDeleteConfirm)
 </script>
 
 <template>
@@ -116,12 +120,8 @@ const confirmDelete = (data: unknown) => DialogService
 
         <el-breadcrumb separator="/">
           <el-breadcrumb-item>
-            <el-text v-if="!parentPath.length">
-              全部
-            </el-text>
-            <el-link v-else @click="() => handleNodeSelect()">
-              全部
-            </el-link>
+            <el-text v-if="!parentPath.length"> 全部 </el-text>
+            <el-link v-else @click="() => handleNodeSelect()"> 全部 </el-link>
           </el-breadcrumb-item>
           <el-breadcrumb-item v-for="node in parentPath" :key="manager.getId(node)">
             <el-text v-if="manager.getId(node) === manager.getId(parent)">
@@ -135,9 +135,7 @@ const confirmDelete = (data: unknown) => DialogService
       </div>
 
       <div class="flex-shrink-0">
-        <el-button text :icon="CirclePlus" @click="openTypeCreator">
-          新增
-        </el-button>
+        <el-button text :icon="CirclePlus" @click="openTypeCreator"> 新增 </el-button>
       </div>
     </div>
 

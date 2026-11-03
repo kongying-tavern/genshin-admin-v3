@@ -35,7 +35,11 @@ import { setupApiEnv } from '../_support/pinia'
 const enabled = await probeIntegration(integrationConfigured)
 
 /** 读取筛选结果 id 列表 */
-const searchMarkerIds = async (search: { areaIdList?: number[], itemIdList?: number[], typeIdList?: number[] }) => {
+const searchMarkerIds = async (search: {
+  areaIdList?: number[]
+  itemIdList?: number[]
+  typeIdList?: number[]
+}) => {
   const { data = [] } = await Apis.marker.searchMarkerId({ data: search })
   return data
 }
@@ -52,12 +56,23 @@ describe.skipIf(!enabled)('集成：跨实体引用与层叠地区', () => {
   describe('层叠地区', () => {
     it('关联两个地区物品的点位，在两个地区下都能检索到', async () => {
       await loginAsTestAccount()
-      const areaA = await createTestArea({ name: '__apitest_overlap_area_a', code: 'C:APITEST_OVERLAP_A', parentId: -1 })
-      const areaB = await createTestArea({ name: '__apitest_overlap_area_b', code: 'C:APITEST_OVERLAP_B', parentId: -1 })
+      const areaA = await createTestArea({
+        name: '__apitest_overlap_area_a',
+        code: 'C:APITEST_OVERLAP_A',
+        parentId: -1,
+      })
+      const areaB = await createTestArea({
+        name: '__apitest_overlap_area_b',
+        code: 'C:APITEST_OVERLAP_B',
+        parentId: -1,
+      })
       const itemA = await createTestItem(areaA)
       const itemB = await createTestItem(areaB)
       const markerId = await createTestMarker({
-        itemList: [{ itemId: itemA, count: 1 }, { itemId: itemB, count: 1 }],
+        itemList: [
+          { itemId: itemA, count: 1 },
+          { itemId: itemB, count: 1 },
+        ],
       })
 
       expect(await searchMarkerIds({ areaIdList: [areaA] })).toContain(markerId)
@@ -69,12 +84,23 @@ describe.skipIf(!enabled)('集成：跨实体引用与层叠地区', () => {
 
     it('删除其中一个地区的物品后，点位仍归属另一个地区', async () => {
       await loginAsTestAccount()
-      const areaA = await createTestArea({ name: '__apitest_overlap_del_area_a', code: 'C:APITEST_OVERLAP_DEL_A', parentId: -1 })
-      const areaB = await createTestArea({ name: '__apitest_overlap_del_area_b', code: 'C:APITEST_OVERLAP_DEL_B', parentId: -1 })
+      const areaA = await createTestArea({
+        name: '__apitest_overlap_del_area_a',
+        code: 'C:APITEST_OVERLAP_DEL_A',
+        parentId: -1,
+      })
+      const areaB = await createTestArea({
+        name: '__apitest_overlap_del_area_b',
+        code: 'C:APITEST_OVERLAP_DEL_B',
+        parentId: -1,
+      })
       const itemA = await createTestItem(areaA)
       const itemB = await createTestItem(areaB)
       const markerId = await createTestMarker({
-        itemList: [{ itemId: itemA, count: 1 }, { itemId: itemB, count: 1 }],
+        itemList: [
+          { itemId: itemA, count: 1 },
+          { itemId: itemB, count: 1 },
+        ],
       })
 
       await Apis.item.deleteItem({ pathParams: { itemId: itemA } })
@@ -90,13 +116,24 @@ describe.skipIf(!enabled)('集成：跨实体引用与层叠地区', () => {
   describe('删除地区', () => {
     it('仅关联该地区物品的点位被删除，跨地区点位保留', async () => {
       await loginAsTestAccount()
-      const areaA = await createTestArea({ name: '__apitest_area_delete_a', code: 'C:APITEST_AREA_DEL_A', parentId: -1 })
-      const areaB = await createTestArea({ name: '__apitest_area_delete_b', code: 'C:APITEST_AREA_DEL_B', parentId: -1 })
+      const areaA = await createTestArea({
+        name: '__apitest_area_delete_a',
+        code: 'C:APITEST_AREA_DEL_A',
+        parentId: -1,
+      })
+      const areaB = await createTestArea({
+        name: '__apitest_area_delete_b',
+        code: 'C:APITEST_AREA_DEL_B',
+        parentId: -1,
+      })
       const itemA = await createTestItem(areaA)
       const itemB = await createTestItem(areaB)
       const markerOnlyA = await createTestMarker({ itemList: [{ itemId: itemA, count: 1 }] })
       const markerBoth = await createTestMarker({
-        itemList: [{ itemId: itemA, count: 1 }, { itemId: itemB, count: 1 }],
+        itemList: [
+          { itemId: itemA, count: 1 },
+          { itemId: itemB, count: 1 },
+        ],
       })
 
       const { data: deleted } = await Apis.area.deleteArea({ pathParams: { areaId: areaA } })
@@ -118,7 +155,11 @@ describe.skipIf(!enabled)('集成：跨实体引用与层叠地区', () => {
   describe('删除物品', () => {
     it('删除物品会清理点位关联，点位不再可查询', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_item_delete_marker_area', code: 'C:APITEST_ITEM_DEL_MARKER', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_item_delete_marker_area',
+        code: 'C:APITEST_ITEM_DEL_MARKER',
+        parentId: -1,
+      })
       const itemId = await createTestItem(areaId)
       const markerId = await createTestMarker({ itemList: [{ itemId, count: 1 }] })
 
@@ -133,7 +174,11 @@ describe.skipIf(!enabled)('集成：跨实体引用与层叠地区', () => {
   describe('引用完整性', () => {
     it('删除被物品引用的图标不会被阻止，物品保留悬空 iconId', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_icon_ref_area', code: 'C:APITEST_ICON_REF', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_icon_ref_area',
+        code: 'C:APITEST_ICON_REF',
+        parentId: -1,
+      })
       const iconId = await createTestIcon()
       const itemId = await createTestItem(areaId, { iconId })
 
@@ -148,11 +193,17 @@ describe.skipIf(!enabled)('集成：跨实体引用与层叠地区', () => {
 
     it('删除被物品引用的物品分类会移除分类关联，物品本身保留', async () => {
       await loginAsTestAccount()
-      const areaId = await createTestArea({ name: '__apitest_type_ref_area', code: 'C:APITEST_TYPE_REF', parentId: -1 })
+      const areaId = await createTestArea({
+        name: '__apitest_type_ref_area',
+        code: 'C:APITEST_TYPE_REF',
+        parentId: -1,
+      })
       const typeId = await createTestItemType()
       const itemId = await createTestItem(areaId, { typeIdList: [typeId] })
 
-      const { data: deleted } = await Apis.item_type.deleteItemType({ pathParams: { itemTypeId: typeId } })
+      const { data: deleted } = await Apis.item_type.deleteItemType({
+        pathParams: { itemTypeId: typeId },
+      })
       expect(deleted).toBe(true)
 
       const item = await readTestItem(itemId)

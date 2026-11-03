@@ -47,14 +47,12 @@ const selectedLayers = computed<ConfigLayerUnit[]>(() => {
  */
 const layerCountMap = computed(() => {
   const countMap: Record<string | number, number> = {}
-  modelValue.value.forEach((layerKey) => {
+  modelValue.value.forEach(layerKey => {
     const layerKeyItem = props.meta.layerKeyMap[layerKey]
-    if (!layerKeyItem)
-      return
-    layerKeyItem.forEach((keyItem) => {
+    if (!layerKeyItem) return
+    layerKeyItem.forEach(keyItem => {
       const { areaId = 0, groupKey = '' } = keyItem
-      if (!areaId || !groupKey)
-        return
+      if (!areaId || !groupKey) return
       countMap[areaId] = (countMap[areaId] ?? 0) + 1
       countMap[`${areaId}-${groupKey}`] = (countMap[`${areaId}-${groupKey}`] ?? 0) + 1
     })
@@ -64,13 +62,14 @@ const layerCountMap = computed(() => {
 
 const layerTotalMap = computed(() => {
   const totalMap: Record<string | number, number> = {}
-  props.list.forEach((item) => {
+  props.list.forEach(item => {
     const { id: areaId = 0, extraConfig = {} } = item
     const { underground = {} } = extraConfig
     const { levels = [] } = underground
-    levels.forEach((group) => {
+    levels.forEach(group => {
       totalMap[areaId] = (totalMap[areaId] ?? 0) + group.children.length
-      totalMap[`${areaId}-${group.value}`] = (totalMap[`${areaId}-${group.value}`] ?? 0) + group.children.length
+      totalMap[`${areaId}-${group.value}`] =
+        (totalMap[`${areaId}-${group.value}`] ?? 0) + group.children.length
     })
   })
 
@@ -94,9 +93,9 @@ const layerTotalMatch = computed(() => {
 // 添加地区内层级
 const addArea = (area: AreaWithExtraConfig) => {
   const shallowCopyValue = [...modelValue.value]
-  const valueSet = new Set<string>(shallowCopyValue);
-  (area.extraConfig?.underground?.levels ?? []).forEach((group) => {
-    group.children.forEach((layer) => {
+  const valueSet = new Set<string>(shallowCopyValue)
+  ;(area.extraConfig?.underground?.levels ?? []).forEach(group => {
+    group.children.forEach(layer => {
       layer.value && valueSet.add(layer.value!)
     })
   })
@@ -106,8 +105,8 @@ const addArea = (area: AreaWithExtraConfig) => {
 // 移除地区内层级
 const removeArea = (area: AreaWithExtraConfig) => {
   const shallowCopyValue = [...modelValue.value]
-  const valueSet = new Set<string>(shallowCopyValue);
-  (area.extraConfig?.underground?.levels ?? []).forEach((group) => {
+  const valueSet = new Set<string>(shallowCopyValue)
+  ;(area.extraConfig?.underground?.levels ?? []).forEach(group => {
     group.children.forEach(layer => valueSet.delete(layer.value!))
   })
   modelValue.value = Array.from(valueSet)
@@ -123,8 +122,8 @@ const toggleArea = (area: AreaWithExtraConfig) => {
 // 添加分组内层级
 const addGroup = (item: ConfigLayerUnit) => {
   const shallowCopyValue = [...modelValue.value]
-  const valueSet = new Set<string>(shallowCopyValue);
-  (item.children ?? []).forEach((layer) => {
+  const valueSet = new Set<string>(shallowCopyValue)
+  ;(item.children ?? []).forEach(layer => {
     layer.value && valueSet.add(layer.value)
   })
   modelValue.value = Array.from(valueSet)
@@ -133,8 +132,8 @@ const addGroup = (item: ConfigLayerUnit) => {
 // 移除分组内层级
 const removeGroup = (item: ConfigLayerUnit) => {
   const shallowCopyValue = [...modelValue.value]
-  const valueSet = new Set<string>(shallowCopyValue);
-  (item.children ?? []).forEach((layer) => {
+  const valueSet = new Set<string>(shallowCopyValue)
+  ;(item.children ?? []).forEach(layer => {
     valueSet.delete(layer.value)
   })
   modelValue.value = Array.from(valueSet)
@@ -158,7 +157,14 @@ const {
   onDragEnd: onAreaDragEnd,
   onDrop: onAreaDrop,
 } = useListBubbleDrag<AreaWithExtraConfig>({
-  isDropback: (ev, item) => Boolean(ev.composedPath().find(target => (target instanceof HTMLElement) && Number(target.dataset.dragAreaId) === item.id!)),
+  isDropback: (ev, item) =>
+    Boolean(
+      ev
+        .composedPath()
+        .find(
+          target => target instanceof HTMLElement && Number(target.dataset.dragAreaId) === item.id!,
+        ),
+    ),
   onClearBubble: removeArea,
 })
 
@@ -168,16 +174,18 @@ const {
   onDragEnd: onGroupDragEnd,
   onDrop: onGroupDrop,
 } = useListBubbleDrag<ConfigLayerUnit>({
-  isDropback: (ev, item) => Boolean(ev.composedPath().find(target => (target instanceof HTMLElement) && target.dataset.dragGroupId === item.value)),
+  isDropback: (ev, item) =>
+    Boolean(
+      ev
+        .composedPath()
+        .find(target => target instanceof HTMLElement && target.dataset.dragGroupId === item.value),
+    ),
   onClearBubble: removeGroup,
 })
 </script>
 
 <template>
-  <div
-    class="w-[700px] flex-1 flex gap-2 overflow-hidden"
-    :class="listClass"
-  >
+  <div class="w-[700px] flex-1 flex gap-2 overflow-hidden" :class="listClass">
     <el-scrollbar class="flex-[10]">
       <SelectList
         v-model="selectedAreaId"
@@ -190,10 +198,7 @@ const {
         @drop="onAreaDrop"
       >
         <template #default="{ item }">
-          <div
-            class="flex-auto flex items-center"
-            :data-drag-area-id="item.id"
-          >
+          <div class="flex-auto flex items-center" :data-drag-area-id="item.id">
             <span class="flex-none mr-1">
               <MarkerFilterButton
                 :theme="layerTotalMatch[item.id!] ? 'light' : 'dark'"
@@ -221,16 +226,8 @@ const {
       </SelectList>
     </el-scrollbar>
     <div class="w-[2px] h-[97%] translate-y-[1.5%] bg-[#E3DDD140]" />
-    <el-scrollbar
-      class="flex-[13]"
-      @dragover.prevent
-      @dragend="onGroupDragEnd"
-      @drop="onGroupDrop"
-    >
-      <template
-        v-for="(layerGroup, layerGroupIndex) in selectedLayers"
-        :key="layerGroupIndex"
-      >
+    <el-scrollbar class="flex-[13]" @dragover.prevent @dragend="onGroupDragEnd" @drop="onGroupDrop">
+      <template v-for="(layerGroup, layerGroupIndex) in selectedLayers" :key="layerGroupIndex">
         <div
           v-if="layerGroup.children && layerGroup.children.length > 0"
           :data-drag-group-id="layerGroup.value"
@@ -238,9 +235,10 @@ const {
           <div class="flex pt-2 pb-1 gap-2 items-end">
             <span
               class="flex-none text-base leading-loose select-none underline underline-offset-4"
-              :class="layerTotalMatch[`${selectedAreaId}-${layerGroup.value}`]
-                ? ['decoration-solid', 'hover:decoration-dotted']
-                : ['decoration-dashed', 'hover:decoration-double']
+              :class="
+                layerTotalMatch[`${selectedAreaId}-${layerGroup.value}`]
+                  ? ['decoration-solid', 'hover:decoration-dotted']
+                  : ['decoration-dashed', 'hover:decoration-double']
               "
               @click.stop="toggleGroup(layerGroup)"
             >
@@ -250,7 +248,9 @@ const {
               <el-button
                 v-if="layerCountMap[`${selectedAreaId}-${layerGroup.value}`]"
                 class="mb-[8px]"
-                :type="layerTotalMatch[`${selectedAreaId}-${layerGroup.value}`] ? 'warning' : 'primary'"
+                :type="
+                  layerTotalMatch[`${selectedAreaId}-${layerGroup.value}`] ? 'warning' : 'primary'
+                "
                 size="small"
                 round
                 .draggable="true"

@@ -1,4 +1,12 @@
-<script lang="ts" setup generic="T extends {[key: string]: string | number} | unknown, K extends string, V extends unknown">
+<script
+  lang="ts"
+  setup
+  generic="
+    T extends { [key: string]: string | number } | unknown,
+    K extends string,
+    V extends unknown
+  "
+>
 import MultiDialog from './MarkerFilterSelectMultiDialog.vue'
 import SingleDialog from './MarkerFilterSelectSingleDialog.vue'
 
@@ -23,7 +31,7 @@ const modelValue = defineModel<V | V[]>('modelValue', {
 
 const dialogValue: Ref<V | V[] | undefined> = ref(undefined)
 
-const dialogTemplate = computed<Component>(() => props.multiple ? MultiDialog : SingleDialog)
+const dialogTemplate = computed<Component>(() => (props.multiple ? MultiDialog : SingleDialog))
 
 const dialogVisible = ref<boolean>(false)
 
@@ -76,10 +84,7 @@ const cancel = () => {
       @cancel="cancel"
     >
       <template v-if="$slots.list" #list="slotProps">
-        <slot
-          name="list"
-          v-bind="slotProps"
-        />
+        <slot name="list" v-bind="slotProps" />
       </template>
     </component>
   </el-dialog>

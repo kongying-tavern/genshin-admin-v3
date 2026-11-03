@@ -10,9 +10,7 @@ const modelValue = defineModel<string[] | undefined>({
 
 <template>
   <div class="mb-4">
-    <div class="mb-1">
-      1.6 版本海岛层级
-    </div>
+    <div class="mb-1">1.6 版本海岛层级</div>
 
     <el-cascader
       v-model="modelValue"

@@ -63,9 +63,7 @@ const modules: {
         :class="isSelf ? 'ml-4' : 'mr-4'"
       >
         <div v-if="!modules[data.type]" class="p-2 text-[var(--el-text-color-secondary)]">
-          <div>
-            未支持的消息类型: {{ data.type }}
-          </div>
+          <div>未支持的消息类型: {{ data.type }}</div>
           <el-divider style="margin: 4px 0" />
           <div>
             {{ dayjs(data.time).format('YYYY-MM-DD HH:mm:ss') }}

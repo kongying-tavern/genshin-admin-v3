@@ -10,9 +10,9 @@ export const useSpecialFlag = (form: Ref<ItemVo>) => {
       const mask = toValue(form).specialFlag ?? 0
       return specialMask.decode(mask)
     },
-    set: (keys) => {
+    set: keys => {
       let mask = 0
-      keys.forEach((key) => {
+      keys.forEach(key => {
         mask = specialMask.active(mask, key)
       })
       form.value.specialFlag = mask

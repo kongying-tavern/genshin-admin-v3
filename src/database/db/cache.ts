@@ -32,8 +32,6 @@ export class CacheDexie extends Dexie {
 
   constructor() {
     super('AppCache')
-    this
-      .version(this.VERSION)
-      .stores(this.STORES)
+    this.version(this.VERSION).stores(this.STORES)
   }
 }

@@ -18,6 +18,6 @@ defineProps<{
   font-size: 1.6rem;
   line-height: 1.6;
   font-weight: bold;
-  margin: 0 .2rem;
+  margin: 0 0.2rem;
 }
 </style>

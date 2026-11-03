@@ -1,8 +1,4 @@
-import type {
-  FilterConditions,
-  FilterConditionsAdvanced,
-  FilterConditionsBasic,
-} from '../types'
+import type { FilterConditions, FilterConditionsAdvanced, FilterConditionsBasic } from '../types'
 import type { PresetPackContext } from '../utils'
 import type { MAFModelId } from '@/shared'
 import type { MAFGroup, MAFItem, MBFItem } from '@/stores/types'
@@ -12,20 +8,14 @@ import { storeToRefs } from 'pinia'
 import { useAreaStore, useItemTypeStore } from '@/stores'
 import { ByteReader } from '@/utils'
 import { usePackUndergroundLayerContext } from '.'
-import {
-  getBinaryFilterType,
-  getValuePacker,
-  isValidBinaryHead,
-} from '../utils'
+import { getBinaryFilterType, getValuePacker, isValidBinaryHead } from '../utils'
 
 /** 将分享码解压为二进制与原始数据（依赖 store 数据） */
 export function usePresetUnzip(code: MaybeRef<string | null | undefined>) {
   const { areaIdMap } = storeToRefs(useAreaStore())
   const { itemTypeIdMap } = storeToRefs(useItemTypeStore())
-  const {
-    codeToHashMap: undergroundCodeToHashMap,
-    hashToCodeMap: undergroundHashToCodeMap,
-  } = usePackUndergroundLayerContext()
+  const { codeToHashMap: undergroundCodeToHashMap, hashToCodeMap: undergroundHashToCodeMap } =
+    usePackUndergroundLayerContext()
 
   const binary = computed(() => {
     const value = unref(code)
@@ -48,10 +38,7 @@ export function usePresetUnzip(code: MaybeRef<string | null | undefined>) {
 
 // ==================== 解压 ====================
 
-function unzipBasic(
-  reader: ByteReader,
-  context: PresetPackContext,
-): FilterConditionsBasic {
+function unzipBasic(reader: ByteReader, context: PresetPackContext): FilterConditionsBasic {
   const { areaIdMap, itemTypeIdMap } = context
   const result = new Map<string, MBFItem>()
 
@@ -61,13 +48,11 @@ function unzipBasic(
     const itemCount = Number(reader.readUint8('blank'))
 
     const items: number[] = []
-    for (let i = 0; i < itemCount; i++)
-      items.push(Number(reader.readUint32LE('blank')))
+    for (let i = 0; i < itemCount; i++) items.push(Number(reader.readUint32LE('blank')))
 
     const area = areaIdMap.get(areaId)
     const type = itemTypeIdMap.get(typeId)
-    if (!area || !type)
-      continue
+    if (!area || !type) continue
 
     result.set(`${area.code}-${typeId}`, { area, type, items })
   }
@@ -75,10 +60,7 @@ function unzipBasic(
   return result
 }
 
-function unzipAdvanced(
-  reader: ByteReader,
-  context: PresetPackContext,
-): FilterConditionsAdvanced {
+function unzipAdvanced(reader: ByteReader, context: PresetPackContext): FilterConditionsAdvanced {
   const result: FilterConditionsAdvanced = []
 
   // 二进制布局：
@@ -140,18 +122,13 @@ function unzipAdvanced(
   return result
 }
 
-function unzip(
-  data: Uint8Array,
-  context: PresetPackContext,
-): FilterConditions {
-  if (data.length === 0)
-    return new Map()
+function unzip(data: Uint8Array, context: PresetPackContext): FilterConditions {
+  if (data.length === 0) return new Map()
 
   const reader = new ByteReader(data)
   const head = Number(reader.readUint8('blank'))
 
-  if (!isValidBinaryHead(head))
-    throw new Error('分享码头部无效')
+  if (!isValidBinaryHead(head)) throw new Error('分享码头部无效')
 
   switch (getBinaryFilterType(head)) {
     case 'basic':

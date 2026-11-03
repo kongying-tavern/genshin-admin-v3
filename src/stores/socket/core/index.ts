@@ -29,10 +29,8 @@ export class AppSocket extends EventTarget {
   }
 
   open = async () => {
-    if (this.#context.socket)
-      return this.#context.socket
-    if (this.#context.connectPromise)
-      return this.#context.connectPromise
+    if (this.#context.socket) return this.#context.socket
+    if (this.#context.connectPromise) return this.#context.connectPromise
     const promise = new Promise<Socket>((resolve, reject) => {
       this.dispatchEvent(new SocketLogEvent(`Attempting to connect to "${this.#url}"`))
       const url = new URL(this.#url)
@@ -49,8 +47,10 @@ export class AppSocket extends EventTarget {
         this.dispatchEvent(new SocketLogEvent(`Disconnected from "${this.#url}"`))
         this.#resetContext()
       })
-      socket.on('connect_error', (err) => {
-        this.dispatchEvent(new SocketLogEvent(`Connection to "${this.#url}" failed: ${err.message}`))
+      socket.on('connect_error', err => {
+        this.dispatchEvent(
+          new SocketLogEvent(`Connection to "${this.#url}" failed: ${err.message}`),
+        )
         this.#context.connectPromise = null
         reject(err)
       })
@@ -61,12 +61,10 @@ export class AppSocket extends EventTarget {
 
   close = async () => {
     const { socket } = this.#context
-    if (!socket)
-      return
-    if (this.#context.closePromise)
-      return this.#context.closePromise
+    if (!socket) return
+    if (this.#context.closePromise) return this.#context.closePromise
     this.dispatchEvent(new SocketLogEvent(`Closing connection to "${this.#url}"`))
-    const promise = new Promise<void>((resolve) => {
+    const promise = new Promise<void>(resolve => {
       socket.close()
       socket.on('disconnect', () => {
         this.#resetContext()
@@ -80,18 +78,26 @@ export class AppSocket extends EventTarget {
   addEventListener<K extends keyof SocketEventMap>(
     type: K,
     listener: (ev: SocketEventMap[K]) => void,
-    options?: boolean | AddEventListenerOptions
+    options?: boolean | AddEventListenerOptions,
   ): void
-  addEventListener(type: string, listener: EventListener, options?: boolean | AddEventListenerOptions): void {
+  addEventListener(
+    type: string,
+    listener: EventListener,
+    options?: boolean | AddEventListenerOptions,
+  ): void {
     super.addEventListener(type, listener, options)
   }
 
   removeEventListener<K extends keyof SocketEventMap>(
     type: K,
     listener: (ev: SocketEventMap[K]) => void,
-    options?: boolean | AddEventListenerOptions
+    options?: boolean | AddEventListenerOptions,
   ): void
-  removeEventListener(type: string, listener: EventListener, options?: EventListenerOptions | boolean): void {
+  removeEventListener(
+    type: string,
+    listener: EventListener,
+    options?: EventListenerOptions | boolean,
+  ): void {
     super.removeEventListener(type, listener, options)
   }
 }

@@ -17,12 +17,13 @@ export interface EditorConfig {
   scrollbarThumbColor?: string
 }
 
-export type EditorProps = EditorConfig & HeaderConfig & {
-  contentHeight?: number
-  sizeRatio?: number
-  baseTextSize: number
-  readonly?: boolean
-}
+export type EditorProps = EditorConfig
+  & HeaderConfig & {
+    contentHeight?: number
+    sizeRatio?: number
+    baseTextSize: number
+    readonly?: boolean
+  }
 
 export interface HeaderToolbarProps extends HeaderConfig {
   editor: Editor

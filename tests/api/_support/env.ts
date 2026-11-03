@@ -26,9 +26,5 @@ export const account = {
  * 任一必需项缺失时整体跳过集成用例，避免在未配置本地凭据的环境（如 CI）产生红灯。
  */
 export const integrationConfigured = Boolean(
-  apiBase
-  && clientAuth.username
-  && clientAuth.password
-  && account.username
-  && account.password,
+  apiBase && clientAuth.username && clientAuth.password && account.username && account.password,
 )

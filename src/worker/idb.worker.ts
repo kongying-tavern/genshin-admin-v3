@@ -18,27 +18,18 @@ export interface WorkerOutput {
 
 globalThis.addEventListener('message', async (ev: MessageEvent<WorkerInput>) => {
   try {
-    const {
-      tableName,
-      clear = false,
-      bulkPutData = [],
-      bulkDeleteKeys = [],
-    } = ev.data
+    const { tableName, clear = false, bulkPutData = [], bulkDeleteKeys = [] } = ev.data
 
     const table = db.table(tableName)
     await db.transaction('rw!', table, async () => {
-      if (clear)
-        await table.clear()
-      else if (bulkDeleteKeys.length)
-        await table.bulkDelete(bulkDeleteKeys)
-      if (bulkPutData.length)
-        await table.bulkPut(bulkPutData)
+      if (clear) await table.clear()
+      else if (bulkDeleteKeys.length) await table.bulkDelete(bulkDeleteKeys)
+      if (bulkPutData.length) await table.bulkPut(bulkPutData)
     })
     globalThis.postMessage({
       message: 'success',
     } as WorkerOutput)
-  }
-  catch (err) {
+  } catch (err) {
     globalThis.postMessage({
       error: true,
       message: err instanceof Error ? err.message : `${err}`,

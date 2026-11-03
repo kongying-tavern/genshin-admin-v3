@@ -10,17 +10,14 @@ const emits = defineEmits<{
 
 const disabled = ref(false)
 const onTransitionStart = (ev: TransitionEvent) => {
-  if (ev.propertyName === 'background-color')
-    disabled.value = true
+  if (ev.propertyName === 'background-color') disabled.value = true
 }
 const onTransitionEnd = (ev: TransitionEvent) => {
-  if (ev.propertyName === 'background-color')
-    disabled.value = false
+  if (ev.propertyName === 'background-color') disabled.value = false
 }
 
 const toggleValue = () => {
-  if (disabled.value)
-    return
+  if (disabled.value) return
   emits('update:modelValue', !props.modelValue)
 }
 </script>
@@ -59,12 +56,12 @@ const toggleValue = () => {
 <style lang="scss" scoped>
 .gs-marker-switch {
   --switch-height: 32px;
-  --switch-bg: #353D4F;
-  --switch-border-color: #EBE4D8;
+  --switch-bg: #353d4f;
+  --switch-border-color: #ebe4d8;
 
-  --switch-slider-border-color: #A69678;
-  --switch-slider-bg: #FFF8DE;
-  --switch-slider-color: #353D4F;
+  --switch-slider-border-color: #a69678;
+  --switch-slider-bg: #fff8de;
+  --switch-slider-color: #353d4f;
   --switch-slider-translate: 0% 0%;
   --switch-slider-filter: none;
 
@@ -91,7 +88,7 @@ const toggleValue = () => {
   }
 
   &.actived {
-    --switch-bg: #D3BC8E;
+    --switch-bg: #d3bc8e;
     --switch-slider-translate: 100% 0%;
     --switch-slider-border-color: #e0dac3;
   }

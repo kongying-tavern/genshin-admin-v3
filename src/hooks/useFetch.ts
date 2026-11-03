@@ -2,12 +2,10 @@ import type { ShallowRef } from 'vue'
 import type { RBoolean } from '@/api/alova/globals'
 import { messageFrom } from '@/utils'
 
-interface BasicResponseBody extends Omit<RBoolean, 'data'> {
-}
+interface BasicResponseBody extends Omit<RBoolean, 'data'> {}
 
 const isBasicResponse = (v: unknown): v is BasicResponseBody => {
-  if (typeof v !== 'object' || v === null)
-    return false
+  if (typeof v !== 'object' || v === null) return false
   return true
 }
 
@@ -41,22 +39,13 @@ interface FetchHookReturn<T, A, S extends boolean = false> {
 export const useFetchHook = <T, A, S extends boolean = false>(
   options: FetchHookOptions<T, A, S>,
 ): FetchHookReturn<T, A, S> => {
-  const {
-    immediate,
-    loading = ref(false),
-    initialValue,
-    shallow,
-    diff,
-    onRequest,
-  } = options
+  const { immediate, loading = ref(false), initialValue, shallow, diff, onRequest } = options
 
   const onSuccessHook = createEventHook<T>()
   const onErrorHook = createEventHook<Error>()
   const onFinishHook = createEventHook<void>()
 
-  const data = shallow
-    ? shallowRef(initialValue) as ShallowRef<T>
-    : ref(initialValue) as Ref<T>
+  const data = shallow ? (shallowRef(initialValue) as ShallowRef<T>) : (ref(initialValue) as Ref<T>)
 
   const abortController = shallowRef<AbortController>()
 
@@ -73,23 +62,18 @@ export const useFetchHook = <T, A, S extends boolean = false>(
       loading.value = true
       if (onRequest) {
         const res = await onRequest(...args)
-        if (abort.signal.aborted)
-          return
-        if (isBasicResponse(res) && res.error)
-          throw new Error(`error in server: ${res.message}`)
-        if (diff && !diff(data.value, res))
-          return data.value
+        if (abort.signal.aborted) return
+        if (isBasicResponse(res) && res.error) throw new Error(`error in server: ${res.message}`)
+        if (diff && !diff(data.value, res)) return data.value
         data.value = res as T
         loading.value = false
         onSuccessHook.trigger(res)
         return res
       }
-    }
-    catch (err) {
+    } catch (err) {
       loading.value = false
       onErrorHook.trigger(err instanceof Error ? err : new Error(messageFrom(err)))
-    }
-    finally {
+    } finally {
       loading.value = false
       onFinishHook.trigger()
       abortController.value = undefined

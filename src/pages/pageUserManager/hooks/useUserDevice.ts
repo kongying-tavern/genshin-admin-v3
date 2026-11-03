@@ -15,8 +15,7 @@ export const useUserDevice = (form: Ref<SysUserVo>, options: UserDeviceHookOptio
     immediate: true,
     onRequest: async () => {
       const { id: userId } = toValue(form)
-      if (userId === undefined)
-        throw new Error('用户 id 为空')
+      if (userId === undefined) throw new Error('用户 id 为空')
 
       const { current, pageSize } = toValue(pagination)
 

@@ -37,22 +37,16 @@ const exit = () => {
 
 const color = computed(() => {
   const { linkAction } = props.linkOption.raw
-  if (!linkAction)
-    return 'black'
+  if (!linkAction) return 'black'
   const colorNums = LINK_CONFIG_MAP.get(linkAction as LinkActionEnum)?.lineColor
-  if (!colorNums)
-    return 'black'
+  if (!colorNums) return 'black'
   return `rgba(${colorNums.join(' ')})`
 })
 </script>
 
 <template>
   <div
-    class="
-      link-info
-      w-full overflow-hidden grid items-center px-1 rounded
-      text-xs leading-5 select-none
-    "
+    class="link-info w-full overflow-hidden grid items-center px-1 rounded text-xs leading-5 select-none"
     :class="[
       editable ? 'grid-cols-[1fr_auto_1fr_auto]' : 'grid-cols-[1fr_auto_1fr]',
       {
@@ -63,7 +57,7 @@ const color = computed(() => {
     ]"
     @pointerenter="enter"
     @pointerleave="exit"
-    @click="focusKey = (linkOption.id === focusKey ? '' : linkOption.id)"
+    @click="focusKey = linkOption.id === focusKey ? '' : linkOption.id"
   >
     <LinkMarkerInfo :marker-id="linkOption.raw.fromId" />
 
@@ -71,19 +65,15 @@ const color = computed(() => {
       class="w-[60px] h-[32px] flex flex-col justify-center items-center rounded"
       :style="`color:${color}`"
     >
-      <div
-        class="leading-none"
-        style="-webkit-text-stroke: 3px white; paint-order: stroke"
-      >
-        {{ linkOption.raw.linkAction ? LINK_ACTION_NAME_MAP.get(linkOption.raw.linkAction as LinkActionEnum) ?? '未知' : '无' }}
+      <div class="leading-none" style="-webkit-text-stroke: 3px white; paint-order: stroke">
+        {{
+          linkOption.raw.linkAction
+            ? (LINK_ACTION_NAME_MAP.get(linkOption.raw.linkAction as LinkActionEnum) ?? '未知')
+            : '无'
+        }}
       </div>
 
-      <div
-        class="leading-none"
-        style="-webkit-text-stroke: 3px white; paint-order: stroke"
-      >
-        →
-      </div>
+      <div class="leading-none" style="-webkit-text-stroke: 3px white; paint-order: stroke">→</div>
     </div>
 
     <LinkMarkerInfo :marker-id="linkOption.raw.toId" reverse />
@@ -135,7 +125,8 @@ const color = computed(() => {
     opacity: 0.5;
   }
 
-  &:not(.is-focus).is-hover, &:hover {
+  &:not(.is-focus).is-hover,
+  &:hover {
     --color: color-mix(in srgb, var(--el-color-primary) 20%, transparent 80%);
   }
 
@@ -157,11 +148,9 @@ const color = computed(() => {
 }
 
 .interaction-button {
-  @apply
-    h-full px-1 grid place-items-center rounded-sm
+  @apply h-full px-1 grid place-items-center rounded-sm
     hover:brightness-110
     active:brightness-90
-    cursor-pointer
-  ;
+    cursor-pointer;
 }
 </style>

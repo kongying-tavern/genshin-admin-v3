@@ -34,11 +34,12 @@ export class IconTypeManager implements TypeManager<IconTypeVo> {
     })
   }
 
-  delete = (data: IconTypeVo) => Apis.icon_type.deleteIconType({
-    pathParams: {
-      typeId: data.id!,
-    },
-  })
+  delete = (data: IconTypeVo) =>
+    Apis.icon_type.deleteIconType({
+      pathParams: {
+        typeId: data.id!,
+      },
+    })
 
   update = (data: IconTypeVo) => Apis.icon_type.updateIconType({ data })
 }

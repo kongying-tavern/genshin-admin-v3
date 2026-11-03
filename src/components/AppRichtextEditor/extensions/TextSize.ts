@@ -27,10 +27,10 @@ export const TextSize = Extension.create<SizeOptions>({
         attributes: {
           size: {
             default: null,
-            parseHTML: (element) => {
+            parseHTML: element => {
               return element.style.getPropertyValue('--size')
             },
-            renderHTML: (attributes) => {
+            renderHTML: attributes => {
               return !attributes.size
                 ? {}
                 : {
@@ -44,17 +44,16 @@ export const TextSize = Extension.create<SizeOptions>({
   },
   addCommands() {
     return {
-      setSize: size => ({ chain }) => {
-        return chain()
-          .setMark('size', { size })
-          .run()
-      },
-      unsetSize: () => ({ chain }) => {
-        return chain()
-          .setMark('size', { size: null })
-          .removeEmptyTextStyle()
-          .run()
-      },
+      setSize:
+        size =>
+        ({ chain }) => {
+          return chain().setMark('size', { size }).run()
+        },
+      unsetSize:
+        () =>
+        ({ chain }) => {
+          return chain().setMark('size', { size: null }).removeEmptyTextStyle().run()
+        },
     }
   },
 })

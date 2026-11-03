@@ -1,5 +1,12 @@
 import type { ScoreGeneratedCache, UserArchiveBody } from 'types/database'
-import type { AreaVo, IconVo, ItemTypeVo, ItemVo, MarkerLinkageVo, MarkerVo } from '@/api/alova/globals'
+import type {
+  AreaVo,
+  IconVo,
+  ItemTypeVo,
+  ItemVo,
+  MarkerLinkageVo,
+  MarkerVo,
+} from '@/api/alova/globals'
 import { Dexie } from 'dexie'
 
 /** 本地通用数据库 */
@@ -51,8 +58,6 @@ export class AppDexie extends Dexie {
 
   constructor() {
     super('AppData')
-    this
-      .version(this.VERSION)
-      .stores(this.STORES)
+    this.version(this.VERSION).stores(this.STORES)
   }
 }

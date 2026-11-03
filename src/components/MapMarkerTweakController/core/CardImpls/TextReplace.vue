@@ -16,7 +16,7 @@ const searchText = computed({
   get: () => {
     return modelValue.value.test ?? ''
   },
-  set: (test) => {
+  set: test => {
     modelValue.value = {
       ...modelValue.value,
       test,
@@ -28,7 +28,7 @@ const text = computed<string>({
   get: () => {
     return modelValue.value.replace ?? ''
   },
-  set: (replace) => {
+  set: replace => {
     modelValue.value = {
       ...modelValue.value,
       replace,

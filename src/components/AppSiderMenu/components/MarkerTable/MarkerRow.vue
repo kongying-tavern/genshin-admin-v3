@@ -41,7 +41,9 @@ const themeColor = computed(() => {
       </div>
 
       <div class="flex items-center gap-1 overflow-hidden">
-        <div class="w-12 h-full grid place-items-center text-xs text-white bg-[var(--theme-color-dark)] rounded">
+        <div
+          class="w-12 h-full grid place-items-center text-xs text-white bg-[var(--theme-color-dark)] rounded"
+        >
           {{ data.id }}
         </div>
         <div class="flex-1 overflow-hidden whitespace-nowrap text-ellipsis">
@@ -50,9 +52,7 @@ const themeColor = computed(() => {
       </div>
 
       <div class="flex gap-1 text-white text-xs">
-        <div v-if="data.render.isUnderground" class="info-tag">
-          非地面
-        </div>
+        <div v-if="data.render.isUnderground" class="info-tag">非地面</div>
       </div>
     </div>
   </div>
@@ -61,7 +61,7 @@ const themeColor = computed(() => {
 <style scoped>
 .marker-card {
   --icon-bg: #111;
-  --bg: #F4EFE280;
+  --bg: #f4efe280;
   --border-color: gray;
   --border-width: 2px;
   --theme-color-dark: color-mix(in srgb, var(--theme-color) 100%, black 20%);
@@ -71,17 +71,18 @@ const themeColor = computed(() => {
   padding: 4px 14px 4px 6px;
   font-size: 14px;
 
-  &:hover, &.is-hover {
-    --bg: #F4EFE2A0;
+  &:hover,
+  &.is-hover {
+    --bg: #f4efe2a0;
   }
 
   &:active {
-    --bg: #F4EFE2F0;
+    --bg: #f4efe2f0;
   }
 
   &.is-focus {
-    --bg: #F4EFE2F0;
-    --border-color: #D6AD85;
+    --bg: #f4efe2f0;
+    --border-color: #d6ad85;
     --icon-bg: color-mix(in srgb, var(--theme-color) 60%, black 40%);
   }
 }
@@ -103,9 +104,9 @@ const themeColor = computed(() => {
   height: 100%;
   display: grid;
   place-items: center;
-  background: #F4F1EB;
+  background: #f4f1eb;
   border: 1px solid rgba(128, 128, 128, 0.6);
-  color: #8E6C4E;
+  color: #8e6c4e;
   border-radius: 4px;
   padding: 1px 6px;
 }

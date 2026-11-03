@@ -70,15 +70,16 @@ declare module '@tiptap/core' {
   }
 }
 
-watch(() => props.readonly, (readonly) => {
-  editor.value?.setEditable(!readonly)
-})
+watch(
+  () => props.readonly,
+  readonly => {
+    editor.value?.setEditable(!readonly)
+  },
+)
 
-watch(modelValue, (newContent) => {
-  if (!editor.value)
-    return
-  if (editor.value.getHTML() === newContent)
-    return
+watch(modelValue, newContent => {
+  if (!editor.value) return
+  if (editor.value.getHTML() === newContent) return
   editor.value.commands.setContent(newContent, {
     emitUpdate: false,
   })
@@ -86,8 +87,7 @@ watch(modelValue, (newContent) => {
 
 onMounted(() => {
   const instance = editor.value
-  if (!instance)
-    return
+  if (!instance) return
 
   instance.on('update', ({ editor }) => {
     modelValue.value = editor.getHTML()
@@ -112,10 +112,7 @@ onMounted(() => {
       :header-max="headerMax"
       :headers="headers"
     />
-    <EditorContent
-      class="editor-instance"
-      :editor="editor"
-    />
+    <EditorContent class="editor-instance" :editor="editor" />
   </div>
 </template>
 
@@ -128,7 +125,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: border-color var(--el-transition-duration-fast) var(--el-transition-function-ease-in-out-bezier);
+  transition: border-color var(--el-transition-duration-fast)
+    var(--el-transition-function-ease-in-out-bezier);
 
   &:not(.is-readonly) {
     border: 1px solid var(--el-border-color);
@@ -180,7 +178,7 @@ onMounted(() => {
     line-height: v-bind('viewLineHeight');
     color: v-bind('defaultForeground');
 
-    &[contenteditable="false"] {
+    &[contenteditable='false'] {
       cursor: inherit;
     }
 
@@ -192,7 +190,10 @@ onMounted(() => {
       color: var(--color);
     }
     size {
-      font-size: calc(var(--size, v-bind('baseTextSize') / v-bind('sizeRatio')) * v-bind('viewZoom') * var(--sizeUnit));
+      font-size: calc(
+        var(--size, v-bind('baseTextSize') / v-bind('sizeRatio')) * v-bind('viewZoom') *
+          var(--sizeUnit)
+      );
     }
     a {
       cursor: pointer;

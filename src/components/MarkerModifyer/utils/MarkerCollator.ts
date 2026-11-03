@@ -24,7 +24,10 @@ export class MarkerCollator {
   }
 
   private static isItemDifferent = (a: MarkerItemLinkVo[] = [], b: MarkerItemLinkVo[] = []) => {
-    const itemCountMap = a.reduce((map, { itemId, count = 0 }) => map.set(itemId!, count), new Map<number, number>())
+    const itemCountMap = a.reduce(
+      (map, { itemId, count = 0 }) => map.set(itemId!, count),
+      new Map<number, number>(),
+    )
 
     b.forEach(({ itemId, count = 0 }) => {
       const newOne = itemCountMap.get(itemId!)

@@ -3,7 +3,7 @@ import type { MAFMetaDummy, MAFOptionSelect, MAFValueNumberExact } from '@/store
 import { GSSegmented } from '@/components'
 
 defineProps<{
-  options: MAFOptionSelect<{ label: string, value: number }>
+  options: MAFOptionSelect<{ label: string; value: number }>
   meta: MAFMetaDummy
 }>()
 

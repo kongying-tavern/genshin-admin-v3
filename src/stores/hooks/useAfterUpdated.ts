@@ -20,8 +20,7 @@ export const useAfterUpdated = <Key, Data>(options: AfterUpdatedHookOptions<Key,
    * 此逻辑用于确保更新被写入数据库后才执行一些临时任务的状态重置，以避免实际状态和显示状态不一致的问题。
    */
   const afterUpdated = async (ids: Key[]) => {
-    if (!ids.length)
-      return
+    if (!ids.length) return
 
     const { resolve, promise } = Promise.withResolvers<void>()
 
@@ -35,25 +34,24 @@ export const useAfterUpdated = <Key, Data>(options: AfterUpdatedHookOptions<Key,
 
       const data = await getData(ids)
 
-      ids.forEach((id) => {
+      ids.forEach(id => {
         waitForUpdate.value.add(id)
       })
 
       await commit(data)
 
-      data.forEach((data) => {
+      data.forEach(data => {
         waitForUpdate.value.delete(getKey(data))
       })
 
       // TODO 暂时无法处理删除导致数据缺失的问题
       if (!data.length) {
-        ids.forEach((id) => {
+        ids.forEach(id => {
           waitForUpdate.value.delete(id)
         })
       }
-    }
-    catch {
-      ids.forEach((id) => {
+    } catch {
+      ids.forEach(id => {
         waitForUpdate.value.delete(id)
       })
       updated.off(finish)

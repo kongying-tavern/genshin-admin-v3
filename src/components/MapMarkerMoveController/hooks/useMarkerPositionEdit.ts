@@ -16,11 +16,16 @@ export const useMarkerPositionEdit = () => {
     updateBy: updateDraggingBy,
   } = mapStateStore.subscribeMission('markerDragging', () => new Map())
 
-  const { refresh: moveMarker, onSuccess, onError, onFinish, ...rest } = useFetchHook({
+  const {
+    refresh: moveMarker,
+    onSuccess,
+    onError,
+    onFinish,
+    ...rest
+  } = useFetchHook({
     onRequest: async () => {
       const tileConfig = tileStore.currentTileConfig
-      if (!tileConfig)
-        throw new Error('无法获取当前图层配置')
+      if (!tileConfig) throw new Error('无法获取当前图层配置')
 
       const [cx, cy] = tileConfig.tile.center
 
@@ -31,22 +36,22 @@ export const useMarkerPositionEdit = () => {
 
       missions.forEach(([x, y], id) => {
         const marker = currentMarkerIdMap.get(id)
-        if (!marker)
-          throw new Error(`获取 id 为 ${id} 的点位数据时出错，对象不存在。`)
+        if (!marker) throw new Error(`获取 id 为 ${id} 的点位数据时出错，对象不存在。`)
         payload.push({
           markerIds: [id],
-          tweaks: [{
-            prop: 'position',
-            type: 'update',
-            meta: {
-              value: `${x - cx},${y - cy}` as unknown as object,
+          tweaks: [
+            {
+              prop: 'position',
+              type: 'update',
+              meta: {
+                value: `${x - cx},${y - cy}` as unknown as object,
+              },
             },
-          }],
+          ],
         })
       })
 
-      if (!payload.length)
-        throw new Error('已验证的提交信息为空')
+      if (!payload.length) throw new Error('已验证的提交信息为空')
 
       ElMessage.warning({
         message: '操作已提交，正在验证中...',
@@ -73,7 +78,7 @@ export const useMarkerPositionEdit = () => {
     })
   })
 
-  onError((err) => {
+  onError(err => {
     ElMessage.error({
       message: `移动点位失败，原因为：${err.message}`,
     })

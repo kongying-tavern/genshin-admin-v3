@@ -29,15 +29,13 @@ const focusInput = () => nativeInputRef.value.focus()
 
 const nativeInputValue = computed(() => String(props.modelValue ?? ''))
 const setNativeInputValue = () => {
-  if (!nativeInputRef.value)
-    return
+  if (!nativeInputRef.value) return
   nativeInputRef.value.value = nativeInputValue.value
 }
 watch(nativeInputValue, setNativeInputValue)
 
-useEventListener<InputEvent>(nativeInputRef, 'input', async (ev) => {
-  if (props.disabled || ev.isComposing)
-    return
+useEventListener<InputEvent>(nativeInputRef, 'input', async ev => {
+  if (props.disabled || ev.isComposing) return
   const { value } = ev.target as HTMLInputElement
   emits('update:modelValue', value)
   emits('input', ev)
@@ -45,9 +43,8 @@ useEventListener<InputEvent>(nativeInputRef, 'input', async (ev) => {
   setNativeInputValue()
 })
 
-useEventListener<CompositionEvent>(nativeInputRef, 'compositionend', async (ev) => {
-  if (props.disabled)
-    return
+useEventListener<CompositionEvent>(nativeInputRef, 'compositionend', async ev => {
+  if (props.disabled) return
   const { value } = ev.target as HTMLInputElement
   emits('update:modelValue', value)
   await nextTick()
@@ -67,7 +64,13 @@ onMounted(() => {
     <div v-if="$slots.prepend" class="gs-input__prepend">
       <slot name="prepend" />
     </div>
-    <input ref="nativeInputRef" :type="type" :placeholder="placeholder" :disabled="disabled" class="gs-input__internal">
+    <input
+      ref="nativeInputRef"
+      :type="type"
+      :placeholder="placeholder"
+      :disabled="disabled"
+      class="gs-input__internal"
+    />
     <div v-if="$slots.append" class="gs-input__append">
       <slot name="append" />
     </div>
@@ -77,11 +80,12 @@ onMounted(() => {
 <style lang="scss" scoped>
 .gs-input {
   --gs-input-bg-color: radial-gradient(
-    #FFF calc(100% - 3px),
-    #BFBFBF calc(100% - 3px),
-    #BFBFBF calc(100% - 1px),
-    #FFF calc(100% - 1px));
-  --gs-input-border-color: #BFBFBF;
+    #fff calc(100% - 3px),
+    #bfbfbf calc(100% - 3px),
+    #bfbfbf calc(100% - 1px),
+    #fff calc(100% - 1px)
+  );
+  --gs-input-border-color: #bfbfbf;
   --gs-input-text-color: #435066;
 
   height: 40px;
@@ -101,7 +105,7 @@ onMounted(() => {
 
   &.disabled {
     --gs-input-bg-color: transparent;
-    --gs-input-border-color: #ECE5D834;
+    --gs-input-border-color: #ece5d834;
     --gs-input-text-color: #959597;
   }
 }

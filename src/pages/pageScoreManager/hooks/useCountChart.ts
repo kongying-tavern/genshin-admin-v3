@@ -3,7 +3,10 @@ import type { FormatedScore } from '../shared'
 import { Chart, Dark, Light } from '@antv/g2'
 import { useTheme } from '@/hooks'
 
-export const useCountChart = (container: Ref<HTMLElement | undefined>, data: Ref<FormatedScore[]>) => {
+export const useCountChart = (
+  container: Ref<HTMLElement | undefined>,
+  data: Ref<FormatedScore[]>,
+) => {
   const chartRef = shallowRef<Chart>()
 
   const { isDark } = useTheme()
@@ -17,8 +20,7 @@ export const useCountChart = (container: Ref<HTMLElement | undefined>, data: Ref
 
   onMounted(async () => {
     const ele = toValue(container)
-    if (!ele)
-      throw new Error('挂载元素为空')
+    if (!ele) throw new Error('挂载元素为空')
 
     const chart = new Chart({
       autoFit: true,

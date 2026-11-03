@@ -18,8 +18,7 @@ export class EnumModifier<T = unknown> extends Modifier<EnumModifierProps<T>> {
         label: '更新',
         modify: (data, { value = '' }) => {
           const { field, customModify } = this.options
-          if (customModify !== undefined)
-            return data
+          if (customModify !== undefined) return data
           return { ...data, [field]: value }
         },
         cardComp: () => import('../CardImpls/EnumUpdate.vue'),

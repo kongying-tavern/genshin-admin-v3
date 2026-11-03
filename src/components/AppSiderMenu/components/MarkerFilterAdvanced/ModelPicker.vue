@@ -18,8 +18,7 @@ const { markerAdvancedFilterConfigs } = useMapStateStore()
 const selectedId = ref(0)
 
 const handleSelect = () => {
-  if (!selectedId.value || selectedId.value <= 0)
-    return
+  if (!selectedId.value || selectedId.value <= 0) return
 
   emits('select', selectedId.value)
   selectedId.value = 0
@@ -43,10 +42,10 @@ const handleClose = () => {
     class="custom-dialog hidden-header bg-transparent"
     @closed="handleClose"
   >
-    <div class="genshin-dark-card flex flex-col overflow-hidden font-['HYWenHei-85W'] min-w-[600px] h-[600px] max-w-[100dvw] max-h-[100dvh]">
-      <div class="text-xl text-center">
-        选择筛选类型
-      </div>
+    <div
+      class="genshin-dark-card flex flex-col overflow-hidden font-['HYWenHei-85W'] min-w-[600px] h-[600px] max-w-[100dvw] max-h-[100dvh]"
+    >
+      <div class="text-xl text-center">选择筛选类型</div>
       <GSDivider color="#76716A" :height="34" />
       <el-scrollbar class="flex-1">
         <SelectList
@@ -67,13 +66,7 @@ const handleClose = () => {
       <GSDivider color="#76716A" :height="34" />
 
       <div class="flex gap-4">
-        <GSButton
-          class="flex-1"
-          icon="cancel"
-          @click="handleClose"
-        >
-          取消
-        </GSButton>
+        <GSButton class="flex-1" icon="cancel" @click="handleClose"> 取消 </GSButton>
         <GSButton
           :disabled="!selectedId && selectedId <= 0"
           class="flex-1"

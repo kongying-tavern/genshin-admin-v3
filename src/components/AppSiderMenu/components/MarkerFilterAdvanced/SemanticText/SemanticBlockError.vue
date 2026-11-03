@@ -19,7 +19,7 @@ defineProps<{
 <style lang="scss" scoped>
 .sem-error {
   color: var(--gs-color-danger);
-  margin: 0 .2rem;
+  margin: 0 0.2rem;
 
   .icon {
     vertical-align: middle;

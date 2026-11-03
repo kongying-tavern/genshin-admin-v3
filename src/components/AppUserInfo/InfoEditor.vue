@@ -14,36 +14,43 @@ const form = ref<SysUserUpdateVo>({
 })
 
 const isDifference = computed(() => {
-  if (!userStore.info)
-    return false
+  if (!userStore.info) return false
   const { nickname, qq, phone } = form.value
   const { nickname: rawNickname, qq: rawQQ, phone: rawPhone } = userStore.info
-  return [
-    [nickname, rawNickname],
-    [qq, rawQQ],
-    [phone, rawPhone],
-  ].find(([a, b]) => {
-    a ||= ''
-    b ||= ''
-    return a !== b
-  }) !== undefined
+  return (
+    [
+      [nickname, rawNickname],
+      [qq, rawQQ],
+      [phone, rawPhone],
+    ].find(([a, b]) => {
+      a ||= ''
+      b ||= ''
+      return a !== b
+    }) !== undefined
+  )
 })
 
 const formRef = ref<ElFormType | null>(null)
 
 const rules: FormRules = {
   nickname: [{ required: true, message: '昵称不能为空' }],
-  qq: [{ required: true, message: '不是合法的Q号格式', validator: (_, v: string) => /[1-9]\d[4,9]/.test(v) }],
-  phone: [{ message: '不是合法的手机号格式', validator: (_, v: string) => !v || /^1[3-9]\d{9}$/.test(v) }],
+  qq: [
+    {
+      required: true,
+      message: '不是合法的Q号格式',
+      validator: (_, v: string) => /[1-9]\d[4,9]/.test(v),
+    },
+  ],
+  phone: [
+    { message: '不是合法的手机号格式', validator: (_, v: string) => !v || /^1[3-9]\d{9}$/.test(v) },
+  ],
 }
 
 const { refresh: updateUserInfo, loading } = useFetchHook({
   onRequest: async () => {
-    if (!isDifference.value)
-      throw new Error('校验失败')
+    if (!isDifference.value) throw new Error('校验失败')
     const isValid = await formRef.value?.validate().catch(() => false)
-    if (!isValid)
-      return
+    if (!isValid) return
     await Apis.user.updateUser({ data: form.value })
     await userStore.refreshUserInfo()
   },
@@ -55,11 +62,7 @@ const { refresh: updateUserInfo, loading } = useFetchHook({
     <el-form
       ref="formRef"
       class="shrink-0"
-      style="
-        --el-form-label-font-size: 18px;
-        width: 370px;
-        --el-text-color-regular: #424F65;
-      "
+      style="--el-form-label-font-size: 18px; width: 370px; --el-text-color-regular: #424f65"
       label-width="100px"
       label-position="left"
       :model="form"

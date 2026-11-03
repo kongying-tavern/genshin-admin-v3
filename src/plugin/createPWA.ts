@@ -6,7 +6,7 @@ const logger = new Logger('服务线程')
 
 export type ServiceWorkerOutput = {
   action: 'log'
-  value: { type: 'info' | 'error', args: string[] }
+  value: { type: 'info' | 'error'; args: string[] }
 } & {
   action: string
   value: unknown
@@ -35,9 +35,7 @@ export const createPWA = (): Plugin => ({
     })
 
     await navigator.serviceWorker?.register(
-      import.meta.env.MODE === 'production'
-        ? '/service.worker.js'
-        : '/dev-sw.js?dev-sw',
+      import.meta.env.MODE === 'production' ? '/service.worker.js' : '/dev-sw.js?dev-sw',
       { type: 'module' },
     )
     await navigator.serviceWorker.ready

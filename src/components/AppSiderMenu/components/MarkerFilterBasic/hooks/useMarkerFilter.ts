@@ -7,8 +7,7 @@ export const useMarkerFilter = () => {
 
   const reviewCondition = (id: string) => {
     const condition = markerBasicFilters.value.get(id)
-    if (!condition)
-      return
+    if (!condition) return
     const { area, type } = condition
     preferenceStore.areaCode = area.code!
     preferenceStore.itemTypeId = type.id!
@@ -17,8 +16,7 @@ export const useMarkerFilter = () => {
 
   const deleteCondition = (id: string) => {
     const condition = markerBasicFilters.value.get(id)
-    if (!condition)
-      return
+    if (!condition) return
     const existItemIds = new Set(preferenceStore.itemIds)
     const { items } = condition
     items.forEach(itemId => existItemIds.delete(itemId))

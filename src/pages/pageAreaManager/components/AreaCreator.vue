@@ -23,11 +23,15 @@ const formData = ref<AreaVo>({
 
 const copyItems = shallowRef<ItemVo[]>([])
 
-const { loading, refresh: submit, onSuccess, onError } = useFetchHook({
+const {
+  loading,
+  refresh: submit,
+  onSuccess,
+  onError,
+} = useFetchHook({
   onRequest: async () => {
     const { data: areaId } = await Apis.area.createArea({ data: formData.value })
-    if (!areaId)
-      throw new Error('无法确认新增地区的id')
+    if (!areaId) throw new Error('无法确认新增地区的id')
     if (copyItems.value.length) {
       await Apis.item.copyItemToArea({
         pathParams: {
@@ -45,7 +49,7 @@ const { loading, refresh: submit, onSuccess, onError } = useFetchHook({
   },
 })
 
-onSuccess((form) => {
+onSuccess(form => {
   ElMessage.success({
     message: '新增地区成功',
   })
@@ -53,7 +57,7 @@ onSuccess((form) => {
   emits('success', form)
 })
 
-onError((err) => {
+onError(err => {
   ElMessage.error({
     message: `新增地区失败，原因为：${err.message}`,
   })
@@ -64,8 +68,7 @@ const createArea = async () => {
   try {
     await formRef.value?.validate()
     await submit()
-  }
-  catch {
+  } catch {
     // validate, no error
   }
 }
@@ -85,9 +88,7 @@ const createArea = async () => {
       <el-button :icon="Check" type="primary" :loading="loading" @click="createArea">
         确定
       </el-button>
-      <el-button :icon="Close" :disabled="loading" @click="() => emits('close')">
-        取消
-      </el-button>
+      <el-button :icon="Close" :disabled="loading" @click="() => emits('close')"> 取消 </el-button>
     </WinDialogFooter>
   </WinDialog>
 </template>

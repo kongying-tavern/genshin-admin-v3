@@ -14,11 +14,17 @@ export const _useRefreshTimeOptions = () => {
     ]
   })
 
-  const refreshTimeTypeOptions = computed(() => refreshTimeOptions.value.map(({ label }) => ({ label, value: label })))
+  const refreshTimeTypeOptions = computed(() =>
+    refreshTimeOptions.value.map(({ label }) => ({ label, value: label })),
+  )
 
-  const refreshTimeTypeNameMap = computed(() => Object.fromEntries(refreshTimeOptions.value.map(({ label, value }) => [value, label])))
+  const refreshTimeTypeNameMap = computed(() =>
+    Object.fromEntries(refreshTimeOptions.value.map(({ label, value }) => [value, label])),
+  )
 
-  const refreshTimeTypeMap = computed(() => Object.fromEntries(refreshTimeOptions.value.map(({ label, value }) => [label, value])))
+  const refreshTimeTypeMap = computed(() =>
+    Object.fromEntries(refreshTimeOptions.value.map(({ label, value }) => [label, value])),
+  )
 
   return {
     refreshTimeOptions,
@@ -29,7 +35,6 @@ export const _useRefreshTimeOptions = () => {
 }
 
 export const useRefreshTimeOptions = () => {
-  if (!_cache)
-    _cache = _useRefreshTimeOptions()
+  if (!_cache) _cache = _useRefreshTimeOptions()
   return _cache
 }

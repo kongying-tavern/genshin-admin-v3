@@ -19,12 +19,7 @@ const activedIcon = defineModel<number | undefined>('activedItem', {
     class="border-r-[1px] border-[var(--el-border-color-light)] h-full overflow-hidden"
     element-loading-text="正在处理..."
   >
-    <AppVirtualTable
-      :data="data"
-      :cached-rows="1"
-      :item-height="ICON_SIZE"
-      :item-width="ICON_SIZE"
-    >
+    <AppVirtualTable :data="data" :cached-rows="1" :item-height="ICON_SIZE" :item-width="ICON_SIZE">
       <template #default="{ item: icon }">
         <div
           class="grid-item"
@@ -34,10 +29,7 @@ const activedIcon = defineModel<number | undefined>('activedItem', {
           }"
           @click="activedIcon = icon.id"
         >
-          <IconImage
-            :url="icon.url"
-            :alt="icon.tag"
-          />
+          <IconImage :url="icon.url" :alt="icon.tag" />
           <div class="item-label">
             {{ icon.tag }}
           </div>

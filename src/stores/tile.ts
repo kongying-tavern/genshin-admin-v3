@@ -4,12 +4,9 @@ import { acceptHMRUpdate, defineStore } from 'pinia'
 import { AREA_ADDITIONAL_CONFIG_MAP } from '@/configs'
 import { useAccessStore, useArchiveStore, useAreaStore, useDadianStore } from '@/stores'
 
-export interface TileInfo extends Required<Pick<DTO.TileConfig, | 'code'
-  | 'name'
-  | 'extension'
-  | 'tilesOffset'
-  | 'size'
-  | 'center'>> {}
+export interface TileInfo extends Required<
+  Pick<DTO.TileConfig, 'code' | 'name' | 'extension' | 'tilesOffset' | 'size' | 'center'>
+> {}
 
 type AreaTagConfigs = Required<(typeof AREA_ADDITIONAL_CONFIG_MAP)[string]>['tags']
 
@@ -46,9 +43,7 @@ export const useTileStore = defineStore('global-map-tile', () => {
 
   const mergedTiles = computed(() => {
     const { tiles = {}, tilesBeta = {} } = dadianStore.raw
-    return accessStore.hasBeta
-      ? merge(tiles, tilesBeta)
-      : tiles
+    return accessStore.hasBeta ? merge(tiles, tilesBeta) : tiles
   })
 
   /**
@@ -60,12 +55,10 @@ export const useTileStore = defineStore('global-map-tile', () => {
 
     for (const maybeAreaCode in mergedTiles.value) {
       // 只保留实际配置，继承用的配置忽略
-      if (!/[A-Z]:[A-Z]+(?::\s+)?/.test(maybeAreaCode))
-        continue
+      if (!/[A-Z]:[A-Z]+(?::\s+)?/.test(maybeAreaCode)) continue
 
       const tileConfig = mergedTiles.value[maybeAreaCode]
-      if (tileConfig.extend)
-        defaultsDeep(tileConfig, mergedTiles.value[tileConfig.extend])
+      if (tileConfig.extend) defaultsDeep(tileConfig, mergedTiles.value[tileConfig.extend])
 
       const {
         code = '',
@@ -76,14 +69,8 @@ export const useTileStore = defineStore('global-map-tile', () => {
         size = [0, 0],
         tilesOffset = [0, 0],
       } = tileConfig
-      const {
-        tags = [],
-        target: rewriteTarget,
-      } = AREA_ADDITIONAL_CONFIG_MAP[maybeAreaCode] ?? {}
-      const {
-        center: target = [0, 0],
-        zoom = 0,
-      } = settings
+      const { tags = [], target: rewriteTarget } = AREA_ADDITIONAL_CONFIG_MAP[maybeAreaCode] ?? {}
+      const { center: target = [0, 0], zoom = 0 } = settings
 
       areaTileConfigs[maybeAreaCode] = {
         tags,
@@ -114,12 +101,10 @@ export const useTileStore = defineStore('global-map-tile', () => {
 
     for (const areaCode in mergedTiles.value) {
       // 只保留实际配置，继承用的配置忽略
-      if (!/[A-Z]:[A-Z]+(?::\s+)?/.test(areaCode))
-        continue
+      if (!/[A-Z]:[A-Z]+(?::\s+)?/.test(areaCode)) continue
 
       const tileConfig = mergedTiles.value[areaCode]
-      if (tileConfig.extend)
-        defaultsDeep(tileConfig, mergedTiles.value[tileConfig.extend])
+      if (tileConfig.extend) defaultsDeep(tileConfig, mergedTiles.value[tileConfig.extend])
 
       const {
         code = '',
@@ -130,14 +115,8 @@ export const useTileStore = defineStore('global-map-tile', () => {
         size = [0, 0],
         tilesOffset = [0, 0],
       } = tileConfig
-      const {
-        tags = [],
-        target: rewriteTarget,
-      } = AREA_ADDITIONAL_CONFIG_MAP[areaCode] ?? {}
-      const {
-        center: target = [0, 0],
-        zoom = 0,
-      } = settings
+      const { tags = [], target: rewriteTarget } = AREA_ADDITIONAL_CONFIG_MAP[areaCode] ?? {}
+      const { center: target = [0, 0], zoom = 0 } = settings
 
       map.set(areaCode, {
         tags,
@@ -161,15 +140,13 @@ export const useTileStore = defineStore('global-map-tile', () => {
 
   /** 当前激活的底图配置 */
   const currentTileConfig = computed(() => {
-    if (!areaCode.value)
-      return
+    if (!areaCode.value) return
     return mergedTileConfigs.value[areaCode.value]
   })
 
   /** 当前激活的底图code */
   const currentTileCode = computed(() => {
-    if (!currentTileConfig.value)
-      return
+    if (!currentTileConfig.value) return
     return currentTileConfig.value.tile.code
   })
 
@@ -179,17 +156,15 @@ export const useTileStore = defineStore('global-map-tile', () => {
     const tileConfigs = mergedTileConfigs.value
     for (const areaCode in tileConfigs) {
       const { tile } = tileConfigs[areaCode]
-      if (tile.code !== currentTileCode.value)
-        continue
+      if (tile.code !== currentTileCode.value) continue
       areaCodeSet.add(areaCode)
     }
 
     const areaIdSet = new Set<number>()
     const { areaCodeMap } = areaStore
-    areaCodeSet.forEach((areaCode) => {
+    areaCodeSet.forEach(areaCode => {
       const area = areaCodeMap.get(areaCode)
-      if (!area)
-        return
+      if (!area) return
       areaIdSet.add(area.id!)
     })
 
@@ -205,12 +180,10 @@ export const useTileStore = defineStore('global-map-tile', () => {
     const tileConfigs = mergedTileConfigs.value
     for (const areaCode in tileConfigs) {
       const { tags, tile } = tileConfigs[areaCode]
-      if (tile.code !== currentTileCode.value)
-        continue
+      if (tile.code !== currentTileCode.value) continue
       for (const tag of tags) {
         const { 2: level = 0 } = tag
-        if (!levelTagsMap[level as number])
-          levelTagsMap[level as number] = []
+        if (!levelTagsMap[level as number]) levelTagsMap[level as number] = []
         levelTagsMap[level as number].push(tag)
       }
     }
@@ -222,16 +195,13 @@ export const useTileStore = defineStore('global-map-tile', () => {
     const { areaCodeMap } = areaStore
     const tileOptions: Record<string, AreaTileConfig> = {}
     for (const areaCode in mergedTileConfigs.value) {
-      if (!areaCodeMap.has(areaCode))
-        continue
+      if (!areaCodeMap.has(areaCode)) continue
 
       const tileConfig = mergedTileConfigs.value[areaCode]
       const tileName = tileConfig.tile.name
       const tileCode = tileConfig.tile.code
-      if (!tileName)
-        continue
-      else if (tileOptions[tileCode])
-        continue
+      if (!tileName) continue
+      else if (tileOptions[tileCode]) continue
 
       const { tile, initViewState } = tileConfig
       tileOptions[tileCode] = { code: areaCode, tile, initViewState, tags: [] }
@@ -241,17 +211,19 @@ export const useTileStore = defineStore('global-map-tile', () => {
 
   /** 将地图坐标转换为点位坐标 */
   const toMarkerCoordinate = ([x, y]: DTO.Coordinate2D): DTO.Coordinate2D => {
-    if (!currentTileConfig.value)
-      return [x, y]
-    const { center: [ox, oy] } = currentTileConfig.value.tile
+    if (!currentTileConfig.value) return [x, y]
+    const {
+      center: [ox, oy],
+    } = currentTileConfig.value.tile
     return [x - ox, y - oy]
   }
 
   /** 将点位坐标转换为地图坐标 */
   const toMapCoordinate = ([x, y]: DTO.Coordinate2D): DTO.Coordinate2D => {
-    if (!currentTileConfig.value)
-      return [x, y]
-    const { center: [ox, oy] } = currentTileConfig.value.tile
+    if (!currentTileConfig.value) return [x, y]
+    const {
+      center: [ox, oy],
+    } = currentTileConfig.value.tile
     return [x + ox, y + oy]
   }
 

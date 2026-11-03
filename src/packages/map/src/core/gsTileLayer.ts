@@ -35,8 +35,7 @@ export class GSTileLayer extends TileLayer<TileData | null> {
       extent: [ox, h + oy, w + ox, oy],
       getTileData: async ({ index: { x, y, z }, signal }) => {
         try {
-          if (signal?.aborted)
-            return null
+          if (signal?.aborted) return null
           const url = `${BASE_URL}/tiles_${code}/${z + ZOOM_MAPPING}/${x}_${y}.${extension}`
           const blob = await fetch(url, { mode: 'cors' }).then(res => res.blob())
           const image = await createImageBitmap(blob)
@@ -45,14 +44,12 @@ export class GSTileLayer extends TileLayer<TileData | null> {
             image,
             url,
           }
-        }
-        catch {
+        } catch {
           return null
         }
       },
-      renderSubLayers: (props) => {
-        if (!props.data)
-          return null
+      renderSubLayers: props => {
+        if (!props.data) return null
         const { url, image } = props.data
         const [[xmin, ymin], [xmax, ymax]] = props.tile.boundingBox
         return new BitmapLayer({

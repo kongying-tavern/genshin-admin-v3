@@ -32,21 +32,18 @@ export interface ManagerUpdateOptions {
 }
 
 export const useManager = <C, T>(options: ManagerOptions<C, T>) => {
-  const {
-    timeoutPull,
-    context,
-    init,
-    diff,
-    full,
-    commit,
-    syncState,
-  } = options
+  const { timeoutPull, context, init, diff, full, commit, syncState } = options
 
   const errorMessage = ref('')
 
   const initFlag = ref(false)
 
-  const { refresh: update, loading, onError, ...rest } = useFetchHook({
+  const {
+    refresh: update,
+    loading,
+    onError,
+    ...rest
+  } = useFetchHook({
     onRequest: async (options: ManagerUpdateOptions = {}) => {
       errorMessage.value = ''
       const { isFull = false } = options
@@ -57,14 +54,14 @@ export const useManager = <C, T>(options: ManagerOptions<C, T>) => {
           await (diff ?? full)?.(context)
           initFlag.value = true
         }
-        return (isFull ? full : diff ?? full)(context)
+        return (isFull ? full : (diff ?? full))(context)
       })()
       await syncState?.(data, context, isInit)
       await commit(data, context)
     },
   })
 
-  onError((err) => {
+  onError(err => {
     errorMessage.value = err.message
   })
 
@@ -73,24 +70,31 @@ export const useManager = <C, T>(options: ManagerOptions<C, T>) => {
 
   const pollTime = ref(0)
 
-  const { isActive, pause, resume } = useTimeoutPoll(async () => {
-    if (!loading.value)
-      await update()
-    nextUpdateTime.value = Date.now() + pollTime.value
-  }, pollTime, {
-    immediate: false,
-  })
+  const { isActive, pause, resume } = useTimeoutPoll(
+    async () => {
+      if (!loading.value) await update()
+      nextUpdateTime.value = Date.now() + pollTime.value
+    },
+    pollTime,
+    {
+      immediate: false,
+    },
+  )
 
   if (timeoutPull) {
     const { condition, time } = timeoutPull
     pollTime.value = time
-    watch(() => condition(), (isTrue) => {
-      if (!isTrue) {
-        pause()
-        return
-      }
-      resume()
-    }, { immediate: true })
+    watch(
+      () => condition(),
+      isTrue => {
+        if (!isTrue) {
+          pause()
+          return
+        }
+        resume()
+      },
+      { immediate: true },
+    )
   }
 
   return {

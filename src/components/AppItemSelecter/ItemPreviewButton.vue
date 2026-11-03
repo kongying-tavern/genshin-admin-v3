@@ -11,16 +11,8 @@ defineProps<{
 </script>
 
 <template>
-  <div
-    v-bind="$attrs"
-    :title="item.name"
-    class="item-selecter-button relative"
-  >
-    <AppIconTagRenderer
-      :src="src"
-      :mapping="mapping"
-      class="w-8 h-8"
-    />
+  <div v-bind="$attrs" :title="item.name" class="item-selecter-button relative">
+    <AppIconTagRenderer :src="src" :mapping="mapping" class="w-8 h-8" />
 
     <div class="absolute w-4 h-4 top-0 right-0 text-[var(--el-color-info-light-3)]">
       <CircleCloseFilled />

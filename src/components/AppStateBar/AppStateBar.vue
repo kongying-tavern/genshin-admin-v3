@@ -20,7 +20,7 @@ onClickOutside(contentZoneRef, () => {
 })
 
 const checkTooltip = (ev: Event) => {
-  const findRes = ev.composedPath().find((target) => {
+  const findRes = ev.composedPath().find(target => {
     return target instanceof HTMLElement && target.dataset.label
   })
   if (!findRes) {
@@ -61,7 +61,7 @@ useEventListener('click', checkTooltip)
 .el-popper.is-customized.state-bar-tooltip {
   padding: 2px 4px;
   background: #495168;
-  color: #ECE5D8;
+  color: #ece5d8;
   font-size: 12px;
   .el-popper__arrow {
     display: none;
@@ -82,12 +82,12 @@ useEventListener('click', checkTooltip)
 .bar-content {
   border-radius: 4px;
   background: #263240;
-  color: #C6C2BA;
+  color: #c6c2ba;
   padding: 2px;
   pointer-events: all;
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  border: 1px solid #ECE5D820;
+  border: 1px solid #ece5d820;
 }
 </style>

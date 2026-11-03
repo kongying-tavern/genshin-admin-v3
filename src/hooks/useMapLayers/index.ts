@@ -3,11 +3,7 @@ import type { GSMarkerInfo } from '@/packages/map'
 import { LineLayer } from 'deck.gl'
 import { GSOverlayer, GSTileLayer } from '@/packages/map'
 import { TempLayerIndex } from '@/shared'
-import {
-  useMapStateStore,
-  useOverlayStore,
-  useTileStore,
-} from '@/stores'
+import { useMapStateStore, useOverlayStore, useTileStore } from '@/stores'
 import { useLinkLayer } from './useLinkLayer'
 import { useMarkerLayer } from './useMarkerLayer'
 import { useTagLayer } from './useTagLayer'
@@ -17,13 +13,15 @@ export const useMapLayers = () => {
   const overlayStore = useOverlayStore()
   const mapStateStore = useMapStateStore()
 
-  const { data: markerDraggingMission } = mapStateStore.subscribeMission('markerDragging', () => new Map())
+  const { data: markerDraggingMission } = mapStateStore.subscribeMission(
+    'markerDragging',
+    () => new Map(),
+  )
 
   // ============================== 底图图层 ==============================
   const tileLayer = computed(() => {
     const tile = tileStore.currentTileConfig?.tile
-    if (!tile)
-      return
+    if (!tile) return
     return new GSTileLayer({
       code: tile.code,
       size: tile.size,
@@ -34,8 +32,7 @@ export const useMapLayers = () => {
 
   // ============================== 附加图层 ==============================
   const overlayer = computed(() => {
-    if (!tileStore.currentTileConfig)
-      return
+    if (!tileStore.currentTileConfig) return
     const [w, h] = tileStore.currentTileConfig.tile.size
     const [ox, oy] = tileStore.currentTileConfig.tile.tilesOffset
     const xmin = ox
@@ -56,8 +53,7 @@ export const useMapLayers = () => {
 
   // ============================== 拖拽指示 ==============================
   const markerDraggingLineLayer = computed(() => {
-    if (!markerDraggingMission.value.size)
-      return
+    if (!markerDraggingMission.value.size) return
     const markers: GSMarkerInfo[] = []
     markerDraggingMission.value.forEach((_, markerId) => {
       const marker = mapStateStore.currentMarkerIdMap.get(markerId)

@@ -5,10 +5,8 @@ const slots = defineSlots<{
 
 const isTabPanel = (vnode: VNode) => {
   const { type } = vnode
-  if (typeof type !== 'object')
-    return false
-  if (!('name' in type))
-    return false
+  if (typeof type !== 'object') return false
+  if (!('name' in type)) return false
   return type.name === 'FilterTabPanel'
 }
 
@@ -24,10 +22,7 @@ const tabPanels = computed(() => slots.default().filter(isTabPanel))
 <template>
   <div class="flex flex-col overflow-hidden">
     <div class="filter-tabs font-[HYWenHei-85W]">
-      <template
-        v-for="panel in tabPanels"
-        :key="panel.props!.value"
-      >
+      <template v-for="panel in tabPanels" :key="panel.props!.value">
         <div
           class="filter-tab"
           :class="{ actived: modelValue === panel.props!.value }"
@@ -81,9 +76,13 @@ const tabPanels = computed(() => slots.default().filter(isTabPanel))
     transition: all ease 150ms;
     user-select: none;
     position: relative;
-    color: #D3BC8E;
+    color: #d3bc8e;
     text-align: center;
-    background: linear-gradient(to bottom, var(--bg-color) calc(100% - 4px), transparent calc(100% - 4px));
+    background: linear-gradient(
+      to bottom,
+      var(--bg-color) calc(100% - 4px),
+      transparent calc(100% - 4px)
+    );
     overflow: hidden;
     cursor: pointer;
 
@@ -95,7 +94,7 @@ const tabPanels = computed(() => slots.default().filter(isTabPanel))
     }
     &.actived {
       --underline-scale: 1;
-      --bg-color: #ECE5D8;
+      --bg-color: #ece5d8;
       color: #000;
     }
     &::before {
@@ -105,7 +104,7 @@ const tabPanels = computed(() => slots.default().filter(isTabPanel))
       height: 4px;
       left: 0;
       bottom: 0;
-      background: #D3BC8E;
+      background: #d3bc8e;
       transition: all ease 150ms;
       scale: var(--underline-scale) 1;
     }

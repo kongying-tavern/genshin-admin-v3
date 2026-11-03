@@ -22,7 +22,7 @@ const emits = defineEmits<{
 const { isDark } = useTheme()
 const preferenceStore = usePreferenceStore()
 
-const settingOptions: { key: string, name: string, is: Component, icon?: Component }[] = [
+const settingOptions: { key: string; name: string; is: Component; icon?: Component }[] = [
   { key: 'dashboard', name: '基本信息', is: ModuleDashboard, icon: El.Monitor },
   { key: 'app', name: '快捷键', is: ModuleApp, icon: El.Box },
   { key: 'mapsetting', name: '地图', is: ModuleMapSetting, icon: El.MapLocation },
@@ -35,7 +35,7 @@ const settingOptions: { key: string, name: string, is: Component, icon?: Compone
 
 const activedKey = computed({
   get: () => preferenceStore.settingActivedKey || settingOptions[0].key,
-  set: (v) => {
+  set: v => {
     preferenceStore.settingActivedKey = v
   },
 })
@@ -64,15 +64,7 @@ const beforeChange = async () => {
 
 <template>
   <div
-    class="
-      w-[800px] h-[600px] overflow-hidden
-      max-w-[90dvw] max-h-[100dvh]
-      flex flex-col
-      bg-[var(--el-bg-color)]
-      transition-[background-color,width]
-      rounded
-      text-[var(--el-text-color-primary)]
-    "
+    class="w-[800px] h-[600px] overflow-hidden max-w-[90dvw] max-h-[100dvh] flex flex-col bg-[var(--el-bg-color)] transition-[background-color,width] rounded text-[var(--el-text-color-primary)]"
   >
     <div class="h-9 flex justify-between items-center p-0.5 mb-2">
       <div class="flex items-center gap-1">
@@ -86,16 +78,17 @@ const beforeChange = async () => {
           :active-action-icon="El.Moon"
           :inactive-action-icon="El.Sunny"
           :before-change="beforeChange"
-          style="
-            --el-switch-on-color: var(--el-fill-color-darker);
-          "
+          style="--el-switch-on-color: var(--el-fill-color-darker)"
         />
       </div>
       <div>
         <el-button
           text
           type="danger"
-          style="--el-fill-color-light: var(--el-color-danger-light-7); --el-fill-color: var(--el-color-danger-light-9);"
+          style="
+            --el-fill-color-light: var(--el-color-danger-light-7);
+            --el-fill-color: var(--el-color-danger-light-9);
+          "
           :icon="El.Close"
           @click="() => emits('close')"
         />
@@ -105,14 +98,7 @@ const beforeChange = async () => {
     <div class="relative flex-1 flex overflow-hidden" @click="show && (show = false)">
       <div class="overflow-visible transition-[width] max-[800px]:w-0 w-[150px]" @click.stop="">
         <div
-          class="
-            w-[150px] h-full flex flex-col px-2
-            absolute left-0
-            bg-[var(--el-bg-color)]
-            translate-x-0
-            transition-[background-color,transform]
-            z-10
-          "
+          class="w-[150px] h-full flex flex-col px-2 absolute left-0 bg-[var(--el-bg-color)] translate-x-0 transition-[background-color,transform] z-10"
           :class="[show ? '' : 'max-[800px]:-translate-x-full']"
         >
           <div
@@ -123,9 +109,11 @@ const beforeChange = async () => {
           >
             <div
               class="px-2 py-1 w-full h-8 overflow-hidden flex items-center gap-2 transition-[color,background-color] rounded"
-              :class="activedKey === setting.key
-                ? 'bg-[var(--el-color-primary-light-9)] text-[var(--el-color-primary)]'
-                : 'group-hover:bg-[var(--el-fill-color-light)] group-active:bg-[var(--el-fill-color-darker)]'"
+              :class="
+                activedKey === setting.key
+                  ? 'bg-[var(--el-color-primary-light-9)] text-[var(--el-color-primary)]'
+                  : 'group-hover:bg-[var(--el-fill-color-light)] group-active:bg-[var(--el-fill-color-darker)]'
+              "
             >
               <el-icon v-if="setting.icon">
                 <component :is="setting.icon" />
@@ -141,13 +129,7 @@ const beforeChange = async () => {
 
       <div
         ref="contentRef"
-        class="
-          flex-1
-          rounded-tl-md
-          bg-[var(--el-bg-color)]
-          transition-[background-color]
-          overflow-hidden
-        "
+        class="flex-1 rounded-tl-md bg-[var(--el-bg-color)] transition-[background-color] overflow-hidden"
         :class="[show ? 'max-[800px]:pointer-events-none max-[800px]:brightness-[0.4]' : '']"
       />
     </div>

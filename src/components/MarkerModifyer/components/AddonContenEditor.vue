@@ -6,13 +6,16 @@ import { ElMessage } from 'element-plus'
 import { useDadianStore, useItemStore } from '@/stores'
 import { AddonTeleporter } from '.'
 
-const props = withDefaults(defineProps<{
-  modelValue?: string
-  addonId: string
-  itemList?: MarkerItemLinkVo[]
-}>(), {
-  itemList: () => [],
-})
+const props = withDefaults(
+  defineProps<{
+    modelValue?: string
+    addonId: string
+    itemList?: MarkerItemLinkVo[]
+  }>(),
+  {
+    itemList: () => [],
+  },
+)
 
 const emits = defineEmits<{
   (e: 'update:modelValue', v?: string): void
@@ -61,8 +64,7 @@ const addonInputRef = ref<InputInstance | null>(null)
 
 const insertChar = async (char: string, newline = false) => {
   const textarea = addonInputRef.value?.textarea
-  if (!textarea)
-    return
+  if (!textarea) return
   if (newline) {
     internalBind.value = `${internalBind.value}\n${char}`.trim()
     return
@@ -110,9 +112,7 @@ const textareaRows = computed(() => Math.floor((height.value - 20) / 21))
     <AddonTeleporter :active="isAddonActived">
       <div class="h-full flex flex-col gap-2">
         <div class="flex">
-          <div class="whitespace-nowrap">
-            快捷标点：
-          </div>
+          <div class="whitespace-nowrap">快捷标点：</div>
           <el-button-group size="small">
             <el-button v-for="c in characters" :key="c" @click="() => insertChar(c)">
               {{ c }}
@@ -120,9 +120,7 @@ const textareaRows = computed(() => Math.floor((height.value - 20) / 21))
           </el-button-group>
         </div>
         <div class="flex">
-          <div class="whitespace-nowrap">
-            描述模板：
-          </div>
+          <div class="whitespace-nowrap">描述模板：</div>
           <el-button-group size="small">
             <el-button
               v-for="item in selectedItems"

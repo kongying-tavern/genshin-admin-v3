@@ -6,8 +6,7 @@ import type { IconTypeVo } from '@/api/alova/globals'
 const cache = ref<Map<number, IconTypeVo[]>>(new Map())
 
 const getIconTypeList = async (parentId = -1, size = 128, useCache = false) => {
-  if (useCache && cache.value.has(parentId))
-    return cache.value.get(parentId)!
+  if (useCache && cache.value.has(parentId)) return cache.value.get(parentId)!
   const { data: { record = [] } = {} } = await Apis.icon_type.listIconType({
     data: {
       typeIdList: [parentId],

@@ -18,9 +18,11 @@ export const useMarkerTextureRender = (options: MarkerSpriteHookOptions) => {
   const textureUrl = useObjectUrl(texture)
 
   /** 标签 mapping  */
-  const markerSpriteMapping = shallowRef<Exclude<NonNullable<IconLayerProps['iconMapping']>, string>>({})
+  const markerSpriteMapping = shallowRef<
+    Exclude<NonNullable<IconLayerProps['iconMapping']>, string>
+  >({})
 
-  const states: { state: string, color: string }[] = [
+  const states: { state: string; color: string }[] = [
     { state: 'default', color: '#FFFFFF' },
     { state: 'hover', color: '#DDDDDD' },
     { state: 'focus', color: '#FFFF00' },
@@ -28,8 +30,7 @@ export const useMarkerTextureRender = (options: MarkerSpriteHookOptions) => {
   ]
 
   const refreshSpriteImage = async () => {
-    if (!iconTexture.value)
-      return
+    if (!iconTexture.value) return
 
     const res = await renderMarkerSprite({
       states,

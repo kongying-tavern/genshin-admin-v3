@@ -12,7 +12,7 @@ const time = computed<number>({
   get: () => {
     return Number(modelValue.value.value) || 0
   },
-  set: (newTime) => {
+  set: newTime => {
     modelValue.value = {
       ...modelValue.value,
       value: newTime as unknown as object,
@@ -20,11 +20,7 @@ const time = computed<number>({
   },
 })
 
-const {
-  refreshTimeType,
-  refreshTimeTypeOptions,
-  isCustom,
-} = useRefreshTime(time)
+const { refreshTimeType, refreshTimeTypeOptions, isCustom } = useRefreshTime(time)
 </script>
 
 <template>

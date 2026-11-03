@@ -12,9 +12,8 @@ const emits = defineEmits<{
 
 const context = useAppWindow()
 
-context.closeHook.on((id) => {
-  if (id !== props.info?.id)
-    return
+context.closeHook.on(id => {
+  if (id !== props.info?.id) return
   emits('close')
 })
 </script>

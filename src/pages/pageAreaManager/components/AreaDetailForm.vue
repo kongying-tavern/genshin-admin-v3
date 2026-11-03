@@ -27,33 +27,41 @@ const enableCopyItems = ref(false)
 
 const isInternalUpdate = ref(false)
 
-watch(() => props.modelValue, (data) => {
-  if (isInternalUpdate.value) {
-    isInternalUpdate.value = false
-    return
-  }
-  formData.value = cloneDeep(data)
-}, { deep: true })
+watch(
+  () => props.modelValue,
+  data => {
+    if (isInternalUpdate.value) {
+      isInternalUpdate.value = false
+      return
+    }
+    formData.value = cloneDeep(data)
+  },
+  { deep: true },
+)
 
-watch(formData, (form) => {
-  isInternalUpdate.value = true
-  emits('update:modelValue', form)
-}, {
-  deep: true,
-})
+watch(
+  formData,
+  form => {
+    isInternalUpdate.value = true
+    emits('update:modelValue', form)
+  },
+  {
+    deep: true,
+  },
+)
 
 const areaCode = computed({
   get: () => {
     const [_, areaTag, areaZone] = formData.value.code?.split(':') ?? []
     return props.parent ? areaZone : areaTag
   },
-  set: (code) => {
-    if (!code)
-      formData.value.code = code
+  set: code => {
+    if (!code) formData.value.code = code
     const formatCode = code.toUpperCase()
-    if (!/^[A-Z0-9_\-.]+$/.test(formatCode))
-      return
-    formData.value.code = props.parent ? `A:${props.parent.code!.split(':')[1]}:${formatCode}` : `C:${formatCode}`
+    if (!/^[A-Z0-9_\-.]+$/.test(formatCode)) return
+    formData.value.code = props.parent
+      ? `A:${props.parent.code!.split(':')[1]}:${formatCode}`
+      : `C:${formatCode}`
   },
 })
 
@@ -61,7 +69,9 @@ const iconStore = useIconStore()
 
 const { loading, tagOptions, getTagList } = useIconOptions()
 
-const hiddenFlagOptions = useArrayFilter(HIDDEN_FLAG_OPTIONS, ({ value }) => accessStore.checkHiddenFlag(value))
+const hiddenFlagOptions = useArrayFilter(HIDDEN_FLAG_OPTIONS, ({ value }) =>
+  accessStore.checkHiddenFlag(value),
+)
 
 const selectedItems = computed({
   get: () => props.items,
@@ -69,17 +79,12 @@ const selectedItems = computed({
 })
 
 const rules: ItemFormRules<AreaVo> = {
-  name: [
-    { required: true, message: '地区名称不能为空' },
-  ],
-  code: [
-    { required: true, message: '地区代码不能为空' },
-  ],
+  name: [{ required: true, message: '地区名称不能为空' }],
+  code: [{ required: true, message: '地区代码不能为空' }],
 }
 
 const areaCodePrefix = computed(() => {
-  if (!props.parent)
-    return 'C:'
+  if (!props.parent) return 'C:'
   const ParentAreaTag = props.parent.code!.split(':')[1]
   return `A:${ParentAreaTag}:`
 })
@@ -138,9 +143,19 @@ defineExpose({
             @clear="formData.iconId = -1"
           >
             <template #default="{ item }">
-              <div class="h-full flex justify-center items-center gap-1 overflow-hidden px-2" :title="item.label">
-                <img :src="item.url" class="w-6 h-6 flex-shrink-0 object-contain" crossorigin="" loading="lazy">
-                <span class="w-full overflow-hidden whitespace-nowrap text-ellipsis text-xs">{{ item.label }}</span>
+              <div
+                class="h-full flex justify-center items-center gap-1 overflow-hidden px-2"
+                :title="item.label"
+              >
+                <img
+                  :src="item.url"
+                  class="w-6 h-6 flex-shrink-0 object-contain"
+                  crossorigin=""
+                  loading="lazy"
+                />
+                <span class="w-full overflow-hidden whitespace-nowrap text-ellipsis text-xs">{{
+                  item.label
+                }}</span>
               </div>
             </template>
           </el-select-v2>
@@ -148,7 +163,11 @@ defineExpose({
       </el-form-item>
 
       <el-form-item label="显示类型" prop="hiddenFlag">
-        <el-select-v2 v-model="formData.hiddenFlag" :options="hiddenFlagOptions" style="width: 100%" />
+        <el-select-v2
+          v-model="formData.hiddenFlag"
+          :options="hiddenFlagOptions"
+          style="width: 100%"
+        />
       </el-form-item>
 
       <el-form-item label="地区排序" prop="sortIndex">

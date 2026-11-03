@@ -2,22 +2,21 @@
 import type { GSMapState } from '@/stores/types/genshin-map-state'
 import { MapAffix } from '@/components'
 
-withDefaults(defineProps<{
-  marker: GSMapState.MarkerWithRenderConfig
-  color?: string
-}>(), {
-  color: '#FFFF00',
-})
+withDefaults(
+  defineProps<{
+    marker: GSMapState.MarkerWithRenderConfig
+    color?: string
+  }>(),
+  {
+    color: '#FFFF00',
+  },
+)
 
 const id = crypto.randomUUID()
 </script>
 
 <template>
-  <MapAffix
-    :pos="marker.render.position"
-    :z-index="0"
-    no-covert-coord
-  >
+  <MapAffix :pos="marker.render.position" :z-index="0" no-covert-coord>
     <template #default="{ zoom }">
       <div
         class="marker-indicator"
@@ -28,7 +27,10 @@ const id = crypto.randomUUID()
       >
         <svg class="indicator-icon" viewBox="0 0 60 60" fill="currentColor">
           <defs>
-            <path :id="id" d="m 2 0 l 18 0 a 1 1 0 0 1 0 2 q -18 0 -18 18 a 1 1 0 0 1 -2 0 l 0 -18 q 0 -2 2 -2" />
+            <path
+              :id="id"
+              d="m 2 0 l 18 0 a 1 1 0 0 1 0 2 q -18 0 -18 18 a 1 1 0 0 1 -2 0 l 0 -18 q 0 -2 2 -2"
+            />
           </defs>
 
           <g>

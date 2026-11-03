@@ -15,15 +15,21 @@ export const useIconList = (options: IconListHookOptions) => {
   const iconList = ref<IconVo[]>([])
   const userMap = ref<Record<string, SysUserSmallVo>>({})
 
-  const { refresh: updateIconList, onSuccess, onError, ...rest } = useFetchHook({
+  const {
+    refresh: updateIconList,
+    onSuccess,
+    onError,
+    ...rest
+  } = useFetchHook({
     immediate: true,
-    onRequest: () => Apis.icon.listIcon({
-      data: {
-        ...getParams(),
-        current: pagination.value.current,
-        size: pagination.value.pageSize,
-      },
-    }),
+    onRequest: () =>
+      Apis.icon.listIcon({
+        data: {
+          ...getParams(),
+          current: pagination.value.current,
+          size: pagination.value.pageSize,
+        },
+      }),
   })
 
   const updateIconListWithResetCurrent = async () => {
@@ -37,9 +43,11 @@ export const useIconList = (options: IconListHookOptions) => {
     pagination.value.total = total
   })
 
-  onError(err => ElMessage.error({
-    message: `更新图标列表失败，原因为：${err.message}`,
-  }))
+  onError(err =>
+    ElMessage.error({
+      message: `更新图标列表失败，原因为：${err.message}`,
+    }),
+  )
 
   return { iconList, userMap, updateIconList, updateIconListWithResetCurrent, onSuccess, ...rest }
 }

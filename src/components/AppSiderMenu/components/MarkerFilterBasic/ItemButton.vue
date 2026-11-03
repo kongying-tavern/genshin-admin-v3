@@ -1,15 +1,18 @@
 <script lang="ts" setup>
-const props = withDefaults(defineProps<{
-  actived: boolean
-  name?: string
-  finishedNum?: number
-  totalNum?: number
-}>(), {
-  finishedNum: 0,
-  totalNum: 0,
-})
+const props = withDefaults(
+  defineProps<{
+    actived: boolean
+    name?: string
+    finishedNum?: number
+    totalNum?: number
+  }>(),
+  {
+    finishedNum: 0,
+    totalNum: 0,
+  },
+)
 
-const percentage = computed(() => (100 * props.finishedNum / props.totalNum) || 0)
+const percentage = computed(() => (100 * props.finishedNum) / props.totalNum || 0)
 </script>
 
 <template>
@@ -26,9 +29,7 @@ const percentage = computed(() => (100 * props.finishedNum / props.totalNum) || 
   >
     <div class="w-full flex-1 flex flex-col px-1.5 justify-center">
       <span class="overflow-hidden text-ellipsis whitespace-nowrap">{{ name }}</span>
-      <span class="collection-text text-xs leading-none">
-        {{ finishedNum }} / {{ totalNum }}
-      </span>
+      <span class="collection-text text-xs leading-none"> {{ finishedNum }} / {{ totalNum }} </span>
     </div>
     <div class="collection-progress" />
   </div>
@@ -44,16 +45,20 @@ const percentage = computed(() => (100 * props.finishedNum / props.totalNum) || 
 .item-button {
   --color-finished: #529b2e;
   --color-progress: #337ecc;
-  --color-unprogress: color-mix(in srgb, #000 60%, #FFF);
-  --text-color: #A19C93;
-  --progress-bg: linear-gradient(to right, var(--color-progress) var(--percentage), var(--color-unprogress) var(--percentage));
+  --color-unprogress: color-mix(in srgb, #000 60%, #fff);
+  --text-color: #a19c93;
+  --progress-bg: linear-gradient(
+    to right,
+    var(--color-progress) var(--percentage),
+    var(--color-unprogress) var(--percentage)
+  );
 
   transition: --percentage ease 150ms;
 
   &.is-actived {
     --color-finished: #85ce61;
     --color-progress: #66b1ff;
-    --color-unprogress: color-mix(in srgb, #000 40%, #FFF);
+    --color-unprogress: color-mix(in srgb, #000 40%, #fff);
   }
 
   &.is-finished {

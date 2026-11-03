@@ -107,11 +107,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       include: ['src/**/*.{ts,vue}'],
-      exclude: [
-        'src/api/protobuf/**',
-        'src/**/*.d.ts',
-        'types/**',
-      ],
+      exclude: ['src/api/protobuf/**', 'src/**/*.d.ts', 'types/**'],
     },
   },
 })

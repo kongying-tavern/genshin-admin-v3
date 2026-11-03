@@ -32,23 +32,20 @@ export const getObjectFitSize = (
       sx = (imgWidth - containerWidth / radio) / 2
       sw = containerWidth / radio
       sh = imgHeight
-    }
-    else {
+    } else {
       // 竖图，宽先匹配，裁剪高度
       radio = containerWidth / imgWidth
       sy = (imgHeight - containerHeight / radio) / 2
       sw = imgWidth
       sh = containerHeight / radio
     }
-  }
-  else if (type === 'contain') {
+  } else if (type === 'contain') {
     if (iWHRatio >= cWHRatio) {
       // 横图，宽先匹配，高度自适应
       radio = containerWidth / imgWidth
       dy = (containerHeight - imgHeight * radio) / 2
       dh = imgHeight * radio
-    }
-    else {
+    } else {
       // 竖图，高先匹配，宽度自适应
       radio = containerHeight / imgHeight
       dx = (containerWidth - imgWidth * radio) / 2

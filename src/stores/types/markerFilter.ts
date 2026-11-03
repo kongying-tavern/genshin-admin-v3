@@ -66,15 +66,15 @@ export interface MAFItemComposed<
 }
 
 export type MAFSemanticType =
-  'logic-operator' |
-  'opposite-indicator' |
-  'parenthesis' |
-  'error' |
-  'regex' |
-  'tag' |
-  'highlight' |
-  'text' |
-  'number'
+  | 'logic-operator'
+  | 'opposite-indicator'
+  | 'parenthesis'
+  | 'error'
+  | 'regex'
+  | 'tag'
+  | 'highlight'
+  | 'text'
+  | 'number'
 
 export interface MAFSemanticUnit {
   type: MAFSemanticType
@@ -191,12 +191,15 @@ export interface MAFMetaUnderground extends MAFMeta {
 }
 
 export interface MAFMetaUndergroundLayer extends MAFMeta {
-  layerKeyMap: Record<string, {
-    areaId: number
-    areaName: string
-    groupKey: string
-    groupName: string
-  }[]>
+  layerKeyMap: Record<
+    string,
+    {
+      areaId: number
+      areaName: string
+      groupKey: string
+      groupName: string
+    }[]
+  >
   layerNameMap: Record<string, string>
   tagList: string[]
   tag: string

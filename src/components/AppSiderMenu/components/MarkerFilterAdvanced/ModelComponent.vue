@@ -20,32 +20,27 @@ const emits = defineEmits<{
 }>()
 
 const handleSwitchOperator = () => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
   emits('switchOperator')
 }
 
 const handleToggleOpposite = () => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
   emits('toggleOpposite')
 }
 
 const handleMoveUpItem = () => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
   emits('moveUpItem')
 }
 
 const handleMoveDownItem = () => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
   emits('moveDownItem')
 }
 
 const handleDeleteItem = () => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
   emits('deleteItem')
 }
 </script>
@@ -65,12 +60,12 @@ const handleDeleteItem = () => {
       </MarkerFilterButton>
       <MarkerFilterButton
         theme="dark"
-        :icon-color="composedCondition.opposite ? 'var(--gs-color-confirm)' : 'var(--gs-color-text)'"
+        :icon-color="
+          composedCondition.opposite ? 'var(--gs-color-confirm)' : 'var(--gs-color-text)'
+        "
         @click="handleToggleOpposite"
       >
-        <template #icon>
-          非
-        </template>
+        <template #icon> 非 </template>
       </MarkerFilterButton>
     </div>
     <slot />
@@ -93,10 +88,7 @@ const handleDeleteItem = () => {
           <ArrowDownBold />
         </template>
       </MarkerFilterButton>
-      <MarkerFilterButton
-        icon-color="var(--gs-color-danger)"
-        @click="handleDeleteItem"
-      >
+      <MarkerFilterButton icon-color="var(--gs-color-danger)" @click="handleDeleteItem">
         <template #icon>
           <CloseBold />
         </template>
@@ -108,7 +100,7 @@ const handleDeleteItem = () => {
 <style lang="scss" scoped>
 .condition-item {
   border-radius: calc(var(--height) / 2);
-  background-color: #E6E3DE;
+  background-color: #e6e3de;
   font-size: 14px;
   padding: 2px 4px;
 }

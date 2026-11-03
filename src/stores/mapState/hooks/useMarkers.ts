@@ -23,13 +23,7 @@ interface MarkerHookOptions {
 }
 
 export const useMarkers = (options: MarkerHookOptions) => {
-  const {
-    archiveStore,
-    markerStore,
-    tileStore,
-    areaStore,
-    itemStore,
-  } = options
+  const { archiveStore, markerStore, tileStore, areaStore, itemStore } = options
 
   const { markerFilterType } = useMarkerFilter(options)
   const { getMAFConfig } = useMarkerAdvancedFilter(options)
@@ -37,22 +31,24 @@ export const useMarkers = (options: MarkerHookOptions) => {
   /** 筛选处理状态 */
   const markersFilterLoading = ref(false)
 
-  const archiveItemIds = computed(() => archiveStore.currentArchive.body.Preference['markerFilter.state.itemIds'] ?? [])
-  const advancedFilter = computed(() => archiveStore.currentArchive.body.Preference['markerFilter.filter.advancedFilter'] ?? [])
+  const archiveItemIds = computed(
+    () => archiveStore.currentArchive.body.Preference['markerFilter.state.itemIds'] ?? [],
+  )
+  const advancedFilter = computed(
+    () => archiveStore.currentArchive.body.Preference['markerFilter.filter.advancedFilter'] ?? [],
+  )
 
   /** 当前基础筛选器（地区-类型-物品）条件表示下的所有点位 */
   const markersForBasicFilter = computed(() => {
     const tileConfigs = tileStore.mergedTileConfigs
-    if (!tileConfigs)
-      return []
+    if (!tileConfigs) return []
 
     const areaIdMap = areaStore.areaIdMap
     const itemIdMap = itemStore.itemIdMap
     const itemIds = new Set(archiveItemIds.value)
     const res = markerStore.markerList.filter(({ itemList = [] }) => {
       for (const { itemId } of itemList) {
-        if (itemIds.has(itemId!))
-          return true
+        if (itemIds.has(itemId!)) return true
       }
       return false
     })
@@ -62,41 +58,35 @@ export const useMarkers = (options: MarkerHookOptions) => {
   /** 当前高级筛选器条件表示下的所有点位 */
   const markersForAdvancedFilter = computed(() => {
     const tileConfigs = tileStore.mergedTileConfigs
-    if (!tileConfigs)
-      return []
+    if (!tileConfigs) return []
     const areaIdMap = areaStore.areaIdMap
     const itemIdMap = itemStore.itemIdMap
 
     /** 合并计算布尔值，支持 null 值 */
     const operateBool = (v1: boolean | null, v2: boolean | null, op: boolean): boolean | null => {
-      if (v1 === null)
-        return v2
-      else if (v2 === null)
-        return v1
-      else
-        return op ? (v1 && v2) : (v1 || v2)
+      if (v1 === null) return v2
+      else if (v2 === null) return v1
+      else return op ? v1 && v2 : v1 || v2
     }
     /** 判断是否可以进行逻辑截断，可逻辑截断时返回 true */
-    const breakBool = (v: boolean | null, op: boolean): boolean => (v === true && !op) || (v === false && op)
+    const breakBool = (v: boolean | null, op: boolean): boolean =>
+      (v === true && !op) || (v === false && op)
 
     const metaCache = new Map<string, MAFMeta>()
     const res = markerStore.markerList.filter((marker: MarkerVo) => {
       let globalVal: boolean | null = null
       for (let groupIndex = 0; groupIndex < advancedFilter.value.length; groupIndex++) {
         const group = advancedFilter.value[groupIndex]
-        if (breakBool(globalVal, group.operator))
-          break
+        if (breakBool(globalVal, group.operator)) break
 
         let groupVal: boolean | null = null
         for (let itemIndex = 0; itemIndex < group.children.length; itemIndex++) {
           const item = group.children[itemIndex]
-          if (breakBool(groupVal, item.operator))
-            break
+          if (breakBool(groupVal, item.operator)) break
 
           const filterConfig = getMAFConfig(item.id)
           const filterId = filterConfig.id
-          if (filterId === null || filterId === undefined || filterId <= 0)
-            continue
+          if (filterId === null || filterId === undefined || filterId <= 0) continue
 
           const {
             prepare: filterPrepare,
@@ -110,13 +100,11 @@ export const useMarkers = (options: MarkerHookOptions) => {
             metaCache.set(itemMetaKey, itemMeta)
           }
           let itemVal: boolean = filterAction(item.value, toValue(filterOption), itemMeta, marker)
-          if (item.opposite)
-            itemVal = !itemVal
+          if (item.opposite) itemVal = !itemVal
           groupVal = operateBool(groupVal, itemVal, item.operator)
         }
 
-        if (group.opposite)
-          groupVal = !groupVal
+        if (group.opposite) groupVal = !groupVal
         globalVal = operateBool(globalVal, groupVal, group.operator)
       }
 
@@ -137,16 +125,17 @@ export const useMarkers = (options: MarkerHookOptions) => {
   })
 
   /** 将点位分配到对应的底图中 */
-  const markersGroupByTile = computed(() => Object.groupBy(markersForFilter.value, (marker) => {
-    return marker.render.tileCode
-  }))
+  const markersGroupByTile = computed(() =>
+    Object.groupBy(markersForFilter.value, marker => {
+      return marker.render.tileCode
+    }),
+  )
 
   // ==================== 临时点位 - start ====================
 
   const staticMarkers = computed(() => {
     const { currentTileCode } = tileStore
-    if (!currentTileCode)
-      return []
+    if (!currentTileCode) return []
     return markersGroupByTile.value[currentTileCode] ?? []
   })
 
@@ -158,7 +147,7 @@ export const useMarkers = (options: MarkerHookOptions) => {
   /** 未去重的临时点位 */
   const undifferentiated = computed(() => {
     const markers: GSMarkerInfo[] = []
-    tempMarkerMap.value.forEach((typeMarkers) => {
+    tempMarkerMap.value.forEach(typeMarkers => {
       markers.push(...typeMarkers)
     })
     return markers
@@ -167,12 +156,10 @@ export const useMarkers = (options: MarkerHookOptions) => {
   /** 已去重并经过预渲染处理的临时点位 */
   const tempMarkers = computed(() => {
     const tileConfigs = tileStore.mergedTileConfigs
-    if (!tileConfigs)
-      return []
+    if (!tileConfigs) return []
     const ids = new Set(staticMarkerIds.value)
-    const differentiated = undifferentiated.value.filter((marker) => {
-      if (ids.has(marker.id!))
-        return false
+    const differentiated = undifferentiated.value.filter(marker => {
+      if (ids.has(marker.id!)) return false
       ids.add(marker.id!)
       return true
     })
@@ -187,12 +174,15 @@ export const useMarkers = (options: MarkerHookOptions) => {
     const { areaIdMap } = areaStore
     const { itemIdMap } = itemStore
     const map = new Map(tempMarkerMap.value)
-    map.set(type, createRenderMarkers(markers, {
-      tileConfigs,
-      areaIdMap,
-      itemIdMap,
-      isTemporary: true,
-    }))
+    map.set(
+      type,
+      createRenderMarkers(markers, {
+        tileConfigs,
+        areaIdMap,
+        itemIdMap,
+        isTemporary: true,
+      }),
+    )
     tempMarkerMap.value = map
   }
 
@@ -200,7 +190,7 @@ export const useMarkers = (options: MarkerHookOptions) => {
     type: K,
     cb: (oldMarkers: TempMarkerTypeMap[K], setter: (value: TempMarkerTypeMap[K]) => void) => void,
   ) => {
-    cb((tempMarkerMap.value.get(type) ?? []) as TempMarkerTypeMap[K], (value) => {
+    cb((tempMarkerMap.value.get(type) ?? []) as TempMarkerTypeMap[K], value => {
       setTempMarkers(type, value)
     })
   }
@@ -216,9 +206,22 @@ export const useMarkers = (options: MarkerHookOptions) => {
    * @note 根据 y 轴排序使得下方点位可以遮挡上方点位，降低视觉复杂度
    */
   const currentLayerMarkers = computed(() => {
-    return staticMarkers.value.sort(({ render: { position: { 1: y1 } } }, { render: { position: { 1: y2 } } }) => {
-      return y1 - y2
-    })
+    return staticMarkers.value.sort(
+      (
+        {
+          render: {
+            position: { 1: y1 },
+          },
+        },
+        {
+          render: {
+            position: { 1: y2 },
+          },
+        },
+      ) => {
+        return y1 - y2
+      },
+    )
   })
 
   /**
@@ -228,10 +231,12 @@ export const useMarkers = (options: MarkerHookOptions) => {
 
   const currentMarkerIds = computed(() => currentMarkers.value.map(marker => marker.id!))
 
-  const currentMarkerIdMap = computed(() => currentMarkers.value.reduce((map, marker) => {
-    map.set(marker.id!, marker)
-    return map
-  }, new Map<number, GSMarkerInfo>()))
+  const currentMarkerIdMap = computed(() =>
+    currentMarkers.value.reduce((map, marker) => {
+      map.set(marker.id!, marker)
+      return map
+    }, new Map<number, GSMarkerInfo>()),
+  )
 
   return {
     markersFilterLoading,

@@ -2,7 +2,7 @@
 import WinDialogTabs from './WinDialogTabs.vue'
 
 defineProps<{
-  tabs?: { key: string, name: string }[]
+  tabs?: { key: string; name: string }[]
   tabsDisabled?: boolean
 }>()
 
@@ -13,12 +13,7 @@ const tabKey = defineModel<string>('tabKey', {
 </script>
 
 <template>
-  <WinDialogTabs
-    v-if="tabs?.length"
-    v-model="tabKey"
-    :options="tabs"
-    :disabled="tabsDisabled"
-  />
+  <WinDialogTabs v-if="tabs?.length" v-model="tabKey" :options="tabs" :disabled="tabsDisabled" />
 
   <div
     v-bind="$attrs"
@@ -31,10 +26,8 @@ const tabKey = defineModel<string>('tabKey', {
 
 <style scoped>
 .win-dialog-tab-panel {
-  @apply
-    p-2 overflow-hidden
+  @apply p-2 overflow-hidden
     border border-[var(--el-border-color)]
-    bg-[var(--el-fill-color-blank)]
-  ;
+    bg-[var(--el-fill-color-blank)];
 }
 </style>

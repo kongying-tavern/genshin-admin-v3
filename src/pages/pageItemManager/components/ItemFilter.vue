@@ -64,7 +64,7 @@ const dropdownKey = ref('')
           v-model="modelValue.name"
           clearable
           placeholder="请输入物品名称"
-          style="width: 100%;"
+          style="width: 100%"
           @change="() => $emit('change')"
         />
       </el-form-item>
@@ -104,12 +104,7 @@ const dropdownKey = ref('')
 
       <el-form-item label-width="0px" style="margin-bottom: 0">
         <div class="w-full flex items-center justify-end">
-          <el-button
-            :loading="loading"
-            :icon="RefreshRight"
-            text
-            @click="() => $emit('refresh')"
-          >
+          <el-button :loading="loading" :icon="RefreshRight" text @click="() => $emit('refresh')">
             刷新
           </el-button>
 
@@ -119,9 +114,7 @@ const dropdownKey = ref('')
             :icon="explorerType === ExplorerType.List ? IconListView : Menu"
             @command="handleExplorerTypeChange"
           >
-            <template #default>
-              查看
-            </template>
+            <template #default> 查看 </template>
 
             <template #dropdown>
               <el-dropdown-menu>
@@ -152,9 +145,7 @@ const dropdownKey = ref('')
 
           <el-divider direction="vertical" />
 
-          <el-button text :icon="CirclePlus" @click="() => $emit('create')">
-            新增
-          </el-button>
+          <el-button text :icon="CirclePlus" @click="() => $emit('create')"> 新增 </el-button>
         </div>
       </el-form-item>
     </div>

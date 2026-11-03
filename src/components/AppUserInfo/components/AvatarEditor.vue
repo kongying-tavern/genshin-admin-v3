@@ -12,15 +12,14 @@ const userStore = useUserStore()
 const { avatarList, loading: avatarsLoading, onSuccess: onAvatarListFetched } = useAvatarList()
 const selectedAvatar = ref<MiyousheAvatar | null>(null)
 onAvatarListFetched(() => {
-  selectedAvatar.value = avatarList.value.find(avatar => avatar.icon === userStore.info?.logo) ?? null
+  selectedAvatar.value =
+    avatarList.value.find(avatar => avatar.icon === userStore.info?.logo) ?? null
 })
 
 const { loading, refresh: updateUserInfo } = useFetchHook({
   onRequest: async () => {
-    if (!userStore.info)
-      throw new Error('未登录')
-    if (!selectedAvatar.value?.icon)
-      throw new Error('头像地址为空')
+    if (!userStore.info) throw new Error('未登录')
+    if (!selectedAvatar.value?.icon) throw new Error('头像地址为空')
     await Apis.user.updateUser({
       data: {
         ...pick(userStore.info, 'nickname', 'qq', 'phone', 'roleId'),
@@ -33,8 +32,7 @@ const { loading, refresh: updateUserInfo } = useFetchHook({
 })
 
 const setSelectedIcon = (avatar: MiyousheAvatar) => {
-  if (loading.value)
-    return
+  if (loading.value) return
   selectedAvatar.value = avatar
 }
 </script>
@@ -67,7 +65,7 @@ const setSelectedIcon = (avatar: MiyousheAvatar) => {
             crossorigin=""
             referrerpolicy="no-referrer"
             loading="lazy"
-          >
+          />
         </div>
       </template>
     </AppVirtualTable>
@@ -75,14 +73,12 @@ const setSelectedIcon = (avatar: MiyousheAvatar) => {
     <div class="w-[150px] flex flex-col gap-8 justify-center items-center pb-1">
       <AvatarPreview :src="selectedAvatar?.icon" />
 
-      <div class="avatar-name">
-        {{ selectedAvatar?.name ?? '<???>' }}
-      </div>
+      <div class="avatar-name">{{ selectedAvatar?.name ?? '<???>' }}</div>
 
       <GSButton
         icon="submit"
         theme="dark"
-        style="width: 100%;"
+        style="width: 100%"
         :disabled="!selectedAvatar || userStore.info?.logo === selectedAvatar.icon"
         :loading="loading"
         @click="updateUserInfo"
@@ -106,7 +102,7 @@ const setSelectedIcon = (avatar: MiyousheAvatar) => {
     border-radius: 6px;
   }
   &::-webkit-scrollbar-thumb {
-    background-color: #FFFFFF;
+    background-color: #ffffff;
     border-radius: 6px;
   }
 }
@@ -130,22 +126,22 @@ const setSelectedIcon = (avatar: MiyousheAvatar) => {
   position: relative;
 
   &:not(.is-selected):hover {
-    --btn-border-color: #8F6D4C;
+    --btn-border-color: #8f6d4c;
     --btn-padding: 4px;
   }
 
   &:not(.is-selected):active {
     --btn-border-color: #d1c1a7;
     --btn-padding: 8px;
-    --btn-bg: #38404F20;
+    --btn-bg: #38404f20;
   }
 
   &.is-selected {
     --btn-border-color: #5d6a81;
-    --btn-bg: #38404F;
+    --btn-bg: #38404f;
     --icon-filter: none;
-    --icon-border-color: #D5D7D9;
-    --icon-outline-color: #FFFFFF20;
+    --icon-border-color: #d5d7d9;
+    --icon-outline-color: #ffffff20;
   }
 
   &.is-actived {
@@ -157,8 +153,8 @@ const setSelectedIcon = (avatar: MiyousheAvatar) => {
       height: 1.5em;
       bottom: 0;
       left: 0;
-      background: #38404F;
-      color: #FFF;
+      background: #38404f;
+      color: #fff;
       font-size: 12px;
       text-align: center;
       z-index: 1;
@@ -166,7 +162,7 @@ const setSelectedIcon = (avatar: MiyousheAvatar) => {
   }
 
   .avatar-icon {
-    background-color: #C79575;
+    background-color: #c79575;
     border: 2px solid var(--icon-border-color);
     filter: var(--icon-filter);
     outline: 4px solid var(--icon-outline-color);
@@ -187,8 +183,14 @@ const setSelectedIcon = (avatar: MiyousheAvatar) => {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    background: linear-gradient(to bottom, #D4BE92 2px, #FFF 2px, #FFF calc(100% - 2px), #D4BE92 calc(100% - 2px));
-    mask: linear-gradient(to right, transparent, #FFF, transparent);
+    background: linear-gradient(
+      to bottom,
+      #d4be92 2px,
+      #fff 2px,
+      #fff calc(100% - 2px),
+      #d4be92 calc(100% - 2px)
+    );
+    mask: linear-gradient(to right, transparent, #fff, transparent);
     z-index: -1;
   }
 }

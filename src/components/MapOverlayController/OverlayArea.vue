@@ -12,7 +12,7 @@ const archiveParentAreaCode = computed({
   get: () => {
     return archiveStore.currentArchive.body.Preference['markerFilter.state.parentAreaCode']
   },
-  set: (code) => {
+  set: code => {
     archiveStore.currentArchive.body.Preference['markerFilter.state.parentAreaCode'] = code
   },
 })
@@ -21,7 +21,7 @@ const archiveAreaCode = computed({
   get: () => {
     return archiveStore.currentArchive.body.Preference['markerFilter.state.areaCode']
   },
-  set: (code) => {
+  set: code => {
     archiveStore.currentArchive.body.Preference['markerFilter.state.areaCode'] = code
   },
 })
@@ -35,55 +35,53 @@ const isTile = (item: {
   return item.chunks[0]?.group.role === 'tile'
 }
 
-const overlayCountMap = computed(() => overlayStore.activedItems.reduce((map, item) => {
-  if (isTile(item))
+const overlayCountMap = computed(() =>
+  overlayStore.activedItems.reduce((map, item) => {
+    if (isTile(item)) return map
+    for (const areaCode of item.areaCodes) map.set(areaCode, (map.get(areaCode) ?? 0) + 1)
     return map
-  for (const areaCode of item.areaCodes)
-    map.set(areaCode, (map.get(areaCode) ?? 0) + 1)
-  return map
-}, new Map<string, number>()))
+  }, new Map<string, number>()),
+)
 
-const overlayTotalMap = computed(() => overlayStore.items.reduce((map, item) => {
-  if (isTile(item))
+const overlayTotalMap = computed(() =>
+  overlayStore.items.reduce((map, item) => {
+    if (isTile(item)) return map
+    for (const areaCode of item.areaCodes) map.set(areaCode, (map.get(areaCode) ?? 0) + 1)
     return map
-  for (const areaCode of item.areaCodes)
-    map.set(areaCode, (map.get(areaCode) ?? 0) + 1)
-  return map
-}, new Map<string, number>()))
+  }, new Map<string, number>()),
+)
 
-const parentOverlayCountMap = computed(() => overlayStore.activedItems.reduce((map, item) => {
-  for (const areaCode of item.areaCodes) {
-    const area = areaStore.areaCodeMap.get(areaCode)
-    if (!area || isTile(item))
-      return map
-    const parentArea = areaStore.areaIdMap.get(area.parentId!)
-    if (!parentArea)
-      return map
-    map.set(parentArea.code!, (map.get(parentArea.code!) ?? 0) + 1)
-  }
-  return map
-}, new Map<string, number>()))
+const parentOverlayCountMap = computed(() =>
+  overlayStore.activedItems.reduce((map, item) => {
+    for (const areaCode of item.areaCodes) {
+      const area = areaStore.areaCodeMap.get(areaCode)
+      if (!area || isTile(item)) return map
+      const parentArea = areaStore.areaIdMap.get(area.parentId!)
+      if (!parentArea) return map
+      map.set(parentArea.code!, (map.get(parentArea.code!) ?? 0) + 1)
+    }
+    return map
+  }, new Map<string, number>()),
+)
 
-const parentOverlayTotalMap = computed(() => overlayStore.items.reduce((map, item) => {
-  for (const areaCode of item.areaCodes) {
-    const area = areaStore.areaCodeMap.get(areaCode)
-    if (!area || isTile(item))
-      return map
-    const parentArea = areaStore.areaIdMap.get(area.parentId!)
-    if (!parentArea)
-      return map
-    map.set(parentArea.code!, (map.get(parentArea.code!) ?? 0) + 1)
-  }
-  return map
-}, new Map<string, number>()))
+const parentOverlayTotalMap = computed(() =>
+  overlayStore.items.reduce((map, item) => {
+    for (const areaCode of item.areaCodes) {
+      const area = areaStore.areaCodeMap.get(areaCode)
+      if (!area || isTile(item)) return map
+      const parentArea = areaStore.areaIdMap.get(area.parentId!)
+      if (!parentArea) return map
+      map.set(parentArea.code!, (map.get(parentArea.code!) ?? 0) + 1)
+    }
+    return map
+  }, new Map<string, number>()),
+)
 
 const childrenAreaList = computed(() => {
-  if (!archiveParentAreaCode.value)
-    return []
+  if (!archiveParentAreaCode.value) return []
   const parentArea = areaStore.areaCodeMap.get(archiveParentAreaCode.value)
-  if (!parentArea)
-    return []
-  return areaStore.childrenAreaList.filter((area) => {
+  if (!parentArea) return []
+  return areaStore.childrenAreaList.filter(area => {
     return area.parentId === parentArea.id
   })
 })
@@ -92,9 +90,7 @@ const childrenAreaList = computed(() => {
 <template>
   <div class="w-full flex flex-wrap gap-2 p-1 pb-2 border-[gray] border-b-[1px]">
     <div class="min-w-[200px] flex-1 flex flex-col">
-      <div class="text-sm text-[#495366]">
-        父级地区
-      </div>
+      <div class="text-sm text-[#495366]">父级地区</div>
       <GSSelect
         v-model="archiveParentAreaCode"
         :options="areaStore.parentAreaList"
@@ -103,14 +99,8 @@ const childrenAreaList = computed(() => {
         class="flex-1 text-sm"
       >
         <template #label="{ label, option }">
-          <div v-if="!option">
-            --/--
-          </div>
-          <div
-            v-else
-            class="w-full overflow-hidden text-ellipsis whitespace-nowrap"
-            :title="label"
-          >
+          <div v-if="!option">--/--</div>
+          <div v-else class="w-full overflow-hidden text-ellipsis whitespace-nowrap" :title="label">
             {{ label }}
           </div>
         </template>
@@ -126,9 +116,7 @@ const childrenAreaList = computed(() => {
     </div>
 
     <div class="min-w-[200px] flex-1 flex flex-col">
-      <div class="text-sm text-[#495366]">
-        子级地区
-      </div>
+      <div class="text-sm text-[#495366]">子级地区</div>
       <GSSelect
         v-model="archiveAreaCode"
         :options="childrenAreaList"
@@ -136,19 +124,11 @@ const childrenAreaList = computed(() => {
         :get-value="item => item.code ?? ''"
         class="flex-1 text-sm"
       >
-        <template #missed>
-          请选择子地区
-        </template>
+        <template #missed> 请选择子地区 </template>
 
         <template #label="{ label, option }">
-          <div v-if="!option">
-            --/--
-          </div>
-          <div
-            v-else
-            class="w-full overflow-hidden text-ellipsis whitespace-nowrap"
-            :title="label"
-          >
+          <div v-if="!option">--/--</div>
+          <div v-else class="w-full overflow-hidden text-ellipsis whitespace-nowrap" :title="label">
             {{ label }}
           </div>
         </template>

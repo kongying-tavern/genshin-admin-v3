@@ -27,45 +27,41 @@ const emits = defineEmits<{
 const composedConditionValue = computed(() => toValue(props.composedCondition))
 
 const handleSwitchOperator = () => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
   emits('switchOperator')
 }
 
 const handleToggleOpposite = () => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
   emits('toggleOpposite')
 }
 
 const handleMoveUpGroup = () => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
   emits('moveUpGroup')
 }
 
 const handleMoveDownGroup = () => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
   emits('moveDownGroup')
 }
 
 const handleDeleteGroup = () => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
   emits('deleteGroup')
 }
 
 const handleAppendItem = () => {
-  if (props.disabled)
-    return
+  if (props.disabled) return
   emits('appendItem')
 }
 
 const handleReorderItems = (orderedChildren: MAFItemComposed[]) => {
-  if (props.disabled)
-    return
-  emits('reorderItems', orderedChildren.map(({ key }) => key))
+  if (props.disabled) return
+  emits(
+    'reorderItems',
+    orderedChildren.map(({ key }) => key),
+  )
 }
 </script>
 
@@ -100,12 +96,12 @@ const handleReorderItems = (orderedChildren: MAFItemComposed[]) => {
         </MarkerFilterButton>
         <MarkerFilterButton
           theme="dark"
-          :icon-color="composedConditionValue.opposite ? 'var(--gs-color-confirm)' : 'var(--gs-color-text)'"
+          :icon-color="
+            composedConditionValue.opposite ? 'var(--gs-color-confirm)' : 'var(--gs-color-text)'
+          "
           @click="handleToggleOpposite"
         >
-          <template #icon>
-            非
-          </template>
+          <template #icon> 非 </template>
         </MarkerFilterButton>
         <MarkerFilterButton
           v-if="withMoveUp && !isFirst"
@@ -147,7 +143,14 @@ const handleReorderItems = (orderedChildren: MAFItemComposed[]) => {
       :get-key="i => i.key"
       @change="handleReorderItems"
     >
-      <template #default="{ item, index: itemIndex, isGrabbing: isItemGrabbing, isDragging: isItemDragging }">
+      <template
+        #default="{
+          item,
+          index: itemIndex,
+          isGrabbing: isItemGrabbing,
+          isDragging: isItemDragging,
+        }"
+      >
         <slot
           :composed-condition="item"
           :index="itemIndex"
@@ -166,7 +169,7 @@ const handleReorderItems = (orderedChildren: MAFItemComposed[]) => {
 .condition-group {
   --height: 32px;
   --radius: 16px;
-  --color-light: #C6C2BA;
+  --color-light: #c6c2ba;
   --color-dark: #313131;
 
   border-radius: var(--radius);

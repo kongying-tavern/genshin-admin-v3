@@ -4,10 +4,7 @@ import { ScatterplotLayer } from 'deck.gl'
 export class MarkerIndicatorLayer extends ScatterplotLayer<GSMarkerInfo> {
   static layerName = 'GSMarkerIndicator'
 
-  constructor(options: {
-    id: string
-    data: GSMarkerInfo[]
-  }) {
+  constructor(options: { id: string; data: GSMarkerInfo[] }) {
     super({
       id: 'marker-indicator',
       data: options.data,

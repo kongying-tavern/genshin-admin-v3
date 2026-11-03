@@ -14,7 +14,12 @@ export interface ItemCreateHookOptions {
 export const useItemCreate = (formRef: ShallowRef<InstanceType<typeof ItemDetailForm> | null>) => {
   const itemStore = useItemStore()
 
-  const { refresh: submit, onSuccess, onError, ...rest } = useFetchHook({
+  const {
+    refresh: submit,
+    onSuccess,
+    onError,
+    ...rest
+  } = useFetchHook({
     onRequest: async (item: ItemVo) => {
       await itemStore.createItem(item)
     },
@@ -34,8 +39,7 @@ export const useItemCreate = (formRef: ShallowRef<InstanceType<typeof ItemDetail
 
   const handleSubmit = async () => {
     const isValid = await formRef.value?.validate()
-    if (!isValid)
-      return
+    if (!isValid) return
     await submit(formData.value)
   }
 
@@ -46,10 +50,12 @@ export const useItemCreate = (formRef: ShallowRef<InstanceType<typeof ItemDetail
     })
   })
 
-  onError(err => GSMessageService.info(`新增失败：${err.message}`, {
-    type: 'error',
-    duration: 5000,
-  }))
+  onError(err =>
+    GSMessageService.info(`新增失败：${err.message}`, {
+      type: 'error',
+      duration: 5000,
+    }),
+  )
 
   return { formData, detailFormRef: formRef, initFormData, handleSubmit, onSuccess, ...rest }
 }

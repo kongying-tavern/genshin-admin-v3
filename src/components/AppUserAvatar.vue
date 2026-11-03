@@ -41,25 +41,21 @@ const userStore = useUserStore()
 
 <style scoped>
 .user-avatar {
-  @apply
-    w-full h-full rounded-full overflow-hidden
+  @apply w-full h-full rounded-full overflow-hidden
     grid place-content-center
     bg-gray-500
-    border-2 border-transparent
-  ;
+    border-2 border-transparent;
   &.is-login {
     @apply border-[#ECE5D8];
   }
   &.has-logo {
-    background: #DA9241;
+    background: #da9241;
   }
 }
 
 .user-info {
-  @apply
-    w-[100px] p-0.5
+  @apply w-[100px] p-0.5
     grid place-content-center
-    text-[#ECE5D8] text-xs
-  ;
+    text-[#ECE5D8] text-xs;
 }
 </style>

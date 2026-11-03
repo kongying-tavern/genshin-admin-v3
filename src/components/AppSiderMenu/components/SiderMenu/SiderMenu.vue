@@ -28,7 +28,7 @@ const checkTooltip = (ev: Event) => {
     virtualRef.value = undefined
     return
   }
-  const findRes = ev.composedPath().find((target) => {
+  const findRes = ev.composedPath().find(target => {
     return target instanceof HTMLElement && target.dataset.tabLabel
   })
   if (!findRes) {
@@ -45,7 +45,10 @@ useEventListener('pointerdown', checkTooltip)
 <template>
   <div class="sider-menu absolute top-0 left-0 bottom-0 flex" :class="{ 'is-collapse': collapse }">
     <div class="sider-menu-sidebar flex flex-col" :class="{ 'is-collapse': collapse }">
-      <div class="w-full flex-shrink-0 aspect-square grid place-items-center transition-all" :class="{ ' -translate-y-full': collapse }">
+      <div
+        class="w-full flex-shrink-0 aspect-square grid place-items-center transition-all"
+        :class="{ ' -translate-y-full': collapse }"
+      >
         <GSButton theme="plain" @click="$emit('update:collapse', !collapse)">
           <template #icon>
             <el-icon color="var(--icon-color)" :size="24">
@@ -67,7 +70,11 @@ useEventListener('pointerdown', checkTooltip)
     </div>
 
     <div class="overflow-hidden h-full w-full">
-      <div ref="contentRef" class="sider-menu-extra-panel flex-1" :class="{ 'is-collapse': collapse }" />
+      <div
+        ref="contentRef"
+        class="sider-menu-extra-panel flex-1"
+        :class="{ 'is-collapse': collapse }"
+      />
     </div>
 
     <el-tooltip
@@ -87,7 +94,7 @@ useEventListener('pointerdown', checkTooltip)
 .el-popper.is-customized.sider-menu-tooltip {
   padding: 6px 12px;
   background: #495168;
-  color: #ECE5D8;
+  color: #ece5d8;
   font-size: 16px;
   .el-popper__arrow {
     display: none;
@@ -116,7 +123,7 @@ useEventListener('pointerdown', checkTooltip)
   @supports not (background: paint(user-card-border)) {
     width: 74px;
     background: #485163;
-    border: 2px solid #8F8779;
+    border: 2px solid #8f8779;
     border-width: 0 2px 0 2px;
   }
 

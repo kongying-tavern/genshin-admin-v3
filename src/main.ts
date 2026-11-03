@@ -33,8 +33,7 @@ void (async () => {
     await useDadianStore().init()
     await useArchiveStore().init()
     app.mount(container)
-  }
-  catch (err) {
+  } catch (err) {
     const formatedError = err instanceof Error ? err : new Error(`${err}`)
     createApp(AppError, {
       error: formatedError,

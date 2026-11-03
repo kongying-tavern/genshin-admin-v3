@@ -20,20 +20,17 @@ const blockComponent = computed<Component>(() => {
   return {
     'logic-operator': SemanticBlockLogicOperator,
     'opposite-indicator': SemanticBlockOppositeIndicator,
-    'parenthesis': SemanticBlockParenthesis,
-    'error': SemanticBlockError,
-    'regex': SemanticBlockRegex,
-    'tag': SemanticBlockTag,
-    'highlight': SemanticBlockHighlight,
-    'text': SemanticBlockText,
-    'number': SemanticBlockNumber,
+    parenthesis: SemanticBlockParenthesis,
+    error: SemanticBlockError,
+    regex: SemanticBlockRegex,
+    tag: SemanticBlockTag,
+    highlight: SemanticBlockHighlight,
+    text: SemanticBlockText,
+    number: SemanticBlockNumber,
   }[props.block.type]
 })
 </script>
 
 <template>
-  <component
-    :is="blockComponent"
-    :option="block"
-  />
+  <component :is="blockComponent" :option="block" />
 </template>

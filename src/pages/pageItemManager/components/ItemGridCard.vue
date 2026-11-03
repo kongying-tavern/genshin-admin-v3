@@ -26,15 +26,14 @@ const areaName = computed(() => {
   return areaStore.areaIdMap.get(areaId!)?.name ?? `(AreaId: ${areaId})`
 })
 
-const {
-  isCaveEntrance,
-  isIconCustomizable,
-  isTeleportable,
-} = useBinaryFlag(computed(() => props.data.specialFlag), {
-  isTeleportable: 0,
-  isIconCustomizable: 1,
-  isCaveEntrance: 2,
-})
+const { isCaveEntrance, isIconCustomizable, isTeleportable } = useBinaryFlag(
+  computed(() => props.data.specialFlag),
+  {
+    isTeleportable: 0,
+    isIconCustomizable: 1,
+    isCaveEntrance: 2,
+  },
+)
 
 const iconStyleMeta = computed(() => {
   return ICON_STYLE_META_MAP.get(props.data.iconStyleType!)
@@ -42,8 +41,7 @@ const iconStyleMeta = computed(() => {
 
 const hiddenFlagType = computed(() => {
   const { hiddenFlag } = props.data
-  if (hiddenFlag === undefined)
-    return 'warning'
+  if (hiddenFlag === undefined) return 'warning'
   return {
     [HiddenFlagEnum.SHOW]: 'success',
     [HiddenFlagEnum.BETA]: 'info',
@@ -52,11 +50,14 @@ const hiddenFlagType = computed(() => {
   }[hiddenFlag] as TagProps['type']
 })
 
-const { humanFriendlyTimeText } = useRefreshTime(computed(() => props.data.defaultRefreshTime), {
-  toHumanFriendly: (days, hours) => {
-    return `${days} 天 ${hours} 小时`
+const { humanFriendlyTimeText } = useRefreshTime(
+  computed(() => props.data.defaultRefreshTime),
+  {
+    toHumanFriendly: (days, hours) => {
+      return `${days} 天 ${hours} 小时`
+    },
   },
-})
+)
 </script>
 
 <template>
@@ -68,10 +69,10 @@ const { humanFriendlyTimeText } = useRefreshTime(computed(() => props.data.defau
         :class="`type-${props.data.iconStyleType ?? IconStyle.DEFAULT}`"
         class="item-icon"
       >
-        <img draggable="false" :src="UnknownIconUrl">
+        <img draggable="false" :src="UnknownIconUrl" />
       </AppIconTagRenderer>
 
-      <div class="mx-3 h-12 flex-1 flex-col overflow-hidden" style="contain: layout;">
+      <div class="mx-3 h-12 flex-1 flex-col overflow-hidden" style="contain: layout">
         <div
           class="w-full mb-1 overflow-hidden whitespace-nowrap text-ellipsis font-[HYWenHei-85W]"
           :title="data.name"
@@ -128,18 +129,14 @@ const { humanFriendlyTimeText } = useRefreshTime(computed(() => props.data.defau
 
     <div class="flex justify-between text-xs">
       <div class="flex-1 shrink-0 flex items-center gap-2">
-        <div>
-          点位数量
-        </div>
+        <div>点位数量</div>
         <el-text type="primary" size="small">
           {{ props.count ?? 0 }}
         </el-text>
       </div>
 
       <div class="flex-1 shrink-0 flex items-center gap-2">
-        <div>
-          排序权重
-        </div>
+        <div>排序权重</div>
         <el-text type="primary" size="small">
           {{ props.data.sortIndex ?? '未设置' }}
         </el-text>

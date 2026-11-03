@@ -19,7 +19,12 @@ const emits = defineEmits<{
 const formData = ref<AreaVo>(props.area)
 const copyItems = shallowRef<ItemVo[]>([])
 
-const { loading, refresh: submit, onSuccess, onError } = useFetchHook({
+const {
+  loading,
+  refresh: submit,
+  onSuccess,
+  onError,
+} = useFetchHook({
   onRequest: async () => {
     await Apis.area.updateArea({
       data: formData.value,
@@ -36,7 +41,7 @@ const { loading, refresh: submit, onSuccess, onError } = useFetchHook({
   },
 })
 
-onSuccess((form) => {
+onSuccess(form => {
   ElMessage.success({
     message: '编辑地区成功',
   })
@@ -44,17 +49,18 @@ onSuccess((form) => {
   emits('success', form)
 })
 
-onError(err => ElMessage.error({
-  message: `编辑地区失败，原因为：${err.message}`,
-}))
+onError(err =>
+  ElMessage.error({
+    message: `编辑地区失败，原因为：${err.message}`,
+  }),
+)
 
 const formRef = ref<InstanceType<typeof AreaDetailForm> | null>(null)
 const updateArea = async () => {
   try {
     await formRef.value?.validate()
     await submit()
-  }
-  catch {
+  } catch {
     // validate, no error
   }
 }
@@ -74,9 +80,7 @@ const updateArea = async () => {
       <el-button :icon="Check" type="primary" :loading="loading" @click="updateArea">
         确定
       </el-button>
-      <el-button :icon="Close" :disabled="loading" @click="() => emits('close')">
-        取消
-      </el-button>
+      <el-button :icon="Close" :disabled="loading" @click="() => emits('close')"> 取消 </el-button>
     </WinDialogFooter>
   </WinDialog>
 </template>

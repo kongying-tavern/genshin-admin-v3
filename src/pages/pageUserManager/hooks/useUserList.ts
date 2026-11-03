@@ -6,7 +6,7 @@ import { useFetchHook } from '@/hooks'
 
 interface UserListHookOptions {
   pagination: Ref<PaginationState>
-  sortInfo: Ref<{ key: string, type: string }>
+  sortInfo: Ref<{ key: string; type: string }>
 }
 
 type SearchKey = keyof Pick<SysUserSearchVo, 'nickname' | 'username'>
@@ -22,7 +22,12 @@ export const useUserList = (options: UserListHookOptions) => {
   const filterValue = ref('')
   const filterRoleIds = ref<number[]>([])
 
-  const { refresh: updateUserList, onSuccess, onError, ...rest } = useFetchHook({
+  const {
+    refresh: updateUserList,
+    onSuccess,
+    onError,
+    ...rest
+  } = useFetchHook({
     immediate: true,
     onRequest: async () => {
       const { current, pageSize: size } = toValue(pagination)
@@ -33,8 +38,7 @@ export const useUserList = (options: UserListHookOptions) => {
         sort: [`${sortKey}${sortType}`],
       }
       data[filterKey.value] = filterValue.value
-      if (filterRoleIds.value.length)
-        data.roleIds = filterRoleIds.value
+      if (filterRoleIds.value.length) data.roleIds = filterRoleIds.value
       const res = await Apis.user.getUserList({ data })
       return res
     },
@@ -50,7 +54,7 @@ export const useUserList = (options: UserListHookOptions) => {
     pagination.value.total = total
   })
 
-  onError((err) => {
+  onError(err => {
     userList.value = []
     ElMessage.error({
       message: `获取结果失败，原因为: ${err.message}`,

@@ -15,11 +15,11 @@ export interface GenshinMapProps extends Omit<OrthographicViewMapProps, 'canvas'
     keyboard?:
       | boolean
       | {
-        zoomSpeed?: number
-        moveSpeed?: number
-        rotateSpeedX?: number
-        rotateSpeedY?: number
-      }
+          zoomSpeed?: number
+          moveSpeed?: number
+          rotateSpeedX?: number
+          rotateSpeedY?: number
+        }
     dragMode?: 'pan' | 'rotate'
     inertia?: boolean | number
     scrollZoom?: {
@@ -279,7 +279,7 @@ export interface OverlayChunkGroup {
 
 export interface OverlayControlGroup extends OverlayChunkGroup {
   bounds: DTO.OverlayBounds
-  items: { id: string, name: string }[]
+  items: { id: string; name: string }[]
 }
 
 export interface MergedOverlayGroups {

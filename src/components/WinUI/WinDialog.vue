@@ -6,11 +6,9 @@
 
 <style scoped>
 .win-dialog {
-  @apply
-    overflow-hidden
+  @apply overflow-hidden
     flex flex-col
     bg-[var(--el-fill-color-light)]
-    border border-[var(--el-color-primary-light-9)] rounded-lg
-  ;
+    border border-[var(--el-color-primary-light-9)] rounded-lg;
 }
 </style>

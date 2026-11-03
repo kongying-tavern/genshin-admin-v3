@@ -6,13 +6,11 @@ import { useGlobalDialog } from '@/hooks'
 const { DialogService } = useGlobalDialog()
 
 const openSettingDIalog = () => {
-  DialogService
-    .config({
-      alignCenter: true,
-      showClose: false,
-      closeOnPressEscape: false,
-    })
-    .open(AppSettings)
+  DialogService.config({
+    alignCenter: true,
+    showClose: false,
+    closeOnPressEscape: false,
+  }).open(AppSettings)
 }
 </script>
 
@@ -21,7 +19,7 @@ const openSettingDIalog = () => {
     class="app-setting-button"
     text
     size="large"
-    style="--el-border-radius-base: 8px; padding: 8px 12px;"
+    style="--el-border-radius-base: 8px; padding: 8px 12px"
     @click="openSettingDIalog"
   >
     <el-icon :size="20">
@@ -30,5 +28,4 @@ const openSettingDIalog = () => {
   </el-button>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

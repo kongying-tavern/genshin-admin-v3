@@ -13,18 +13,13 @@ const emits = defineEmits<{
 </script>
 
 <template>
-  <el-badge
-    class="notice-title"
-    style="width: 100%"
-    :hidden="hidden"
-    value=" "
-  >
+  <el-badge class="notice-title" style="width: 100%" :hidden="hidden" value=" ">
     <div
       :class="{
         'is-selected': isSelected,
       }"
       class="title-name"
-      @click="(ev) => emits('click', ev)"
+      @click="ev => emits('click', ev)"
     >
       {{ notice.title }}
     </div>
@@ -41,7 +36,7 @@ const emits = defineEmits<{
 
   :deep(.el-badge__content) {
     border: none;
-    filter: drop-shadow(0 0 1px #E6445E);
+    filter: drop-shadow(0 0 1px #e6445e);
     &::before {
       content: '!';
       width: 100%;
@@ -60,17 +55,17 @@ const emits = defineEmits<{
       top: 0;
       transform: translate(50%, -50%);
       padding: 0;
-      background-color: #E6445E;
+      background-color: #e6445e;
     }
   }
 }
 
 .title-name {
   --padding: 2px;
-  --line-color: #EEE7DD;
+  --line-color: #eee7dd;
   --arrow-opacity: 0;
 
-  background: #F9F6F2;
+  background: #f9f6f2;
   color: #737883;
   padding: 0 20px 0 12px;
   border-radius: 4px;
@@ -87,19 +82,19 @@ const emits = defineEmits<{
   overflow: hidden;
 
   &:hover {
-    outline-color: #E5BFB2;
-    background: #FFFFFF;
+    outline-color: #e5bfb2;
+    background: #ffffff;
   }
 
   &:active {
-    --line-color: #E5D9C2;
+    --line-color: #e5d9c2;
     background: #f0efec;
   }
 
   &.is-selected {
-    color: #3B4354;
+    color: #3b4354;
     outline-color: #da9781;
-    background: #FFFDFA;
+    background: #fffdfa;
     --arrow-opacity: 1;
   }
 
@@ -123,12 +118,18 @@ const emits = defineEmits<{
     height: 10px;
     top: 50%;
     right: 12px;
-    background: conic-gradient(from -135deg at 50% 50%, transparent 25%, #3B4354 25%, #3B4354 75%, transparent 75%);
-    filter: drop-shadow(0 0 2px #3B435480);
+    background: conic-gradient(
+      from -135deg at 50% 50%,
+      transparent 25%,
+      #3b4354 25%,
+      #3b4354 75%,
+      transparent 75%
+    );
+    filter: drop-shadow(0 0 2px #3b435480);
     border-radius: 1px;
     transform-origin: 50% 50%;
     transform: translate(0, -50%) rotate(45deg);
-    transition: all .2s ease;
+    transition: all 0.2s ease;
   }
 }
 </style>

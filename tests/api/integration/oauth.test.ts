@@ -33,7 +33,9 @@ describe.skipIf(!enabled)('集成：OAuth 令牌获取与刷新', () => {
   })
 
   it('密码错误时登录失败，且不写入登录态', async () => {
-    await expect(loginAs(account.username, `${account.password}__wrong`)).rejects.toThrow('Bad Request')
+    await expect(loginAs(account.username, `${account.password}__wrong`)).rejects.toThrow(
+      'Bad Request',
+    )
 
     expect(useUserStore().auth.accessToken).toBeUndefined()
   })

@@ -14,9 +14,12 @@ const emits = defineEmits<{
 
 const isRegister = ref(Boolean(props.isRegisterMode))
 
-watch(() => props.isRegisterMode, (bool) => {
-  isRegister.value = bool
-})
+watch(
+  () => props.isRegisterMode,
+  bool => {
+    isRegister.value = bool
+  },
+)
 </script>
 
 <template>

@@ -6,9 +6,12 @@ const props = defineProps<{
 }>()
 
 const loading = ref(true)
-watch(() => props.src, () => {
-  loading.value = true
-})
+watch(
+  () => props.src,
+  () => {
+    loading.value = true
+  },
+)
 </script>
 
 <template>
@@ -26,7 +29,7 @@ watch(() => props.src, () => {
         class="w-full h-full object-contain"
         @load="loading = false"
         @error="loading = false"
-      >
+      />
     </template>
   </div>
 </template>
@@ -35,10 +38,10 @@ watch(() => props.src, () => {
 .avatar-preview {
   width: 112px;
   height: 112px;
-  background: #D19D78;
+  background: #d19d78;
   border: 6px solid #5d6a81;
   border-radius: 50%;
-  outline: 2px solid #D4BE92;
+  outline: 2px solid #d4be92;
   overflow: hidden;
 }
 </style>

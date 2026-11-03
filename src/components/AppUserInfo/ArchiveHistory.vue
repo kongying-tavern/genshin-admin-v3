@@ -16,7 +16,10 @@ const format = (timestamp: number) => {
 }
 
 const toggleSelectItem = (history: ArchiveData) => {
-  emits('update:modelValue', props.modelValue?.historyIndex === history.historyIndex ? undefined : history)
+  emits(
+    'update:modelValue',
+    props.modelValue?.historyIndex === history.historyIndex ? undefined : history,
+  )
 }
 </script>
 
@@ -42,7 +45,7 @@ const toggleSelectItem = (history: ArchiveData) => {
   --outline-color: transparent;
   --outline-offset: -4px;
   --bg-color: #303544;
-  --text-color: #FFF;
+  --text-color: #fff;
 
   border: 1px solid gray;
   outline: 1px solid var(--outline-color);
@@ -51,18 +54,18 @@ const toggleSelectItem = (history: ArchiveData) => {
   color: var(--text-color);
 
   &:hover {
-    --outline-color: #CCBB99;
+    --outline-color: #ccbb99;
     --outline-offset: 0px;
   }
 
   &:active {
-    --bg-color: #FDFAEC;
-    --text-color: #1C5563;
+    --bg-color: #fdfaec;
+    --text-color: #1c5563;
   }
 
   &.is-selected {
-    --bg-color: #FDFAEC;
-    --text-color: #1C5563;
+    --bg-color: #fdfaec;
+    --text-color: #1c5563;
   }
 }
 </style>

@@ -21,27 +21,25 @@ export const useAppEvent = (ipc: PageIPC<AppSocket.MainEventMap, AppSocket.Worke
   })
 
   // ==================== 物品 ====================
-  ipc.on('ItemAdded', async (id) => {
+  ipc.on('ItemAdded', async id => {
     const { data: [itemInfo] = [], users = {} } = await Apis.item.listItemById({
       data: [id],
     })
-    if (!itemInfo)
-      return
+    if (!itemInfo) return
     const userInfo = Object.assign({ id: itemInfo.creatorId }, users[itemInfo.creatorId!])
     appEvent.emit('ItemAdded', itemInfo, userInfo)
   })
 
-  ipc.on('ItemUpdated', async (id) => {
+  ipc.on('ItemUpdated', async id => {
     const { data: [itemInfo] = [], users = {} } = await Apis.item.listItemById({
       data: [id],
     })
-    if (!itemInfo)
-      return
+    if (!itemInfo) return
     const userInfo = Object.assign({ id: itemInfo.creatorId }, users[itemInfo.creatorId!])
     appEvent.emit('ItemUpdated', itemInfo, userInfo)
   })
 
-  ipc.on('ItemDeleted', async (id) => {
+  ipc.on('ItemDeleted', async id => {
     const { data: { record: [history] = [] } = {}, users = {} } = await Apis.history.searchHistory({
       data: {
         current: 0,
@@ -61,12 +59,11 @@ export const useAppEvent = (ipc: PageIPC<AppSocket.MainEventMap, AppSocket.Worke
   })
 
   // ==================== 点位 ====================
-  ipc.on('MarkerAdded', async (id) => {
+  ipc.on('MarkerAdded', async id => {
     const { data: [markerInfo] = [], users = {} } = await Apis.marker.listMarkerById({
       data: { markerIdList: [id] },
     })
-    if (!markerInfo)
-      return
+    if (!markerInfo) return
     const userInfo = Object.assign({ id: markerInfo.creatorId }, users[markerInfo.creatorId!])
     appEvent.emit('MarkerAdded', markerInfo, userInfo)
   })
@@ -75,7 +72,7 @@ export const useAppEvent = (ipc: PageIPC<AppSocket.MainEventMap, AppSocket.Worke
     appEvent.emit('MarkerBinaryPurged')
   })
 
-  ipc.on('MarkerDeleted', async (id) => {
+  ipc.on('MarkerDeleted', async id => {
     const { data: { record: [history] = [] } = {}, users = {} } = await Apis.history.searchHistory({
       data: {
         current: 0,
@@ -105,50 +102,45 @@ export const useAppEvent = (ipc: PageIPC<AppSocket.MainEventMap, AppSocket.Worke
         groupIds: groups,
       },
     })
-    if (!data)
-      return
+    if (!data) return
     const link = Object.values(data).flat(1)?.[0]
-    if (!link)
-      return
+    if (!link) return
     const { data: user } = await Apis.user.getUserInfo({
       pathParams: { userId: link.updaterId! },
     })
-    if (!user)
-      return
+    if (!user) return
     appEvent.emit('MarkerLinked', markerList ?? [], user)
   })
 
-  ipc.on('MarkerTweaked', async (ids) => {
+  ipc.on('MarkerTweaked', async ids => {
     const { data = [], users = {} } = await Apis.marker.listMarkerById({
       data: { markerIdList: ids },
     })
-    if (!data.length)
-      return
+    if (!data.length) return
     const [{ updaterId }] = data
     const userInfo = Object.assign({ id: updaterId }, users[updaterId!])
     appEvent.emit('MarkerTweaked', data, userInfo)
   })
 
-  ipc.on('MarkerUpdated', async (id) => {
+  ipc.on('MarkerUpdated', async id => {
     const { data: [markerInfo] = [], users = {} } = await Apis.marker.listMarkerById({
       data: { markerIdList: [id] },
     })
-    if (!markerInfo)
-      return
+    if (!markerInfo) return
     const userInfo = Object.assign({ id: markerInfo.updaterId }, users[markerInfo.updaterId!])
     appEvent.emit('MarkerUpdated', markerInfo, userInfo)
   })
 
   // ==================== 公告 ====================
-  ipc.on('NoticeAdded', async (id) => {
+  ipc.on('NoticeAdded', async id => {
     appEvent.emit('NoticeAdded', id)
   })
 
-  ipc.on('NoticeDeleted', (id) => {
+  ipc.on('NoticeDeleted', id => {
     appEvent.emit('NoticeDeleted', id)
   })
 
-  ipc.on('NoticeUpdated', (id) => {
+  ipc.on('NoticeUpdated', id => {
     appEvent.emit('NoticeUpdated', id)
   })
 

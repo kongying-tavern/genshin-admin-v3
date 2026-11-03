@@ -1,7 +1,5 @@
 <template>
-  <div class="message-component-loading">
-    Loading...
-  </div>
+  <div class="message-component-loading">Loading...</div>
 </template>
 
 <style scoped>

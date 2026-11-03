@@ -8,9 +8,12 @@ const props = defineProps<{
 
 const isLoaded = ref(false)
 
-watch(() => props.url, () => {
-  isLoaded.value = false
-})
+watch(
+  () => props.url,
+  () => {
+    isLoaded.value = false
+  },
+)
 
 const handleLoad = () => {
   isLoaded.value = true
@@ -36,7 +39,7 @@ const handleError = () => {
       loading="lazy"
       @load="handleLoad"
       @error="handleError"
-    >
+    />
   </div>
 </template>
 

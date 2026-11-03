@@ -1,12 +1,15 @@
 <script lang="ts" setup>
 import { vCopyCleanText } from '@/utils'
 
-withDefaults(defineProps<{
-  actived: boolean
-  zoom?: number
-}>(), {
-  zoom: 0,
-})
+withDefaults(
+  defineProps<{
+    actived: boolean
+    zoom?: number
+  }>(),
+  {
+    zoom: 0,
+  },
+)
 </script>
 
 <template>
@@ -15,14 +18,11 @@ withDefaults(defineProps<{
     class="genshin-marker-popover font-['HYWenHei-85W']"
     :class="{ actived }"
     :style="{
-      '--arrow-offset-y': `${32 * 2 ** (zoom > -2 ? 0 : (zoom + 2))}px`,
+      '--arrow-offset-y': `${32 * 2 ** (zoom > -2 ? 0 : zoom + 2)}px`,
     }"
   >
     <div class="popover-content flex flex-col">
-      <div
-        v-copy-clean-text
-        class="popover-header relative flex justify-between items-center p-1"
-      >
+      <div v-copy-clean-text class="popover-header relative flex justify-between items-center p-1">
         <slot name="header" />
       </div>
 
@@ -44,7 +44,7 @@ withDefaults(defineProps<{
 <style lang="scss" scoped>
 .genshin-marker-popover {
   --arrow-size: 16px;
-  --card-bg-color: #D9D3C8;
+  --card-bg-color: #d9d3c8;
   --card-radius: 8px;
 
   width: 256px;
@@ -83,14 +83,14 @@ withDefaults(defineProps<{
 }
 
 .popover-header {
-  color: #D3BC8E;
+  color: #d3bc8e;
   border-radius: var(--card-radius) var(--card-radius) 0 0;
-  background-color: #3D4555;
+  background-color: #3d4555;
   z-index: 1;
 }
 
 .popover-body {
-  color: #676D7A;
+  color: #676d7a;
   background: var(--card-bg-color);
   border-radius: 0 0 calc(2.5 * var(--card-radius)) calc(2.5 * var(--card-radius));
 }

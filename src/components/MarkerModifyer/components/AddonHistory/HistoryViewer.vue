@@ -24,8 +24,7 @@ const rewriteSet = new (class RewriteSet extends Set<string> {
 })()
 
 const difference = computed(() => {
-  if (!props.diffs)
-    return rewriteSet
+  if (!props.diffs) return rewriteSet
   return props.diffs
 })
 </script>
@@ -38,10 +37,7 @@ const difference = computed(() => {
         :auto-collapse="autoCollapse"
         :is-different="difference.has('markerTitle')"
       >
-        <DifferText
-          :current="newContent.markerTitle"
-          :history="oldContent.markerTitle"
-        />
+        <DifferText :current="newContent.markerTitle" :history="oldContent.markerTitle" />
       </HistoryDifferItem>
 
       <HistoryDifferItem
@@ -63,10 +59,7 @@ const difference = computed(() => {
         :auto-collapse="autoCollapse"
         :is-different="difference.has('itemList')"
       >
-        <DifferItem
-          :current="newContent.itemList"
-          :history="oldContent.itemList"
-        />
+        <DifferItem :current="newContent.itemList" :history="oldContent.itemList" />
       </HistoryDifferItem>
 
       <HistoryDifferItem
@@ -74,10 +67,7 @@ const difference = computed(() => {
         :auto-collapse="autoCollapse"
         :is-different="difference.has('content')"
       >
-        <DifferText
-          :current="newContent.content"
-          :history="oldContent.content"
-        />
+        <DifferText :current="newContent.content" :history="oldContent.content" />
       </HistoryDifferItem>
 
       <HistoryDifferItem
@@ -85,10 +75,7 @@ const difference = computed(() => {
         :auto-collapse="autoCollapse"
         :is-different="difference.has('position')"
       >
-        <DifferCoord
-          :current="newContent.position"
-          :history="oldContent.position"
-        />
+        <DifferCoord :current="newContent.position" :history="oldContent.position" />
       </HistoryDifferItem>
 
       <HistoryDifferItem
@@ -96,10 +83,7 @@ const difference = computed(() => {
         :auto-collapse="autoCollapse"
         :is-different="difference.has('picture')"
       >
-        <DifferImage
-          :current="newContent.picture"
-          :history="oldContent.picture"
-        />
+        <DifferImage :current="newContent.picture" :history="oldContent.picture" />
       </HistoryDifferItem>
 
       <HistoryDifferItem
@@ -107,10 +91,7 @@ const difference = computed(() => {
         :auto-collapse="autoCollapse"
         :is-different="difference.has('hiddenFlag')"
       >
-        <DifferHiddenFlag
-          :current="newContent.hiddenFlag"
-          :history="oldContent.hiddenFlag"
-        />
+        <DifferHiddenFlag :current="newContent.hiddenFlag" :history="oldContent.hiddenFlag" />
       </HistoryDifferItem>
 
       <HistoryDifferItem
@@ -118,10 +99,7 @@ const difference = computed(() => {
         :auto-collapse="autoCollapse"
         :is-different="difference.has('refreshTime')"
       >
-        <DifferRefreshTime
-          :current="newContent.refreshTime"
-          :history="oldContent.refreshTime"
-        />
+        <DifferRefreshTime :current="newContent.refreshTime" :history="oldContent.refreshTime" />
       </HistoryDifferItem>
 
       <HistoryDifferItem
@@ -129,10 +107,7 @@ const difference = computed(() => {
         :auto-collapse="autoCollapse"
         :is-different="difference.has('videoPath')"
       >
-        <DifferText
-          :current="newContent.videoPath"
-          :history="oldContent.videoPath"
-        />
+        <DifferText :current="newContent.videoPath" :history="oldContent.videoPath" />
       </HistoryDifferItem>
 
       <HistoryDifferItem
@@ -141,10 +116,12 @@ const difference = computed(() => {
         :is-different="difference.has('linkageId')"
       >
         <div class="text-xs">
-          旧关联组 ID: {{ oldContent.linkageId === undefined ? 'undefined' : `"${oldContent.linkageId}"` }}
+          旧关联组 ID:
+          {{ oldContent.linkageId === undefined ? 'undefined' : `"${oldContent.linkageId}"` }}
         </div>
         <div class="text-xs">
-          新关联组 ID: {{ newContent.linkageId === undefined ? 'undefined' : `"${newContent.linkageId}"` }}
+          新关联组 ID:
+          {{ newContent.linkageId === undefined ? 'undefined' : `"${newContent.linkageId}"` }}
         </div>
       </HistoryDifferItem>
     </template>
