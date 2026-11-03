@@ -11,10 +11,7 @@ const modelValue = defineModel<string>('modelValue', {
   default: '',
 })
 
-const {
-  initLoading,
-  thumbImageUrl,
-} = useMarkerPicture(modelValue)
+const { initLoading, thumbImageUrl } = useMarkerPicture(modelValue)
 
 // ==================== 待上传图片 ====================
 const {
@@ -26,8 +23,6 @@ const {
 } = useLocalPicture()
 
 // ==================== 生成缩略图 ====================
-const cropperRef = ref<InstanceType<typeof AppImageCropper> | null>(null)
-
 const isCropped = computed(() => modelValue.value.toLowerCase().startsWith('blob:'))
 
 const croppedImage = shallowRef<Blob>()
@@ -38,8 +33,7 @@ onUnmounted(() => {
 })
 
 const withoutSearchParams = (url?: string) => {
-  if (!url)
-    return ''
+  if (!url) return ''
   const urlObj = new URL(url)
   return `${urlObj.protocol}${urlObj.pathname}`
 }
@@ -68,14 +62,13 @@ const addonId = defineModel<string>('addonId', {
 
 const isAddonActived = computed({
   get: () => addonId.value === 'picture',
-  set: (v) => {
+  set: v => {
     addonId.value = v ? 'picture' : ''
   },
 })
 
-onSelectSuccess((file) => {
-  if (!file)
-    return
+onSelectSuccess(file => {
+  if (!file) return
   isAddonActived.value = true
 })
 </script>
@@ -86,13 +79,7 @@ onSelectSuccess((file) => {
       v-loading.fullscreen="loading"
       element-loading-text="等待文件系统响应..."
       element-loading-background="var(--el-mask-color-extra-light)"
-      class="
-        w-40 h-40 rounded overflow-hidden
-        border border-dashed border-[var(--el-border-color)]
-        hover:border-solid hover:border-[var(--el-border-color-hover)]
-        cursor-pointer
-        transition-[border-color]
-      "
+      class="w-40 h-40 rounded overflow-hidden border border-dashed border-[var(--el-border-color)] hover:border-solid hover:border-[var(--el-border-color-hover)] cursor-pointer transition-[border-color]"
       @click="selectFile"
     >
       <img
@@ -101,7 +88,7 @@ onSelectSuccess((file) => {
         :src="isCropped ? withoutSearchParams(modelValue) : thumbImageUrl"
         crossorigin=""
         class="w-full h-full object-cover"
-      >
+      />
 
       <div v-else class="w-full h-full flex flex-col items-center justify-center">
         <ElIcon :size="24">
@@ -123,13 +110,14 @@ onSelectSuccess((file) => {
           @click="clearImage"
         />
       </div>
-      <div v-if="croppedImage" class="text-xs gap-1 text-[var(--el-color-success)] leading-none grid grid-cols-[auto_1fr] grid-rows-2">
+      <div
+        v-if="croppedImage"
+        class="text-xs gap-1 text-[var(--el-color-success)] leading-none grid grid-cols-[auto_1fr] grid-rows-2"
+      >
         <el-icon class="row-span-2" :size="24">
           <CircleCheck />
         </el-icon>
-        <div>
-          预计大小
-        </div>
+        <div>预计大小</div>
         <div>
           {{ formatByteSize(croppedImage.size) }}
         </div>
@@ -153,7 +141,6 @@ onSelectSuccess((file) => {
         </el-alert>
         <div class="flex-1 grid place-items-center place-content-center gap-2">
           <AppImageCropper
-            ref="cropperRef"
             :image="newPictureUrl ?? thumbImageUrl"
             :auto-crop-on-image-loaded="newPictureUrl !== undefined"
             :auto-crop="newPictureUrl !== undefined"
@@ -164,12 +151,8 @@ onSelectSuccess((file) => {
         <el-alert type="info" :closable="false">
           操作指南：
           <ol class="list-disc">
-            <li class="ml-4">
-              拖拽移动图像
-            </li>
-            <li class="ml-4">
-              滚轮缩放图像
-            </li>
+            <li class="ml-4">拖拽移动图像</li>
+            <li class="ml-4">滚轮缩放图像</li>
           </ol>
         </el-alert>
       </div>

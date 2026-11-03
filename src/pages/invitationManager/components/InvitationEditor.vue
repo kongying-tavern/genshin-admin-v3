@@ -27,10 +27,7 @@ const formRef = shallowRef<InstanceType<typeof ElForm>>()
 const raw = JSON.parse(JSON.stringify(props.data ?? {})) as SysUserInvitationVo
 
 const form = ref<SysUserInvitationVo>({
-  accessPolicy: [
-    'ip:same_last_ip',
-    'dev:same_last_device',
-  ],
+  accessPolicy: ['ip:same_last_ip', 'dev:same_last_device'],
   username: '',
   remark: '',
   ...props.data,
@@ -46,13 +43,18 @@ const isSame = computed(() => {
   ].every(Boolean)
 })
 
-const { data, loading, refresh: submit, onSuccess } = (isUpdateMode ? useInvitationUpdate : useInvitationCreate)({
+const {
+  data: invitation,
+  loading,
+  refresh: submit,
+  onSuccess,
+} = (isUpdateMode ? useInvitationUpdate : useInvitationCreate)({
   form,
   validate: () => formRef.value?.validate().catch(() => false),
 })
 
 onSuccess(() => {
-  emits('close', data.value)
+  emits('close', invitation.value)
   emits('success')
 })
 
@@ -60,10 +62,8 @@ const rules: Partial<Record<keyof SysUserInvitationVo, FormItemRule>> = {
   username: {
     required: true,
     validator: (_, v: string, cb) => {
-      if (!v)
-        return cb('用户名不能为空')
-      if (/\s/.test(v))
-        return cb('用户名不能包含空白字符')
+      if (!v) return cb('用户名不能为空')
+      if (/\s/.test(v)) return cb('用户名不能包含空白字符')
       cb()
     },
   },
@@ -75,21 +75,21 @@ const rules: Partial<Record<keyof SysUserInvitationVo, FormItemRule>> = {
 
 const invitationUrl = computed(() => {
   const { code, username } = form.value
-  if (!code || !username)
-    return
+  if (!code || !username) return
   const url = new URL(location.origin)
-  url.searchParams.append(RouteQuery.Invitation.getKey(), RouteQuery.Invitation.stringify({ code, username }))
+  url.searchParams.append(
+    RouteQuery.Invitation.getKey(),
+    RouteQuery.Invitation.stringify({ code, username }),
+  )
   return url.toString()
 })
 
 const copyInvitationCode = async () => {
-  if (!invitationUrl.value)
-    return
+  if (!invitationUrl.value) return
   try {
     await navigator.clipboard.writeText(invitationUrl.value)
     ElMessage.success('邀请链接已复制到剪贴板')
-  }
-  catch {
+  } catch {
     // cancel
   }
 }
@@ -102,17 +102,9 @@ const copyInvitationCode = async () => {
     </WinDialogTitleBar>
 
     <WinDialogTabPanel>
-      <el-form
-        ref="formRef"
-        label-position="top"
-        :disabled="loading"
-        :model="form"
-        :rules="rules"
-      >
+      <el-form ref="formRef" label-position="top" :disabled="loading" :model="form" :rules="rules">
         <el-form-item label="用户名" prop="username" :disabled="isUpdateMode">
-          <el-input
-            v-model="form.username"
-          />
+          <el-input v-model="form.username" />
         </el-form-item>
 
         <el-form-item label="权限" prop="roleId">
@@ -129,9 +121,7 @@ const copyInvitationCode = async () => {
         </el-form-item>
 
         <el-form-item label="备注" prop="remark">
-          <el-input
-            v-model="form.remark"
-          />
+          <el-input v-model="form.remark" />
         </el-form-item>
 
         <el-form-item label="登录策略" prop="accessPolicy">
@@ -143,8 +133,13 @@ const copyInvitationCode = async () => {
           />
         </el-form-item>
 
-        <el-form-item v-if="invitationUrl" label="邀请链接" style="margin-bottom: 0;">
-          <el-button :icon="ElIcons.Link" :disabled="!isSame" class="w-full" @click="copyInvitationCode">
+        <el-form-item v-if="invitationUrl" label="邀请链接" style="margin-bottom: 0">
+          <el-button
+            :icon="ElIcons.Link"
+            :disabled="!isSame"
+            class="w-full"
+            @click="copyInvitationCode"
+          >
             {{ isSame ? '复制链接' : '提交更新后获取' }}
           </el-button>
         </el-form-item>

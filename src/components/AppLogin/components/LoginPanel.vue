@@ -16,6 +16,7 @@ const isRegister = defineModel<boolean>('isRegister', {
 const title = import.meta.env.VITE_TITLE
 
 const {
+  // @ts-expect-error 模板 `ref="formRef"` 在运行时写入该 ref，脚本侧不读取
   formRef,
   isValid,
   rules,
@@ -34,8 +35,7 @@ onSuccess(() => {
 const { count, set: setCount } = useCountDown()
 
 const trigger = async () => {
-  if (count.value > 0)
-    return
+  if (count.value > 0) return
   setCount(3)
   await login()
 }
@@ -43,13 +43,14 @@ const trigger = async () => {
 
 <template>
   <WinDialog class="w-[340px]">
-    <WinDialogTitleBar :loading="loading" @close="() => emits('close')">
-      登录
-    </WinDialogTitleBar>
+    <WinDialogTitleBar :loading="loading" @close="() => emits('close')"> 登录 </WinDialogTitleBar>
 
-    <div class="w-full flex flex-col p-4 bg-[var(--el-bg-color)]" style="--el-border-radius-base: 8px">
+    <div
+      class="w-full flex flex-col p-4 bg-[var(--el-bg-color)]"
+      style="--el-border-radius-base: 8px"
+    >
       <div class="flex flex-col justify-center items-center font-['HYWenHei-85W'] pb-4">
-        <img class="w-12 h-12" src="/favicon.ico">
+        <img class="w-12 h-12" src="/favicon.ico" />
         {{ title }}
       </div>
 
@@ -64,11 +65,7 @@ const trigger = async () => {
         @validate="handleValidate"
       >
         <el-form-item label="用户名" prop="username">
-          <el-input
-            v-model="loginForm.username"
-            placeholder="请输入用户名或Q号"
-            type="text"
-          />
+          <el-input v-model="loginForm.username" placeholder="请输入用户名或Q号" type="text" />
         </el-form-item>
 
         <el-form-item label="密码" prop="password">
@@ -86,7 +83,8 @@ const trigger = async () => {
             class="w-full"
             size="large"
             :icon="User"
-            :disabled="!isValid || count > 0" :loading="loading"
+            :disabled="!isValid || count > 0"
+            :loading="loading"
             @click="trigger"
           >
             登录 {{ count > 0 ? `(${count})` : '' }}
@@ -97,9 +95,7 @@ const trigger = async () => {
       <el-divider style="margin: 24px 0 16px" />
 
       <div class="flex justify-between">
-        <el-button link type="primary" disabled title="暂时没做这个功能">
-          忘记密码
-        </el-button>
+        <el-button link type="primary" disabled title="暂时没做这个功能"> 忘记密码 </el-button>
         <el-button link type="success" :disabled="loading" @click="isRegister = true">
           没有账号？去注册 →
         </el-button>

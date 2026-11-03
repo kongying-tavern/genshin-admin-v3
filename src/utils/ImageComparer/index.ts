@@ -22,15 +22,13 @@ export class ImageComparer {
 
     gl.clearColor(0, 0, 0, 1)
 
-    Object.keys(this.#uniform).forEach((key) => {
+    Object.keys(this.#uniform).forEach(key => {
       this.#uniform[key] = gl.getUniformLocation(program, key)
     })
 
     const POSITIONS = new Float32Array([
-      ...[-1, +1, 0, 1],
-      ...[-1, -1, 0, 0],
-      ...[+1, +1, 1, 1],
-      ...[+1, -1, 1, 0],
+      // 2×2 顶点矩阵，每 4 个分量描述一个顶点（x, y, u, v）
+      -1, +1, 0, 1, -1, -1, 0, 0, +1, +1, 1, 1, +1, -1, 1, 0,
     ])
     const FSIZE = Float32Array.BYTES_PER_ELEMENT
     const STRIDE = FSIZE * 4
@@ -52,7 +50,12 @@ export class ImageComparer {
 
   #vertexCount = 4
 
-  #attribute: { name: string, type: keyof WebGL2RenderingContext, size: number, offset?: number }[] = [
+  #attribute: {
+    name: string
+    type: keyof WebGL2RenderingContext
+    size: number
+    offset?: number
+  }[] = [
     { name: 'instancePosition', type: 'FLOAT', size: 2 },
     { name: 'instanceTexCoord', type: 'FLOAT', size: 2 },
   ]
@@ -73,8 +76,7 @@ export class ImageComparer {
     const { width, height, pixels } = this.#draw(gl, imageA, imageB)
 
     let sum = 0
-    for (let i = 0; i < pixels.length; i += 4)
-      sum += pixels[i] / 255
+    for (let i = 0; i < pixels.length; i += 4) sum += pixels[i] / 255
 
     return {
       pixels,
@@ -87,7 +89,12 @@ export class ImageComparer {
     gl.clear(gl.COLOR_BUFFER_BIT)
   }
 
-  #setTexture = (gl: WebGL2RenderingContext, image: TexImageSource, location: WebGLUniformLocation | null, unit: number) => {
+  #setTexture = (
+    gl: WebGL2RenderingContext,
+    image: TexImageSource,
+    location: WebGLUniformLocation | null,
+    unit: number,
+  ) => {
     const texture = gl.createTexture()!
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1)
     gl.activeTexture(gl.TEXTURE0 + unit)
@@ -106,7 +113,6 @@ export class ImageComparer {
 
     const { drawingBufferWidth, drawingBufferHeight } = gl
 
-    // eslint-disable-next-line ts/naming-convention
     const { u_imageA, u_imegaB } = this.#uniform
 
     this.#setTexture(gl, imageA, u_imageA, 0)

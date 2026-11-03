@@ -20,11 +20,10 @@ const info = defineModel<MapWindow.Info>('info', {
   required: true,
 })
 
+// @ts-expect-error 模板 `ref="mainRef"` 在运行时写入该 ref，脚本侧不读取
 const mainRef = defineModel<HTMLElement | null>('mainRef', {
   default: null,
 })
-
-const instanceRef = ref<HTMLDivElement>()
 
 const isTransitioning = ref(false)
 
@@ -54,7 +53,6 @@ const isResizerEnable = computed(() => {
 
 <template>
   <div
-    ref="instanceRef"
     v-transition:height="isTransitioning"
     class="window-instance"
     :class="{
@@ -82,7 +80,7 @@ const isResizerEnable = computed(() => {
         <el-icon
           :size="30"
           class="header-action-button"
-          style="--hover-color: #FFFFFF20; --active-color: #FFFFFF40"
+          style="--hover-color: #ffffff20; --active-color: #ffffff40"
           @click="() => context.setSizeState(id, 'minimize')"
         >
           <ElIcons.Plus v-if="isMinimize" />
@@ -92,7 +90,7 @@ const isResizerEnable = computed(() => {
         <el-icon
           :size="30"
           class="header-action-button"
-          style="--hover-color: #FFFFFF20; --active-color: #FFFFFF40"
+          style="--hover-color: #ffffff20; --active-color: #ffffff40"
           @click="() => context.setSizeState(id, 'maximize')"
         >
           <ElIcons.CopyDocument v-if="isMaximize" />
@@ -102,7 +100,10 @@ const isResizerEnable = computed(() => {
         <el-icon
           :size="30"
           class="header-action-button"
-          style="--hover-color: var(--el-color-danger); --active-color: var(--el-color-danger-light-3)"
+          style="
+            --hover-color: var(--el-color-danger);
+            --active-color: var(--el-color-danger-light-3);
+          "
           @click="() => context.closeWindow(id)"
         >
           <ElIcons.Close />
@@ -189,23 +190,19 @@ const isResizerEnable = computed(() => {
 }
 
 .header-title {
-  @apply
-    px-2 flex-1
+  @apply px-2 flex-1
     text-xs text-[#C6C2BA] font-bold leading-[30px]
-    overflow-hidden whitespace-nowrap text-ellipsis
-  ;
+    overflow-hidden whitespace-nowrap text-ellipsis;
   cursor: move;
 }
 
 .header-action-button {
-  @apply
-    p-2
+  @apply p-2
     transition-all
     text-[var(--el-color-white)]
     hover:bg-[var(--hover-color)]
     hover:text-[var(--el-color-white)]
-    active:bg-[var(--active-color)]
-  ;
+    active:bg-[var(--active-color)];
 }
 
 .window-content {

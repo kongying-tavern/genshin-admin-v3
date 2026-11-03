@@ -21,6 +21,7 @@ const isRegister = defineModel<boolean>('isRegister', {
 const title = import.meta.env.VITE_TITLE
 
 const {
+  // @ts-expect-error 模板 `ref="formRef"` 在运行时写入该 ref，脚本侧不读取
   formRef,
   isValid,
   rules,
@@ -42,8 +43,7 @@ onSuccess(() => {
 const { count, set: setCount } = useCountDown()
 
 const trigger = async () => {
-  if (count.value > 0)
-    return
+  if (count.value > 0) return
   setCount(3)
   await register()
 }
@@ -51,13 +51,14 @@ const trigger = async () => {
 
 <template>
   <WinDialog class="w-[340px]">
-    <WinDialogTitleBar :loading="loading" @close="() => emits('close')">
-      注册
-    </WinDialogTitleBar>
+    <WinDialogTitleBar :loading="loading" @close="() => emits('close')"> 注册 </WinDialogTitleBar>
 
-    <div class="w-full flex flex-col p-4 bg-[var(--el-bg-color)]" style="--el-border-radius-base: 8px">
+    <div
+      class="w-full flex flex-col p-4 bg-[var(--el-bg-color)]"
+      style="--el-border-radius-base: 8px"
+    >
       <div class="flex flex-col justify-center items-center font-['HYWenHei-85W'] pb-4">
-        <img class="w-12 h-12" src="/favicon.ico">
+        <img class="w-12 h-12" src="/favicon.ico" />
         {{ title }}
       </div>
 
@@ -72,27 +73,15 @@ const trigger = async () => {
         @validate="handleValidate"
       >
         <el-form-item label="邀请码" prop="code">
-          <el-input
-            v-model="form.code"
-            placeholder="请输入注册邀请码"
-            type="text"
-          />
+          <el-input v-model="form.code" placeholder="请输入注册邀请码" type="text" />
         </el-form-item>
 
         <el-form-item label="用户名" prop="username">
-          <el-input
-            v-model="form.username"
-            placeholder="请输入用户名或Q号"
-            type="text"
-          />
+          <el-input v-model="form.username" placeholder="请输入用户名或Q号" type="text" />
         </el-form-item>
 
         <el-form-item label="昵称" prop="nickname">
-          <el-input
-            v-model="form.nickname"
-            placeholder="请输入昵称"
-            type="text"
-          />
+          <el-input v-model="form.nickname" placeholder="请输入昵称" type="text" />
         </el-form-item>
 
         <el-divider />

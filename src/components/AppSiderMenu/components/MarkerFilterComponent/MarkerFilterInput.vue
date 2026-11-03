@@ -5,8 +5,6 @@ defineProps<{
   placeholder?: string
 }>()
 
-const nativeInputRef = ref<HTMLInputElement>()
-
 const modelValue = defineModel<string>('modelValue', {
   required: true,
   default: '',
@@ -14,10 +12,7 @@ const modelValue = defineModel<string>('modelValue', {
 </script>
 
 <template>
-  <div
-    class="condition-unit"
-    :class="{ disabled }"
-  >
+  <div class="condition-unit" :class="{ disabled }">
     <div
       class="condition-unit-input__inner"
       :class="[error ? 'ring-2 ring-offset-0 ring-[#E6455F]' : '']"
@@ -28,12 +23,11 @@ const modelValue = defineModel<string>('modelValue', {
         </div>
       </template>
       <input
-        ref="nativeInputRef"
         v-model="modelValue"
         class="condition-unit-input__internal"
         :placeholder="placeholder"
         :disabled="disabled"
-      >
+      />
       <template v-if="$slots.append">
         <div class="condition-unit-input__separator condition-unit-input__append">
           <slot name="append" />

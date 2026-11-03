@@ -8,20 +8,16 @@ const PRESET_NAME_REGEX = /^[^\\/:*?"'<>|]*$/u
  * 而非 null / undefined，保证下游拿到非空字符串类型的数据。
  */
 export const usePresetName = (source: MaybeRef<string | null> = '') => {
-  const rawName = controlledRef<string | null>(
-    unref(source) ?? '',
-    {
-      onBeforeChange: (value) => {
-        if (!value)
-          return true
-        return (
-          PRESET_NAME_REGEX.test(value)
-          && !/^\./u.test(value)
-          && value.trim().length === value.length
-        )
-      },
+  const rawName = controlledRef<string | null>(unref(source) ?? '', {
+    onBeforeChange: value => {
+      if (!value) return true
+      return (
+        PRESET_NAME_REGEX.test(value)
+        && !value.startsWith('.')
+        && value.trim().length === value.length
+      )
     },
-  )
+  })
 
   return refDefault<string>(rawName, '')
 }
