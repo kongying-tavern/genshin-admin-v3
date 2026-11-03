@@ -99,6 +99,9 @@
     "pnpm": ">=10.0.0"
   },
   "pnpm": {
+    "overrides": {
+      "wgsl_reflect": "1.2.3"
+    },
     "onlyBuiltDependencies": [
       "@vaadin/vaadin-usage-statistics",
       "core-js",

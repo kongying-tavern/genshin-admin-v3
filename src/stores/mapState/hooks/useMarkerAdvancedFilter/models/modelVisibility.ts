@@ -6,7 +6,7 @@ import type {
   MAFSemanticUnit,
   MAFValueNumberArray,
 } from '@/stores/types'
-import { useHiddenFlagOptions } from '@/hooks'
+import { useHiddenFlagOptions } from '@/hooks/useHiddenFlagOptions'
 import { MAF_MODEL_META_MAP, MAFModelId } from '@/shared'
 
 type OptionType = MAFOptionSelect<{ label: string; value: number }>

@@ -7,7 +7,7 @@ import type {
   MAFSemanticUnit,
   MAFValueNumberRange,
 } from '@/stores/types'
-import { useRefreshTimeOptions } from '@/hooks'
+import { useRefreshTimeOptions } from '@/hooks/useRefreshTimeOptions'
 import { MAF_MODEL_META_MAP, MAFModelId } from '@/shared'
 
 type OptionType = MAFOptionRange & MAFOptionSelect<{ label: string; value: number }>
