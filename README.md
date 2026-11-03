@@ -5,13 +5,13 @@
   <h2>空荧后厨</h2>
   <div>
     <a href="https://www.typescriptlang.org" target="_blank">
-      <img src="https://img.shields.io/badge/typescript-5-blue">
+      <img src="https://img.shields.io/badge/typescript-6-blue">
     </a>
     <a href="https://nodejs.org" target="_blank">
-      <img src="https://img.shields.io/badge/node.js-20-green">
+      <img src="https://img.shields.io/badge/node.js-24-green">
     </a>
     <a href="https://cn.vitejs.dev" target="_blank">
-      <img src="https://img.shields.io/badge/vite.js-7-green">
+      <img src="https://img.shields.io/badge/vite.js-8-green">
     </a>
     <a href="https://cn.vuejs.org" target="_blank">
       <img src="https://img.shields.io/badge/vue.js-3-green">

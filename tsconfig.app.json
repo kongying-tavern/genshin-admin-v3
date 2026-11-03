@@ -1,16 +1,9 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": [
-    "types/**/*",
-    "src/**/*",
-    "tests/**/*"
-  ],
-  "exclude": [
-    "./src/api/protobuf/compiled.js"
-  ],
+  "include": ["types/**/*", "src/**/*", "tests/**/*"],
+  "exclude": ["./src/api/protobuf/compiled.js"],
   "compilerOptions": {
     "alwaysStrict": true,
-    "baseUrl": ".",
     "checkJs": true,
     "incremental": true,
     "lib": [
@@ -23,7 +16,8 @@
     ],
     "noUnusedLocals": true,
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"],
+      "types/*": ["./types/*"]
     },
     "strictNullChecks": true,
     "target": "ESNext",
