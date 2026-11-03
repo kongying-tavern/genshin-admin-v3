@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": false,
+  "singleQuote": true,
+  "quoteProps": "as-needed",
+  "trailingComma": "all",
+  "arrowParens": "avoid",
+  "endOfLine": "lf",
+  "insertFinalNewline": true,
+  "objectWrap": "preserve",
+  "experimentalOperatorPosition": "start",
+  "vueIndentScriptAndStyle": false,
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    "src/api/protobuf/compiled.js",
+    "src/api/protobuf/compiled.d.ts",
+    "**/*.md",
+    "**/*.html",
+    "**/*.css",
+    "**/*.scss"
+  ]
+}

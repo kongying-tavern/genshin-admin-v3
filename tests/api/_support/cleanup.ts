@@ -1,3 +1,6 @@
+/* oxlint-disable unicorn/no-useless-spread */
+// 清理时遍历的是 `[...集合]` 快照：删除过程涉及 await，先固定快照可保证
+// 遍历期间即使有新增项也不会影响本轮清理范围。
 import Apis from '@/api/alova'
 import { loginAsTestAccount } from './auth'
 
@@ -65,8 +68,7 @@ export const registerMarkerForCleanup = (markerId: number) => {
  * 单个删除失败不中断整体清理（例如用例自身已覆盖删除行为）。
  */
 export const cleanupCreatedUsers = async () => {
-  if (!createdUserIds.size)
-    return
+  if (!createdUserIds.size) return
 
   await loginAsTestAccount().catch(() => {})
 
@@ -85,8 +87,7 @@ export const cleanupCreatedUsers = async () => {
  * 只能依赖此处登记 id 精确回收。
  */
 export const cleanupCreatedAreas = async () => {
-  if (!createdAreaIds.size)
-    return
+  if (!createdAreaIds.size) return
 
   await loginAsTestAccount().catch(() => {})
 
@@ -98,8 +99,7 @@ export const cleanupCreatedAreas = async () => {
 
 /** 删除本次测试创建的全部点位；点位可能已被用例删除或随地区级联删除 */
 export const cleanupCreatedMarkers = async () => {
-  if (!createdMarkerIds.size)
-    return
+  if (!createdMarkerIds.size) return
 
   await loginAsTestAccount().catch(() => {})
 
@@ -111,8 +111,7 @@ export const cleanupCreatedMarkers = async () => {
 
 /** 删除本次测试创建的全部物品；删除物品会同时清理其分类与点位关联 */
 export const cleanupCreatedItems = async () => {
-  if (!createdItemIds.size)
-    return
+  if (!createdItemIds.size) return
 
   await loginAsTestAccount().catch(() => {})
 
@@ -124,8 +123,7 @@ export const cleanupCreatedItems = async () => {
 
 /** 删除本次测试创建的全部物品分类（会递归删除子分类与分类关联） */
 export const cleanupCreatedItemTypes = async () => {
-  if (!createdItemTypeIds.size)
-    return
+  if (!createdItemTypeIds.size) return
 
   await loginAsTestAccount().catch(() => {})
 
@@ -137,8 +135,7 @@ export const cleanupCreatedItemTypes = async () => {
 
 /** 删除本次测试创建的全部图标 */
 export const cleanupCreatedIcons = async () => {
-  if (!createdIconIds.size)
-    return
+  if (!createdIconIds.size) return
 
   await loginAsTestAccount().catch(() => {})
 
@@ -150,8 +147,7 @@ export const cleanupCreatedIcons = async () => {
 
 /** 删除本次测试创建的全部图标分类（会递归删除子分类与分类关联） */
 export const cleanupCreatedIconTypes = async () => {
-  if (!createdIconTypeIds.size)
-    return
+  if (!createdIconTypeIds.size) return
 
   await loginAsTestAccount().catch(() => {})
 

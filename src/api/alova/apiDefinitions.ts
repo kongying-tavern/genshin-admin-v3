@@ -1,6 +1,6 @@
 /// <reference types='./globals.d.ts' />
 /* tslint:disable */
-/* eslint-disable */
+/* oxlint-disable */
 /**
  * OpenAPI definition - version v0
  *
@@ -99,7 +99,10 @@ export default {
   'marker_link_doc.listAllMarkerLinkageBinary': ['GET', '/api/marker_link_doc/all_list_bin'],
   'marker_link_doc.listAllMarkerLinkageBinaryMD5': ['GET', '/api/marker_link_doc/all_list_bin_md5'],
   'marker_link_doc.graphAllMarkerLinkageBinary': ['GET', '/api/marker_link_doc/all_graph_bin'],
-  'marker_link_doc.graphAllMarkerLinkageBinaryMD5': ['GET', '/api/marker_link_doc/all_graph_bin_md5'],
+  'marker_link_doc.graphAllMarkerLinkageBinaryMD5': [
+    'GET',
+    '/api/marker_link_doc/all_graph_bin_md5',
+  ],
   'marker_doc.listMarkerBinaryMD5': ['GET', '/api/marker_doc/list_page_bin_md5'],
   'marker_doc.listPageMarkerByBinary': ['GET', '/api/marker_doc/list_page_bin/{md5}'],
   'marker_doc.listMarkersByBinary': ['GET', '/api/marker_doc/list_markers'],
@@ -132,5 +135,5 @@ export default {
   'cache.cleanIconCache': ['DELETE', '/api/cache/icon'],
   'cache.cleanCommonItemCache': ['DELETE', '/api/cache/commonItem'],
   'cache.cleanAreaCache': ['DELETE', '/api/cache/area'],
-  'area.deleteArea': ['DELETE', '/api/area/{areaId}']
-};
+  'area.deleteArea': ['DELETE', '/api/area/{areaId}'],
+}

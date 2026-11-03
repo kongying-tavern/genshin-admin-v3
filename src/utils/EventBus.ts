@@ -1,17 +1,16 @@
 export type EventHandler<P> = (...payloads: P extends unknown[] ? P : []) => void
 
 export class EventBus<EventMap> {
-  // eslint-disable-next-line ts/no-explicit-any
+  // oxlint-disable-next-line typescript/no-explicit-any
   #handlers: Record<any, any[]> = {}
 
-  on = <T extends keyof EventMap>(event: T, handler: EventHandler<EventMap[T]>): () => void => {
-    if (!this.#handlers[event])
-      this.#handlers[event] = []
+  on = <T extends keyof EventMap>(event: T, handler: EventHandler<EventMap[T]>): (() => void) => {
+    if (!this.#handlers[event]) this.#handlers[event] = []
     this.#handlers[event].push(handler)
     return () => this.off(event, handler)
   }
 
-  once = <T extends keyof EventMap>(event: T, handler: EventHandler<EventMap[T]>): () => void => {
+  once = <T extends keyof EventMap>(event: T, handler: EventHandler<EventMap[T]>): (() => void) => {
     const onceHandler: EventHandler<EventMap[T]> = (...payloads) => {
       handler(...payloads)
       this.off(event, onceHandler)
@@ -20,18 +19,18 @@ export class EventBus<EventMap> {
     return () => this.off(event, onceHandler)
   }
 
-  emit = <T extends keyof EventMap>(event: T, ...payloads: EventMap[T] extends unknown[] ? EventMap[T] : unknown[]): void => {
+  emit = <T extends keyof EventMap>(
+    event: T,
+    ...payloads: EventMap[T] extends unknown[] ? EventMap[T] : unknown[]
+  ): void => {
     const eventHandlers = this.#handlers[event]
-    if (eventHandlers)
-      eventHandlers.forEach(handler => handler(...payloads))
+    if (eventHandlers) eventHandlers.forEach(handler => handler(...payloads))
   }
 
   off = <T extends keyof EventMap>(event: T, handler: EventHandler<EventMap[T]>): void => {
     const eventHandlers = this.#handlers[event]
     if (eventHandlers) {
-      this.#handlers[event] = eventHandlers.filter(
-        existingHandler => existingHandler !== handler,
-      )
+      this.#handlers[event] = eventHandlers.filter(existingHandler => existingHandler !== handler)
     }
   }
 

@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+/* oxlint-disable no-console */
 import type { LogInfo } from '@/utils'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import { Logger } from '@/utils'
@@ -14,7 +14,9 @@ export const useDevStore = defineStore('global-dev', () => {
 
   const logList = ref<LogInfo[]>([])
 
-  const visibleLogList = computed(() => logList.value.filter(({ label }) => enableLoggers.value.has(label)))
+  const visibleLogList = computed(() =>
+    logList.value.filter(({ label }) => enableLoggers.value.has(label)),
+  )
 
   const preLogList = ref<LogInfo[]>([])
 
@@ -30,27 +32,27 @@ export const useDevStore = defineStore('global-dev', () => {
 
     logList.value.push(logInfo)
 
-    if (!enableLoggers.value.has(logInfo.label))
-      return
+    if (!enableLoggers.value.has(logInfo.label)) return
 
     const { type, args } = logInfo
     console[type](...args)
   }
 
-  watch(() => preferenceStore.enableLoggers, () => {
-    preLogList.value.forEach(handleLog)
-    preLogList.value = []
-  })
+  watch(
+    () => preferenceStore.enableLoggers,
+    () => {
+      preLogList.value.forEach(handleLog)
+      preLogList.value = []
+    },
+  )
 
   const registerLogger = (label: string) => {
-    if (loggerLabels.value.has(label))
-      return
+    if (loggerLabels.value.has(label)) return
     loggerLabels.value.add(label)
   }
 
   const initLogger = () => {
-    if (Logger.isInit)
-      return
+    if (Logger.isInit) return
     Logger.loggerLabelsCache.forEach(registerLogger)
     Logger.logsCache.forEach(handleLog)
     Logger.init()

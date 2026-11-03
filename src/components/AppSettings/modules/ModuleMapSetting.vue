@@ -7,7 +7,7 @@ const dadianStore = useDadianStore()
 const preferenceStore = usePreferenceStore()
 
 const consoleConfig = () => {
-  // eslint-disable-next-line no-console
+  // oxlint-disable-next-line no-console
   console.log(tileStore.mergedTileConfigs)
 }
 </script>
@@ -23,9 +23,7 @@ const consoleConfig = () => {
           </div>
         </template>
         <template #setting>
-          <el-button @click="consoleConfig">
-            查看配置
-          </el-button>
+          <el-button @click="consoleConfig"> 查看配置 </el-button>
         </template>
       </SettingBar>
     </SettingGroup>
@@ -33,7 +31,9 @@ const consoleConfig = () => {
     <SettingGroup name="筛选器设置">
       <SettingBar label="条件预设" note="当前存储的自定义条件预设总数">
         <template #setting>
-          <span class="text-sm">{{ preferenceStore.presets.filter(p => p.name !== 'temp')?.length ?? 0 }}</span>
+          <span class="text-sm">{{
+            preferenceStore.presets.filter(p => p.name !== 'temp')?.length ?? 0
+          }}</span>
         </template>
       </SettingBar>
       <SettingBar label="自动跳转下级筛选" note="点位筛选器满足条件后自动跳转下一级筛选器">
@@ -54,7 +54,10 @@ const consoleConfig = () => {
           <el-switch v-model="preferenceStore.transparentMarked" />
         </template>
       </SettingBar>
-      <SettingBar label="滚轮缩放过渡时间（毫秒）" note="使用滚轮进行缩放时，过渡所消耗的时间，设置为 0 时则取消过渡">
+      <SettingBar
+        label="滚轮缩放过渡时间（毫秒）"
+        note="使用滚轮进行缩放时，过渡所消耗的时间，设置为 0 时则取消过渡"
+      >
         <template #setting>
           <div class="flex flex-col">
             <el-input-number

@@ -2,17 +2,20 @@
 import { ElDropdown } from 'element-plus'
 import DropdownButton from './components/DropdownButton.vue'
 
-const props = withDefaults(defineProps<{
-  dropdownKey: string
-  icon?: string | Component
-  trigger?: 'click' | 'hover' | 'focus' | 'contextmenu'
-  hideOnClick?: boolean
-}>(), {
-  trigger: 'click',
-})
+const props = withDefaults(
+  defineProps<{
+    dropdownKey: string
+    icon?: string | Component
+    trigger?: 'click' | 'hover' | 'focus' | 'contextmenu'
+    hideOnClick?: boolean
+  }>(),
+  {
+    trigger: 'click',
+  },
+)
 
 defineEmits<{
-  // eslint-disable-next-line ts/no-explicit-any
+  // oxlint-disable-next-line typescript/no-explicit-any
   command: [any]
 }>()
 
@@ -34,11 +37,9 @@ const handleVisibleChange = (visible: boolean) => {
   modelValue.value = props.dropdownKey
 }
 
-watch(modelValue, (key) => {
-  if (!internalVisible.value || !modelValue.value)
-    return
-  if (props.dropdownKey !== key)
-    dropdownRef.value?.handleClose()
+watch(modelValue, key => {
+  if (!internalVisible.value || !modelValue.value) return
+  if (props.dropdownKey !== key) dropdownRef.value?.handleClose()
 })
 
 defineExpose({

@@ -3,7 +3,13 @@ import * as ElIcons from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { AppVirtualTable } from '@/components'
 import { useFetchHook } from '@/hooks'
-import { useAccessStore, useDadianStore, useDevStore, useIconStore, usePreferenceStore } from '@/stores'
+import {
+  useAccessStore,
+  useDadianStore,
+  useDevStore,
+  useIconStore,
+  usePreferenceStore,
+} from '@/stores'
 import { SettingBar, SettingGroup, SettingPanel } from '../components'
 
 const accessStore = useAccessStore()
@@ -23,15 +29,14 @@ const initLogInfo = (args: unknown[]) => {
   const styles: string[] = ['', `${prefixStyle}`, `${tagStyle}`]
 
   ;`${prefix}`.split('%c').forEach((code, index) => {
-    if (!code)
-      return
+    if (!code) return
     str.push({
       style: styles[index] ?? '',
       text: code,
     })
   })
 
-  payloads.forEach((payload) => {
+  payloads.forEach(payload => {
     const text = `${payload}`
     if (text === '[object Object]') {
       str.push({
@@ -57,45 +62,38 @@ const { refresh: refreshApp, loading: refreshLoading } = useFetchHook({
 })
 
 const confirmRefreshApp = async () => {
-  await ElMessageBox.confirm(
-    '该操作将会导致全部在线用户执行刷新操作，是否继续？',
-    '警告',
-    {
-      type: 'warning',
-      closeOnClickModal: false,
-      closeOnPressEscape: false,
-      closeOnHashChange: false,
-      showClose: false,
-      distinguishCancelAndClose: true,
-      cancelButtonClass: 'el-button--primary el-button--danger',
-      cancelButtonText: '确定',
-      confirmButtonClass: 'el-button--info is-text',
-      confirmButtonText: '取消',
-      beforeClose: (action, instance, done) => {
-        if (refreshLoading.value)
-          return
-        if (action !== 'cancel')
-          return done()
-        instance.cancelButtonLoading = true
-        refreshApp().then(() => {
-          ElMessage.success('操作成功')
-          instance.cancelButtonLoading = false
-          done()
-        })
-      },
+  await ElMessageBox.confirm('该操作将会导致全部在线用户执行刷新操作，是否继续？', '警告', {
+    type: 'warning',
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
+    closeOnHashChange: false,
+    showClose: false,
+    distinguishCancelAndClose: true,
+    cancelButtonClass: 'el-button--primary el-button--danger',
+    cancelButtonText: '确定',
+    confirmButtonClass: 'el-button--info is-text',
+    confirmButtonText: '取消',
+    beforeClose: (action, instance, done) => {
+      if (refreshLoading.value) return
+      if (action !== 'cancel') return done()
+      instance.cancelButtonLoading = true
+      refreshApp().then(() => {
+        ElMessage.success('操作成功')
+        instance.cancelButtonLoading = false
+        done()
+      })
     },
-  ).catch(() => false)
+  }).catch(() => false)
 }
 
 const showDadianJson = () => {
-  // eslint-disable-next-line no-console
+  // oxlint-disable-next-line no-console
   console.log('[DadianJSON]', dadianStore.raw)
 }
 
 const iconStore = useIconStore()
 const downloadIconSprite = () => {
-  if (!iconStore.iconTextureUrl)
-    return
+  if (!iconStore.iconTextureUrl) return
   const a = document.createElement('a')
   a.href = iconStore.iconTextureUrl
   a.download = 'icon-sprite.png'
@@ -104,8 +102,7 @@ const downloadIconSprite = () => {
 }
 
 const downloadMarkerTexture = () => {
-  if (!iconStore.markerSpriteUrl)
-    return
+  if (!iconStore.markerSpriteUrl) return
   const a = document.createElement('a')
   a.href = iconStore.markerSpriteUrl
   a.download = 'marker-sprite.png'
@@ -114,7 +111,7 @@ const downloadMarkerTexture = () => {
 }
 
 const printIconSpriteMapping = () => {
-  // eslint-disable-next-line no-console
+  // oxlint-disable-next-line no-console
   console.log('[mapping]', {
     marker: iconStore.markerSpriteMapping,
     icon: iconStore.iconCoordMap,
@@ -168,11 +165,7 @@ const printIconSpriteMapping = () => {
         <template #detail>
           <el-checkbox-group v-model="preferenceStore.enableLoggers" @change="devStore.refreshLogs">
             <div class="grid grid-cols-2 sm:grid-cols-4">
-              <el-checkbox
-                v-for="label in devStore.loggerLabels"
-                :key="label"
-                :value="label"
-              >
+              <el-checkbox v-for="label in devStore.loggerLabels" :key="label" :value="label">
                 {{ label }}
               </el-checkbox>
             </div>
@@ -197,58 +190,37 @@ const printIconSpriteMapping = () => {
 
       <SettingBar label="打印纹理坐标映射">
         <template #setting>
-          <el-button
-            class="shrink-0"
-            @click="printIconSpriteMapping"
-          >
-            打印
-          </el-button>
+          <el-button class="shrink-0" @click="printIconSpriteMapping"> 打印 </el-button>
         </template>
       </SettingBar>
 
       <SettingBar label="下载图标精灵图">
         <template #setting>
-          <el-button
-            class="shrink-0"
-            @click="downloadIconSprite"
-          >
-            下载
-          </el-button>
+          <el-button class="shrink-0" @click="downloadIconSprite"> 下载 </el-button>
         </template>
       </SettingBar>
 
       <SettingBar label="下载点位纹理图">
         <template #setting>
-          <el-button
-            class="shrink-0"
-            @click="downloadMarkerTexture"
-          >
-            下载
-          </el-button>
+          <el-button class="shrink-0" @click="downloadMarkerTexture"> 下载 </el-button>
         </template>
       </SettingBar>
 
       <SettingBar label="在控制台打印地图配置">
         <template #setting>
-          <el-button @click="showDadianJson">
-            查看地图配置
-          </el-button>
+          <el-button @click="showDadianJson"> 查看地图配置 </el-button>
         </template>
       </SettingBar>
 
       <SettingBar label="从本地文件加载测试用的地图配置（会经过校验）">
         <template #setting>
-          <el-button @click="dadianStore.loadDadianJSON">
-            加载地图配置
-          </el-button>
+          <el-button @click="dadianStore.loadDadianJSON"> 加载地图配置 </el-button>
         </template>
       </SettingBar>
 
       <SettingBar label="恢复为当前订阅的地图配置">
         <template #setting>
-          <el-button @click="dadianStore.update">
-            恢复地图配置
-          </el-button>
+          <el-button @click="dadianStore.update"> 恢复地图配置 </el-button>
         </template>
       </SettingBar>
     </SettingGroup>
@@ -260,7 +232,7 @@ const printIconSpriteMapping = () => {
   width: 100%;
   height: 240px;
   overflow: hidden;
-  background: #23262A;
+  background: #23262a;
   color: white;
   font-size: 12px;
   font-family: monospace;
@@ -275,11 +247,11 @@ const printIconSpriteMapping = () => {
   clip-path: inset(1px 4px round 6px);
 
   &.is-warn {
-    --item-bg: #413C26;
+    --item-bg: #413c26;
   }
 
   &.is-error {
-    --item-bg: #4E3534;
+    --item-bg: #4e3534;
   }
 }
 </style>

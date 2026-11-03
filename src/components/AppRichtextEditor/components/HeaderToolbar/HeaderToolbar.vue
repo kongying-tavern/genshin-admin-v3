@@ -12,25 +12,27 @@ const props = withDefaults(defineProps<HeaderToolbarProps>(), {
 
 // ==================== 字体尺寸 ====================
 const size = controlledRef<number>(props.baseSize, {
-  onBeforeChange: (value) => {
-    if (Number.isNaN(Number(value)))
-      return false
+  onBeforeChange: value => {
+    if (Number.isNaN(Number(value))) return false
     return true
   },
-  onChanged: (value) => {
+  onChanged: value => {
     return Number(value)
   },
 })
 
 const isInternalChange = ref(false)
 
-watch(() => props.editor.getAttributes('size').size, (newSize) => {
-  if (!newSize) {
-    size.value = props.baseSize
-    return
-  }
-  size.value = Number(newSize)
-})
+watch(
+  () => props.editor.getAttributes('size').size,
+  newSize => {
+    if (!newSize) {
+      size.value = props.baseSize
+      return
+    }
+    size.value = Number(newSize)
+  },
+)
 
 const setSize = (value: number) => {
   isInternalChange.value = true
@@ -51,8 +53,10 @@ const sizeAliasList = computed(() => {
     return sizeAliasFullList.filter(alias => props.headers?.includes(alias.level))
 
   if (
-    props.headerMin && props.headerMax
-    && Number.isFinite(props.headerMin) && Number.isFinite(props.headerMax)
+    props.headerMin
+    && props.headerMax
+    && Number.isFinite(props.headerMin)
+    && Number.isFinite(props.headerMax)
     && props.headerMin <= props.headerMax
   ) {
     return sizeAliasFullList.slice(props.headerMin - 1, props.headerMax)
@@ -64,28 +68,17 @@ const sizeAliasList = computed(() => {
 // ==================== 文字链接 ====================
 const setLink = () => {
   const previousUrl = props.editor.getAttributes('link').href
-  const url = window.prompt('请输入链接，清空链接为删除链接', previousUrl) // eslint-disable-line no-alert
+  const url = window.prompt('请输入链接，清空链接为删除链接', previousUrl) // oxlint-disable-line no-alert
 
   // 取消弹窗
-  if (url === null)
-    return
+  if (url === null) return
   // empty
   if (url === '') {
-    props.editor
-      .chain()
-      .focus()
-      .extendMarkRange('link')
-      .unsetLink()
-      .run()
+    props.editor.chain().focus().extendMarkRange('link').unsetLink().run()
     return
   }
 
-  props.editor
-    .chain()
-    .focus()
-    .extendMarkRange('link')
-    .setLink({ href: url })
-    .run()
+  props.editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
 }
 </script>
 
@@ -145,7 +138,9 @@ const setLink = () => {
       :key="sizeAlias.level"
       @click="() => setSize(baseSize * sizeAlias.sizeFactor)"
     >
-      <span class="font-bold text-base">H<sub class="inline-block scale-[0.9]">{{ sizeAlias.level }}</sub></span>
+      <span class="font-bold text-base"
+        >H<sub class="inline-block scale-[0.9]">{{ sizeAlias.level }}</sub></span
+      >
     </ToolbarItem>
   </div>
 </template>

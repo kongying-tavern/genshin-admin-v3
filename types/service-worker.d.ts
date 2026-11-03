@@ -24,7 +24,7 @@ declare namespace AppServiceWorker {
     mode: RequestMode | null
   }
 
-  // eslint-disable-next-line ts/consistent-type-definitions
+  // oxlint-disable-next-line typescript/consistent-type-definitions
   type EventMap = {
     log: {
       args: [type: 'info' | 'error', message: string]

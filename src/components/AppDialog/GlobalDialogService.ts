@@ -1,4 +1,4 @@
-/* eslint-disable ts/no-explicit-any */
+/* oxlint-disable typescript/no-explicit-any */
 import type { Component } from 'vue'
 import type { GlobalDialogOptions, GlobalDialogPropsHack, GlobalDialogServiceImpl } from './types'
 import type { AnyObject } from '@/shared'

@@ -1,0 +1,94 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  // 插件全部显式列出：设置 plugins 会覆盖默认插件集，漏写即失效
+  "plugins": ["eslint", "typescript", "unicorn", "oxc", "import", "promise", "vue"],
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2024": true
+  },
+  // 只启用 correctness 分级，使约束强度与原 ESLint 基线持平；
+  // suspicious / pedantic / perf 会在存量代码上产生数百条历史遗留告警，
+  // 如需启用建议按规则逐条引入，而非整类打开。
+  "categories": {
+    "correctness": "error"
+  },
+  "ignorePatterns": [
+    "dist/**",
+    "coverage/**",
+    "temp/**",
+    "src/api/protobuf/compiled.js",
+    "src/api/protobuf/compiled.d.ts"
+  ],
+  "rules": {
+    // 一般情况下不允许使用 console
+    "eslint/no-console": ["warn", { "allow": ["warn", "error"] }],
+
+    // 默认参数必须放在最后
+    "eslint/default-param-last": "error",
+
+    // 允许短路 / 三元表达式作为语句（项目大量使用 `cond && fn()` 写法）
+    "eslint/no-unused-expressions": [
+      "error",
+      {
+        "allowShortCircuit": true,
+        "allowTernary": true,
+        "allowTaggedTemplates": true
+      }
+    ],
+
+    // 一般情况下不允许使用 any
+    "typescript/no-explicit-any": "warn",
+
+    // 禁止未使用的值
+    "typescript/no-unused-vars": [
+      "error",
+      {
+        "args": "all",
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "destructuredArrayIgnorePattern": "^_"
+      }
+    ],
+
+    // Vite 的 `?worker` / `?url` 虚拟模块无法被静态解析，误报「没有默认导出」
+    "import/default": "off",
+
+    // `points[0 * 2 + 0]` 这类下标写法用于表达矩阵排布，属于有意为之
+    "oxc/erasing-op": "off",
+
+    // 误报率高：UI 回调（如 ElMessageBox 的 done）在 then 中调用是正常用法
+    "promise/no-callback-in-promise": "off",
+
+    // 组件定义名称只允许大驼峰
+    "vue/component-definition-name-casing": ["error", "PascalCase"],
+
+    // 组件属性名称只允许小驼峰
+    "vue/prop-name-casing": ["error", "camelCase"]
+  },
+  "overrides": [
+    {
+      // CSS Houdini paint worklet 运行时提供的全局变量
+      "files": ["src/style/CSSHoudini/*.js"],
+      "globals": {
+        "registerPaint": "readonly"
+      }
+    },
+    {
+      // Worker 入口需要 `declare const globalThis: DedicatedWorkerGlobalScope`
+      // 与 `export {}` 来声明模块上下文
+      "files": ["src/worker/**/*.ts"],
+      "rules": {
+        "eslint/no-shadow-restricted-names": "off",
+        "typescript/no-useless-empty-export": "off"
+      }
+    },
+    {
+      // 构建 / 插件脚本允许输出构建信息
+      "files": ["*.config.ts", "plugins/**/*.ts"],
+      "rules": {
+        "eslint/no-console": "off"
+      }
+    }
+  ]
+}

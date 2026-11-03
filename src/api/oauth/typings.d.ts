@@ -1,4 +1,4 @@
-/* eslint-disable */
+/* oxlint-disable */
 
 declare namespace OauthAPI {
   type SysTokenVO = {
@@ -20,7 +20,7 @@ declare namespace OauthAPI {
     scope: string
     userRoles: string[]
     userId: number
-    jti: string,
+    jti: string
     message?: string
   }
 }

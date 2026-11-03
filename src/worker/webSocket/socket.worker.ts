@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+/* oxlint-disable no-console */
 import type { Socket } from 'socket.io-client'
 import { io } from 'socket.io-client'
 import { wsdb } from '@/database'
@@ -44,22 +44,23 @@ const startRttCheckLoop = (socket: Socket) => {
     socket.emit('rttcheck', { id: context.rtt.id })
   }
 
-  socket.on('rttcheck', ({ id, receiveTimestamp, sendTimestamp }: AppSocket.SocketEventMap['rttcheck'][0]) => {
-    if (id !== context.rtt.id)
-      return
-    const endTime = Date.now()
-    const totalRtt = endTime - context.rtt.time
-    const serverProcessTime = sendTimestamp - receiveTimestamp
-    const rtt = totalRtt - serverProcessTime
-    context.delay = rtt
-    context.ports.forEach(ipc => ipc.emit('delayChange', rtt))
-    setTimeout(() => requestRttCheck(), context.rtt.interval)
-  })
+  socket.on(
+    'rttcheck',
+    ({ id, receiveTimestamp, sendTimestamp }: AppSocket.SocketEventMap['rttcheck'][0]) => {
+      if (id !== context.rtt.id) return
+      const endTime = Date.now()
+      const totalRtt = endTime - context.rtt.time
+      const serverProcessTime = sendTimestamp - receiveTimestamp
+      const rtt = totalRtt - serverProcessTime
+      context.delay = rtt
+      context.ports.forEach(ipc => ipc.emit('delayChange', rtt))
+      setTimeout(() => requestRttCheck(), context.rtt.interval)
+    },
+  )
 
   socket.on('disconnect', () => {
     console.log('socket disconnected, stop rtt check loop')
-    if (timer === null)
-      return
+    if (timer === null) return
     clearTimeout(timer)
     timer = null
   })
@@ -88,8 +89,7 @@ const startHeartbeat = (
   startNextPing()
 
   ipc.handle('pong', () => {
-    if (!disconnectTimer)
-      return
+    if (!disconnectTimer) return
     globalThis.clearTimeout(disconnectTimer)
     disconnectTimer = null
     startNextPing()
@@ -100,7 +100,7 @@ const startHeartbeat = (
 if (Object.prototype.toString.call(globalThis) === '[object SharedWorkerGlobalScope]') {
   const scope = globalThis as SharedWorkerGlobalScope
 
-  scope.addEventListener('connect', (ev) => {
+  scope.addEventListener('connect', ev => {
     const id = crypto.randomUUID()
     const port = ev.ports[0]
 
@@ -150,15 +150,14 @@ if (Object.prototype.toString.call(globalThis) === '[object SharedWorkerGlobalSc
       socket.on('message', async (message: string) => {
         try {
           const payload = JSON.parse(message) as ServerEvents
-          // eslint-disable-next-line ts/no-explicit-any
+          // oxlint-disable-next-line typescript/no-explicit-any
           context.ports.forEach(ipc => ipc.emit(payload.event, payload.data as any))
           await wsdb.logs.add({
             t: Date.now(),
             msg: message,
             type: 0,
           })
-        }
-        catch (err) {
+        } catch (err) {
           const error = err instanceof Error ? err : new Error('Unknown error')
           context.ports.forEach(ipc => ipc.emit('error', error.message, error.stack || ''))
         }
@@ -191,10 +190,8 @@ if (Object.prototype.toString.call(globalThis) === '[object SharedWorkerGlobalSc
 
     /** 关闭 socket 连接 */
     ipc.handle('close', async () => {
-      if (context.openPromise)
-        await context.openPromise
-      if (!context.socket)
-        return
+      if (context.openPromise) await context.openPromise
+      if (!context.socket) return
       context.socket.close()
       context.socket = null
     })

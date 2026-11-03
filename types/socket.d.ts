@@ -1,6 +1,6 @@
 declare namespace AppSocket {
   /** 主线程可以发送的事件 */
-  // eslint-disable-next-line ts/consistent-type-definitions
+  // oxlint-disable-next-line typescript/consistent-type-definitions
   type MainEventMap = {
     /** 初始化 */
     init: {
@@ -9,14 +9,17 @@ declare namespace AppSocket {
     }
     /** 开启 socket 连接 */
     open: {
-      args: [url: string, options: {
-        path: string
-        query: {
-          userId: string
-          /** 后端握手鉴权：Rust `WS_AUTH_REQUIRED` 要求 token（query 或 Authorization 头） */
-          token?: string
-        }
-      }]
+      args: [
+        url: string,
+        options: {
+          path: string
+          query: {
+            userId: string
+            /** 后端握手鉴权：Rust `WS_AUTH_REQUIRED` 要求 token（query 或 Authorization 头） */
+            token?: string
+          }
+        },
+      ]
       return: 'created' | 'reused'
     }
     /** 关闭 socket 连接 */
@@ -66,11 +69,13 @@ declare namespace AppSocket {
   }
 
   interface SocketEventMap {
-    rttcheck: [feedback: {
-      id: string
-      receiveTimestamp: number
-      sendTimestamp: number
-    }]
+    rttcheck: [
+      feedback: {
+        id: string
+        receiveTimestamp: number
+        sendTimestamp: number
+      },
+    ]
   }
 
   /** 主线程 ws 上下文 */

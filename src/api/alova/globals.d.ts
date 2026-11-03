@@ -1,5 +1,5 @@
 /* tslint:disable */
-/* eslint-disable */
+/* oxlint-disable */
 /**
  * OpenAPI definition - version v0
  *
@@ -14,12 +14,12 @@
  *
  * **Do not edit the file manually.**
  */
-import type { Alova, AlovaMethodCreateConfig, AlovaGenerics, Method } from 'alova';
-import type { $$userConfigMap, alovaInstance } from './index';
-import type apiDefinitions from './apiDefinitions';
+import type { Alova, AlovaMethodCreateConfig, AlovaGenerics, Method } from 'alova'
+import type { $$userConfigMap, alovaInstance } from './index'
+import type apiDefinitions from './apiDefinitions'
 
-type CollapsedAlova = typeof alovaInstance;
-type UserMethodConfigMap = typeof $$userConfigMap;
+type CollapsedAlova = typeof alovaInstance
+type UserMethodConfigMap = typeof $$userConfigMap
 
 type Alova2MethodConfig<Responded> =
   CollapsedAlova extends Alova<
@@ -36,27 +36,36 @@ type Alova2MethodConfig<Responded> =
   >
     ? Omit<
         AlovaMethodCreateConfig<
-          AlovaGenerics<Responded, any, RequestConfig, Response, ResponseHeader, L1Cache, L2Cache, SE>,
+          AlovaGenerics<
+            Responded,
+            any,
+            RequestConfig,
+            Response,
+            ResponseHeader,
+            L1Cache,
+            L2Cache,
+            SE
+          >,
           any,
           Responded
         >,
         'params'
       >
-    : never;
+    : never
 
 // Extract the return type of transform function that define in $$userConfigMap, if it not exists, use the default type.
 type ExtractUserDefinedTransformed<
   DefinitionKey extends keyof typeof apiDefinitions,
-  Default
+  Default,
 > = DefinitionKey extends keyof UserMethodConfigMap
   ? UserMethodConfigMap[DefinitionKey]['transform'] extends (...args: any[]) => any
     ? Awaited<ReturnType<UserMethodConfigMap[DefinitionKey]['transform']>>
     : Default
-  : Default;
+  : Default
 type Alova2Method<
   Responded,
   DefinitionKey extends keyof typeof apiDefinitions,
-  CurrentConfig extends Alova2MethodConfig<any>
+  CurrentConfig extends Alova2MethodConfig<any>,
 > =
   CollapsedAlova extends Alova<
     AlovaGenerics<
@@ -86,1266 +95,1266 @@ type Alova2Method<
           SE
         >
       >
-    : never;
+    : never
 
 export interface RouteVo {
   /**
    * 乐观锁
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 创建人
    * ---
    */
-  creatorId?: number;
+  creatorId?: number
   /**
    * 创建时间
    * ---
    */
-  createTime?: string;
+  createTime?: string
   /**
    * 更新人
    * ---
    */
-  updaterId?: number;
+  updaterId?: number
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 路线名称
    * ---
    */
-  name?: string;
+  name?: string
   /**
    * 路线描述
    * ---
    */
-  content?: string;
+  content?: string
   /**
    * 点位顺序数组
    * ---
    */
-  markerList?: object[];
+  markerList?: object[]
   /**
    * 显隐等级
    * ---
    */
-  hiddenFlag?: number;
+  hiddenFlag?: number
   /**
    * 视频地址
    * ---
    */
-  video?: string;
+  video?: string
   /**
    * 额外信息
    * ---
    */
-  extra?: Record<string, object>;
+  extra?: Record<string, object>
   /**
    * 创建人昵称
    * ---
    */
-  creatorNickname?: string;
+  creatorNickname?: string
 }
 export interface ResourceUploadVo {
   /**
    * 文件路径
    * ---
    */
-  filePath?: string;
+  filePath?: string
   /**
    * 文件地址
    * ---
    */
-  fileUrl?: string;
+  fileUrl?: string
 }
 export interface Underground {
   /**
    * 是否是分层层级
    * ---
    */
-  is_underground?: boolean;
+  is_underground?: boolean
   /**
    * 是否是非地面层级
    * ---
    */
-  is_global?: boolean;
+  is_global?: boolean
   /**
    * 分层区域
    * ---
    * 分层区域标签
    */
-  region_levels?: string[];
+  region_levels?: string[]
 }
 export interface IconOverride {
   /**
    * 图标ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 最小可见缩放级别
    * ---
    * 最小可见缩放级别，大于该值可见
    */
-  minZoom?: number;
+  minZoom?: number
   /**
    * 最大可见缩放级别
    * ---
    * 最大可见缩放级别，小于该值可见
    */
-  maxZoom?: number;
+  maxZoom?: number
 }
 export interface V2_8_Island {
   /**
    * 海岛名
    * ---
    */
-  island_name?: string;
+  island_name?: string
   /**
    * 海岛状态
    * ---
    * 海岛状态标签
    */
-  island_state?: string[];
+  island_state?: string[]
 }
 export interface MarkerExtraVo {
   /**
    * 分层层级数据
    * ---
    */
-  underground?: Underground;
+  underground?: Underground
   /**
    * 图标覆盖数据
    * ---
    */
-  iconOverride?: IconOverride;
+  iconOverride?: IconOverride
   /**
    * 1.6 海岛数据
    * ---
    * 海岛阶段数组
    */
-  '1_6_island'?: string[];
+  '1_6_island'?: string[]
   /**
    * 2.8 海岛数据
    * ---
    */
-  '2_8_island'?: V2_8_Island;
+  '2_8_island'?: V2_8_Island
 }
 export interface MarkerPunctuateVo {
   /**
    * 乐观锁
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 创建人
    * ---
    */
-  creatorId?: number;
+  creatorId?: number
   /**
    * 创建时间
    * ---
    */
-  createTime?: string;
+  createTime?: string
   /**
    * 更新人
    * ---
    */
-  updaterId?: number;
+  updaterId?: number
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 点位提交ID
    * ---
    */
-  punctuateId?: number;
+  punctuateId?: number
   /**
    * 原有点位ID
    * ---
    */
-  originalMarkerId?: number;
+  originalMarkerId?: number
   /**
    * 点位名称
    * ---
    */
-  markerTitle?: string;
+  markerTitle?: string
   /**
    * 点位物品列表
    * ---
    */
-  itemList?: string;
+  itemList?: string
   /**
    * 点位坐标
    * ---
    */
-  position?: string;
+  position?: string
   /**
    * 点位说明
    * ---
    */
-  content?: string;
+  content?: string
   /**
    * 点位附加数据前端封装
    * ---
    */
-  extra?: MarkerExtraVo;
+  extra?: MarkerExtraVo
   /**
    * 点位图片
    * ---
    */
-  picture?: string;
+  picture?: string
   /**
    * 点位初始标记者
    * ---
    */
-  markerCreatorId?: number;
+  markerCreatorId?: number
   /**
    * 点位图片上传者
    * ---
    */
-  pictureCreatorId?: number;
+  pictureCreatorId?: number
   /**
    * 点位视频
    * ---
    */
-  videoPath?: string;
+  videoPath?: string
   /**
    * 隐藏标志
    * ---
    */
-  hiddenFlag?: number;
+  hiddenFlag?: number
   /**
    * 点位提交者ID
    * ---
    */
-  author?: number;
+  author?: number
   /**
    * 状态;0:暂存 1:审核中 2:不通过
    * ---
    */
-  status?: number;
+  status?: number
   /**
    * 审核备注
    * ---
    */
-  auditRemark?: string;
+  auditRemark?: string
   /**
    * 操作类型;1: 新增 2: 修改 3: 删除
    * ---
    */
-  methodType?: number;
+  methodType?: number
   /**
    * 点位刷新时间
    * ---
    */
-  refreshTime?: number;
+  refreshTime?: number
 }
 export interface NoticeVo {
   /**
    * 乐观锁
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 创建人
    * ---
    */
-  creatorId?: number;
+  creatorId?: number
   /**
    * 创建时间
    * ---
    */
-  createTime?: string;
+  createTime?: string
   /**
    * 更新人
    * ---
    */
-  updaterId?: number;
+  updaterId?: number
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 频道
    * ---
    */
-  channel?: string[];
+  channel?: string[]
   /**
    * 标题
    * ---
    */
-  title?: string;
+  title?: string
   /**
    * 内容
    * ---
    */
-  content?: string;
+  content?: string
   /**
    * 排序
    * ---
    */
-  sortIndex?: number;
+  sortIndex?: number
   /**
    * 有效期开始时间
    * ---
    */
-  validTimeStart?: string;
+  validTimeStart?: string
   /**
    * 有效期结束时间
    * ---
    */
-  validTimeEnd?: string;
+  validTimeEnd?: string
 }
 export interface MarkerItemLinkVo {
   /**
    * 物品ID
    * ---
    */
-  itemId?: number;
+  itemId?: number
   /**
    * 物品于该点位数量
    * ---
    */
-  count?: number;
+  count?: number
   /**
    * 图标ID
    * ---
    */
-  iconId?: number;
+  iconId?: number
 }
 export interface MarkerVo {
   /**
    * 乐观锁
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 创建人
    * ---
    */
-  creatorId?: number;
+  creatorId?: number
   /**
    * 创建时间
    * ---
    */
-  createTime?: string;
+  createTime?: string
   /**
    * 更新人
    * ---
    */
-  updaterId?: number;
+  updaterId?: number
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 点位签戳（用于兼容旧点位ID）
    * ---
    */
-  markerStamp?: string;
+  markerStamp?: string
   /**
    * 点位名称
    * ---
    */
-  markerTitle?: string;
+  markerTitle?: string
   /**
    * 点位坐标
    * ---
    */
-  position?: string;
+  position?: string
   /**
    * 点位物品列表
    * ---
    */
-  itemList?: MarkerItemLinkVo[];
+  itemList?: MarkerItemLinkVo[]
   /**
    * 点位说明
    * ---
    */
-  content?: string;
+  content?: string
   /**
    * 点位图片
    * ---
    */
-  picture?: string;
+  picture?: string
   /**
    * 点位初始标记者
    * ---
    */
-  markerCreatorId?: number;
+  markerCreatorId?: number
   /**
    * 点位图片上传者
    * ---
    */
-  pictureCreatorId?: number;
+  pictureCreatorId?: number
   /**
    * 点位视频
    * ---
    */
-  videoPath?: string;
+  videoPath?: string
   /**
    * 点位刷新时间;单位:毫秒
    * ---
    */
-  refreshTime?: number;
+  refreshTime?: number
   /**
    * 隐藏标志
    * ---
    */
-  hiddenFlag?: number;
+  hiddenFlag?: number
   /**
    * 点位附加数据前端封装
    * ---
    */
-  extra?: MarkerExtraVo;
+  extra?: MarkerExtraVo
   /**
    * 点位关联组ID
    * ---
    */
-  linkageId?: string;
+  linkageId?: string
 }
 export interface ItemTypeVo {
   /**
    * 乐观锁
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 创建人
    * ---
    */
-  creatorId?: number;
+  creatorId?: number
   /**
    * 创建时间
    * ---
    */
-  createTime?: string;
+  createTime?: string
   /**
    * 更新人
    * ---
    */
-  updaterId?: number;
+  updaterId?: number
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 图标ID
    * ---
    */
-  iconId?: number;
+  iconId?: number
   /**
    * 类型名
    * ---
    */
-  name?: string;
+  name?: string
   /**
    * 类型补充说明
    * ---
    */
-  content?: string;
+  content?: string
   /**
    * 父级类型ID（无父级则为-1）
    * ---
    */
-  parentId?: number;
+  parentId?: number
   /**
    * 是否为末端类型
    * ---
    */
-  isFinal?: boolean;
+  isFinal?: boolean
   /**
    * 隐藏标记
    * ---
    */
-  hiddenFlag?: number;
+  hiddenFlag?: number
   /**
    * 排序
    * ---
    */
-  sortIndex?: number;
+  sortIndex?: number
 }
 export interface ItemVo {
   /**
    * 乐观锁
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 创建人
    * ---
    */
-  creatorId?: number;
+  creatorId?: number
   /**
    * 创建时间
    * ---
    */
-  createTime?: string;
+  createTime?: string
   /**
    * 更新人
    * ---
    */
-  updaterId?: number;
+  updaterId?: number
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 物品名称
    * ---
    */
-  name?: string;
+  name?: string
   /**
    * 地区ID（须确保是末端地区）
    * ---
    */
-  areaId?: number;
+  areaId?: number
   /**
    * 默认刷新时间;单位:毫秒
    * ---
    */
-  defaultRefreshTime?: number;
+  defaultRefreshTime?: number
   /**
    * 默认描述模板;用于提交新物品点位时的描述模板
    * ---
    */
-  defaultContent?: string;
+  defaultContent?: string
   /**
    * 默认数量
    * ---
    */
-  defaultCount?: number;
+  defaultCount?: number
   /**
    * 图标ID
    * ---
    */
-  iconId?: number;
+  iconId?: number
   /**
    * 图标样式类型
    * ---
    */
-  iconStyleType?: number;
+  iconStyleType?: number
   /**
    * 隐藏标志
    * ---
    */
-  hiddenFlag?: number;
+  hiddenFlag?: number
   /**
    * 物品排序
    * ---
    */
-  sortIndex?: number;
+  sortIndex?: number
   /**
    * 特殊物品标记;二进制表示；低位第一位：前台是否显示
    * ---
    */
-  specialFlag?: number;
+  specialFlag?: number
   /**
    * 物品类型ID列表
    * ---
    */
-  typeIdList?: number[];
+  typeIdList?: number[]
   /**
    * 查询条件下物品总数
    * ---
    */
-  count?: number;
+  count?: number
   /**
    * 物品总数区分
    * ---
    */
-  countSplit?: Record<string, number>;
+  countSplit?: Record<string, number>
 }
 export interface IconTypeVo {
   /**
    * 乐观锁
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 创建人
    * ---
    */
-  creatorId?: number;
+  creatorId?: number
   /**
    * 创建时间
    * ---
    */
-  createTime?: string;
+  createTime?: string
   /**
    * 更新人
    * ---
    */
-  updaterId?: number;
+  updaterId?: number
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 分类名
    * ---
    */
-  name?: string;
+  name?: string
   /**
    * 父级分类ID（-1为根分类）
    * ---
    */
-  parentId?: number;
+  parentId?: number
   /**
    * 是否为末端类型
    * ---
    */
-  isFinal?: boolean;
+  isFinal?: boolean
 }
 export interface IconVo {
   /**
    * 乐观锁
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 创建人
    * ---
    */
-  creatorId?: number;
+  creatorId?: number
   /**
    * 创建时间
    * ---
    */
-  createTime?: string;
+  createTime?: string
   /**
    * 更新人
    * ---
    */
-  updaterId?: number;
+  updaterId?: number
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 图标标签
    * ---
    */
-  tag?: string;
+  tag?: string
   /**
    * 图标类型ID列表
    * ---
    */
-  typeIdList?: number[];
+  typeIdList?: number[]
   /**
    * 图标url
    * ---
    */
-  url?: string;
+  url?: string
   /**
    * 图标变体url
    * ---
    */
-  urlVariants?: Record<string, string>;
+  urlVariants?: Record<string, string>
   /**
    * 图标描述
    * ---
    */
-  description?: string;
+  description?: string
 }
 export interface AreaVo {
   /**
    * 乐观锁
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 创建人
    * ---
    */
-  creatorId?: number;
+  creatorId?: number
   /**
    * 创建时间
    * ---
    */
-  createTime?: string;
+  createTime?: string
   /**
    * 更新人
    * ---
    */
-  updaterId?: number;
+  updaterId?: number
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 地区名称
    * ---
    */
-  name?: string;
+  name?: string
   /**
    * 地区代码
    * ---
    */
-  code?: string;
+  code?: string
   /**
    * 地区说明
    * ---
    */
-  content?: string;
+  content?: string
   /**
    * 图标ID
    * ---
    */
-  iconId?: number;
+  iconId?: number
   /**
    * 父级地区ID（无父级则为-1）
    * ---
    */
-  parentId?: number;
+  parentId?: number
   /**
    * 是否为末端地区
    * ---
    */
-  isFinal?: boolean;
+  isFinal?: boolean
   /**
    * 权限屏蔽标记
    * ---
    */
-  hiddenFlag?: number;
+  hiddenFlag?: number
   /**
    * 额外标记;低位第一位：前台是否显示
    * ---
    */
-  specialFlag?: number;
+  specialFlag?: number
   /**
    * 排序
    * ---
    */
-  sortIndex?: number;
+  sortIndex?: number
 }
 export interface SysUserUpdateVo {
-  userId?: number;
-  nickname?: string;
-  qq?: string;
-  phone?: string;
-  logo?: string;
-  roleId?: number;
-  remark?: string;
-  accessPolicy?: string[];
+  userId?: number
+  nickname?: string
+  qq?: string
+  phone?: string
+  logo?: string
+  roleId?: number
+  remark?: string
+  accessPolicy?: string[]
 }
 export interface SysUserPasswordUpdateVo {
-  userId?: number;
-  password?: string;
-  oldPassword?: string;
+  userId?: number
+  password?: string
+  oldPassword?: string
 }
 export interface SysUserRegisterVo {
-  username?: string;
-  password?: string;
+  username?: string
+  password?: string
 }
 export interface SysUserSearchVo {
   /**
    * 当前页，从1开始
    * ---
    */
-  current?: number;
+  current?: number
   /**
    * 每页大小，默认为10
    * ---
    */
-  size?: number;
+  size?: number
   /**
    * 用户名
    * ---
    */
-  username?: string;
+  username?: string
   /**
    * 昵称
    * ---
    */
-  nickname?: string;
+  nickname?: string
   /**
    * 角色ID
    * ---
    */
-  roleIds?: number[];
+  roleIds?: number[]
   /**
    * 排序条件
    * ---
    */
-  sort?: string[];
+  sort?: string[]
 }
 export interface SysUserInvitationVo {
   /**
    * 乐观锁
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 创建人
    * ---
    */
-  creatorId?: number;
+  creatorId?: number
   /**
    * 创建时间
    * ---
    */
-  createTime?: string;
+  createTime?: string
   /**
    * 更新人
    * ---
    */
-  updaterId?: number;
+  updaterId?: number
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 邀请码
    * ---
    */
-  code?: string;
+  code?: string
   /**
    * 用户名
    * ---
    */
-  username?: string;
+  username?: string
   /**
    * 角色ID
    * ---
    */
-  roleId?: number;
+  roleId?: number
   /**
    * 备注
    * ---
    */
-  remark?: string;
+  remark?: string
   /**
    * 权限策略
    * ---
    */
-  accessPolicy?: string[];
+  accessPolicy?: string[]
 }
 export interface SysUserInvitationSearchVo {
   /**
    * 当前页，从1开始
    * ---
    */
-  current?: number;
+  current?: number
   /**
    * 每页大小，默认为10
    * ---
    */
-  size?: number;
+  size?: number
   /**
    * 邀请码
    * ---
    */
-  code?: string;
+  code?: string
   /**
    * 用户名
    * ---
    */
-  username?: string;
+  username?: string
   /**
    * 排序条件
    * ---
    */
-  sort?: string[];
+  sort?: string[]
 }
 export interface SysUserInvitationSmallVo {
   /**
    * 邀请码
    * ---
    */
-  code?: string;
+  code?: string
   /**
    * 用户名
    * ---
    */
-  username?: string;
+  username?: string
 }
 export interface SysUserInvitationConsumeVo {
   /**
    * 邀请码
    * ---
    */
-  code?: string;
+  code?: string
   /**
    * 用户名
    * ---
    */
-  username?: string;
+  username?: string
   /**
    * 密码
    * ---
    */
-  password?: string;
+  password?: string
   /**
    * 昵称
    * ---
    */
-  nickname?: string;
+  nickname?: string
 }
 export interface Region {
   /**
    * 国家
    * ---
    */
-  country?: string;
+  country?: string
   /**
    * 地区
    * ---
    */
-  region?: string;
+  region?: string
   /**
    * 省/州
    * ---
    */
-  province?: string;
+  province?: string
   /**
    * 城市
    * ---
    */
-  city?: string;
+  city?: string
   /**
    * 网络运营商
    * ---
    */
-  isp?: string;
-  fullRegion?: string;
+  isp?: string
+  fullRegion?: string
   /**
    * 是否是未知地区
    * ---
    */
-  isUnknown?: boolean;
+  isUnknown?: boolean
 }
 export interface SysUserDeviceVo {
   /**
    * 乐观锁
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 创建人
    * ---
    */
-  creatorId?: number;
+  creatorId?: number
   /**
    * 创建时间
    * ---
    */
-  createTime?: string;
+  createTime?: string
   /**
    * 更新人
    * ---
    */
-  updaterId?: number;
+  updaterId?: number
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 用户ID
    * ---
    */
-  userId?: number;
+  userId?: number
   /**
    * 设备编码
    * ---
    */
-  deviceId?: string;
+  deviceId?: string
   /**
    * IPv4
    * ---
    */
-  ipv4?: string;
+  ipv4?: string
   /**
    * IP地区信息
    * ---
    */
-  ipRegion?: Region;
+  ipRegion?: Region
   /**
    * 设备状态
    * ---
    */
-  status?: '0' | '1' | '2';
+  status?: '0' | '1' | '2'
   /**
    * 上次登录时间
    * ---
    */
-  lastLoginTime?: string;
+  lastLoginTime?: string
 }
 export interface SysUserDeviceSearchVo {
   /**
    * 当前页，从1开始
    * ---
    */
-  current?: number;
+  current?: number
   /**
    * 每页大小，默认为10
    * ---
    */
-  size?: number;
+  size?: number
   /**
    * 用户ID
    * ---
    */
-  userId?: number;
+  userId?: number
   /**
    * IPv4
    * ---
    */
-  ipv4?: string;
+  ipv4?: string
   /**
    * 设备ID
    * ---
    */
-  deviceId?: string;
+  deviceId?: string
   /**
    * 设备状态
    * ---
    */
-  status?: number;
+  status?: number
   /**
    * 排序条件
    * ---
    */
-  sort?: string[];
+  sort?: string[]
 }
 export interface SysActionLogSearchVo {
   /**
    * 当前页，从0开始
    * ---
    */
-  current?: number;
+  current?: number
   /**
    * 每页大小，默认为10
    * ---
    */
-  size?: number;
+  size?: number
   /**
    * 用户ID
    * ---
    */
-  userId?: number;
+  userId?: number
   /**
    * IPv4
    * ---
    */
-  ipv4?: string;
+  ipv4?: string
   /**
    * 设备ID
    * ---
    */
-  deviceId?: string;
+  deviceId?: string
   /**
    * 操作名
    * ---
    */
-  action?: string;
+  action?: string
   /**
    * 是否是错误
    * ---
    */
-  isError?: boolean;
+  isError?: boolean
   /**
    * 排序条件
    * ---
    */
-  sort?: string[];
+  sort?: string[]
 }
 export interface ScoreParamsVo {
   /**
    * 统计范围
    * ---
    */
-  scope?: string;
+  scope?: string
   /**
    * 开始时间
    * ---
    */
-  startTime?: string;
+  startTime?: string
   /**
    * 结束时间
    * ---
    */
-  endTime?: string;
+  endTime?: string
   /**
    * 统计颗粒度
    * ---
    */
-  span?: 'DAY';
-  generatorId?: number;
+  span?: 'DAY'
+  generatorId?: number
 }
 export interface RouteSearchVo {
   /**
    * 路线名称模糊搜索字段
    * ---
    */
-  namePart?: string;
+  namePart?: string
   /**
    * 创建人昵称模糊搜索字段，此字段不能与创建人id字段共存
    * ---
    */
-  creatorNicknamePart?: string;
+  creatorNicknamePart?: string
   /**
    * 创建人id，此字段不能与昵称模糊搜索字段共存
    * ---
    */
-  creatorId?: string;
+  creatorId?: string
   /**
    * 当前页，从1开始
    * ---
    */
-  current?: number;
+  current?: number
   /**
    * 每页大小，默认为10
    * ---
    */
-  size?: number;
+  size?: number
 }
 export interface PageSearchVo {
   /**
    * 当前页，从1开始
    * ---
    */
-  current?: number;
+  current?: number
   /**
    * 每页大小，默认为10
    * ---
    */
-  size?: number;
+  size?: number
 }
 export interface PunctuateSearchVo {
   /**
    * 乐观锁：修改次数
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * 地区ID列表
    * ---
    */
-  areaIdList?: number[];
+  areaIdList?: number[]
   /**
    * 物品ID列表
    * ---
    */
-  itemIdList?: number[];
+  itemIdList?: number[]
   /**
    * 类型ID列表
    * ---
    */
-  typeIdList?: number[];
+  typeIdList?: number[]
   /**
    * 提交者ID列表
    * ---
    */
-  authorList?: number[];
+  authorList?: number[]
 }
 export interface NoticeSearchVo {
   /**
    * 频道
    * ---
    */
-  channels?: string[];
+  channels?: string[]
   /**
    * 标题
    * ---
    */
-  title?: string;
+  title?: string
   /**
    * 获取有效数据
    * ---
    */
-  getValid?: boolean;
+  getValid?: boolean
   /**
    * 数据转换器
    * ---
    */
-  transformer?: string;
+  transformer?: string
   /**
    * 排序条件
    * ---
    */
-  sort?: string[];
+  sort?: string[]
   /**
    * 当前页，从1开始
    * ---
    */
-  current?: number;
+  current?: number
   /**
    * 每页大小，默认为10
    * ---
    */
-  size?: number;
+  size?: number
 }
 export interface PathEdgeVo {
   /**
@@ -1353,1383 +1362,1383 @@ export interface PathEdgeVo {
    * ---
    * 输出时会转换为 X1 & Y1
    */
-  id1?: number;
+  id1?: number
   /**
    * 起始位置X坐标
    * ---
    */
-  x1?: number;
+  x1?: number
   /**
    * 起始位置Y坐标
    * ---
    */
-  y1?: number;
+  y1?: number
   /**
    * 起始曲线句柄X坐标
    * ---
    * 起始位置的三次贝塞尔曲线句柄X坐标
    */
-  handleX1?: number;
+  handleX1?: number
   /**
    * 起始曲线句柄Y坐标
    * ---
    * 起始位置的三次贝塞尔曲线句柄Y坐标
    */
-  handleY1?: number;
+  handleY1?: number
   /**
    * 起点箭头形状
    * ---
    */
-  arrowType1?: 'NONE' | 'ARROW' | 'CIRCLE' | 'DOT';
+  arrowType1?: 'NONE' | 'ARROW' | 'CIRCLE' | 'DOT'
   /**
    * 终止点位ID
    * ---
    * 输出时会转换为 X2 & Y2
    */
-  id2?: number;
+  id2?: number
   /**
    * 终止位置X坐标
    * ---
    */
-  x2?: number;
+  x2?: number
   /**
    * 终止位置Y坐标
    * ---
    */
-  y2?: number;
+  y2?: number
   /**
    * 终止曲线句柄X坐标
    * ---
    * 终止位置的三次贝塞尔曲线句柄X坐标
    */
-  handleX2?: number;
+  handleX2?: number
   /**
    * 终止曲线句柄Y坐标
    * ---
    * 终止位置的三次贝塞尔曲线句柄Y坐标
    */
-  handleY2?: number;
+  handleY2?: number
   /**
    * 终点箭头形状
    * ---
    */
-  arrowType2?: 'NONE' | 'ARROW' | 'CIRCLE' | 'DOT';
+  arrowType2?: 'NONE' | 'ARROW' | 'CIRCLE' | 'DOT'
   /**
    * 线条样式
    * ---
    */
-  lineType?: 'SOLID' | 'DASHED' | 'DOTTED';
+  lineType?: 'SOLID' | 'DASHED' | 'DOTTED'
 }
 export interface MarkerLinkageVo {
   /**
    * 乐观锁
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 更新人
    * ---
    */
-  updaterId?: number;
+  updaterId?: number
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 组ID
    * ---
    */
-  groupId?: string;
+  groupId?: string
   /**
    * 起始点点位ID;会根据是否反向与 to_id 交换
    * ---
    */
-  fromId?: number;
+  fromId?: number
   /**
    * 终止点点位ID;会根据是否反向与 from_id 交换
    * ---
    */
-  toId?: number;
+  toId?: number
   /**
    * 关联操作类型
    * ---
    */
-  linkAction?: string;
+  linkAction?: string
   /**
    * 是否反向
    * ---
    */
-  linkReverse?: boolean;
+  linkReverse?: boolean
   /**
    * 路线
    * ---
    */
-  path?: PathEdgeVo[];
+  path?: PathEdgeVo[]
   /**
    * 额外数据
    * ---
    */
-  extra?: Record<string, object>;
+  extra?: Record<string, object>
 }
 export interface MarkerLinkageSearchVo {
-  isTraverse?: boolean;
-  groupIds?: string[];
+  isTraverse?: boolean
+  groupIds?: string[]
 }
 export interface TweakConfigMetaVo {
   /**
    * 数据值
    * ---
    */
-  value?: object;
+  value?: object
   /**
    * 检查文本
    * ---
    */
-  test?: string;
+  test?: string
   /**
    * 替换为
    * ---
    */
-  replace?: string;
+  replace?: string
   /**
    * 键值对映射
    * ---
    */
-  map?: Record<string, object>;
+  map?: Record<string, object>
   /**
    * 物品关联
    * ---
    */
-  itemList?: MarkerItemLinkVo[];
+  itemList?: MarkerItemLinkVo[]
 }
 export interface TweakConfigVo {
   /**
    * 需调整的点位属性
    * ---
    */
-  prop?: string;
+  prop?: string
   /**
    * 调整方法类型
    * ---
    */
-  type?: string;
+  type?: string
   /**
    * 调整配置数据前端封装
    * ---
    * 此项根据调整方法类型使用不同的数据字段
    */
-  meta?: TweakConfigMetaVo;
+  meta?: TweakConfigMetaVo
 }
 export interface TweakVo {
   /**
    * 点位ID
    * ---
    */
-  markerIds?: number[];
+  markerIds?: number[]
   /**
    * 点位数据调整配置
    * ---
    */
-  tweaks?: TweakConfigVo[];
+  tweaks?: TweakConfigVo[]
 }
 export interface MarkerSearchVo {
   /**
    * 点位ID列表
    * ---
    */
-  markerIdList?: number[];
+  markerIdList?: number[]
   /**
    * 地区ID列表
    * ---
    */
-  areaIdList?: number[];
+  areaIdList?: number[]
   /**
    * 物品ID列表
    * ---
    */
-  itemIdList?: number[];
+  itemIdList?: number[]
   /**
    * 类型ID列表
    * ---
    */
-  typeIdList?: number[];
+  typeIdList?: number[]
 }
 export interface ItemSearchVo {
   /**
    * 末端物品类型ID列表
    * ---
    */
-  typeIdList?: number[];
+  typeIdList?: number[]
   /**
    * 末端地区ID列表
    * ---
    */
-  areaIdList?: number[];
+  areaIdList?: number[]
   /**
    * 物品名
    * ---
    */
-  name?: string;
+  name?: string
   /**
    * 特殊标记
    * ---
    */
-  specialFlag?: number;
+  specialFlag?: number
   /**
    * 当前页，从1开始
    * ---
    */
-  current?: number;
+  current?: number
   /**
    * 每页大小，默认为10
    * ---
    */
-  size?: number;
+  size?: number
   /**
    * 排序条件
    * ---
    */
-  sort?: string[];
+  sort?: string[]
 }
 export interface PageAndTypeSearchVo {
   /**
    * 当前页，从1开始
    * ---
    */
-  current?: number;
+  current?: number
   /**
    * 每页大小，默认为10
    * ---
    */
-  size?: number;
+  size?: number
   /**
    * 父级类型ID列表
    * ---
    */
-  typeIdList?: number[];
+  typeIdList?: number[]
 }
 export interface IconSearchVo {
   /**
    * 乐观锁：修改次数
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * 图标ID列表
    * ---
    */
-  iconIdList?: number[];
+  iconIdList?: number[]
   /**
    * 创建者ID
    * ---
    */
-  creator?: number;
+  creator?: number
   /**
    * 图标分类列表
    * ---
    */
-  typeIdList?: number[];
+  typeIdList?: number[]
   /**
    * 图标标签
    * ---
    */
-  tag?: string;
+  tag?: string
   /**
    * 当前页，从1开始
    * ---
    */
-  current?: number;
+  current?: number
   /**
    * 每页大小，默认为10
    * ---
    */
-  size?: number;
+  size?: number
 }
 export interface HistorySearchVo {
   /**
    * 当前页，从1开始
    * ---
    */
-  current?: number;
+  current?: number
   /**
    * 每页大小，默认为10
    * ---
    */
-  size?: number;
+  size?: number
   /**
    * 记录类型
    * ---
    */
-  type?: number;
+  type?: number
   /**
    * 类型ID(配合记录类型使用)
    * ---
    */
-  id?: number[];
+  id?: number[]
   /**
    * 操作数据类型
    * ---
    */
-  editType?: '0' | '1' | '2' | '3' | '10';
+  editType?: '0' | '1' | '2' | '3' | '10'
   /**
    * 创建人ID
    * ---
    */
-  creatorId?: number;
+  creatorId?: number
   /**
    * 创建时间开始时间
    * ---
    */
-  createTimeStart?: string;
+  createTimeStart?: string
   /**
    * 创建时间结束时间
    * ---
    */
-  createTimeEnd?: string;
+  createTimeEnd?: string
   /**
    * 排序条件
    * ---
    */
-  sort?: string[];
+  sort?: string[]
 }
 export interface AreaSearchVo {
   /**
    * 父级ID
    * ---
    */
-  parentId?: number;
+  parentId?: number
   /**
    * 是否遍历子地区
    * ---
    */
-  isTraverse?: boolean;
+  isTraverse?: boolean
   /**
    * 数据等级(hidden_flag范围)
    * ---
    */
-  hiddenFlagList?: number[];
+  hiddenFlagList?: number[]
 }
 export interface LinkDeleteQueryVo {
-  ids?: number[];
-  groupIds?: string[];
+  ids?: number[]
+  groupIds?: string[]
 }
 export interface SysUserSmallVo {
   /**
    * 用户名
    * ---
    */
-  username?: string;
+  username?: string
   /**
    * 昵称
    * ---
    */
-  nickname?: string;
+  nickname?: string
   /**
    * QQ
    * ---
    */
-  qq?: string;
+  qq?: string
   /**
    * 手机号
    * ---
    */
-  phone?: string;
+  phone?: string
   /**
    * 头像链接
    * ---
    */
-  logo?: string;
+  logo?: string
   /**
    * 备注
    * ---
    */
-  remark?: string;
+  remark?: string
 }
 export interface RListItemTypeVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: ItemTypeVo[];
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: ItemTypeVo[]
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RBoolean {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: boolean;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: boolean
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface SysRoleVo {
   /**
    * 角色ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 角色名
    * ---
    */
-  name?: string;
+  name?: string
   /**
    * 角色代码（英文大写）
    * ---
    */
-  code?: string;
+  code?: string
   /**
    * 角色层级（越大级别越高）
    * ---
    */
-  sort?: number;
+  sort?: number
 }
 export interface RListSysRoleVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: SysRoleVo[];
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: SysRoleVo[]
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface SysArchiveVo {
   /**
    * 存档时间
    * ---
    */
-  time?: string;
+  time?: string
   /**
    * 存档
    * ---
    */
-  archive?: string;
+  archive?: string
   /**
    * 存档历史下标
    * ---
    */
-  historyIndex?: number;
+  historyIndex?: number
 }
 export interface SysArchiveSlotVo {
-  version?: number;
+  version?: number
   /**
    * 存档ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 存档名称
    * ---
    */
-  name?: string;
+  name?: string
   /**
    * 槽位顺序
    * ---
    */
-  slotIndex?: number;
+  slotIndex?: number
   /**
    * 创建时间
    * ---
    */
-  createTime?: string;
+  createTime?: string
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 存档列表
    * ---
    */
-  archive?: SysArchiveVo[];
+  archive?: SysArchiveVo[]
 }
 export interface RListSysArchiveSlotVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: SysArchiveSlotVo[];
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: SysArchiveSlotVo[]
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface BinaryMD5Vo {
   /**
    * md5
    * ---
    */
-  md5?: string;
+  md5?: string
   /**
    * 时间戳
    * ---
    */
-  time?: number;
+  time?: number
 }
 export interface RBinaryMD5Vo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 归档类MD5前端封装
    * ---
    * 归档类MD5前端封装
    */
-  data?: BinaryMD5Vo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: BinaryMD5Vo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RListBinaryMD5Vo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: BinaryMD5Vo[];
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: BinaryMD5Vo[]
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RLong {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: number;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: number
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RResourceUploadVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 资源上传前端封装
    * ---
    * 资源上传前端封装
    */
-  data?: ResourceUploadVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: ResourceUploadVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface SysUserVo {
   /**
    * 乐观锁
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 更新人
    * ---
    */
-  updaterId?: number;
+  updaterId?: number
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 用户名
    * ---
    */
-  username?: string;
+  username?: string
   /**
    * 昵称
    * ---
    */
-  nickname?: string;
+  nickname?: string
   /**
    * QQ
    * ---
    */
-  qq?: string;
+  qq?: string
   /**
    * 手机号
    * ---
    */
-  phone?: string;
+  phone?: string
   /**
    * 头像链接
    * ---
    */
-  logo?: string;
+  logo?: string
   /**
    * 角色ID
    * ---
    */
-  roleId?: number;
+  roleId?: number
   /**
    * 备注
    * ---
    */
-  remark?: string;
+  remark?: string
   /**
    * access_policy
    * ---
    */
-  accessPolicy?: string[];
+  accessPolicy?: string[]
 }
 export interface PageListVoSysUserVo {
-  record?: SysUserVo[];
-  total?: number;
-  size?: number;
+  record?: SysUserVo[]
+  total?: number
+  size?: number
 }
 export interface RPageListVoSysUserVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 分页记录前端封装
    * ---
    * 分页记录前端封装
    */
-  data?: PageListVoSysUserVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: PageListVoSysUserVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RSysUserInvitationSmallVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 用户邀请前端封装
    * ---
    * 用户邀请前端封装
    */
-  data?: SysUserInvitationSmallVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: SysUserInvitationSmallVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface PageListVoSysUserInvitationVo {
-  record?: SysUserInvitationVo[];
-  total?: number;
-  size?: number;
+  record?: SysUserInvitationVo[]
+  total?: number
+  size?: number
 }
 export interface RPageListVoSysUserInvitationVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 分页记录前端封装
    * ---
    * 分页记录前端封装
    */
-  data?: PageListVoSysUserInvitationVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: PageListVoSysUserInvitationVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface SysUserInvitationConsumeResultVo {
   /**
    * 用户ID
    * ---
    */
-  userId?: number;
+  userId?: number
   /**
    * 条件结果
    * ---
    */
-  result?: 'EXISTING' | 'SUCCESS';
+  result?: 'EXISTING' | 'SUCCESS'
 }
 export interface RSysUserInvitationConsumeResultVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 用户邀请消费结果数据封装
    * ---
    * 用户邀请消费结果数据封装
    */
-  data?: SysUserInvitationConsumeResultVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: SysUserInvitationConsumeResultVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface PageListVoSysUserDeviceVo {
-  record?: SysUserDeviceVo[];
-  total?: number;
-  size?: number;
+  record?: SysUserDeviceVo[]
+  total?: number
+  size?: number
 }
 export interface RPageListVoSysUserDeviceVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 分页记录前端封装
    * ---
    * 分页记录前端封装
    */
-  data?: PageListVoSysUserDeviceVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: PageListVoSysUserDeviceVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface SysActionLogVo {
   /**
    * 乐观锁
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 创建人
    * ---
    */
-  creatorId?: number;
+  creatorId?: number
   /**
    * 创建时间
    * ---
    */
-  createTime?: string;
+  createTime?: string
   /**
    * 更新人
    * ---
    */
-  updaterId?: number;
+  updaterId?: number
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 用户ID
    * ---
    */
-  userId?: number;
+  userId?: number
   /**
    * IPv4
    * ---
    */
-  ipv4?: string;
+  ipv4?: string
   /**
    * 设备编码
    * ---
    */
-  deviceId?: string;
+  deviceId?: string
   /**
    * 操作名
    * ---
    */
-  action?: string;
+  action?: string
   /**
    * 是否是错误
    * ---
    */
-  isError?: boolean;
+  isError?: boolean
   /**
    * 附加信息
    * ---
    */
-  extraData?: Record<string, object>;
+  extraData?: Record<string, object>
 }
 export interface PageListVoSysActionLogVo {
-  record?: SysActionLogVo[];
-  total?: number;
-  size?: number;
+  record?: SysActionLogVo[]
+  total?: number
+  size?: number
 }
 export interface RPageListVoSysActionLogVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 分页记录前端封装
    * ---
    * 分页记录前端封装
    */
-  data?: PageListVoSysActionLogVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: PageListVoSysActionLogVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RObject {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: object;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: object
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface PageListVoRouteVo {
-  record?: RouteVo[];
-  total?: number;
-  size?: number;
+  record?: RouteVo[]
+  total?: number
+  size?: number
 }
 export interface RPageListVoRouteVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 分页记录前端封装
    * ---
    * 分页记录前端封装
    */
-  data?: PageListVoRouteVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: PageListVoRouteVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RListRouteVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: RouteVo[];
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: RouteVo[]
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface PageListVoMarkerPunctuateVo {
-  record?: MarkerPunctuateVo[];
-  total?: number;
-  size?: number;
+  record?: MarkerPunctuateVo[]
+  total?: number
+  size?: number
 }
 export interface RPageListVoMarkerPunctuateVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 分页记录前端封装
    * ---
    * 分页记录前端封装
    */
-  data?: PageListVoMarkerPunctuateVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: PageListVoMarkerPunctuateVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RListMarkerPunctuateVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: MarkerPunctuateVo[];
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: MarkerPunctuateVo[]
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RListLong {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: number[];
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: number[]
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface PageListVoNoticeVo {
-  record?: NoticeVo[];
-  total?: number;
-  size?: number;
+  record?: NoticeVo[]
+  total?: number
+  size?: number
 }
 export interface RPageListVoNoticeVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 分页记录前端封装
    * ---
    * 分页记录前端封装
    */
-  data?: PageListVoNoticeVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: PageListVoNoticeVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RString {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: string;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: string
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RMapStringListMarkerLinkageVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: Record<string, MarkerLinkageVo[]>;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: Record<string, MarkerLinkageVo[]>
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface LinkRefVo {
   /**
    * 点位ID
    * ---
    */
-  markerId?: number;
+  markerId?: number
   /**
    * 起始点位ID
    * ---
    */
-  srcId?: number;
+  srcId?: number
   /**
    * 结束点位ID
    * ---
    */
-  tarId?: number;
+  tarId?: number
   /**
    * 路线组引用ID
    * ---
    */
-  pathRefId?: number;
+  pathRefId?: number
 }
 export interface RelationVo {
   /**
    * 关联组类型
    * ---
    */
-  type?: string;
+  type?: string
   /**
    * 触发关联数据
    * ---
    */
-  triggers?: LinkRefVo[];
+  triggers?: LinkRefVo[]
   /**
    * 目标关联数据
    * ---
    */
-  targets?: LinkRefVo[];
+  targets?: LinkRefVo[]
   /**
    * 分组关联数据
    * ---
    */
-  group?: LinkRefVo[];
+  group?: LinkRefVo[]
 }
 export interface GraphVo {
   /**
    * 点位关联关系
    * ---
    */
-  relations?: Record<string, string[]>;
+  relations?: Record<string, string[]>
   /**
    * 点位关联关系引用映射
    * ---
    */
-  relRefs?: Record<string, RelationVo>;
+  relRefs?: Record<string, RelationVo>
   /**
    * 路线组引用映射
    * ---
    */
-  pathRefs?: Record<string, PathEdgeVo[]>;
+  pathRefs?: Record<string, PathEdgeVo[]>
 }
 export interface RMapStringGraphVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: Record<string, GraphVo>;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: Record<string, GraphVo>
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RListMarkerVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: MarkerVo[];
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: MarkerVo[]
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface PageListVoMarkerVo {
-  record?: MarkerVo[];
-  total?: number;
-  size?: number;
+  record?: MarkerVo[]
+  total?: number
+  size?: number
 }
 export interface RPageListVoMarkerVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 分页记录前端封装
    * ---
    * 分页记录前端封装
    */
-  data?: PageListVoMarkerVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: PageListVoMarkerVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface ItemAreaPublicVo {
   /**
    * 乐观锁
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 创建人
    * ---
    */
-  creatorId?: number;
+  creatorId?: number
   /**
    * 创建时间
    * ---
    */
-  createTime?: string;
+  createTime?: string
   /**
    * 更新人
    * ---
    */
-  updaterId?: number;
+  updaterId?: number
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 物品ID
    * ---
    */
-  itemId?: number;
+  itemId?: number
   /**
    * 物品名称
    * ---
    */
-  name?: string;
+  name?: string
   /**
    * 地区ID（须确保是末端地区）
    * ---
    */
-  areaId?: number;
+  areaId?: number
   /**
    * 默认刷新时间;单位:毫秒
    * ---
    */
-  defaultRefreshTime?: number;
+  defaultRefreshTime?: number
   /**
    * 默认描述模板;用于提交新物品点位时的描述模板
    * ---
    */
-  defaultContent?: string;
+  defaultContent?: string
   /**
    * 默认数量
    * ---
    */
-  defaultCount?: number;
+  defaultCount?: number
   /**
    * 图标ID
    * ---
    */
-  iconId?: number;
+  iconId?: number
   /**
    * 图标样式类型
    * ---
    */
-  iconStyleType?: number;
+  iconStyleType?: number
   /**
    * 隐藏标志
    * ---
    */
-  hiddenFlag?: number;
+  hiddenFlag?: number
   /**
    * 物品排序
    * ---
    */
-  sortIndex?: number;
+  sortIndex?: number
   /**
    * 特殊物品标记;二进制表示；低位第一位：前台是否显示
    * ---
    */
-  specialFlag?: number;
+  specialFlag?: number
   /**
    * 物品类型ID列表
    * ---
    */
-  typeIdList?: number[];
+  typeIdList?: number[]
 }
 export interface PageListVoItemAreaPublicVo {
-  record?: ItemAreaPublicVo[];
-  total?: number;
-  size?: number;
+  record?: ItemAreaPublicVo[]
+  total?: number
+  size?: number
 }
 export interface RPageListVoItemAreaPublicVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 分页记录前端封装
    * ---
    * 分页记录前端封装
    */
-  data?: PageListVoItemAreaPublicVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: PageListVoItemAreaPublicVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface PageListVoItemVo {
-  record?: ItemVo[];
-  total?: number;
-  size?: number;
+  record?: ItemVo[]
+  total?: number
+  size?: number
 }
 export interface RPageListVoItemVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 分页记录前端封装
    * ---
    * 分页记录前端封装
    */
-  data?: PageListVoItemVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: PageListVoItemVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RListItemVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: ItemVo[];
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: ItemVo[]
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface PageListVoIconTypeVo {
-  record?: IconTypeVo[];
-  total?: number;
-  size?: number;
+  record?: IconTypeVo[]
+  total?: number
+  size?: number
 }
 export interface RPageListVoIconTypeVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 分页记录前端封装
    * ---
    * 分页记录前端封装
    */
-  data?: PageListVoIconTypeVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: PageListVoIconTypeVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RIconVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * Icon前端封装
    * ---
    * 图标主表前端封装
    */
-  data?: IconVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: IconVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface PageListVoIconVo {
-  record?: IconVo[];
-  total?: number;
-  size?: number;
+  record?: IconVo[]
+  total?: number
+  size?: number
 }
 export interface RPageListVoIconVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 分页记录前端封装
    * ---
    * 分页记录前端封装
    */
-  data?: PageListVoIconVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: PageListVoIconVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface HistoryVo {
   /**
    * 乐观锁
    * ---
    */
-  version?: number;
+  version?: number
   /**
    * ID
    * ---
    */
-  id?: number;
+  id?: number
   /**
    * 创建人
    * ---
    */
-  creatorId?: number;
+  creatorId?: number
   /**
    * 创建时间
    * ---
    */
-  createTime?: string;
+  createTime?: string
   /**
    * 更新人
    * ---
    */
-  updaterId?: number;
+  updaterId?: number
   /**
    * 更新时间
    * ---
    */
-  updateTime?: string;
+  updateTime?: string
   /**
    * 内容
    * ---
    */
-  content?: string;
+  content?: string
   /**
    * MD5
    * ---
    */
-  md5?: string;
+  md5?: string
   /**
    * 操作数据类型;1地区; 2图标; 3物品; 4点位;
    * ---
    */
-  type?: number;
+  type?: number
   /**
    * IPv4
    * ---
    */
-  ipv4?: string;
+  ipv4?: string
   /**
    * 修改类型
    * ---
    */
-  editType?: '0' | '1' | '2' | '3' | '10';
-  tid?: number;
+  editType?: '0' | '1' | '2' | '3' | '10'
+  tid?: number
 }
 export interface PageListVoHistoryVo {
-  record?: HistoryVo[];
-  total?: number;
-  size?: number;
+  record?: HistoryVo[]
+  total?: number
+  size?: number
 }
 export interface RPageListVoHistoryVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 分页记录前端封装
    * ---
    * 分页记录前端封装
    */
-  data?: PageListVoHistoryVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: PageListVoHistoryVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RAreaVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * Area前端封装
    * ---
    * 地区主表前端封装
    */
-  data?: AreaVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: AreaVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RListAreaVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: AreaVo[];
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: AreaVo[]
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RSysUserVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * SysUser前端封装
    * ---
    * 系统用户表前端封装
    */
-  data?: SysUserVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: SysUserVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RSysArchiveVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 存档VO
    * ---
    * 存档VO
    */
-  data?: SysArchiveVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: SysArchiveVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface RSysArchiveSlotVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 存档槽位VO
    * ---
    * 存档槽位VO
    */
-  data?: SysArchiveSlotVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: SysArchiveSlotVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface LinkDeleteVo {
-  groups?: string[];
-  markers?: number[];
+  groups?: string[]
+  markers?: number[]
 }
 export interface RLinkDeleteVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
-  data?: LinkDeleteVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
+  data?: LinkDeleteVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 export interface PageListVoItemTypeVo {
-  record?: ItemTypeVo[];
-  total?: number;
-  size?: number;
+  record?: ItemTypeVo[]
+  total?: number
+  size?: number
 }
 export interface RPageListVoItemTypeVo {
-  error?: boolean;
-  errorStatus?: number;
-  errorData?: object;
-  message?: string;
+  error?: boolean
+  errorStatus?: number
+  errorData?: object
+  message?: string
   /**
    * 分页记录前端封装
    * ---
    * 分页记录前端封装
    */
-  data?: PageListVoItemTypeVo;
-  users?: Record<string, SysUserSmallVo>;
-  time?: string;
+  data?: PageListVoItemTypeVo
+  users?: Record<string, SysUserSmallVo>
+  time?: string
 }
 declare global {
   interface Apis {
@@ -2792,14 +2801,14 @@ declare global {
       createSlotAndSaveArchive<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            slot_index: number;
-            name: string;
-          };
-          data: string;
-        }
+            slot_index: number
+            name: string
+          }
+          data: string
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'archive.createSlotAndSaveArchive', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'archive.createSlotAndSaveArchive', Config>
       /**
        * ---
        *
@@ -2857,13 +2866,13 @@ declare global {
       saveArchive<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            slot_index: number;
-          };
-          data: string;
-        }
+            slot_index: number
+          }
+          data: string
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'archive.saveArchive', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'archive.saveArchive', Config>
       /**
        * ---
        *
@@ -2915,13 +2924,13 @@ declare global {
       renameSlot<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            slot_index: number;
-            new_name: string;
-          };
-        }
+            slot_index: number
+            new_name: string
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'archive.renameSlot', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'archive.renameSlot', Config>
       /**
        * ---
        *
@@ -2981,12 +2990,12 @@ declare global {
       getLastArchive<
         Config extends Alova2MethodConfig<RSysArchiveVo> & {
           pathParams: {
-            slot_index: number;
-          };
-        }
+            slot_index: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RSysArchiveVo, 'archive.getLastArchive', Config>;
+        config: Config,
+      ): Alova2Method<RSysArchiveVo, 'archive.getLastArchive', Config>
       /**
        * ---
        *
@@ -3064,12 +3073,12 @@ declare global {
       getHistoryArchive<
         Config extends Alova2MethodConfig<RSysArchiveSlotVo> & {
           pathParams: {
-            slot_index: number;
-          };
-        }
+            slot_index: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RSysArchiveSlotVo, 'archive.getHistoryArchive', Config>;
+        config: Config,
+      ): Alova2Method<RSysArchiveSlotVo, 'archive.getHistoryArchive', Config>
       /**
        * ---
        *
@@ -3138,8 +3147,8 @@ declare global {
        * ```
        */
       getAllHistoryArchive<Config extends Alova2MethodConfig<RListSysArchiveSlotVo>>(
-        config?: Config
-      ): Alova2Method<RListSysArchiveSlotVo, 'archive.getAllHistoryArchive', Config>;
+        config?: Config,
+      ): Alova2Method<RListSysArchiveSlotVo, 'archive.getAllHistoryArchive', Config>
       /**
        * ---
        *
@@ -3190,12 +3199,12 @@ declare global {
       removeArchive<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            slot_index: number;
-          };
-        }
+            slot_index: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'archive.removeArchive', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'archive.removeArchive', Config>
       /**
        * ---
        *
@@ -3255,13 +3264,13 @@ declare global {
       restoreArchive<
         Config extends Alova2MethodConfig<RSysArchiveVo> & {
           pathParams: {
-            slot_index: number;
-          };
-        }
+            slot_index: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RSysArchiveVo, 'archive.restoreArchive', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RSysArchiveVo, 'archive.restoreArchive', Config>
+    }
     route: {
       /**
        * ---
@@ -3340,11 +3349,11 @@ declare global {
        */
       createRoute<
         Config extends Alova2MethodConfig<RLong> & {
-          data: RouteVo;
-        }
+          data: RouteVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RLong, 'route.createRoute', Config>;
+        config: Config,
+      ): Alova2Method<RLong, 'route.createRoute', Config>
       /**
        * ---
        *
@@ -3422,11 +3431,11 @@ declare global {
        */
       updateRoute<
         Config extends Alova2MethodConfig<RBoolean> & {
-          data: RouteVo;
-        }
+          data: RouteVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'route.updateRoute', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'route.updateRoute', Config>
       /**
        * ---
        *
@@ -3525,11 +3534,11 @@ declare global {
        */
       listRoutePageSearch<
         Config extends Alova2MethodConfig<RPageListVoRouteVo> & {
-          data: RouteSearchVo;
-        }
+          data: RouteSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoRouteVo, 'route.listRoutePageSearch', Config>;
+        config: Config,
+      ): Alova2Method<RPageListVoRouteVo, 'route.listRoutePageSearch', Config>
       /**
        * ---
        *
@@ -3622,11 +3631,11 @@ declare global {
        */
       listRoutePage<
         Config extends Alova2MethodConfig<RPageListVoRouteVo> & {
-          data: PageSearchVo;
-        }
+          data: PageSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoRouteVo, 'route.listRoutePage', Config>;
+        config: Config,
+      ): Alova2Method<RPageListVoRouteVo, 'route.listRoutePage', Config>
       /**
        * ---
        *
@@ -3708,11 +3717,11 @@ declare global {
        */
       listRouteById<
         Config extends Alova2MethodConfig<RListRouteVo> & {
-          data: number[];
-        }
+          data: number[]
+        },
       >(
-        config: Config
-      ): Alova2Method<RListRouteVo, 'route.listRouteById', Config>;
+        config: Config,
+      ): Alova2Method<RListRouteVo, 'route.listRouteById', Config>
       /**
        * ---
        *
@@ -3763,13 +3772,13 @@ declare global {
       deleteRoute<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            routeId: number;
-          };
-        }
+            routeId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'route.deleteRoute', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RBoolean, 'route.deleteRoute', Config>
+    }
     resource: {
       /**
        * ---
@@ -3836,18 +3845,18 @@ declare global {
       uploadImage<
         Config extends Alova2MethodConfig<RResourceUploadVo> & {
           data: {
-            file?: Blob;
+            file?: Blob
             /**
              * 资源上传前端封装
              * ---
              * 资源上传前端封装
              */
-            uploadVo?: ResourceUploadVo;
-          };
-        }
+            uploadVo?: ResourceUploadVo
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RResourceUploadVo, 'resource.uploadImage', Config>;
+        config: Config,
+      ): Alova2Method<RResourceUploadVo, 'resource.uploadImage', Config>
       /**
        * ---
        *
@@ -3905,13 +3914,13 @@ declare global {
       getResource<
         Config extends Alova2MethodConfig<RResourceUploadVo> & {
           params: {
-            filePath: string;
-          };
-        }
+            filePath: string
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RResourceUploadVo, 'resource.getResource', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RResourceUploadVo, 'resource.getResource', Config>
+    }
     punctuate: {
       /**
        * ---
@@ -4052,11 +4061,11 @@ declare global {
        */
       addPunctuate<
         Config extends Alova2MethodConfig<RLong> & {
-          data: MarkerPunctuateVo;
-        }
+          data: MarkerPunctuateVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RLong, 'punctuate.addPunctuate', Config>;
+        config: Config,
+      ): Alova2Method<RLong, 'punctuate.addPunctuate', Config>
       /**
        * ---
        *
@@ -4196,11 +4205,11 @@ declare global {
        */
       updateSelfPunctuate<
         Config extends Alova2MethodConfig<RBoolean> & {
-          data: MarkerPunctuateVo;
-        }
+          data: MarkerPunctuateVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'punctuate.updateSelfPunctuate', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'punctuate.updateSelfPunctuate', Config>
       /**
        * ---
        *
@@ -4251,12 +4260,12 @@ declare global {
       pushPunctuate<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            authorId: number;
-          };
-        }
+            authorId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'punctuate.pushPunctuate', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'punctuate.pushPunctuate', Config>
       /**
        * ---
        *
@@ -4411,11 +4420,11 @@ declare global {
        */
       listPunctuatePage<
         Config extends Alova2MethodConfig<RPageListVoMarkerPunctuateVo> & {
-          data: PageSearchVo;
-        }
+          data: PageSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoMarkerPunctuateVo, 'punctuate.listPunctuatePage', Config>;
+        config: Config,
+      ): Alova2Method<RPageListVoMarkerPunctuateVo, 'punctuate.listPunctuatePage', Config>
       /**
        * ---
        *
@@ -4580,13 +4589,13 @@ declare global {
       listSelfPunctuatePage<
         Config extends Alova2MethodConfig<RPageListVoMarkerPunctuateVo> & {
           pathParams: {
-            authorId: number;
-          };
-          data: PageSearchVo;
-        }
+            authorId: number
+          }
+          data: PageSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoMarkerPunctuateVo, 'punctuate.listSelfPunctuatePage', Config>;
+        config: Config,
+      ): Alova2Method<RPageListVoMarkerPunctuateVo, 'punctuate.listSelfPunctuatePage', Config>
       /**
        * ---
        *
@@ -4638,14 +4647,14 @@ declare global {
       deleteSelfPunctuate<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            punctuateId: number;
-            authorId: number;
-          };
-        }
+            punctuateId: number
+            authorId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'punctuate.deleteSelfPunctuate', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RBoolean, 'punctuate.deleteSelfPunctuate', Config>
+    }
     notice: {
       /**
        * ---
@@ -4722,11 +4731,11 @@ declare global {
        */
       createNotice<
         Config extends Alova2MethodConfig<RLong> & {
-          data: NoticeVo;
-        }
+          data: NoticeVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RLong, 'notice.createNotice', Config>;
+        config: Config,
+      ): Alova2Method<RLong, 'notice.createNotice', Config>
       /**
        * ---
        *
@@ -4802,11 +4811,11 @@ declare global {
        */
       updateNotice<
         Config extends Alova2MethodConfig<RBoolean> & {
-          data: NoticeVo;
-        }
+          data: NoticeVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'notice.updateNotice', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'notice.updateNotice', Config>
       /**
        * ---
        *
@@ -4913,11 +4922,11 @@ declare global {
        */
       listNotice<
         Config extends Alova2MethodConfig<RPageListVoNoticeVo> & {
-          data: NoticeSearchVo;
-        }
+          data: NoticeSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoNoticeVo, 'notice.listNotice', Config>;
+        config: Config,
+      ): Alova2Method<RPageListVoNoticeVo, 'notice.listNotice', Config>
       /**
        * ---
        *
@@ -4968,13 +4977,13 @@ declare global {
       deleteNotice<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            noticeId: number;
-          };
-        }
+            noticeId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'notice.deleteNotice', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RBoolean, 'notice.deleteNotice', Config>
+    }
     marker: {
       /**
        * ---
@@ -5118,11 +5127,11 @@ declare global {
        */
       createMarker<
         Config extends Alova2MethodConfig<RLong> & {
-          data: MarkerVo;
-        }
+          data: MarkerVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RLong, 'marker.createMarker', Config>;
+        config: Config,
+      ): Alova2Method<RLong, 'marker.createMarker', Config>
       /**
        * ---
        *
@@ -5265,11 +5274,11 @@ declare global {
        */
       updateMarker<
         Config extends Alova2MethodConfig<RBoolean> & {
-          data: MarkerVo;
-        }
+          data: MarkerVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'marker.updateMarker', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'marker.updateMarker', Config>
       /**
        * ---
        *
@@ -5457,11 +5466,11 @@ declare global {
        */
       tweakMarkers<
         Config extends Alova2MethodConfig<RListMarkerVo> & {
-          data: TweakVo[];
-        }
+          data: TweakVo[]
+        },
       >(
-        config: Config
-      ): Alova2Method<RListMarkerVo, 'marker.tweakMarkers', Config>;
+        config: Config,
+      ): Alova2Method<RListMarkerVo, 'marker.tweakMarkers', Config>
       /**
        * ---
        *
@@ -5619,11 +5628,11 @@ declare global {
        */
       listMarkerPage<
         Config extends Alova2MethodConfig<RPageListVoMarkerVo> & {
-          data: PageSearchVo;
-        }
+          data: PageSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoMarkerVo, 'marker.listMarkerPage', Config>;
+        config: Config,
+      ): Alova2Method<RPageListVoMarkerVo, 'marker.listMarkerPage', Config>
       /**
        * ---
        *
@@ -5791,11 +5800,11 @@ declare global {
        */
       searchMarker<
         Config extends Alova2MethodConfig<RListMarkerVo> & {
-          data: MarkerSearchVo;
-        }
+          data: MarkerSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RListMarkerVo, 'marker.searchMarker', Config>;
+        config: Config,
+      ): Alova2Method<RListMarkerVo, 'marker.searchMarker', Config>
       /**
        * ---
        *
@@ -5963,11 +5972,11 @@ declare global {
        */
       listMarkerById<
         Config extends Alova2MethodConfig<RListMarkerVo> & {
-          data: MarkerSearchVo;
-        }
+          data: MarkerSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RListMarkerVo, 'marker.listMarkerById', Config>;
+        config: Config,
+      ): Alova2Method<RListMarkerVo, 'marker.listMarkerById', Config>
       /**
        * ---
        *
@@ -6038,11 +6047,11 @@ declare global {
        */
       searchMarkerId<
         Config extends Alova2MethodConfig<RListLong> & {
-          data: MarkerSearchVo;
-        }
+          data: MarkerSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RListLong, 'marker.searchMarkerId', Config>;
+        config: Config,
+      ): Alova2Method<RListLong, 'marker.searchMarkerId', Config>
       /**
        * ---
        *
@@ -6093,13 +6102,13 @@ declare global {
       deleteMarker<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            markerId: number;
-          };
-        }
+            markerId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'marker.deleteMarker', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RBoolean, 'marker.deleteMarker', Config>
+    }
     item_type: {
       /**
        * ---
@@ -6175,11 +6184,11 @@ declare global {
        */
       addItemType<
         Config extends Alova2MethodConfig<RLong> & {
-          data: ItemTypeVo;
-        }
+          data: ItemTypeVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RLong, 'item_type.addItemType', Config>;
+        config: Config,
+      ): Alova2Method<RLong, 'item_type.addItemType', Config>
       /**
        * ---
        *
@@ -6254,11 +6263,11 @@ declare global {
        */
       updateItemType<
         Config extends Alova2MethodConfig<RBoolean> & {
-          data: ItemTypeVo;
-        }
+          data: ItemTypeVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'item_type.updateItemType', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'item_type.updateItemType', Config>
       /**
        * ---
        *
@@ -6316,13 +6325,13 @@ declare global {
       moveItemType<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            targetTypeId: number;
-          };
-          data: number[];
-        }
+            targetTypeId: number
+          }
+          data: number[]
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'item_type.moveItemType', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'item_type.moveItemType', Config>
       /**
        * ---
        *
@@ -6393,8 +6402,8 @@ declare global {
        * ```
        */
       listItemType<Config extends Alova2MethodConfig<RListItemTypeVo>>(
-        config?: Config
-      ): Alova2Method<RListItemTypeVo, 'item_type.listItemType', Config>;
+        config?: Config,
+      ): Alova2Method<RListItemTypeVo, 'item_type.listItemType', Config>
       /**
        * ---
        *
@@ -6499,13 +6508,13 @@ declare global {
       listItemType_1<
         Config extends Alova2MethodConfig<RPageListVoItemTypeVo> & {
           pathParams: {
-            self: number;
-          };
-          data: PageAndTypeSearchVo;
-        }
+            self: number
+          }
+          data: PageAndTypeSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoItemTypeVo, 'item_type.listItemType_1', Config>;
+        config: Config,
+      ): Alova2Method<RPageListVoItemTypeVo, 'item_type.listItemType_1', Config>
       /**
        * ---
        *
@@ -6556,13 +6565,13 @@ declare global {
       deleteItemType<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            itemTypeId: number;
-          };
-        }
+            itemTypeId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'item_type.deleteItemType', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RBoolean, 'item_type.deleteItemType', Config>
+    }
     item_common: {
       /**
        * ---
@@ -6611,11 +6620,11 @@ declare global {
        */
       addCommonItem<
         Config extends Alova2MethodConfig<RBoolean> & {
-          data: number[];
-        }
+          data: number[]
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'item_common.addCommonItem', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'item_common.addCommonItem', Config>
       /**
        * ---
        *
@@ -6718,11 +6727,11 @@ declare global {
        */
       listCommonItem<
         Config extends Alova2MethodConfig<RPageListVoItemAreaPublicVo> & {
-          data: PageSearchVo;
-        }
+          data: PageSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoItemAreaPublicVo, 'item_common.listCommonItem', Config>;
+        config: Config,
+      ): Alova2Method<RPageListVoItemAreaPublicVo, 'item_common.listCommonItem', Config>
       /**
        * ---
        *
@@ -6773,13 +6782,13 @@ declare global {
       deleteCommonItem<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            itemId: number;
-          };
-        }
+            itemId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'item_common.deleteCommonItem', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RBoolean, 'item_common.deleteCommonItem', Config>
+    }
     item: {
       /**
        * ---
@@ -6840,13 +6849,13 @@ declare global {
       copyItemToArea<
         Config extends Alova2MethodConfig<RListLong> & {
           pathParams: {
-            areaId: number;
-          };
-          data: number[];
-        }
+            areaId: number
+          }
+          data: number[]
+        },
       >(
-        config: Config
-      ): Alova2Method<RListLong, 'item.copyItemToArea', Config>;
+        config: Config,
+      ): Alova2Method<RListLong, 'item.copyItemToArea', Config>
       /**
        * ---
        *
@@ -6936,11 +6945,11 @@ declare global {
        */
       createItem<
         Config extends Alova2MethodConfig<RLong> & {
-          data: ItemVo;
-        }
+          data: ItemVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RLong, 'item.createItem', Config>;
+        config: Config,
+      ): Alova2Method<RLong, 'item.createItem', Config>
       /**
        * ---
        *
@@ -7042,13 +7051,13 @@ declare global {
       updateItem<
         Config extends Alova2MethodConfig<RListLong> & {
           pathParams: {
-            editSame: number;
-          };
-          data: ItemVo[];
-        }
+            editSame: number
+          }
+          data: ItemVo[]
+        },
       >(
-        config: Config
-      ): Alova2Method<RListLong, 'item.updateItem', Config>;
+        config: Config,
+      ): Alova2Method<RListLong, 'item.updateItem', Config>
       /**
        * ---
        *
@@ -7106,13 +7115,13 @@ declare global {
       joinItemsInType<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            typeId: number;
-          };
-          data: number[];
-        }
+            typeId: number
+          }
+          data: number[]
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'item.joinItemsInType', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'item.joinItemsInType', Config>
       /**
        * ---
        *
@@ -7236,11 +7245,11 @@ declare global {
        */
       listItemIdByType<
         Config extends Alova2MethodConfig<RPageListVoItemVo> & {
-          data: ItemSearchVo;
-        }
+          data: ItemSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoItemVo, 'item.listItemIdByType', Config>;
+        config: Config,
+      ): Alova2Method<RPageListVoItemVo, 'item.listItemIdByType', Config>
       /**
        * ---
        *
@@ -7334,11 +7343,11 @@ declare global {
        */
       listItemById<
         Config extends Alova2MethodConfig<RListItemVo> & {
-          data: number[];
-        }
+          data: number[]
+        },
       >(
-        config: Config
-      ): Alova2Method<RListItemVo, 'item.listItemById', Config>;
+        config: Config,
+      ): Alova2Method<RListItemVo, 'item.listItemById', Config>
       /**
        * ---
        *
@@ -7389,13 +7398,13 @@ declare global {
       deleteItem<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            itemId: number;
-          };
-        }
+            itemId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'item.deleteItem', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RBoolean, 'item.deleteItem', Config>
+    }
     icon_type: {
       /**
        * ---
@@ -7463,11 +7472,11 @@ declare global {
        */
       addIconType<
         Config extends Alova2MethodConfig<RLong> & {
-          data: IconTypeVo;
-        }
+          data: IconTypeVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RLong, 'icon_type.addIconType', Config>;
+        config: Config,
+      ): Alova2Method<RLong, 'icon_type.addIconType', Config>
       /**
        * ---
        *
@@ -7534,11 +7543,11 @@ declare global {
        */
       updateIconType<
         Config extends Alova2MethodConfig<RBoolean> & {
-          data: IconTypeVo;
-        }
+          data: IconTypeVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'icon_type.updateIconType', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'icon_type.updateIconType', Config>
       /**
        * ---
        *
@@ -7625,11 +7634,11 @@ declare global {
        */
       listIconType<
         Config extends Alova2MethodConfig<RPageListVoIconTypeVo> & {
-          data: PageAndTypeSearchVo;
-        }
+          data: PageAndTypeSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoIconTypeVo, 'icon_type.listIconType', Config>;
+        config: Config,
+      ): Alova2Method<RPageListVoIconTypeVo, 'icon_type.listIconType', Config>
       /**
        * ---
        *
@@ -7680,13 +7689,13 @@ declare global {
       deleteIconType<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            typeId: number;
-          };
-        }
+            typeId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'icon_type.deleteIconType', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RBoolean, 'icon_type.deleteIconType', Config>
+    }
     icon: {
       /**
        * ---
@@ -7761,11 +7770,11 @@ declare global {
        */
       createIcon<
         Config extends Alova2MethodConfig<RLong> & {
-          data: IconVo;
-        }
+          data: IconVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RLong, 'icon.createIcon', Config>;
+        config: Config,
+      ): Alova2Method<RLong, 'icon.createIcon', Config>
       /**
        * ---
        *
@@ -7839,11 +7848,11 @@ declare global {
        */
       updateIcon<
         Config extends Alova2MethodConfig<RBoolean> & {
-          data: IconVo;
-        }
+          data: IconVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'icon.updateIcon', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'icon.updateIcon', Config>
       /**
        * ---
        *
@@ -7922,12 +7931,12 @@ declare global {
       getIcon<
         Config extends Alova2MethodConfig<RIconVo> & {
           pathParams: {
-            iconId: number;
-          };
-        }
+            iconId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RIconVo, 'icon.getIcon', Config>;
+        config: Config,
+      ): Alova2Method<RIconVo, 'icon.getIcon', Config>
       /**
        * ---
        *
@@ -8032,11 +8041,11 @@ declare global {
        */
       listIcon<
         Config extends Alova2MethodConfig<RPageListVoIconVo> & {
-          data: IconSearchVo;
-        }
+          data: IconSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoIconVo, 'icon.listIcon', Config>;
+        config: Config,
+      ): Alova2Method<RPageListVoIconVo, 'icon.listIcon', Config>
       /**
        * ---
        *
@@ -8087,13 +8096,13 @@ declare global {
       deleteIcon<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            iconId: number;
-          };
-        }
+            iconId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'icon.deleteIcon', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RBoolean, 'icon.deleteIcon', Config>
+    }
     area: {
       /**
        * ---
@@ -8173,11 +8182,11 @@ declare global {
        */
       createArea<
         Config extends Alova2MethodConfig<RLong> & {
-          data: AreaVo;
-        }
+          data: AreaVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RLong, 'area.createArea', Config>;
+        config: Config,
+      ): Alova2Method<RLong, 'area.createArea', Config>
       /**
        * ---
        *
@@ -8256,11 +8265,11 @@ declare global {
        */
       updateArea<
         Config extends Alova2MethodConfig<RBoolean> & {
-          data: AreaVo;
-        }
+          data: AreaVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'area.updateArea', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'area.updateArea', Config>
       /**
        * ---
        *
@@ -8344,12 +8353,12 @@ declare global {
       getArea<
         Config extends Alova2MethodConfig<RAreaVo> & {
           pathParams: {
-            areaId: number;
-          };
-        }
+            areaId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RAreaVo, 'area.getArea', Config>;
+        config: Config,
+      ): Alova2Method<RAreaVo, 'area.getArea', Config>
       /**
        * ---
        *
@@ -8442,11 +8451,11 @@ declare global {
        */
       listArea<
         Config extends Alova2MethodConfig<RListAreaVo> & {
-          data: AreaSearchVo;
-        }
+          data: AreaSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RListAreaVo, 'area.listArea', Config>;
+        config: Config,
+      ): Alova2Method<RListAreaVo, 'area.listArea', Config>
       /**
        * ---
        *
@@ -8497,13 +8506,13 @@ declare global {
       deleteArea<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            areaId: number;
-          };
-        }
+            areaId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'area.deleteArea', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RBoolean, 'area.deleteArea', Config>
+    }
     user: {
       /**
        * ---
@@ -8563,11 +8572,11 @@ declare global {
        */
       updateUser<
         Config extends Alova2MethodConfig<RBoolean> & {
-          data: SysUserUpdateVo;
-        }
+          data: SysUserUpdateVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'user.updateUser', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'user.updateUser', Config>
       /**
        * ---
        *
@@ -8619,11 +8628,11 @@ declare global {
        */
       updateUserPassword<
         Config extends Alova2MethodConfig<RBoolean> & {
-          data: SysUserPasswordUpdateVo;
-        }
+          data: SysUserPasswordUpdateVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'user.updateUserPassword', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'user.updateUserPassword', Config>
       /**
        * ---
        *
@@ -8675,11 +8684,11 @@ declare global {
        */
       updateUserPasswordByAdmin<
         Config extends Alova2MethodConfig<RBoolean> & {
-          data: SysUserPasswordUpdateVo;
-        }
+          data: SysUserPasswordUpdateVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'user.updateUserPasswordByAdmin', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'user.updateUserPasswordByAdmin', Config>
       /**
        * ---
        *
@@ -8730,11 +8739,11 @@ declare global {
        */
       registerUser<
         Config extends Alova2MethodConfig<RLong> & {
-          data: SysUserRegisterVo;
-        }
+          data: SysUserRegisterVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RLong, 'user.registerUser', Config>;
+        config: Config,
+      ): Alova2Method<RLong, 'user.registerUser', Config>
       /**
        * ---
        *
@@ -8785,11 +8794,11 @@ declare global {
        */
       registerUserByQQ<
         Config extends Alova2MethodConfig<RLong> & {
-          data: SysUserRegisterVo;
-        }
+          data: SysUserRegisterVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RLong, 'user.registerUserByQQ', Config>;
+        config: Config,
+      ): Alova2Method<RLong, 'user.registerUserByQQ', Config>
       /**
        * ---
        *
@@ -8894,11 +8903,11 @@ declare global {
        */
       getUserList<
         Config extends Alova2MethodConfig<RPageListVoSysUserVo> & {
-          data: SysUserSearchVo;
-        }
+          data: SysUserSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoSysUserVo, 'user.getUserList', Config>;
+        config: Config,
+      ): Alova2Method<RPageListVoSysUserVo, 'user.getUserList', Config>
       /**
        * ---
        *
@@ -8979,12 +8988,12 @@ declare global {
       getUserInfo<
         Config extends Alova2MethodConfig<RSysUserVo> & {
           pathParams: {
-            userId: number;
-          };
-        }
+            userId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RSysUserVo, 'user.getUserInfo', Config>;
+        config: Config,
+      ): Alova2Method<RSysUserVo, 'user.getUserInfo', Config>
       /**
        * ---
        *
@@ -9035,12 +9044,12 @@ declare global {
       deleteUser<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            workId: number;
-          };
-        }
+            workId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'user.deleteUser', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'user.deleteUser', Config>
       /**
        * ---
        *
@@ -9091,13 +9100,13 @@ declare global {
       kickOutUser<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            workId: number;
-          };
-        }
+            workId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'user.kickOutUser', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RBoolean, 'user.kickOutUser', Config>
+    }
     invitation: {
       /**
        * ---
@@ -9179,11 +9188,11 @@ declare global {
        */
       updateInvitation<
         Config extends Alova2MethodConfig<RSysUserInvitationSmallVo> & {
-          data: SysUserInvitationVo;
-        }
+          data: SysUserInvitationVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RSysUserInvitationSmallVo, 'invitation.updateInvitation', Config>;
+        config: Config,
+      ): Alova2Method<RSysUserInvitationSmallVo, 'invitation.updateInvitation', Config>
       /**
        * ---
        *
@@ -9281,11 +9290,11 @@ declare global {
        */
       listInvitation<
         Config extends Alova2MethodConfig<RPageListVoSysUserInvitationVo> & {
-          data: SysUserInvitationSearchVo;
-        }
+          data: SysUserInvitationSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoSysUserInvitationVo, 'invitation.listInvitation', Config>;
+        config: Config,
+      ): Alova2Method<RPageListVoSysUserInvitationVo, 'invitation.listInvitation', Config>
       /**
        * ---
        *
@@ -9345,11 +9354,11 @@ declare global {
        */
       checkInvitation<
         Config extends Alova2MethodConfig<RSysUserInvitationSmallVo> & {
-          data: SysUserInvitationSmallVo;
-        }
+          data: SysUserInvitationSmallVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RSysUserInvitationSmallVo, 'invitation.checkInvitation', Config>;
+        config: Config,
+      ): Alova2Method<RSysUserInvitationSmallVo, 'invitation.checkInvitation', Config>
       /**
        * ---
        *
@@ -9413,11 +9422,11 @@ declare global {
        */
       consumeInvitation<
         Config extends Alova2MethodConfig<RSysUserInvitationConsumeResultVo> & {
-          data: SysUserInvitationConsumeVo;
-        }
+          data: SysUserInvitationConsumeVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RSysUserInvitationConsumeResultVo, 'invitation.consumeInvitation', Config>;
+        config: Config,
+      ): Alova2Method<RSysUserInvitationConsumeResultVo, 'invitation.consumeInvitation', Config>
       /**
        * ---
        *
@@ -9468,13 +9477,13 @@ declare global {
       deleteInvitation<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            invitationId: number;
-          };
-        }
+            invitationId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'invitation.deleteInvitation', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RBoolean, 'invitation.deleteInvitation', Config>
+    }
     device: {
       /**
        * ---
@@ -9562,11 +9571,11 @@ declare global {
        */
       updateDevice<
         Config extends Alova2MethodConfig<RBoolean> & {
-          data: SysUserDeviceVo;
-        }
+          data: SysUserDeviceVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'device.updateDevice', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'device.updateDevice', Config>
       /**
        * ---
        *
@@ -9681,12 +9690,12 @@ declare global {
        */
       searchPage<
         Config extends Alova2MethodConfig<RPageListVoSysUserDeviceVo> & {
-          data: SysUserDeviceSearchVo;
-        }
+          data: SysUserDeviceSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoSysUserDeviceVo, 'device.searchPage', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RPageListVoSysUserDeviceVo, 'device.searchPage', Config>
+    }
     action_log: {
       /**
        * ---
@@ -9790,12 +9799,12 @@ declare global {
        */
       searchActionLog<
         Config extends Alova2MethodConfig<RPageListVoSysActionLogVo> & {
-          data: SysActionLogSearchVo;
-        }
+          data: SysActionLogSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoSysActionLogVo, 'action_log.searchActionLog', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RPageListVoSysActionLogVo, 'action_log.searchActionLog', Config>
+    }
     score: {
       /**
        * ---
@@ -9854,11 +9863,11 @@ declare global {
        */
       generate<
         Config extends Alova2MethodConfig<RObject> & {
-          data: ScoreParamsVo;
-        }
+          data: ScoreParamsVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RObject, 'score.generate', Config>;
+        config: Config,
+      ): Alova2Method<RObject, 'score.generate', Config>
       /**
        * ---
        *
@@ -9916,12 +9925,12 @@ declare global {
        */
       getData<
         Config extends Alova2MethodConfig<RObject> & {
-          data: ScoreParamsVo;
-        }
+          data: ScoreParamsVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RObject, 'score.getData', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RObject, 'score.getData', Config>
+    }
     punctuate_audit: {
       /**
        * ---
@@ -9980,13 +9989,13 @@ declare global {
       rejectPunctuate<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            punctuateId: number;
-          };
-          data: string;
-        }
+            punctuateId: number
+          }
+          data: string
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'punctuate_audit.rejectPunctuate', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'punctuate_audit.rejectPunctuate', Config>
       /**
        * ---
        *
@@ -10037,12 +10046,12 @@ declare global {
       passPunctuate<
         Config extends Alova2MethodConfig<RLong> & {
           pathParams: {
-            punctuateId: number;
-          };
-        }
+            punctuateId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RLong, 'punctuate_audit.passPunctuate', Config>;
+        config: Config,
+      ): Alova2Method<RLong, 'punctuate_audit.passPunctuate', Config>
       /**
        * ---
        *
@@ -10197,11 +10206,11 @@ declare global {
        */
       listAllPunctuatePage<
         Config extends Alova2MethodConfig<RPageListVoMarkerPunctuateVo> & {
-          data: PageSearchVo;
-        }
+          data: PageSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoMarkerPunctuateVo, 'punctuate_audit.listAllPunctuatePage', Config>;
+        config: Config,
+      ): Alova2Method<RPageListVoMarkerPunctuateVo, 'punctuate_audit.listAllPunctuatePage', Config>
       /**
        * ---
        *
@@ -10368,11 +10377,11 @@ declare global {
        */
       searchPunctuate<
         Config extends Alova2MethodConfig<RListMarkerPunctuateVo> & {
-          data: PunctuateSearchVo;
-        }
+          data: PunctuateSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RListMarkerPunctuateVo, 'punctuate_audit.searchPunctuate', Config>;
+        config: Config,
+      ): Alova2Method<RListMarkerPunctuateVo, 'punctuate_audit.searchPunctuate', Config>
       /**
        * ---
        *
@@ -10516,11 +10525,11 @@ declare global {
        */
       listPunctuateById<
         Config extends Alova2MethodConfig<RListMarkerPunctuateVo> & {
-          data: number[];
-        }
+          data: number[]
+        },
       >(
-        config: Config
-      ): Alova2Method<RListMarkerPunctuateVo, 'punctuate_audit.listPunctuateById', Config>;
+        config: Config,
+      ): Alova2Method<RListMarkerPunctuateVo, 'punctuate_audit.listPunctuateById', Config>
       /**
        * ---
        *
@@ -10593,11 +10602,11 @@ declare global {
        */
       searchPunctuateId<
         Config extends Alova2MethodConfig<RListLong> & {
-          data: PunctuateSearchVo;
-        }
+          data: PunctuateSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RListLong, 'punctuate_audit.searchPunctuateId', Config>;
+        config: Config,
+      ): Alova2Method<RListLong, 'punctuate_audit.searchPunctuateId', Config>
       /**
        * ---
        *
@@ -10648,13 +10657,13 @@ declare global {
       deletePunctuate<
         Config extends Alova2MethodConfig<RBoolean> & {
           pathParams: {
-            punctuateId: number;
-          };
-        }
+            punctuateId: number
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'punctuate_audit.deletePunctuate', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RBoolean, 'punctuate_audit.deletePunctuate', Config>
+    }
     marker_link: {
       /**
        * ---
@@ -10762,11 +10771,11 @@ declare global {
        */
       linkMarker<
         Config extends Alova2MethodConfig<RString> & {
-          data: MarkerLinkageVo[];
-        }
+          data: MarkerLinkageVo[]
+        },
       >(
-        config: Config
-      ): Alova2Method<RString, 'marker_link.linkMarker', Config>;
+        config: Config,
+      ): Alova2Method<RString, 'marker_link.linkMarker', Config>
       /**
        * ---
        *
@@ -10881,11 +10890,11 @@ declare global {
        */
       getMarkerLinkageList<
         Config extends Alova2MethodConfig<RMapStringListMarkerLinkageVo> & {
-          data: MarkerLinkageSearchVo;
-        }
+          data: MarkerLinkageSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RMapStringListMarkerLinkageVo, 'marker_link.getMarkerLinkageList', Config>;
+        config: Config,
+      ): Alova2Method<RMapStringListMarkerLinkageVo, 'marker_link.getMarkerLinkageList', Config>
       /**
        * ---
        *
@@ -11032,11 +11041,11 @@ declare global {
        */
       getMarkerLinkageGraph<
         Config extends Alova2MethodConfig<RMapStringGraphVo> & {
-          data: MarkerLinkageSearchVo;
-        }
+          data: MarkerLinkageSearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RMapStringGraphVo, 'marker_link.getMarkerLinkageGraph', Config>;
+        config: Config,
+      ): Alova2Method<RMapStringGraphVo, 'marker_link.getMarkerLinkageGraph', Config>
       /**
        * ---
        *
@@ -11098,12 +11107,12 @@ declare global {
        */
       deleteMarkerLinkage<
         Config extends Alova2MethodConfig<RLinkDeleteVo> & {
-          data: LinkDeleteQueryVo;
-        }
+          data: LinkDeleteQueryVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RLinkDeleteVo, 'marker_link.deleteMarkerLinkage', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RLinkDeleteVo, 'marker_link.deleteMarkerLinkage', Config>
+    }
     history: {
       /**
        * ---
@@ -11211,12 +11220,12 @@ declare global {
        */
       searchHistory<
         Config extends Alova2MethodConfig<RPageListVoHistoryVo> & {
-          data: HistorySearchVo;
-        }
+          data: HistorySearchVo
+        },
       >(
-        config: Config
-      ): Alova2Method<RPageListVoHistoryVo, 'history.searchHistory', Config>;
-    };
+        config: Config,
+      ): Alova2Method<RPageListVoHistoryVo, 'history.searchHistory', Config>
+    }
     app: {
       /**
        * ---
@@ -11257,9 +11266,9 @@ declare global {
        * ```
        */
       triggerAppUpdate<Config extends Alova2MethodConfig<RBoolean>>(
-        config?: Config
-      ): Alova2Method<RBoolean, 'app.triggerAppUpdate', Config>;
-    };
+        config?: Config,
+      ): Alova2Method<RBoolean, 'app.triggerAppUpdate', Config>
+    }
     role: {
       /**
        * ---
@@ -11313,9 +11322,9 @@ declare global {
        * ```
        */
       listRole<Config extends Alova2MethodConfig<RListSysRoleVo>>(
-        config?: Config
-      ): Alova2Method<RListSysRoleVo, 'role.listRole', Config>;
-    };
+        config?: Config,
+      ): Alova2Method<RListSysRoleVo, 'role.listRole', Config>
+    }
     marker_link_doc: {
       /**
        * ---
@@ -11332,8 +11341,8 @@ declare global {
        * ```
        */
       listAllMarkerLinkageBinary<Config extends Alova2MethodConfig<string[]>>(
-        config?: Config
-      ): Alova2Method<string[], 'marker_link_doc.listAllMarkerLinkageBinary', Config>;
+        config?: Config,
+      ): Alova2Method<string[], 'marker_link_doc.listAllMarkerLinkageBinary', Config>
       /**
        * ---
        *
@@ -11380,8 +11389,8 @@ declare global {
        * ```
        */
       listAllMarkerLinkageBinaryMD5<Config extends Alova2MethodConfig<RBinaryMD5Vo>>(
-        config?: Config
-      ): Alova2Method<RBinaryMD5Vo, 'marker_link_doc.listAllMarkerLinkageBinaryMD5', Config>;
+        config?: Config,
+      ): Alova2Method<RBinaryMD5Vo, 'marker_link_doc.listAllMarkerLinkageBinaryMD5', Config>
       /**
        * ---
        *
@@ -11397,8 +11406,8 @@ declare global {
        * ```
        */
       graphAllMarkerLinkageBinary<Config extends Alova2MethodConfig<string[]>>(
-        config?: Config
-      ): Alova2Method<string[], 'marker_link_doc.graphAllMarkerLinkageBinary', Config>;
+        config?: Config,
+      ): Alova2Method<string[], 'marker_link_doc.graphAllMarkerLinkageBinary', Config>
       /**
        * ---
        *
@@ -11445,9 +11454,9 @@ declare global {
        * ```
        */
       graphAllMarkerLinkageBinaryMD5<Config extends Alova2MethodConfig<RBinaryMD5Vo>>(
-        config?: Config
-      ): Alova2Method<RBinaryMD5Vo, 'marker_link_doc.graphAllMarkerLinkageBinaryMD5', Config>;
-    };
+        config?: Config,
+      ): Alova2Method<RBinaryMD5Vo, 'marker_link_doc.graphAllMarkerLinkageBinaryMD5', Config>
+    }
     marker_doc: {
       /**
        * ---
@@ -11497,8 +11506,8 @@ declare global {
        * ```
        */
       listMarkerBinaryMD5<Config extends Alova2MethodConfig<RListBinaryMD5Vo>>(
-        config?: Config
-      ): Alova2Method<RListBinaryMD5Vo, 'marker_doc.listMarkerBinaryMD5', Config>;
+        config?: Config,
+      ): Alova2Method<RListBinaryMD5Vo, 'marker_doc.listMarkerBinaryMD5', Config>
       /**
        * ---
        *
@@ -11525,12 +11534,12 @@ declare global {
       listPageMarkerByBinary<
         Config extends Alova2MethodConfig<string[]> & {
           pathParams: {
-            md5: string;
-          };
-        }
+            md5: string
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<string[], 'marker_doc.listPageMarkerByBinary', Config>;
+        config: Config,
+      ): Alova2Method<string[], 'marker_doc.listPageMarkerByBinary', Config>
       /**
        * ---
        *
@@ -11546,8 +11555,8 @@ declare global {
        * ```
        */
       listMarkersByBinary<Config extends Alova2MethodConfig<string[]>>(
-        config?: Config
-      ): Alova2Method<string[], 'marker_doc.listMarkersByBinary', Config>;
+        config?: Config,
+      ): Alova2Method<string[], 'marker_doc.listMarkersByBinary', Config>
       /**
        * ---
        *
@@ -11563,9 +11572,9 @@ declare global {
        * ```
        */
       listMarkerDiffSnapshotByBinary<Config extends Alova2MethodConfig<string[]>>(
-        config?: Config
-      ): Alova2Method<string[], 'marker_doc.listMarkerDiffSnapshotByBinary', Config>;
-    };
+        config?: Config,
+      ): Alova2Method<string[], 'marker_doc.listMarkerDiffSnapshotByBinary', Config>
+    }
     item_doc: {
       /**
        * ---
@@ -11615,8 +11624,8 @@ declare global {
        * ```
        */
       listItemBinaryMD5<Config extends Alova2MethodConfig<RListBinaryMD5Vo>>(
-        config?: Config
-      ): Alova2Method<RListBinaryMD5Vo, 'item_doc.listItemBinaryMD5', Config>;
+        config?: Config,
+      ): Alova2Method<RListBinaryMD5Vo, 'item_doc.listItemBinaryMD5', Config>
       /**
        * ---
        *
@@ -11643,13 +11652,13 @@ declare global {
       listPageItemByBinary<
         Config extends Alova2MethodConfig<string[]> & {
           pathParams: {
-            md5: string;
-          };
-        }
+            md5: string
+          }
+        },
       >(
-        config: Config
-      ): Alova2Method<string[], 'item_doc.listPageItemByBinary', Config>;
-    };
+        config: Config,
+      ): Alova2Method<string[], 'item_doc.listPageItemByBinary', Config>
+    }
     icon_doc: {
       /**
        * ---
@@ -11666,8 +11675,8 @@ declare global {
        * ```
        */
       listAllIconBinary<Config extends Alova2MethodConfig<string[]>>(
-        config?: Config
-      ): Alova2Method<string[], 'icon_doc.listAllIconBinary', Config>;
+        config?: Config,
+      ): Alova2Method<string[], 'icon_doc.listAllIconBinary', Config>
       /**
        * ---
        *
@@ -11714,9 +11723,9 @@ declare global {
        * ```
        */
       listAllIconBinaryMd5<Config extends Alova2MethodConfig<RBinaryMD5Vo>>(
-        config?: Config
-      ): Alova2Method<RBinaryMD5Vo, 'icon_doc.listAllIconBinaryMd5', Config>;
-    };
+        config?: Config,
+      ): Alova2Method<RBinaryMD5Vo, 'icon_doc.listAllIconBinaryMd5', Config>
+    }
     jwkController: {
       /**
        * ---
@@ -11733,9 +11742,9 @@ declare global {
        * ```
        */
       getJwk<Config extends Alova2MethodConfig<Record<string, object>>>(
-        config?: Config
-      ): Alova2Method<Record<string, object>, 'jwkController.getJwk', Config>;
-    };
+        config?: Config,
+      ): Alova2Method<Record<string, object>, 'jwkController.getJwk', Config>
+    }
     cache: {
       /**
        * ---
@@ -11776,8 +11785,8 @@ declare global {
        * ```
        */
       cleanNoticeCache<Config extends Alova2MethodConfig<RBoolean>>(
-        config?: Config
-      ): Alova2Method<RBoolean, 'cache.cleanNoticeCache', Config>;
+        config?: Config,
+      ): Alova2Method<RBoolean, 'cache.cleanNoticeCache', Config>
       /**
        * ---
        *
@@ -11817,8 +11826,8 @@ declare global {
        * ```
        */
       cleanMarkerCache<Config extends Alova2MethodConfig<RBoolean>>(
-        config?: Config
-      ): Alova2Method<RBoolean, 'cache.cleanMarkerCache', Config>;
+        config?: Config,
+      ): Alova2Method<RBoolean, 'cache.cleanMarkerCache', Config>
       /**
        * ---
        *
@@ -11858,8 +11867,8 @@ declare global {
        * ```
        */
       cleanMarkerLinkageCache<Config extends Alova2MethodConfig<RBoolean>>(
-        config?: Config
-      ): Alova2Method<RBoolean, 'cache.cleanMarkerLinkageCache', Config>;
+        config?: Config,
+      ): Alova2Method<RBoolean, 'cache.cleanMarkerLinkageCache', Config>
       /**
        * ---
        *
@@ -11899,8 +11908,8 @@ declare global {
        * ```
        */
       cleanItemCache<Config extends Alova2MethodConfig<RBoolean>>(
-        config?: Config
-      ): Alova2Method<RBoolean, 'cache.cleanItemCache', Config>;
+        config?: Config,
+      ): Alova2Method<RBoolean, 'cache.cleanItemCache', Config>
       /**
        * ---
        *
@@ -11948,11 +11957,11 @@ declare global {
        */
       cleanIconCache<
         Config extends Alova2MethodConfig<RBoolean> & {
-          data: number[];
-        }
+          data: number[]
+        },
       >(
-        config: Config
-      ): Alova2Method<RBoolean, 'cache.cleanIconCache', Config>;
+        config: Config,
+      ): Alova2Method<RBoolean, 'cache.cleanIconCache', Config>
       /**
        * ---
        *
@@ -11992,8 +12001,8 @@ declare global {
        * ```
        */
       cleanCommonItemCache<Config extends Alova2MethodConfig<RBoolean>>(
-        config?: Config
-      ): Alova2Method<RBoolean, 'cache.cleanCommonItemCache', Config>;
+        config?: Config,
+      ): Alova2Method<RBoolean, 'cache.cleanCommonItemCache', Config>
       /**
        * ---
        *
@@ -12033,10 +12042,10 @@ declare global {
        * ```
        */
       cleanAreaCache<Config extends Alova2MethodConfig<RBoolean>>(
-        config?: Config
-      ): Alova2Method<RBoolean, 'cache.cleanAreaCache', Config>;
-    };
+        config?: Config,
+      ): Alova2Method<RBoolean, 'cache.cleanAreaCache', Config>
+    }
   }
 
-  var Apis: Apis;
+  var Apis: Apis
 }

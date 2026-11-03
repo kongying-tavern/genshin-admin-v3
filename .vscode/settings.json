@@ -1,42 +1,28 @@
 {
   "editor.bracketPairColorization.enabled": true,
   "editor.guides.bracketPairs": true,
-  "editor.formatOnSave": false,
-  "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.codeActionsOnSave": {
     "source.fixAll": "never",
-    "source.fixAll.eslint": "always",
-    "source.organizeImports": "never",
+    "source.fixAll.oxc": "always",
+    "source.organizeImports": "never"
   },
 
   "prettier.enable": false,
 
-  "eslint.useFlatConfig": true,
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "typescript",
-    "typescriptreact",
-    "vue",
-    "html",
-    "markdown",
-    "json",
-    "jsonc",
-    "yaml"
-  ],
+  "oxc.enable": true,
 
-  "files.eol": "\r\n",
+  "files.eol": "\n",
   "files.associations": {
     ".env": "dotenv",
     ".env.*": "dotenv",
-    ".env.*.local": "dotenv",
+    ".env.*.local": "dotenv"
   },
 
   "css.validate": false,
   "scss.validate": false,
-  "css.customData": [
-    ".vscode/tailwindcss.json"
-  ],
+  "css.customData": [".vscode/tailwindcss.json"],
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
 
@@ -44,6 +30,6 @@
   "explorer.fileNesting.patterns": {
     "tsconfig.json": "tsconfig.*.json",
     "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb, bun.lock",
-    "Cargo.toml": "Cargo.lock",
+    "Cargo.toml": "Cargo.lock"
   }
 }

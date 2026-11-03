@@ -1,6 +1,7 @@
 {
   "recommendations": [
     "vue.volar",
+    "oxc.oxc-vscode",
     "gruntfuggly.todo-tree",
     "bradlc.vscode-tailwindcss",
     "pkief.material-icon-theme",
@@ -19,6 +20,6 @@
     // 这是 vue2 的
     "octref.vetur",
     // 已被 volar 代替
-    "Vue.vscode-typescript-vue-plugin",
+    "Vue.vscode-typescript-vue-plugin"
   ]
 }
