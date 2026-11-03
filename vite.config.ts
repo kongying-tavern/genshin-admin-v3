@@ -5,6 +5,7 @@ import BaseSSL from '@vitejs/plugin-basic-ssl'
 import Vue from '@vitejs/plugin-vue'
 import { simpleGit } from 'simple-git'
 import AutoImport from 'unplugin-auto-import/vite'
+import UnoCSS from 'unocss/vite'
 import { defineConfig, loadEnv } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { injectAssetsManifest } from './plugins'
@@ -26,6 +27,8 @@ export default defineConfig(async ({ mode }) => {
 
   const plugins: Plugin[] = [
     injectAssetsManifest(),
+    // 返回的是插件数组，需要展开
+    ...UnoCSS(),
     Vue({
       script: {
         defineModel: true,

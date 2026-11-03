@@ -22,7 +22,6 @@
 
   "css.validate": false,
   "scss.validate": false,
-  "css.customData": [".vscode/tailwindcss.json"],
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
 
