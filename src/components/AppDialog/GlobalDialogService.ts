@@ -1,6 +1,10 @@
-/* oxlint-disable typescript/no-explicit-any */
 import type { Component } from 'vue'
-import type { GlobalDialogOptions, GlobalDialogPropsHack, GlobalDialogServiceImpl } from './types'
+import type {
+  GlobalDialogListeners,
+  GlobalDialogOptions,
+  GlobalDialogPropsHack,
+  GlobalDialogServiceImpl,
+} from './types'
 import type { AnyObject } from '@/shared'
 import { context } from './context'
 import { GlobalDialogController } from './GlobalDialogController'
@@ -19,7 +23,7 @@ export class GlobalDialogService implements GlobalDialogServiceImpl {
 
   #props: AnyObject = {}
 
-  #listeners: Record<string, (...args: any[]) => void> = {}
+  #listeners: GlobalDialogListeners = {}
 
   #component?: Component
 
@@ -73,7 +77,7 @@ export class GlobalDialogService implements GlobalDialogServiceImpl {
   }
 
   /** 传递给弹窗默认插槽上的组件的事件监听器 */
-  listeners = <T extends Record<string, (...args: any[]) => void>>(listenersObj: T) => {
+  listeners = (listenersObj: GlobalDialogListeners) => {
     this.#listeners = {
       ...this.#listeners,
       ...listenersObj,

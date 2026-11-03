@@ -1,4 +1,8 @@
-import type { GlobalDialogControllerImpl, GlobalDialogPropsHack } from '@/components'
+import type {
+  GlobalDialogControllerImpl,
+  GlobalDialogListeners,
+  GlobalDialogPropsHack,
+} from '@/components'
 import type { AnyObject } from '@/shared'
 import { GlobalDialogService } from '@/components'
 
@@ -29,7 +33,7 @@ export const useGlobalDialog = () => {
       return this
     }
 
-    static listeners = <T extends Record<string, (...args: any[]) => void>>(listenersObj: T) => {
+    static listeners = (listenersObj: GlobalDialogListeners) => {
       dialog.listeners(listenersObj)
       return this
     }
