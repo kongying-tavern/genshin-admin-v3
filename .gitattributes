@@ -5,3 +5,7 @@
 *.js text eol=lf
 *.css text eol=lf
 *.scss text eol=lf
+
+# 锁文件由 pnpm 自动生成：标记为 generated 后 GitHub 不计入语言/行数统计，
+# 也不会在 PR 里当成需要 review 的源码展开。
+pnpm-lock.yaml linguist-generated=true linguist-detectable=false

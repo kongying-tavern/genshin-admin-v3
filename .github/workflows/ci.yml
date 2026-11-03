@@ -30,13 +30,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          # 仓库未入库 pnpm-lock.yaml（.gitignore 忽略），setup-node 的 pnpm 缓存
-          # 会因缺少锁文件在 "Setup Node.js" 步骤直接失败（#167 合并版本即此问题）。
-          # 如后续决定入库锁文件，可恢复 cache: pnpm
+          # 缓存 pnpm store，key 由 pnpm-lock.yaml 的哈希决定
+          cache: pnpm
 
-      # 仓库未入库 pnpm-lock.yaml（.gitignore 忽略），故不能使用 --frozen-lockfile
+      # 锁文件已入库，用 --frozen-lockfile 保证 CI 与本地解析完全一致
+      # 注意：wgsl_reflect 由 package.json 的 pnpm.overrides 固定在 1.2.3，
+      # 其 >=1.3.0 版本声明 type: module 但 main 仍指向 CJS 产物，Node 侧具名导入会直接抛 SyntaxError
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       # 集成测试（tests/api/integration）会直连 dev 后端并写入数据，留给本地/后续流水线
       - name: Run unit and api-contract tests
