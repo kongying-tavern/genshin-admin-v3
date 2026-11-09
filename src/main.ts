@@ -1,6 +1,7 @@
 import ElementPlus from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { createPinia } from 'pinia'
+import Apis from '@/api/alova'
 import { AppError } from '@/components'
 import { createLogger, createPWA, customPaint, ElementIcons } from '@/plugin'
 import { router } from '@/router'
@@ -12,6 +13,9 @@ import 'virtual:uno.css'
 import './style/app.scss'
 import 'element-plus/dist/index.css'
 import 'element-plus/theme-chalk/dark/css-vars.css'
+
+// 部分模块（如 stores/user.ts）直接引用全局 Apis，需在应用启动前挂载
+Reflect.set(globalThis, 'Apis', Apis)
 
 void (async () => {
   const container = '#app'
