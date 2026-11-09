@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { IconVariant } from '../../types'
-import { ArrowDown, Delete, FolderOpened } from '@element-plus/icons-vue'
+import { Aim, ArrowDown, Delete, FolderOpened } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getObjectFitSize } from '@/utils'
 import { useImageCropper } from './hooks'
@@ -76,6 +76,7 @@ const disabledEdit = computed(() => {
 const {
   ready,
   destory,
+  autoFit,
   loadFromFile,
   loadFromSrc,
   onFrame,
@@ -308,6 +309,13 @@ onBeforeUnmount(() => {
         <el-check-tag v-model:checked="config.rawSize"> 原始尺寸 </el-check-tag>
         <el-check-tag v-model:checked="config.keepRatio"> 锁定比例 </el-check-tag>
       </div>
+
+      <el-button
+        class="ml-auto" size="small" :icon="Aim"
+        :disabled="disabledEdit" @click="autoFit"
+      >
+        自适应
+      </el-button>
     </div>
   </div>
 </template>

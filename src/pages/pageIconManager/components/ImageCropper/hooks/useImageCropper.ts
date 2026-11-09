@@ -3,12 +3,18 @@ import type { ShallowRef } from 'vue'
 import type { IconVariant } from '@/pages/pageIconManager/types'
 import { clamp } from '@vueuse/core'
 import Konva from 'konva'
-import { getObjectFitSize } from '@/utils'
 
 const config = {
   anchorFill: '#FFF',
   anchorStroke: '#00CCFF',
 }
+
+/** 选区最小边长（px） */
+const MIN_RECT_SIZE = 32
+/** 自适应后图标最长边的尺寸（px） */
+const AUTO_FIT_SIZE = 64
+/** 滚轮缩放时底图最长边的最小显示尺寸（px） */
+const MIN_IMAGE_EDGE = 8
 
 /**
  * ### 图像裁切器 hook
@@ -134,17 +140,32 @@ export const useImageCropper = (
       context.transformer.value = null
     }
     const { width: cw, height: ch } = stage.getSize()
-    const { dx, dy, dw, dh } = getObjectFitSize('contain', cw, ch, bmp.width, bmp.height)
+    // 底图适配画布且不做放大，避免小图被拉伸铺满后选框失去可移动空间
+    const ratio = Math.min(1, cw / bmp.width, ch / bmp.height)
+    const dw = bmp.width * ratio
+    const dh = bmp.height * ratio
+    const dx = (cw - dw) / 2
+    const dy = (ch - dh) / 2
     // 创建图层
     const layer = new Konva.Layer()
     // 创建图片层
-    const image = new Konva.Image({
+    const image: Konva.Image = new Konva.Image({
       image: bmp,
       x: dx,
       y: dy,
       width: dw,
       height: dh,
       draggable: true,
+      dragBoundFunc({ x, y }) {
+        // 限制在画布可视范围内，避免底图被拖出画布后无法找回
+        const { width: cw, height: ch } = stage.getSize()
+        const w = image.width() * image.scaleX()
+        const h = image.height() * image.scaleY()
+        return {
+          x: Math.round(clamp(x, Math.min(0, cw - w), Math.max(0, cw - w))),
+          y: Math.round(clamp(y, Math.min(0, ch - h), Math.max(0, ch - h))),
+        }
+      },
     })
     context.image.value = image
     layer.add(image)
@@ -157,11 +178,12 @@ export const useImageCropper = (
       height: rectSize,
       draggable: true,
       dragBoundFunc({ x, y }) {
+        // 限制在画布可视范围内，避免选框被拖出画布后无法找回
         const { width: w, height: h } = this.getClientRect()
-        const { x: dx, y: dy, width: dw, height: dh } = image.getClientRect()
+        const { width: cw, height: ch } = stage.getSize()
         return {
-          x: Math.round(clamp(x, dx, dx + dw - w)),
-          y: Math.round(clamp(y, dy, dy + dh - h)),
+          x: Math.round(clamp(x, Math.min(0, cw - w), Math.max(0, cw - w))),
+          y: Math.round(clamp(y, Math.min(0, ch - h), Math.max(0, ch - h))),
         }
       },
     })
@@ -175,21 +197,25 @@ export const useImageCropper = (
       anchorFill: isDisabled ? 'transparent' : config.anchorFill,
       anchorStroke: isDisabled ? 'transparent' : config.anchorStroke,
       anchorSize: 6,
-      boundBoxFunc: ({ width: ow, height: oh }, { x, y, width: w, height: h }) => {
-        const { x: dx, y: dy, width: dw, height: dh } = image.getClientRect()
-        const newW = Math.round(clamp(w, 32, dw))
-        const newH = Math.round(clamp(h, 32, dh))
+      boundBoxFunc: (_, { x, y, width, height }) => {
+        const { width: cw, height: ch } = stage.getSize()
         const keep = toValue(keepRatio)
-        const outW = keep ? Math.min(newW, newH) : newW
-        const outH = keep ? Math.min(newW, newH) : newH
-        const rect = {
-          x: Math.round(clamp(x, dx, dx + dw - ow)),
-          y: Math.round(clamp(y, dy, dy + dh - oh)),
-          width: outW,
-          height: outH,
+        const minSide = Math.min(MIN_RECT_SIZE, rectSize, cw, ch)
+        let w = clamp(width, minSide, cw)
+        let h = clamp(height, minSide, ch)
+        if (keep) {
+          const side = Math.min(w, h)
+          w = side
+          h = side
+        }
+        // 使用调整后的尺寸计算边界，避免选框位置跳动
+        return {
+          x: Math.round(clamp(x, 0, cw - w)),
+          y: Math.round(clamp(y, 0, ch - h)),
+          width: Math.round(w),
+          height: Math.round(h),
           rotation: 0,
         }
-        return rect
       },
     })
     context.transformer.value = tr
@@ -201,6 +227,19 @@ export const useImageCropper = (
     rect.on('mouseout', () => {
       rect.fill('transparent')
       stage.getStage().container().style.cursor = 'default'
+    })
+    // 将变换产生的缩放折叠回宽高，保证后续尺寸换算一致
+    rect.on('transformend', () => {
+      const { x: rx, y: ry, width: rw, height: rh } = rect.getClientRect({ skipStroke: true })
+      rect.setAttrs({
+        x: Math.round(rx),
+        y: Math.round(ry),
+        width: Math.round(rw),
+        height: Math.round(rh),
+        scaleX: 1,
+        scaleY: 1,
+      })
+      tr.forceUpdate()
     })
     layer.add(rect)
     layer.add(tr)
@@ -257,21 +296,72 @@ export const useImageCropper = (
 
   if (isRef(keepRatio)) {
     watch(keepRatio, v => {
+      const stage = context.stage.value
       const transformer = context.transformer.value
       const rect = context.rect.value
       const image = context.image.value
-      if (!transformer || !rect || !image) return
+      if (!stage || !transformer || !rect || !image) return
       transformer.keepRatio(v)
       if (v) {
         // 开启时将选区收敛为正方形，保持 1:1 语义
-        const { x: ix, y: iy, width: iw, height: ih } = image.getClientRect()
-        const size = Math.min(rect.width(), rect.height())
-        const nx = Math.round(clamp(rect.x(), ix, ix + iw - size))
-        const ny = Math.round(clamp(rect.y(), iy, iy + ih - size))
-        rect.setAttrs({ x: nx, y: ny, width: size, height: size })
+        const { width: cw, height: ch } = stage.getSize()
+        const { x: rx, y: ry, width: rw, height: rh } = rect.getClientRect({ skipStroke: true })
+        const size = Math.min(rw, rh, cw, ch)
+        const nx = clamp(rx, 0, cw - size)
+        const ny = clamp(ry, 0, ch - size)
+        rect.setAttrs({
+          x: Math.round(nx),
+          y: Math.round(ny),
+          width: Math.round(size),
+          height: Math.round(size),
+          scaleX: 1,
+          scaleY: 1,
+        })
         transformer.forceUpdate()
       }
     })
+  }
+
+  /**
+   * 自适应
+   * - 底图以 contain 方式缩放到最长边 `AUTO_FIT_SIZE` 并水平垂直居中
+   * - 选区收敛为居中的 `AUTO_FIT_SIZE` 正方形
+   */
+  const autoFit = () => {
+    const stage = context.stage.value
+    const image = context.image.value
+    const rect = context.rect.value
+    const transformer = context.transformer.value
+    if (!stage || !image || !rect || !transformer)
+      return
+
+    const { width: cw, height: ch } = stage.getSize()
+    const baseW = image.width()
+    const baseH = image.height()
+    if (!baseW || !baseH)
+      return
+
+    // 底图最长边缩放为 64px 并居中
+    const scale = AUTO_FIT_SIZE / Math.max(baseW, baseH)
+    const w = baseW * scale
+    const h = baseH * scale
+    image.position({
+      x: (cw - w) / 2,
+      y: (ch - h) / 2,
+    })
+    image.scale({ x: scale, y: scale })
+
+    // 选区固定为 64x64 并居中
+    const side = Math.min(AUTO_FIT_SIZE, cw, ch)
+    rect.setAttrs({
+      x: Math.round((cw - side) / 2),
+      y: Math.round((ch - side) / 2),
+      width: side,
+      height: side,
+      scaleX: 1,
+      scaleY: 1,
+    })
+    transformer.forceUpdate()
   }
 
   /** 从文件选择器加载图片 */
@@ -381,8 +471,10 @@ export const useImageCropper = (
 
       // 4. 计算 新的缩放比例
       const factor = 1 - ev.deltaY / 1000
-      const newScaleX = oldScaleX * factor
-      const newScaleY = oldScaleY * factor
+      const baseEdge = Math.max(image.width(), image.height()) || 1
+      const minScale = MIN_IMAGE_EDGE / baseEdge
+      const newScaleX = Math.max(minScale, oldScaleX * factor)
+      const newScaleY = Math.max(minScale, oldScaleY * factor)
 
       // 5. 应用新缩放
       image.scale({ x: newScaleX, y: newScaleY })
@@ -401,6 +493,7 @@ export const useImageCropper = (
   return {
     ready,
     destory,
+    autoFit,
     loadFromFile,
     loadFromSrc,
     onImageLoad: imageHook.on,
