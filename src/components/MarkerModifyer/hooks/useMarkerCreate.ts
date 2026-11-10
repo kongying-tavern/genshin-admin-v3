@@ -32,8 +32,11 @@ export const useMarkerCreate = (
    */
   const isSuccess = ref(false)
 
+  /** 是否存在正在进行的提交 */
+  const isSubmitting = ref(false)
+
   const {
-    refresh: submit,
+    refresh: request,
     onSuccess,
     onError,
     ...rest
@@ -46,6 +49,22 @@ export const useMarkerCreate = (
       await markerStore.createMarker(form)
     },
   })
+
+  /**
+   * 提交新增（带防止重复提交的同步锁）
+   * loading 需要等待 DOM 更新后才会禁用按钮，极快双击时第二次点击可能先于此触发；
+   * 并且 refresh 被重复调用时会中止上一次调用并再次发起请求，无法阻止重复写入。
+   * 因此需要在调用入口同步加锁，仅在失败时解锁以允许重试。
+   */
+  const submit = async () => {
+    if (isSubmitting.value || isSuccess.value) return
+    isSubmitting.value = true
+    try {
+      return await request()
+    } finally {
+      if (!isSuccess.value) isSubmitting.value = false
+    }
+  }
 
   onSuccess(async () => {
     isSuccess.value = true
