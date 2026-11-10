@@ -88,6 +88,46 @@ const {
   keepRatio: computed(() => config.value.keepRatio),
 })
 
+/** 是否正在拖拽文件 */
+const isDragging = ref(false)
+/** 拖拽进入次数，用于抵消子元素触发的 dragleave */
+let dragDepth = 0
+
+/** 拖拽进入 */
+const onDragEnter = (ev: DragEvent) => {
+  if (props.loading || !ev.dataTransfer?.types.includes('Files')) return
+  dragDepth++
+  isDragging.value = true
+}
+
+/** 拖拽悬停，需阻止默认行为才允许 drop */
+const onDragOver = (ev: DragEvent) => {
+  if (!ev.dataTransfer?.types.includes('Files')) return
+  ev.preventDefault()
+  ev.dataTransfer.dropEffect = 'copy'
+}
+
+/** 拖拽离开 */
+const onDragLeave = () => {
+  if (!isDragging.value) return
+  dragDepth = Math.max(0, dragDepth - 1)
+  if (dragDepth === 0) isDragging.value = false
+}
+
+/** 释放文件并加载图片 */
+const onDrop = async (ev: DragEvent) => {
+  dragDepth = 0
+  isDragging.value = false
+  if (props.loading) return
+  const file = ev.dataTransfer?.files[0]
+  if (!file) return
+  if (!file.type.startsWith('image/')) {
+    ElMessage.warning('仅支持加载图片文件')
+    return
+  }
+  await loadFromSrc(file)
+}
+
 const cleanups = ref<(() => void)[]>([])
 
 /** 记录首次加载图片 */
@@ -205,7 +245,13 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="overflow-hidden flex flex-col gap-2">
+  <div
+    class="relative overflow-hidden flex flex-col gap-2"
+    @dragenter.prevent="onDragEnter"
+    @dragover="onDragOver"
+    @dragleave="onDragLeave"
+    @drop.prevent="onDrop"
+  >
     <div class="shrink-0 w-full flex gap-1">
       <!-- 裁切容器 -->
       <div
@@ -310,17 +356,30 @@ onBeforeUnmount(() => {
         <el-check-tag v-model:checked="config.keepRatio"> 锁定比例 </el-check-tag>
       </div>
 
-      <el-button
-        class="ml-auto" size="small" :icon="Aim"
-        :disabled="disabledEdit" @click="autoFit"
-      >
+      <el-button class="ml-auto" size="small" :icon="Aim" :disabled="disabledEdit" @click="autoFit">
         自适应
       </el-button>
     </div>
+
+    <!-- 拖拽提示 -->
+    <div v-if="isDragging" class="drag-overlay pointer-events-none">松开以加载图片</div>
   </div>
 </template>
 
 <style scoped>
+.drag-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-content: center;
+  font-size: 12px;
+  color: var(--el-color-primary);
+  background: color-mix(in srgb, var(--el-bg-color) 80%, transparent);
+  border: 1px dashed var(--el-color-primary);
+  user-select: none;
+}
+
 .chessboard-background {
   --s: 32px;
   --color-a: transparent;

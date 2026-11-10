@@ -126,13 +126,8 @@ const cancel = () => {
           class="shrink-0 h-fit relative toggle-cropper border border-[var(--el-border-color)] rounded overflow-hidden"
           :class="{
             'is-editting': iconEditable,
-          }"
-        >
-          <IconRenderer
-            class="w-[120px] h-[120px]"
-            :icon-id="props.icon.id"
-            @click="iconEditable = !iconEditable"
-          />
+          }">
+          <IconRenderer class="w-[120px] h-[120px]" :icon-id="props.icon.id" @click="iconEditable = !iconEditable" />
         </div>
 
         <el-form :disabled="loading" :rules="rules" :model="form" label-width="60px" class="flex-1">
@@ -145,15 +140,8 @@ const cancel = () => {
           </el-form-item>
 
           <el-form-item label="分类" prop="typeIdList" style="margin-bottom: 0">
-            <el-tree-select
-              v-model="form.typeIdList"
-              lazy
-              multiple
-              collapse-tags
-              collapse-tags-tooltip
-              :load="loadIconType"
-              :props="typeTreeProps"
-            />
+            <el-tree-select v-model="form.typeIdList" lazy multiple collapse-tags collapse-tags-tooltip
+              :load="loadIconType" :props="typeTreeProps" />
           </el-form-item>
         </el-form>
       </div>
@@ -161,22 +149,13 @@ const cancel = () => {
       <div class="overflow-visible transition-all" :class="iconEditable ? 'h-[336px]' : 'h-[0px]'">
         <el-divider style="margin: 8px 0" />
         <el-tabs v-model="variant" class="custom-tabs" type="border-card">
-          <el-tab-pane
-            v-for="tab in variantTabs"
-            :key="tab.name"
-            :name="tab.name"
+          <el-tab-pane v-for="tab in variantTabs" :key="tab.name" :name="tab.name"
             :label="`${variantLabelRecord[tab.name]} ${variantStatusRecord[tab.name] ? `(${variantStatusRecord[tab.name]})` : ''}`"
-            lazy
-          >
-            <ImageCropper
-              :raw="tab.name === 'default' ? form.url : form.urlVariants?.[tab.name]"
-              :variant="tab.name"
+            lazy>
+            <ImageCropper :raw="tab.name === 'default' ? form.url : form.urlVariants?.[tab.name]" :variant="tab.name"
               :disabled-delete="!form.urlVariants?.[tab.name] || stash[tab.name] === null"
-              :show-preview="stash[tab.name] !== undefined"
-              class="w-full flex-1"
-              @image-load="handleImageLoad"
-              @delete="handleIconVariantDelete"
-            />
+              :show-preview="stash[tab.name] !== undefined" class="w-full flex-1" @image-load="handleImageLoad"
+              @delete="handleIconVariantDelete" />
           </el-tab-pane>
         </el-tabs>
       </div>
@@ -188,13 +167,7 @@ const cancel = () => {
           将会更新图片
         </el-tag>
       </div>
-      <el-button
-        type="primary"
-        :icon="Check"
-        :disabled="disabledConfirm"
-        :loading="loading"
-        @click="updateIcon"
-      >
+      <el-button type="primary" :icon="Check" :disabled="disabledConfirm" :loading="loading" @click="updateIcon">
         确认
       </el-button>
       <el-button :icon="Close" :disabled="loading" @click="cancel"> 取消 </el-button>
@@ -216,22 +189,18 @@ const cancel = () => {
     border-radius: 4px;
     display: grid;
     place-content: center;
-    color: color-mix(
-      in srgb,
-      var(--el-color-white) var(--text-alpha),
-      transparent calc(100% - var(--text-alpha))
-    );
+    color: color-mix(in srgb,
+        var(--el-color-white) var(--text-alpha),
+        transparent calc(100% - var(--text-alpha)));
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
     opacity: var(--alpha);
-    background-color: color-mix(
-      in srgb,
-      var(--bg) var(--bg-alpha),
-      transparent calc(100% - var(--bg-alpha))
-    );
+    background-color: color-mix(in srgb,
+        var(--bg) var(--bg-alpha),
+        transparent calc(100% - var(--bg-alpha)));
     z-index: 1;
     pointer-events: none;
   }
@@ -240,6 +209,7 @@ const cancel = () => {
     --text-alpha: 100%;
     --bg-alpha: 50%;
   }
+
   &:active {
     --bg-alpha: 30%;
   }
@@ -258,17 +228,21 @@ const cancel = () => {
     padding-left: 8px;
     padding-right: 8px;
   }
+
   :deep(.el-tabs__header.is-top) {
     margin-bottom: 0;
   }
+
   :deep(.el-tabs__item) {
     font-size: 12px;
     transition: none;
   }
+
   :deep(.el-tabs__content) {
     padding: 4px;
     flex: 1;
   }
+
   :deep(.el-tab-pane) {
     display: flex;
     flex-direction: column;
