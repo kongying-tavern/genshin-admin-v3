@@ -109,15 +109,8 @@ const cancel = () => {
           </el-form-item>
 
           <el-form-item label="类型" prop="typeIdList" style="margin-bottom: 0">
-            <el-tree-select
-              v-model="form.typeIdList"
-              lazy
-              multiple
-              collapse-tags
-              collapse-tags-tooltip
-              :load="loadIconType"
-              :props="typeTreeProps"
-            />
+            <el-tree-select v-model="form.typeIdList" lazy multiple collapse-tags collapse-tags-tooltip
+              :load="loadIconType" :props="typeTreeProps" />
           </el-form-item>
         </el-form>
       </div>
@@ -125,35 +118,19 @@ const cancel = () => {
       <div class="h-[336px] overflow-visible transition-all">
         <el-divider style="margin: 8px 0" />
         <el-tabs v-model="variant" class="custom-tabs" type="border-card">
-          <el-tab-pane
-            v-for="tab in variantTabs"
-            :key="tab.name"
-            :name="tab.name"
+          <el-tab-pane v-for="tab in variantTabs" :key="tab.name" :name="tab.name"
             :label="`${variantLabelRecord[tab.name]} ${variantStatusRecord[tab.name] ? `(${variantStatusRecord[tab.name]})` : ''}`"
-            lazy
-          >
-            <ImageCropper
-              :raw="tab.name === 'default' ? form.url : form.urlVariants?.[tab.name]"
-              :variant="tab.name"
-              :disabled-delete="!stash[tab.name]"
-              :show-preview="stash[tab.name] !== undefined"
-              class="w-full flex-1"
-              @image-load="handleImageLoad"
-              @delete="handleIconVariantDelete"
-            />
+            lazy>
+            <ImageCropper :raw="tab.name === 'default' ? form.url : form.urlVariants?.[tab.name]" :variant="tab.name"
+              :disabled-delete="!stash[tab.name]" :show-preview="stash[tab.name] !== undefined" class="w-full flex-1"
+              @image-load="handleImageLoad" @delete="handleIconVariantDelete" />
           </el-tab-pane>
         </el-tabs>
       </div>
     </WinDialogTabPanel>
 
     <WinDialogFooter class="items-center">
-      <el-button
-        type="primary"
-        :icon="Check"
-        :disabled="disabledConfirm"
-        :loading="loading"
-        @click="createIcon"
-      >
+      <el-button type="primary" :icon="Check" :disabled="disabledConfirm" :loading="loading" @click="createIcon">
         确认
       </el-button>
       <el-button :icon="Close" :disabled="loading" @click="cancel"> 取消 </el-button>
@@ -164,25 +141,29 @@ const cancel = () => {
 <style scoped>
 .custom-tabs {
   --el-tabs-header-height: 30px;
+}
 
-  :deep(.el-tabs__item.el-tabs__item.el-tabs__item) {
-    padding-left: 8px;
-    padding-right: 8px;
-  }
-  :deep(.el-tabs__header.is-top) {
-    margin-bottom: 0;
-  }
-  :deep(.el-tabs__item) {
-    font-size: 12px;
-    transition: none;
-  }
-  :deep(.el-tabs__content) {
-    padding: 4px;
-    flex: 1;
-  }
-  :deep(.el-tab-pane) {
-    display: flex;
-    flex-direction: column;
-  }
+.custom-tabs :deep(.el-tabs__item.el-tabs__item.el-tabs__item) {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.custom-tabs :deep(.el-tabs__header.is-top) {
+  margin-bottom: 0;
+}
+
+.custom-tabs :deep(.el-tabs__item) {
+  font-size: 12px;
+  transition: none;
+}
+
+.custom-tabs :deep(.el-tabs__content) {
+  padding: 4px;
+  flex: 1;
+}
+
+.custom-tabs :deep(.el-tab-pane) {
+  display: flex;
+  flex-direction: column;
 }
 </style>

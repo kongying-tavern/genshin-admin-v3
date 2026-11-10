@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { IconVariant } from '../../types'
-import { Aim, ArrowDown, Delete, FolderOpened } from '@element-plus/icons-vue'
+import { FullScreen, ArrowDown, Delete, FolderOpened } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getObjectFitSize } from '@/utils'
 import { useImageCropper } from './hooks'
@@ -245,61 +245,35 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div
-    class="relative overflow-hidden flex flex-col gap-2"
-    @dragenter.prevent="onDragEnter"
-    @dragover="onDragOver"
-    @dragleave="onDragLeave"
-    @drop.prevent="onDrop"
-  >
+  <div class="relative overflow-hidden flex flex-col gap-2" @dragenter.prevent="onDragEnter" @dragover="onDragOver"
+    @dragleave="onDragLeave" @drop.prevent="onDrop">
     <div class="shrink-0 w-full flex gap-1">
       <!-- 裁切容器 -->
-      <div
-        ref="containerRef"
-        class="cropper-container shrink-0 w-[240px] h-[240px] chessboard-background overflow-hidden"
-      />
+      <div ref="containerRef"
+        class="cropper-container shrink-0 w-[240px] h-[240px] chessboard-background overflow-hidden" />
 
       <!-- 右侧状态栏 -->
       <div class="flex-1 h-[240px] flex flex-col gap-1">
         <div class="flex gap-1">
-          <el-button
-            style="width: 100%"
-            :icon="FolderOpened"
-            :disabled="loading"
-            size="small"
-            @click="() => loadFromFile()"
-          >
+          <el-button style="width: 100%" :icon="FolderOpened" :disabled="loading" size="small"
+            @click="() => loadFromFile()">
             选择
           </el-button>
-          <el-button
-            v-if="variant !== 'default'"
-            style="margin-left: 0"
-            type="danger"
-            plain
-            :icon="Delete"
-            :disabled="loading || props.disabledDelete"
-            size="small"
-            @click="() => emits('delete', variant)"
-          />
+          <el-button v-if="variant !== 'default'" style="margin-left: 0" type="danger" plain :icon="Delete"
+            :disabled="loading || props.disabledDelete" size="small" @click="() => emits('delete', variant)" />
         </div>
 
         <!-- 修改前预览 -->
         <div class="flex-1 flex flex-col gap-0.5 items-center justify-center select-none">
           <template v-if="oldImage">
-            <img
-              class="w-[66px] h-[66px] border border-[var(--el-border-color)] object-contain"
-              :src="props.raw"
-              draggable="false"
-              crossorigin=""
-            />
+            <img class="w-[66px] h-[66px] border border-[var(--el-border-color)] object-contain" :src="props.raw"
+              draggable="false" crossorigin="" />
             <div class="shrink-0 text-xs">
               {{ `${oldImage.width.toFixed(2)} x ${oldImage.height.toFixed(2)}` }}
             </div>
           </template>
-          <div
-            v-else
-            class="w-[66px] h-[66px] text-xs grid place-content-center border border-[var(--el-border-color)]"
-          >
+          <div v-else
+            class="w-[66px] h-[66px] text-xs grid place-content-center border border-[var(--el-border-color)]">
             无
           </div>
         </div>
@@ -312,31 +286,15 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- 修改后预览 -->
-        <div
-          v-show="props.showPreview"
-          class="flex-1 flex flex-col gap-0.5 items-center justify-center"
-        >
-          <div
-            class="w-[66px] h-[66px] border border-[var(--el-border-color)] relative scale-container"
-          >
-            <canvas
-              v-show="newImage"
-              ref="previewerRef"
-              class="scale-to-container"
-              :style="{
-                '--w': previewerSize.w,
-                '--h': previewerSize.h,
-              }"
-              :class="{
-                'raw-size': config.rawSize,
-              }"
-              :width="previewerSize.w"
-              :height="previewerSize.h"
-            />
-            <div
-              v-show="!newImage"
-              class="w-full h-full text-xs grid place-content-center select-none"
-            >
+        <div v-show="props.showPreview" class="flex-1 flex flex-col gap-0.5 items-center justify-center">
+          <div class="w-[66px] h-[66px] border border-[var(--el-border-color)] relative scale-container">
+            <canvas v-show="newImage" ref="previewerRef" class="scale-to-container" :style="{
+              '--w': previewerSize.w,
+              '--h': previewerSize.h,
+            }" :class="{
+              'raw-size': config.rawSize,
+            }" :width="previewerSize.w" :height="previewerSize.h" />
+            <div v-show="!newImage" class="w-full h-full text-xs grid place-content-center select-none">
               无
             </div>
           </div>
@@ -350,13 +308,13 @@ onBeforeUnmount(() => {
 
     <!-- 底部操作栏 -->
     <div class="h-[32px] flex items-center">
-      <div class="shrink-0 flex gap-2 items-center">
+      <div class="shrink-0 flex flex-1 gap-2 items-center">
         <el-check-tag v-model:checked="config.clipCircle"> 圆形裁切 </el-check-tag>
         <el-check-tag v-model:checked="config.rawSize"> 原始尺寸 </el-check-tag>
         <el-check-tag v-model:checked="config.keepRatio"> 锁定比例 </el-check-tag>
       </div>
 
-      <el-button class="ml-auto" size="small" :icon="Aim" :disabled="disabledEdit" @click="autoFit">
+      <el-button class="ml-auto" size="small" :icon="FullScreen" :disabled="disabledEdit" @click="autoFit">
         自适应
       </el-button>
     </div>
@@ -384,16 +342,14 @@ onBeforeUnmount(() => {
   --s: 32px;
   --color-a: transparent;
   --color-b: var(--el-fill-color-darker);
-  background: conic-gradient(
-    from 0deg at 50% 50%,
-    var(--color-a) 25%,
-    var(--color-b) 25%,
-    var(--color-b) 50%,
-    var(--color-a) 50%,
-    var(--color-a) 75%,
-    var(--color-b) 75%,
-    var(--color-b) 100%
-  );
+  background: conic-gradient(from 0deg at 50% 50%,
+      var(--color-a) 25%,
+      var(--color-b) 25%,
+      var(--color-b) 50%,
+      var(--color-a) 50%,
+      var(--color-a) 75%,
+      var(--color-b) 75%,
+      var(--color-b) 100%);
   background-size: var(--s) var(--s);
 }
 
