@@ -7,6 +7,8 @@ import Konva from 'konva'
 const config = {
   anchorFill: '#FFF',
   anchorStroke: '#00CCFF',
+  /** 图片边缘虚线颜色 */
+  imageOutlineStroke: '#00CCFF',
 }
 
 /** 选区最小边长（px） */
@@ -15,6 +17,19 @@ const MIN_RECT_SIZE = 32
 const AUTO_FIT_SIZE = 64
 /** 滚轮缩放时底图最长边的最小显示尺寸（px） */
 const MIN_IMAGE_EDGE = 8
+
+/**
+ * 同步图片边缘虚线框
+ * - 图片支持透明背景，使用虚线标出实际边界以便裁切参照
+ */
+const syncImageOutline = (image: Konva.Image, outline: Konva.Rect) => {
+  const x = image.x()
+  const y = image.y()
+  const w = image.width() * image.scaleX()
+  const h = image.height() * image.scaleY()
+  if (outline.x() === x && outline.y() === y && outline.width() === w && outline.height() === h) return
+  outline.setAttrs({ x, y, width: w, height: h })
+}
 
 /**
  * ### 图像裁切器 hook
@@ -169,6 +184,15 @@ export const useImageCropper = (
     })
     context.image.value = image
     layer.add(image)
+    // 图片边缘虚线框，便于透明背景图片确认实际边界
+    const imageOutline = new Konva.Rect({
+      stroke: config.imageOutlineStroke,
+      strokeWidth: 1,
+      dash: [4, 4],
+      listening: false,
+      perfectDrawEnabled: false,
+    })
+    layer.add(imageOutline)
     // 创建选区
     const rectSize = Math.min(dw, dh)
     const rect = new Konva.Rect({
@@ -254,6 +278,7 @@ export const useImageCropper = (
       const image = context.image.value
       const rect = context.rect.value
       if (stage && image && rect) {
+        syncImageOutline(image, imageOutline)
         frameHook.trigger({
           stage,
           rect,
