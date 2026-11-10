@@ -77,8 +77,9 @@ export default defineConfig(async ({ mode }) => {
 
   return {
     define: {
-      // 关闭选项式 API 支持
-      __VUE_OPTIONS_API__: false,
+      // el-tree-select 内部的 option 组件依赖选项式 API 的 extends 继承 ElOption 的 render，
+      // 关闭后会出现 "Component is missing template or render function" 警告且树节点渲染为空白，故必须开启
+      __VUE_OPTIONS_API__: true,
 
       // 在生产环境中关闭 devtools 支持
       __VUE_PROD_DEVTOOLS__: false,
