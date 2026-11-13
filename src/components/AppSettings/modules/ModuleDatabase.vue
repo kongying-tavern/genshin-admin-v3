@@ -71,7 +71,8 @@ const dbList = [
     loading: computed(() => markerStore.updateLoading),
     nextUpdateTime: computed(() => markerStore.nextUpdateTime),
     message: computed(() => markerStore.context.message),
-    error: computed(() => markerStore.managerError),
+    // 分片拉取失败不会中断整次同步，但数据是不完整的，必须显式暴露出来
+    error: computed(() => markerStore.managerError || markerStore.syncWarning),
     isActive: computed(() => markerStore.isActive),
     updateDiff: () => markerStore.update(),
     updateFull: () => markerStore.update({ isFull: true }),

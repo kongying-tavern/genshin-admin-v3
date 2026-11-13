@@ -1,4 +1,7 @@
+export * from './createDataDiff'
 export * from './createHashMap'
 export * from './createRenderMarkers'
 export { getCostTime } from './get-cost-time'
+export * from './idbWriter'
 export * from './isAccessible'
+export * from './runShards'

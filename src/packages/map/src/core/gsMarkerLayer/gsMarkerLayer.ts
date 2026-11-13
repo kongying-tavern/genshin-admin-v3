@@ -54,6 +54,7 @@ export class GSMarkerLayer extends CompositeLayer<GSMarkerLayerProps> {
       markedMarkerIds,
       rewritePositions,
       transparentMarked,
+      _dataDiff,
     } = this.props
 
     const isInteraction = (id: number) => {
@@ -114,6 +115,8 @@ export class GSMarkerLayer extends CompositeLayer<GSMarkerLayerProps> {
         id: `${this.id}-bottom`,
         pickable: true,
         data,
+        // 透传区间更新描述：分片加载时只上传新增行的顶点属性
+        _dataDiff,
         statusCount: ATTACH_TOTAL,
         iconAtlas,
         iconMapping,
@@ -140,6 +143,8 @@ export class GSMarkerLayer extends CompositeLayer<GSMarkerLayerProps> {
         id: `${this.id}-top`,
         pickable: true,
         data,
+        // 透传区间更新描述：分片加载时只上传新增行的顶点属性
+        _dataDiff,
         statusCount: ATTACH_TOTAL,
         iconAtlas,
         iconMapping,

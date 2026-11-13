@@ -1,6 +1,7 @@
-import type { MarkerVo } from '@/api/alova/globals'
+import type { AreaVo, ItemVo, MarkerVo } from '@/api/alova/globals'
 import type { GSMarkerInfo, TempMarkerType, TempMarkerTypeMap } from '@/packages/map'
 import type {
+  AreaTileConfig,
   useArchiveStore,
   useAreaStore,
   useItemStore,
@@ -31,6 +32,33 @@ export const useMarkers = (options: MarkerHookOptions) => {
   /** 筛选处理状态 */
   const markersFilterLoading = ref(false)
 
+  /**
+   * 渲染对象缓存
+   *
+   * 点位的渲染配置只取决于「点位自身 + 底图配置 + 地区索引 + 物品索引」。
+   * 索引不变时可以直接复用上一次的渲染对象，使分片更新只需为新增点位付出分配成本，
+   * 而不是每次都把几万个点位对象重新展开一遍。
+   *
+   * 这里不使用 watch 重置缓存：computed 的重新求值可能早于 watch 回调，
+   * 会读到上一轮的过期缓存。改为在求值时比对依赖引用，保证永远一致。
+   */
+  let renderCache = new WeakMap<MarkerVo, GSMarkerInfo>()
+  let renderCacheDeps: unknown[] | undefined
+
+  const getRenderCache = (
+    tileConfigs: Record<string, AreaTileConfig>,
+    areaIdMap: Map<number, AreaVo>,
+    itemIdMap: Map<number, ItemVo>,
+  ) => {
+    const deps = renderCacheDeps
+    if (deps && deps[0] === tileConfigs && deps[1] === areaIdMap && deps[2] === itemIdMap) {
+      return renderCache
+    }
+    renderCache = new WeakMap()
+    renderCacheDeps = [tileConfigs, areaIdMap, itemIdMap]
+    return renderCache
+  }
+
   const archiveItemIds = computed(
     () => archiveStore.currentArchive.body.Preference['markerFilter.state.itemIds'] ?? [],
   )
@@ -52,7 +80,12 @@ export const useMarkers = (options: MarkerHookOptions) => {
       }
       return false
     })
-    return createRenderMarkers(res, { tileConfigs, areaIdMap, itemIdMap })
+    return createRenderMarkers(res, {
+      tileConfigs,
+      areaIdMap,
+      itemIdMap,
+      cache: getRenderCache(tileConfigs, areaIdMap, itemIdMap),
+    })
   })
 
   /** 当前高级筛选器条件表示下的所有点位 */
@@ -110,7 +143,12 @@ export const useMarkers = (options: MarkerHookOptions) => {
 
       return globalVal
     })
-    return createRenderMarkers(res, { tileConfigs, areaIdMap, itemIdMap })
+    return createRenderMarkers(res, {
+      tileConfigs,
+      areaIdMap,
+      itemIdMap,
+      cache: getRenderCache(tileConfigs, areaIdMap, itemIdMap),
+    })
   })
 
   /** 当前混合选择器 */
@@ -202,11 +240,30 @@ export const useMarkers = (options: MarkerHookOptions) => {
   // ====================  临时点位 - end  ====================
 
   /**
+   * 是否正在「按分片追加数据」
+   *
+   * 只有真的已经有数据落地时才切换到追加顺序，避免空同步时点位绘制顺序
+   * 来回翻转（那会造成一次无意义的全量重传）。
+   * 该值在一次同步中只会变化一次，不会给下游带来额外重算。
+   */
+  const isAppendingMarkers = computed(() => {
+    if (!markerStore.updateLoading) return false
+    const { phase, finished } = markerStore.syncProgress
+    return finished > 0 && (phase === 'fetch' || phase === 'persist')
+  })
+
+  /**
    * 所属于当前底图的点位，不含临时点位
    * @note 根据 y 轴排序使得下方点位可以遮挡上方点位，降低视觉复杂度
    */
   const currentLayerMarkers = computed(() => {
-    return staticMarkers.value.sort(
+    const markers = staticMarkers.value
+    /**
+     * 追加数据期间不排序：保持「只追加」的顺序，deck.gl 才能用区间更新
+     * 跳过未变化的行；同步结束后统一排序一次即可。
+     */
+    if (isAppendingMarkers.value) return markers
+    return markers.toSorted(
       (
         {
           render: {
@@ -218,9 +275,7 @@ export const useMarkers = (options: MarkerHookOptions) => {
             position: { 1: y2 },
           },
         },
-      ) => {
-        return y1 - y2
-      },
+      ) => y1 - y2,
     )
   })
 

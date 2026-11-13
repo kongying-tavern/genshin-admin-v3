@@ -13,9 +13,9 @@ export interface ManagerOptions<C, T> {
   /** 初始化上下文 */
   init?: (context: C) => Promise<void> | void
   /** 差异更新数据 */
-  diff?: (context: C) => Promise<T>
+  diff?: (context: C) => Promise<T | void>
   /** 全量更新数据 */
-  full: (context: C) => Promise<T>
+  full: (context: C) => Promise<T | void>
   /** 写入数据 */
   commit: (data: Awaited<T> | void, context: C) => Promise<void> | void
   /**
@@ -48,16 +48,14 @@ export const useManager = <C, T>(options: ManagerOptions<C, T>) => {
       errorMessage.value = ''
       const { isFull = false } = options
       const isInit = !initFlag.value
-      const data = await (async () => {
-        if (!initFlag.value) {
-          await init?.(context)
-          await (diff ?? full)?.(context)
-          initFlag.value = true
-        }
-        return (isFull ? full : (diff ?? full))(context)
-      })()
+      // init 只执行一次，且其结果不再额外拉取一遍数据
+      // （旧实现会在 init 后丢弃性地执行一次 diff，导致首屏请求翻倍）
+      if (isInit) await init?.(context)
+      const data = await (isFull ? full : (diff ?? full))(context)
+      initFlag.value = true
       await syncState?.(data, context, isInit)
       await commit(data, context)
+      return data
     },
   })
 

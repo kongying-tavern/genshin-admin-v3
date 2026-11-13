@@ -1,13 +1,20 @@
 import type { MarkerVo, TweakVo } from '@/api/alova/globals'
-import type { WorkerInput } from '@/worker/idb.worker'
 import { AddLocation, DeleteLocation, Location } from '@element-plus/icons-vue'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import Apis from '@/api/alova'
 import db from '@/database'
-import BulkPutWorker from '@/worker/idb.worker?worker'
+import { Logger, messageFrom, yieldToMain } from '@/utils'
 import { useAccessStore, useSocketStore, useUserStore } from '.'
 import { useManager } from './hooks'
-import { getCostTime, isAccessible } from './utils'
+import {
+  chunk,
+  forEachChunk,
+  getCostTime,
+  isAccessible,
+  retry,
+  runShards,
+  writeLocalTable,
+} from './utils'
 
 interface ManagerContext {
   startTime: Ref<number>
@@ -15,10 +22,42 @@ interface ManagerContext {
   tag: Ref<string>
 }
 
-interface DiffData {
-  updateList: MarkerVo[]
-  deleteIds: number[]
-  clear?: boolean
+/** 单个分片包含的点位数量 */
+const SHARD_SIZE = 1000
+/** 分片请求的最大并发数 */
+const SHARD_CONCURRENCY = 4
+/** 单个分片的最大尝试次数 */
+const SHARD_RETRY_LIMIT = 3
+/** 累计失败多少个分片后判定接口不可用，中止剩余分片 */
+const SHARD_ABORT_THRESHOLD = 3
+/** 单次分片请求的超时时间（毫秒） */
+const SHARD_TIMEOUT = 20_000
+/** 全量数据写入本地库时的分块大小 */
+const PERSIST_CHUNK_SIZE = 2000
+/** 差异计算时让出主线程的间隔（条） */
+const DIFF_YIELD_INTERVAL = 4000
+/** 渐进式更新合并视图刷新的最短间隔（毫秒） */
+const NOTIFY_INTERVAL = 150
+
+/** 同步阶段 */
+export type MarkerSyncPhase =
+  | 'idle'
+  | 'init'
+  | 'snapshot'
+  | 'diff'
+  | 'fetch'
+  | 'persist'
+  | 'prune'
+
+/** 同步进度，供 UI 展示 */
+export interface MarkerSyncProgress {
+  phase: MarkerSyncPhase
+  /** 已完成的单位数（分片数或条数） */
+  finished: number
+  /** 总单位数，0 表示未知 */
+  total: number
+  /** 失败的单位数 */
+  failed: number
 }
 
 const getMarkersByIds = async (ids: number[]) => {
@@ -27,6 +66,11 @@ const getMarkersByIds = async (ids: number[]) => {
   return data
 }
 
+/**
+ * 计算本地点位与服务器快照的差异
+ *
+ * 大数组遍历时按 `DIFF_YIELD_INTERVAL` 让出主线程，避免长时间阻塞渲染
+ */
 const diffMapMarkers = async (
   snapshots: {
     id?: number | null
@@ -34,14 +78,16 @@ const diffMapMarkers = async (
     linkageId?: string | null
   }[],
   markerMap: Map<number, MarkerVo>,
+  onProgress?: (finished: number, total: number) => void,
 ) => {
   const deleteIds = new Set(markerMap.keys())
   const updateIds = new Set<number>()
-  let count = 0
   const { length } = snapshots
   for (let i = 0; i < length; i++) {
-    count++
-    if (count % 2000 === 0) await scheduler.yield() // 每 2000 个点位等一次，避免卡顿
+    if (i > 0 && i % DIFF_YIELD_INTERVAL === 0) {
+      onProgress?.(i, length)
+      await yieldToMain()
+    }
     const { id, version, linkageId } = snapshots[i]
     if (!id || !version) continue
     deleteIds.delete(id)
@@ -59,6 +105,7 @@ const diffMapMarkers = async (
       continue
     }
   }
+  onProgress?.(length, length)
   return {
     updateIds: [...updateIds],
     deleteIds: [...deleteIds],
@@ -71,36 +118,97 @@ export const useMarkerStore = defineStore('global-marker', () => {
   const socketStore = useSocketStore()
   const userStore = useUserStore()
 
+  const logger = new Logger('点位同步')
+
   // ============================== 内部状态 ==============================
 
   /** 点位 id 索引表 */
   const localMarkerMap = shallowRef(new Map<number, MarkerVo>())
+
+  /** 同步进度 */
+  const syncProgress = shallowRef<MarkerSyncProgress>({
+    phase: 'idle',
+    finished: 0,
+    total: 0,
+    failed: 0,
+  })
+
+  /** 同步告警：数据不完整但不致命的情况（部分分片失败、本地库读写异常等） */
+  const syncWarning = ref('')
+
+  // ---------------------------- 视图刷新节流 ----------------------------
+
+  let notifyTimer: ReturnType<typeof setTimeout> | undefined
+  let notifyDirty = false
+
+  const flushNotify = () => {
+    if (notifyTimer) {
+      clearTimeout(notifyTimer)
+      notifyTimer = undefined
+    }
+    if (!notifyDirty) return
+    notifyDirty = false
+    triggerRef(localMarkerMap)
+  }
+
+  /**
+   * 请求一次视图刷新
+   *
+   * 分片更新时若每片都触发，`markerList` 及下游的过滤器、计数、deck.gl 图层
+   * 会被重算几十次；这里按 `NOTIFY_INTERVAL` 合并，既保证看得到渐进效果，
+   * 又不会把主线程打满。
+   */
+  const notifyLocal = (immediate = true) => {
+    notifyDirty = true
+    if (immediate) {
+      flushNotify()
+      return
+    }
+    if (notifyTimer) return
+    notifyTimer = setTimeout(flushNotify, NOTIFY_INTERVAL)
+  }
+
+  const setProgress = (progress: Partial<MarkerSyncProgress> & { phase: MarkerSyncPhase }) => {
+    syncProgress.value = { ...syncProgress.value, ...progress }
+  }
 
   // ============================== 代理方法 ==============================
 
   /**
    * @local 更新本地点位
    * - 已包含 version 比较逻辑
+   * @param immediate 是否立即触发视图刷新；批量更新时传 `false` 以合并刷新
    */
-  const updateLocal = (options: { updateList?: MarkerVo[]; deleteIds?: number[] }) => {
-    const { updateList = [], deleteIds = [] } = options
+  const updateLocal = (options: {
+    updateList?: MarkerVo[]
+    deleteIds?: number[]
+    immediate?: boolean
+  }) => {
+    const { updateList = [], deleteIds = [], immediate = true } = options
     if (!updateList.length && !deleteIds.length) return
+    const map = localMarkerMap.value
+    let changed = false
     const { length: deleteLength } = deleteIds
     for (let i = 0; i < deleteLength; i++) {
-      const id = deleteIds[i]
-      localMarkerMap.value.delete(id)
+      changed = map.delete(deleteIds[i]) || changed
     }
     const { length: updateLength } = updateList
     for (let i = 0; i < updateLength; i++) {
       const marker = updateList[i]
       const { id, version = 0, linkageId } = marker
-      const localMarker = localMarkerMap.value.get(id!)
-      // 1. version 小于等于本地版本
-      // 2. linkageId 等于本地 linkageId (点位关联变更不会影响 version)
-      if (version <= (localMarker?.version ?? 0) && linkageId === localMarker?.linkageId) continue
-      localMarkerMap.value.set(id!, marker)
+      if (id === undefined) continue
+      const localMarker = map.get(id)
+      // 仅当新数据版本更高，或关联发生变化时（关联变更不影响 version）才覆盖
+      if (localMarker) {
+        const isNewer = version > (localMarker.version ?? 0)
+        const isLinkageChanged = (linkageId ?? '') !== (localMarker.linkageId ?? '')
+        if (!isNewer && !isLinkageChanged) continue
+      }
+      map.set(id, marker)
+      changed = true
     }
-    triggerRef(localMarkerMap)
+    // 没有任何实际变化时不触发刷新，避免下游做无意义的重算
+    if (changed) notifyLocal(immediate)
   }
 
   /** @server 创建点位 */
@@ -112,6 +220,7 @@ export const useMarkerStore = defineStore('global-marker', () => {
     })
     if (!marker) throw new Error('服务器未返回新点位数据')
     updateLocal({ updateList: [marker] })
+    await persistMarkers({ updateList: [marker] })
   }
 
   /** @server 更新点位 */
@@ -124,6 +233,7 @@ export const useMarkerStore = defineStore('global-marker', () => {
     })
     if (!marker) throw new Error('服务器未返回新点位数据')
     updateLocal({ updateList: [marker] })
+    await persistMarkers({ updateList: [marker] })
   }
 
   /** @server 删除点位 */
@@ -133,12 +243,38 @@ export const useMarkerStore = defineStore('global-marker', () => {
     })
     if (!isSuccess) throw new Error(message)
     updateLocal({ deleteIds: [markerId] })
+    await persistMarkers({ deleteIds: [markerId] })
   }
 
   /** @server 批量操作点位 */
   const tweakMarkers = async (tweaks: TweakVo[]) => {
     const { data = [] } = await Apis.marker.tweakMarkers({ data: tweaks })
-    updateLocal({ updateList: data })
+    updateLocal({ updateList: data, immediate: data.length <= SHARD_SIZE })
+    await persistMarkers({ updateList: data })
+  }
+
+  // ============================== 本地持久化 ==============================
+
+  /**
+   * 将变更写入本地数据库
+   *
+   * 写入失败不影响内存中的点位（地图仍然是可用的），但必须暴露出来，
+   * 否则下次冷启动会看到「已经删掉的点位又回来了」。
+   */
+  const persistMarkers = async (options: { updateList?: MarkerVo[]; deleteIds?: number[] }) => {
+    const { updateList = [], deleteIds = [] } = options
+    if (!updateList.length && !deleteIds.length) return
+    try {
+      await writeLocalTable<number, MarkerVo>({
+        tableName: 'marker',
+        bulkPutData: updateList,
+        bulkDeleteKeys: deleteIds,
+      })
+    } catch (err) {
+      const message = messageFrom(err, '未知错误')
+      logger.error('写入本地点位数据库失败:', err)
+      syncWarning.value = `本地点位数据库写入失败：${message}`
+    }
   }
 
   // ============================== 外部状态 ==============================
@@ -158,6 +294,205 @@ export const useMarkerStore = defineStore('global-marker', () => {
 
   // ============================== 数据更新 ==============================
 
+  /**
+   * 分片拉取点位并「边拉边应用」
+   *
+   * 每个分片成功后会立刻写入内存与本地库，因此地图不必等待全部数据；
+   * 单个分片耗尽重试后只影响自己，通过返回值与 `syncWarning` 反馈。
+   */
+  const fetchMarkersByShards = async (ids: number[], context: ManagerContext) => {
+    const shards = chunk(ids, SHARD_SIZE)
+    const { length: shardTotal } = shards
+    let failedCount = 0
+    let failedShards = 0
+    let aborted = false
+
+    /** 过半分片失败时判定为接口整体不可用，避免死等几分钟的重试 */
+    const isEndpointBroken = () => failedShards >= SHARD_ABORT_THRESHOLD && failedShards * 2 >= shardTotal
+
+    setProgress({ phase: 'fetch', finished: 0, total: shardTotal, failed: 0 })
+
+    const { failures } = await runShards({
+      shards,
+      concurrency: SHARD_CONCURRENCY,
+      retryLimit: SHARD_RETRY_LIMIT,
+      retryDelay: 800,
+      timeout: SHARD_TIMEOUT,
+
+      shouldAbort: () => {
+        if (!isEndpointBroken()) return false
+        aborted = true
+        return true
+      },
+
+      run: shard => getMarkersByIds(shard),
+
+      onSuccess: async markers => {
+        if (!markers.length) return
+        updateLocal({ updateList: markers, immediate: false })
+        await writeLocalTable<number, MarkerVo>({ tableName: 'marker', bulkPutData: markers })
+      },
+
+      onFailure: (failure, shard) => {
+        failedShards += 1
+        failedCount += shard.length
+        logger.error(
+          `分片 #${failure.index + 1} 拉取失败（已完成 ${failure.attempts} 次尝试）`,
+          failure.error,
+        )
+      },
+
+      onSettled: ({ finished, total, failed }) => {
+        setProgress({ phase: 'fetch', finished, total, failed })
+        // 分片级进度直接写进 message，用户在设置面板里能看到「拉到哪了」
+        context.message.value = `[${context.tag.value}] 拉取点位数据 ${finished}/${total} 片${
+          failed ? `，失败 ${failed} 片` : ''
+        }`
+      },
+    })
+
+    // 兜底刷新，确保被节流合并的最后一批数据一定会上图
+    flushNotify()
+
+    return { failures, failedCount, aborted }
+  }
+
+  const buildSummary = (context: ManagerContext, summary: string) =>
+    `[${context.tag.value}] ${summary}，耗时 ${getCostTime(context.startTime.value).toFixed(1)}s`
+
+  /** 差异更新：快照 → 计算差异 → 分片拉取并渐进应用 */
+  const diffUpdate = async (context: ManagerContext) => {
+    // 1. 拉取轻量快照（仅 id / version / linkageId）
+    setProgress({ phase: 'snapshot', finished: 0, total: 0, failed: 0 })
+    context.message.value = `[${context.tag.value}] 拉取比对快照...`
+    const { snapshots } = await retry(() => Apis.marker_doc.listMarkerDiffSnapshotByBinary(), {
+      retryLimit: 2,
+      retryDelay: 1000,
+      timeout: 60_000,
+    })
+
+    // 2. 计算差异
+    setProgress({ phase: 'diff', finished: 0, total: snapshots.length, failed: 0 })
+    context.message.value = `[${context.tag.value}] 计算差异 (${snapshots.length})...`
+    const { updateIds, deleteIds } = await diffMapMarkers(
+      snapshots,
+      localMarkerMap.value,
+      (finished, total) => {
+        setProgress({ phase: 'diff', finished, total, failed: 0 })
+        context.message.value = `[${context.tag.value}] 计算差异 ${finished}/${total}`
+      },
+    )
+
+    // 3. 删除先落地：不需要网络，能让列表立刻变干净
+    if (deleteIds.length) {
+      updateLocal({ deleteIds, immediate: false })
+      await persistMarkers({ deleteIds })
+    }
+
+    if (!updateIds.length) {
+      flushNotify()
+      context.message.value = buildSummary(context, `没有需要更新的数据，删除(${deleteIds.length})`)
+      return
+    }
+
+    // 4. 分片拉取并渐进应用
+    const { failures, failedCount, aborted } = await fetchMarkersByShards(updateIds, context)
+
+    // 5. 汇总
+    if (failures.length) {
+      const detail = failures[0].error.message
+      syncWarning.value = [
+        `[${context.tag.value}] `,
+        `${failures.length} 个分片拉取失败，约 ${failedCount} 个点位未更新：${detail}`,
+        aborted ? '（失败过多，已中止剩余分片）' : '',
+      ].join('')
+      context.message.value = buildSummary(
+        context,
+        `更新(${updateIds.length - failedCount})，删除(${deleteIds.length})，失败(${failures.length} 片 / ${failedCount} 个)`,
+      )
+      return
+    }
+
+    context.message.value = buildSummary(
+      context,
+      `更新(${updateIds.length})，删除(${deleteIds.length})`,
+    )
+  }
+
+  /** 全量更新：整包拉取 → 分块应用 → 清理服务端已删除的点位 */
+  const fullUpdate = async (context: ManagerContext) => {
+    setProgress({ phase: 'persist', finished: 0, total: 0, failed: 0 })
+    context.message.value = `[${context.tag.value}] 正在获取点位数据...`
+
+    let markers: MarkerVo[]
+    try {
+      markers = await retry(() => Apis.marker_doc.listMarkersByBinary(), {
+        retryLimit: 2,
+        retryDelay: 1000,
+        timeout: 120_000,
+      })
+    } catch (err) {
+      // 整包请求失败（网关超时 / 响应体过大 / 服务端异常）时不再让整次更新失败，
+      // 而是降级成分片同步：至少把能拿到的数据先落到地图上
+      const message = messageFrom(err, '未知错误')
+      logger.error('获取点位全量数据失败，降级为分片同步:', err)
+      context.tag.value = '全量(降级)'
+      context.message.value = `[全量] 整包获取失败：${message}，正在降级为分片同步...`
+      await diffUpdate(context)
+      return
+    }
+
+    // 先记录本地已有点位，等全部写入成功后再删除服务端已经不存在的点位
+    // （旧实现直接 clear 整表，一旦中途失败本地缓存就空了）
+    let staleIds: Set<number>
+    try {
+      staleIds = new Set((await db.marker.toCollection().primaryKeys()) as number[])
+    } catch (err) {
+      logger.error('读取本地点位 id 失败，跳过清理阶段:', err)
+      staleIds = new Set()
+    }
+
+    const { length: markerTotal } = markers
+    let written = 0
+    let writeFailed = 0
+
+    await forEachChunk(markers, PERSIST_CHUNK_SIZE, async (slice, { index, total }) => {
+      updateLocal({ updateList: slice, immediate: false })
+      try {
+        await writeLocalTable<number, MarkerVo>({ tableName: 'marker', bulkPutData: slice })
+      } catch (err) {
+        writeFailed += slice.length
+        logger.error(`写入第 ${index + 1}/${total} 批点位失败:`, err)
+      }
+      for (let i = 0; i < slice.length; i++) {
+        const { id } = slice[i]
+        if (id !== undefined) staleIds.delete(id)
+      }
+      written += slice.length
+      setProgress({ phase: 'persist', finished: written, total: markerTotal, failed: writeFailed })
+      context.message.value = `[${context.tag.value}] 写入点位 ${written}/${markerTotal}`
+    })
+
+    flushNotify()
+
+    // 全部写入成功后才清理残留，避免「写一半 + 清空」造成的数据空洞
+    if (writeFailed) {
+      syncWarning.value = `[${context.tag.value}] ${writeFailed} 个点位写入本地数据库失败，请重试`
+    } else if (staleIds.size) {
+      setProgress({ phase: 'prune', finished: 0, total: staleIds.size, failed: 0 })
+      const ids = [...staleIds]
+      updateLocal({ deleteIds: ids })
+      await persistMarkers({ deleteIds: ids })
+      context.message.value = buildSummary(
+        context,
+        `更新(${markerTotal})，清理已删除点位(${ids.length})`,
+      )
+      return
+    }
+
+    context.message.value = buildSummary(context, `更新(${markerTotal})`)
+  }
+
   const {
     context,
     isActive,
@@ -165,7 +500,7 @@ export const useMarkerStore = defineStore('global-marker', () => {
     nextUpdateTime,
     loading: updateLoading,
     update,
-  } = useManager<ManagerContext, DiffData | void>({
+  } = useManager<ManagerContext, void>({
     timeoutPull: {
       time: 60 * 60 * 1000,
       condition: () => userStore.info?.roleId !== undefined,
@@ -177,67 +512,46 @@ export const useMarkerStore = defineStore('global-marker', () => {
       tag: ref(''),
     },
 
-    syncState: async (data, context) => {
-      if (!data) return
-      if (!data.updateList.length && !data.deleteIds.length) {
-        context.message.value = [
-          `[${context.tag.value}] `,
-          '没有需要更新的数据，',
-          `耗时 ${getCostTime(context.startTime.value).toFixed(1)}s`,
-        ].join('')
-        return
-      }
-      const { updateList, deleteIds } = data
-      updateLocal(data)
-      context.message.value = [
-        `[${context.tag.value}] `,
-        `更新(${updateList.length})，`,
-        `删除(${deleteIds.length})，`,
-        `耗时：${getCostTime(context.startTime.value).toFixed(1)}s`,
-      ].join('')
-    },
-
-    commit: data => {
-      if (!data || (!data.updateList.length && !data.deleteIds.length)) return
-      const worker = new BulkPutWorker({ name: '点位更新线程' })
-      worker.addEventListener('message', () => {
-        worker.terminate()
-      })
-      worker.postMessage(<WorkerInput<number, MarkerVo>>{
-        tableName: 'marker',
-        clear: data.clear,
-        bulkPutData: data.updateList,
-        bulkDeleteKeys: data.deleteIds,
-      })
-    },
-
     init: async context => {
       context.startTime.value = Date.now()
       context.tag.value = '初始化'
-      context.message.value = `[${context.tag.value}] 拉取冷数据...`
-      const localMarkers = await db.marker.toArray()
-      updateLocal({ updateList: localMarkers })
+      setProgress({ phase: 'init', finished: 0, total: 0, failed: 0 })
+      context.message.value = `[${context.tag.value}] 读取本地数据...`
+      try {
+        const localMarkers = await db.marker.toArray()
+        updateLocal({ updateList: localMarkers })
+      } catch (err) {
+        // 本地库读不出来不应该阻断同步，按冷启动处理，交给后续的差异/全量补齐
+        logger.error('读取本地点位数据失败:', err)
+        syncWarning.value = `读取本地点位数据库失败：${messageFrom(err, '未知错误')}`
+      }
     },
 
     diff: async context => {
       context.startTime.value = Date.now()
       context.tag.value = '差异'
-      context.message.value = `[${context.tag.value}] 拉取比对快照...`
-      const { snapshots } = await Apis.marker_doc.listMarkerDiffSnapshotByBinary()
-      context.message.value = `[${context.tag.value}] 计算差异...`
-      const { updateIds, deleteIds } = await diffMapMarkers(snapshots, localMarkerMap.value)
-      context.message.value = `[${context.tag.value}] 拉取更新数据...`
-      const updateList = await getMarkersByIds(updateIds)
-      return { updateList, deleteIds }
+      syncWarning.value = ''
+      try {
+        await diffUpdate(context)
+      } finally {
+        // 无论成功失败都要收尾，否则进度会永久停在某个中间阶段
+        setProgress({ phase: 'idle' })
+      }
     },
 
     full: async context => {
       context.startTime.value = Date.now()
       context.tag.value = '全量'
-      context.message.value = `[${context.tag.value}] 正在获取点位数据...`
-      const updateList = await Apis.marker_doc.listMarkersByBinary()
-      return { updateList, deleteIds: [] as number[], clear: true }
+      syncWarning.value = ''
+      try {
+        await fullUpdate(context)
+      } finally {
+        setProgress({ phase: 'idle' })
+      }
     },
+
+    // 数据已在拉取过程中分片写入，无需在结束后再整体提交一次
+    commit: () => {},
   })
 
   // ============================== 外部响应 ==============================
@@ -286,7 +600,7 @@ export const useMarkerStore = defineStore('global-marker', () => {
     if (!data.length) return
     const [{ updaterId }] = data
     const { username = `(uid: ${updaterId})`, nickname } = userInfo
-    updateLocal({ updateList: data })
+    updateLocal({ updateList: data, immediate: data.length <= SHARD_SIZE })
     socketStore.notice('MarkerTweaked', {
       message: `${nickname ?? username} 批量更新了 ${data.length} 个点位`,
       icon: Location,
@@ -303,6 +617,11 @@ export const useMarkerStore = defineStore('global-marker', () => {
     updateLoading,
     update,
     updateLocal,
+
+    /** 同步进度（阶段 / 已完成 / 失败分片数） */
+    syncProgress,
+    /** 同步告警，非空时应当提示用户数据可能不完整 */
+    syncWarning,
 
     createMarker,
     updateMarker,

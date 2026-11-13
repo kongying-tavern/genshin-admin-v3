@@ -1,4 +1,10 @@
-import type { DeckProps, IconLayerProps, OrthographicView, OrthographicViewState } from 'deck.gl'
+import type {
+  DeckProps,
+  IconLayerProps,
+  LayerProps,
+  OrthographicView,
+  OrthographicViewState,
+} from 'deck.gl'
 import type { AreaVo, MarkerLinkageVo, MarkerVo } from '@/api/alova/globals'
 import type { AreaTagTuple } from '@/configs'
 
@@ -81,6 +87,13 @@ export interface GSOverlayerProps {
 
 export interface GSMarkerLayerProps {
   data: GSMarkerInfo[]
+  /**
+   * 数据区间更新描述（deck.gl 的 `_dataDiff`）
+   *
+   * 返回行区间时只重新计算并上传这些行的顶点属性，
+   * 分片加载场景下可以把每条分片的 GPU 开销压到只与新增点位数量相关
+   */
+  _dataDiff?: LayerProps['_dataDiff']
   iconAtlas: IconLayerProps['iconAtlas']
   iconMapping: Required<IconLayerProps>['iconMapping']
   transparentMarked: boolean
