@@ -8,7 +8,7 @@ import AutoImport from 'unplugin-auto-import/vite'
 import UnoCSS from 'unocss/vite'
 import { defineConfig, loadEnv } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
-import { injectAssetsManifest } from './plugins'
+import { injectAssetsManifest, postcssPlugins } from './plugins'
 
 export default defineConfig(async ({ mode }) => {
   const git = simpleGit()
@@ -144,6 +144,14 @@ export default defineConfig(async ({ mode }) => {
           replacement: `${path.resolve(__dirname, 'src')}/`,
         },
       ],
+    },
+
+    css: {
+      // 嵌套必须在 Vue 的 scoped 编译之前拍平，否则 :deep() 会退化成后代选择器。
+      // 详见 plugins/postcss.ts 与 tests/style/scoped-deep.test.ts。
+      postcss: {
+        plugins: postcssPlugins(),
+      },
     },
 
     plugins,

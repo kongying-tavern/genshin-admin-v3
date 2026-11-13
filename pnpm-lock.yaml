@@ -159,6 +159,12 @@ importers:
       oxlint:
         specifier: 1.90.0
         version: 1.90.0
+      postcss:
+        specifier: 8.5.31
+        version: 8.5.31
+      postcss-nested:
+        specifier: 9.0.1
+        version: 9.0.1(postcss@8.5.31)
       protobufjs-cli:
         specifier: 2.5.1
         version: 2.5.1(protobufjs@8.6.6)
@@ -5064,6 +5070,16 @@ packages:
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
     engines: {node: '>= 0.4'}
+
+  postcss-nested@9.0.1:
+    resolution: {integrity: sha512-FfeEbUMZ9nhld7AUMA32mGKstuXpQoDNj60v722j6+vH06H2kfuGhjmYdxDlkslx8H9+GrR7/cvlfS1zsuBscw==}
+    engines: {node: ^22.0.0 || ^24.0.0 || >= 26.0.0}
+    peerDependencies:
+      postcss: ^8.2.14
+
+  postcss-selector-parser@7.2.1:
+    resolution: {integrity: sha512-GwxlMgTTXwIom+ebC7an3k6RaJDwklRQQnfiXsLPGicu8FYV/k/+1/9YY2OU2+r938H2t4X0TDxoif+HP2rjzQ==}
+    engines: {node: '>=4'}
 
   postcss@8.5.31:
     resolution: {integrity: sha512-YUbWYCgErwnMAVkjUnYa+KlMBzGpHwiIt/DE7f0G33AuX2LH9UcTk6KgWxd3zRU+pN3u/C+Xl3EnMLM4Hea7Sg==}
@@ -11855,6 +11871,15 @@ snapshots:
       tslib: 2.4.0
 
   possible-typed-array-names@1.1.0: {}
+
+  postcss-nested@9.0.1(postcss@8.5.31):
+    dependencies:
+      postcss: 8.5.31
+      postcss-selector-parser: 7.2.1
+
+  postcss-selector-parser@7.2.1:
+    dependencies:
+      util-deprecate: 1.0.2
 
   postcss@8.5.31:
     dependencies:
