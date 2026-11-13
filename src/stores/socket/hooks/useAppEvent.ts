@@ -1,6 +1,7 @@
 import type { ItemVo, MarkerVo } from '@/api/alova/globals'
 import type { PageIPC } from '@/utils/worker'
 import { HistoryRecordType } from '@/shared'
+import { fetchMarkersWithUsersByIds } from '@/stores/utils/fetchMarkersByIds'
 import { EventBus } from '@/utils'
 
 export const useAppEvent = (ipc: PageIPC<AppSocket.MainEventMap, AppSocket.WorkerEventMap>) => {
@@ -92,11 +93,7 @@ export const useAppEvent = (ipc: PageIPC<AppSocket.MainEventMap, AppSocket.Worke
   })
 
   ipc.on('MarkerLinked', async ({ markers, groups }) => {
-    const { data: markerList } = await Apis.marker.listMarkerById({
-      data: {
-        markerIdList: markers,
-      },
-    })
+    const { markers: markerList } = await fetchMarkersWithUsersByIds(markers)
     const { data } = await Apis.marker_link.getMarkerLinkageList({
       data: {
         groupIds: groups,
@@ -113,9 +110,7 @@ export const useAppEvent = (ipc: PageIPC<AppSocket.MainEventMap, AppSocket.Worke
   })
 
   ipc.on('MarkerTweaked', async ids => {
-    const { data = [], users = {} } = await Apis.marker.listMarkerById({
-      data: { markerIdList: ids },
-    })
+    const { markers: data, users } = await fetchMarkersWithUsersByIds(ids)
     if (!data.length) return
     const [{ updaterId }] = data
     const userInfo = Object.assign({ id: updaterId }, users[updaterId!])

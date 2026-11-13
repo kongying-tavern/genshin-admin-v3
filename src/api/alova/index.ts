@@ -7,6 +7,7 @@ import { useUserStore } from '@/stores'
 import { Logger } from '@/utils'
 import { Zip } from '@/utils/Zip'
 import compiled from '../protobuf/compiled'
+import { toNumber, toOptionalNumber } from '../protobuf/toNumber'
 import { createApis, withConfigType } from './createApis'
 
 const logger = new Logger('Alova')
@@ -69,6 +70,11 @@ export const alovaInstance = createAlova({
   },
 })
 
+/**
+ * 二进制协议中的 64 位整型必须在这里收敛为 number，
+ * 否则 `{ low, high, unsigned }` 形态的 Long 实例会顺着数据流污染整条链路
+ * （请求参数、Map 索引、IndexedDB 主键）。
+ */
 export const $$userConfigMap = withConfigType({
   'marker_doc.listMarkersByBinary': {
     meta: { raw: true },
@@ -86,30 +92,32 @@ export const $$userConfigMap = withConfigType({
         const extra = marker.extra
         const itemList = marker.itemList
         const rewrite: MarkerVo = {
-          version: marker.version,
-          id: marker.id,
-          creatorId: marker.creatorId,
-          updaterId: marker.updaterId,
+          version: toNumber(marker.version),
+          id: toNumber(marker.id),
+          creatorId: toNumber(marker.creatorId),
+          updaterId: toNumber(marker.updaterId),
           markerStamp: marker.markerStamp ?? undefined,
           markerTitle: marker.markerTitle ?? undefined,
           position: marker.position ?? undefined,
           itemList: itemList
             ? itemList.map(item => ({
-                itemId: item.itemId,
-                iconId: item.iconId,
+                itemId: toNumber(item.itemId),
+                iconId: toNumber(item.iconId),
                 count: item.count ?? undefined,
               }))
             : undefined,
           content: marker.content ?? undefined,
           picture: marker.picture ?? undefined,
-          markerCreatorId: marker.markerCreatorId,
-          pictureCreatorId: marker.pictureCreatorId,
+          markerCreatorId: toOptionalNumber(marker.markerCreatorId),
+          pictureCreatorId: toOptionalNumber(marker.pictureCreatorId),
           videoPath: marker.videoPath ?? undefined,
-          refreshTime: marker.refreshTime ?? undefined,
+          refreshTime: toOptionalNumber(marker.refreshTime),
           hiddenFlag: marker.hiddenFlag ?? undefined,
           linkageId: marker.linkageId ?? undefined,
-          createTime: createTime ?? undefined,
-          updateTime: updateTime ?? undefined,
+          // 时间字段在 JSON 接口中是字符串，在二进制接口中是毫秒时间戳，
+          // 下游统一通过 `new Date()` 消费，这里保持时间戳数值即可
+          createTime: toOptionalNumber(createTime) as unknown as MarkerVo['createTime'],
+          updateTime: toOptionalNumber(updateTime) as unknown as MarkerVo['updateTime'],
         }
         if (extra) {
           const v16 = extra.v_1_6Island
@@ -134,7 +142,7 @@ export const $$userConfigMap = withConfigType({
             }
             if (iconOverride)
               extra.iconOverride = {
-                id: iconOverride.id,
+                id: toNumber(iconOverride.id),
                 minZoom: iconOverride.minZoom ?? undefined,
                 maxZoom: iconOverride.maxZoom ?? undefined,
               }
@@ -151,7 +159,18 @@ export const $$userConfigMap = withConfigType({
     transform: async res => {
       const buffer = await (res as unknown as Response).arrayBuffer()
       const data = compiled.protobuf.MarkerDiffSnapshotVoList.decode(new Uint8Array(buffer))
-      return data
+      const { snapshots } = data
+      const len = snapshots.length
+      // 快照只用于差异比对，直接摊平成普通对象，避免把 Long 实例带进比对逻辑
+      const result = Array.from({ length: len }, (_, i) => {
+        const snapshot = snapshots[i]
+        return {
+          id: toNumber(snapshot.id),
+          version: toNumber(snapshot.version),
+          linkageId: snapshot.linkageId ?? undefined,
+        }
+      })
+      return { snapshots: result }
     },
   },
 })

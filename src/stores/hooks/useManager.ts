@@ -49,9 +49,10 @@ export const useManager = <C, T>(options: ManagerOptions<C, T>) => {
       const { isFull = false } = options
       const isInit = !initFlag.value
       const data = await (async () => {
+        // 首次更新只需要拉一次冷数据，diff / full 的结果由下面的统一分支产出，
+        // 在这里额外跑一次 diff 会把整批点位查询白白发两遍
         if (!initFlag.value) {
           await init?.(context)
-          await (diff ?? full)?.(context)
           initFlag.value = true
         }
         return (isFull ? full : (diff ?? full))(context)

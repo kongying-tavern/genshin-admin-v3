@@ -1,4 +1,5 @@
 export * from './createHashMap'
 export * from './createRenderMarkers'
+export * from './diffMarkers'
 export { getCostTime } from './get-cost-time'
 export * from './isAccessible'

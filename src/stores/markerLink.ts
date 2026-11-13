@@ -10,6 +10,7 @@ import BulkPutWorker from '@/worker/idb.worker?worker'
 import { useSocketStore, useUserStore } from '.'
 import { useMarkerStore } from './marker'
 import { getCostTime } from './utils'
+import { fetchMarkersByIds } from './utils/fetchMarkersByIds'
 
 interface ManagerContext {
   startTime: Ref<number>
@@ -145,11 +146,8 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
     // 7.1 更新本地关联表
     updateLocal({ updateList: newLinks })
 
-    Apis.marker
-      .listMarkerById({
-        data: { markerIdList: allEffectedMarkerIds },
-      })
-      .then(({ data: updatedMarkers = [] }) => {
+    fetchMarkersByIds(allEffectedMarkerIds)
+      .then(updatedMarkers => {
         markerStore.updateLocal({ updateList: updatedMarkers })
       })
       .catch(() => false)
@@ -180,9 +178,7 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
       })(),
       (async () => {
         if (markerIds.length) {
-          const { data: markers = [] } = await Apis.marker.listMarkerById({
-            data: { markerIdList: markerIds },
-          })
+          const markers = await fetchMarkersByIds(markerIds)
           const markerStore = useMarkerStore()
           markerStore.updateLocal({ updateList: markers })
         }
@@ -245,11 +241,8 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
 
       // 异步更新受影响的点位数据
       if (effectedMarkerIds.size > 0) {
-        Apis.marker
-          .listMarkerById({
-            data: { markerIdList: Array.from(effectedMarkerIds) },
-          })
-          .then(({ data: updatedMarkers = [] }) => {
+        fetchMarkersByIds(Array.from(effectedMarkerIds))
+          .then(updatedMarkers => {
             markerStore.updateLocal({ updateList: updatedMarkers })
           })
           .catch(() => false)
