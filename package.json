@@ -21,6 +21,11 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:api": "vitest run --project api-contract --project api-integration",
+    "test:parity": "node tests/api/parity/run-parity.mjs",
+    "test:parity:java": "vitest run --config vitest.parity.config.ts --mode parity-java",
+    "test:parity:rust": "vitest run --config vitest.parity.config.ts --mode parity-rust",
+    "test:parity:diff": "node tests/api/parity/diff-report.mjs",
+    "test:parity:strict": "node tests/api/parity/run-parity.mjs --strict",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "proto:build": "pbjs -t static-module -w es6 -o src/api/protobuf/compiled.js src/api/protobuf/*.proto && pbts -o src/api/protobuf/compiled.d.ts src/api/protobuf/compiled.js"

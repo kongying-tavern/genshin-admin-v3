@@ -10,8 +10,26 @@ node_modules
 dist
 build
 
-# 测试覆盖率报告
+# ---------------- 测试产物（tests/） ----------------
+
+# 覆盖率报告：`pnpm test:coverage` 每次全量重写
 coverage
+
+# Java↔Rust 行为对齐测试（tests/api/parity）的复跑产物
+# 一次 `pnpm test:parity` 会重建 260+ 个文件：snapshots/{java,rust}/*.json、
+# env-*.json、cleanup-*.json、parity-result.{json,md}、diff-list.md、
+# assertion-fixes.md、java-baseline-deviations.md、report.html。
+# 内容随 runId / 时间戳 / 用例执行顺序变化，入库只会制造噪声 diff，
+# 比对口径一律以「当场跑出来的结果」为准。
+tests/api/parity/_reports/*
+# 例外：人工评审结论（脚本不会重跑生成）保留入库留档
+!tests/api/parity/_reports/final-review-report.md
+!tests/api/parity/_reports/gate-verdict.json
+!tests/api/parity/_reports/gate-findings.json
+
+# Vitest / Vite 运行期缓存
+.vitest
+*.tsbuildinfo
 
 # visualizer files
 stats.html
@@ -32,6 +50,8 @@ debug.log
 *.sln
 
 # 忽略本地环境变量
+# 注意：parity 测试读取的 .env.development.local / .env.development.rust.local
+# 含真实开发环境凭据，同样由本规则覆盖，禁止入库
 .env.*local
 
 # mock
