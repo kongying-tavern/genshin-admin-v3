@@ -200,7 +200,9 @@ const itemOrderMap = computed(() => {
     border-color: #d6ad85;
   }
 
-  :deep(.el-checkbox__label) {
+  /* 单选图层用 ElRadio 渲染，label 类是 .el-radio__label
+     （此处曾误写为 .el-checkbox__label，类名不存在于本组件 DOM，覆盖一直未生效） */
+  :deep(.el-radio__label) {
     text-overflow: ellipsis;
     flex: 1;
     container-type: inline-size;

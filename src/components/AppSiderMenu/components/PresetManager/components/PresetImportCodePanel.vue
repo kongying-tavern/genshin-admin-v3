@@ -88,9 +88,9 @@ const { loadPreset } = usePresetLoad({
 
 <style scoped lang="scss">
 .share-code-input {
-  :deep(.el-textarea) {
-    height: 100%;
-  }
+  // 该 class 直接落在 el-input(type="textarea") 的根节点上，
+  // 根节点自身就是 .el-textarea，因此不能用后代选择器 `:deep(.el-textarea)`。
+  height: 100%;
 
   :deep(.el-textarea__inner) {
     height: 100%;
