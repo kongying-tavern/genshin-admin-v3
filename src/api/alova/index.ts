@@ -52,7 +52,9 @@ export const alovaInstance = createAlova({
       // 处理 401/403 错误，调用 logout
       if (status === 401 || status === 403) useUserStore().logout()
 
-      throw new Error(statusText)
+      // HTTP/2 没有 reason phrase，`statusText` 恒为空串，
+      // 直接抛出去会让上层拿到空错误信息，界面只能继续显示上一次的结论
+      throw new Error(statusText || `请求失败（HTTP ${status}）`)
     }
 
     // 解析响应数据
@@ -64,7 +66,9 @@ export const alovaInstance = createAlova({
     const data = await response.json()
 
     if (data.error)
-      throw new Error(data.message || data.error_description || data.errorData || statusText)
+      throw new Error(
+        data.message || data.error_description || data.errorData || statusText || '服务端返回错误',
+      )
 
     return data as unknown
   },

@@ -1,15 +1,13 @@
 import type { ShallowRef } from 'vue'
 import type { MarkerLinkageVo } from '@/api/alova/globals'
-import type { WorkerInput } from '@/worker/idb.worker'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import { computed, ref, shallowRef, triggerRef } from 'vue'
 import Apis from '@/api/alova'
 import db from '@/database'
 import { useManager } from '@/stores/hooks'
-import BulkPutWorker from '@/worker/idb.worker?worker'
 import { useSocketStore, useUserStore } from '.'
 import { useMarkerStore } from './marker'
-import { getCostTime } from './utils'
+import { bulkWrite, getCostTime } from './utils'
 import { fetchMarkersByIds } from './utils/fetchMarkersByIds'
 
 interface ManagerContext {
@@ -198,6 +196,7 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
     error: managerError,
     nextUpdateTime,
     loading: updateLoading,
+    progress,
     update,
   } = useManager<ManagerContext, DiffData | void>({
     timeoutPull: {
@@ -216,7 +215,7 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
       if (!data.updateList.length && !data.deleteIds.length) {
         context.message.value = [
           `[${context.tag.value}] `,
-          '没有需要更新的数据，',
+          '检查完成，没有需要更新的数据，',
           `耗时 ${getCostTime(context.startTime.value).toFixed(1)}s`,
         ].join('')
         return
@@ -256,18 +255,17 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
       ].join('')
     },
 
-    commit: async data => {
+    commit: async (data, context, task) => {
       if (!data || (!data.updateList.length && !data.deleteIds.length)) return
-      const worker = new BulkPutWorker({ name: '点位关联更新线程' })
-      worker.addEventListener('message', () => {
-        worker.terminate()
-      })
-      worker.postMessage(<WorkerInput<number, MarkerLinkageVo>>{
+      const { error, message } = await bulkWrite<number, MarkerLinkageVo>({
+        name: '点位关联更新线程',
         tableName: 'markerLink',
         clear: data.clear,
         bulkPutData: data.updateList,
         bulkDeleteKeys: data.deleteIds,
+        onProgress: (loaded, total) => task.report({ loaded, total }),
       })
+      if (error) context.message.value = `[${context.tag.value}] 关联写入失败：${message}`
     },
 
     init: async context => {
@@ -334,6 +332,7 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
     managerError,
     nextUpdateTime,
     updateLoading,
+    progress,
     update,
     updateLocal,
 

@@ -1,10 +1,12 @@
 import type { IconVo } from '@/api/alova/globals'
-import type { WorkerInput } from '@/worker/idb.worker'
+import type { ManagerTask } from './hooks'
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import BulkPutWorker from '@/worker/idb.worker?worker'
 import { useUserStore } from '.'
 import { useIconTextureRender, useManager, useMarkerTextureRender } from './hooks'
-import { getCostTime } from './utils'
+import { bulkWrite, getCostTime } from './utils'
+
+/** 图标分页查询的页大小 */
+const PAGE_SIZE = 500
 
 interface ManagerContext {
   startTime: Ref<number>
@@ -18,10 +20,13 @@ interface DiffData {
   clear?: boolean
 }
 
-const getAllIcons = async (context: ManagerContext) => {
+const getAllIcons = async (context: ManagerContext, task: ManagerTask) => {
   context.message.value = '正在获取图标列表'
-  const { data: { total = 0 } = {} } = await Apis.icon.listIcon({ data: { current: 1, size: 1 } })
-  const missionTotal = Math.ceil(total / 500)
+  const { data: { total = 0 } = {} } = await Apis.icon.listIcon({
+    data: { current: 1, size: 1 },
+  })
+  const missionTotal = Math.ceil(total / PAGE_SIZE)
+  if (!missionTotal) return new Map<number, IconVo>()
   const iconMap = new Map<number, IconVo>()
   let finished = 0
   await Promise.allSettled(
@@ -29,7 +34,7 @@ const getAllIcons = async (context: ManagerContext) => {
       const { data: { record = [] } = {} } = await Apis.icon.listIcon({
         data: {
           current: index + 1,
-          size: 500,
+          size: PAGE_SIZE,
         },
       })
       const { length } = record
@@ -38,7 +43,8 @@ const getAllIcons = async (context: ManagerContext) => {
         iconMap.set(icon.id!, icon)
       }
       finished += 1
-      context.message.value = `正在获取图标列表 (${finished}/${total})`
+      task.report({ loaded: finished, total: missionTotal })
+      context.message.value = `正在获取图标列表 (${finished}/${missionTotal})`
     }),
   )
   return iconMap
@@ -104,6 +110,7 @@ export const useIconStore = defineStore('global-icon', () => {
     error: managerError,
     nextUpdateTime,
     loading: updateLoading,
+    progress,
     update,
   } = useManager<ManagerContext, DiffData | void>({
     timeoutPull: {
@@ -122,7 +129,7 @@ export const useIconStore = defineStore('global-icon', () => {
       if (!data.updateMap.size && !data.deleteIds.length) {
         context.message.value = [
           `[${context.tag.value}] `,
-          '没有需要更新的数据，',
+          '检查完成，没有需要更新的数据，',
           `耗时 ${getCostTime(context.startTime.value).toFixed(1)}s`,
         ].join('')
         return
@@ -138,25 +145,24 @@ export const useIconStore = defineStore('global-icon', () => {
       ].join('')
     },
 
-    commit: data => {
+    commit: async (data, context, task) => {
       if (!data || (!data.updateMap.size && !data.deleteIds.length)) return
-      const worker = new BulkPutWorker({ name: '图标更新线程' })
-      worker.addEventListener('message', () => {
-        worker.terminate()
-      })
-      worker.postMessage(<WorkerInput<number, IconVo>>{
+      const { error, message } = await bulkWrite<number, IconVo>({
+        name: '图标更新线程',
         tableName: 'icon',
         clear: data.clear,
         bulkPutData: Array.from(data.updateMap.values()),
         bulkDeleteKeys: data.deleteIds,
+        onProgress: (loaded, total) => task.report({ loaded, total }),
       })
+      if (error) context.message.value = `[${context.tag.value}] 图标写入失败：${message}`
     },
 
-    init: async context => {
+    init: async (context, task) => {
       context.startTime.value = Date.now()
       context.tag.value = '初始化'
       context.message.value = `[${context.tag.value}] 拉取最新数据...`
-      const updateMap = await getAllIcons(context)
+      const updateMap = await getAllIcons(context, task)
       updateLocal({ updateMap })
       context.message.value = `[${context.tag.value}] 完毕: ${getCostTime(context.startTime.value).toFixed(1)}s`
     },
@@ -168,10 +174,10 @@ export const useIconStore = defineStore('global-icon', () => {
       // no diff for items
     },
 
-    full: async context => {
+    full: async (context, task) => {
       context.startTime.value = Date.now()
       context.tag.value = '全量'
-      const updateMap = await getAllIcons(context)
+      const updateMap = await getAllIcons(context, task)
       return { updateMap, deleteIds: [] }
     },
   })
@@ -230,6 +236,7 @@ export const useIconStore = defineStore('global-icon', () => {
     managerError,
     nextUpdateTime,
     updateLoading,
+    progress,
     update,
 
     /** 图标纹理 */

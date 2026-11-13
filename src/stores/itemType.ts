@@ -1,14 +1,12 @@
 import type { Hash } from 'types/database'
 import type { HashGroupMeta } from './utils'
 import type { ItemTypeVo } from '@/api/alova/globals'
-import type { WorkerInput, WorkerOutput } from '@/worker/idb.worker'
 import { liveQuery } from 'dexie'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import db from '@/database'
-import BulkPutWorker from '@/worker/idb.worker?worker'
 import { useAccessStore, useUserStore } from '.'
 import { useManager } from './hooks'
-import { createHashGroupMap } from './utils'
+import { bulkWrite, createHashGroupMap } from './utils'
 
 /** 本地物品类型数据 */
 export const useItemTypeStore = defineStore('global-item-type', () => {
@@ -56,6 +54,7 @@ export const useItemTypeStore = defineStore('global-item-type', () => {
     error: managerError,
     nextUpdateTime,
     loading: updateLoading,
+    progress,
     update,
   } = useManager({
     timeoutPull: {
@@ -69,18 +68,20 @@ export const useItemTypeStore = defineStore('global-item-type', () => {
       message: ref(''),
     },
 
-    init: async () => {
+    init: async ({ message }) => {
+      message.value = '读取本地物品类型数据...'
       const dbList = await db.itemType.toArray()
       hashGroupMap.value = createHashGroupMap(dbList)
       triggerRef(hashGroupMap)
     },
 
-    full: async ({ updateCount, startTime, message }) => {
+    full: async ({ updateCount, startTime, message }, task) => {
       startTime.value = Date.now()
 
       // 由于 itemType 接口暂无档案版，直接跳过 diff 进行覆盖更新
       message.value = '获取更新数据'
       const { data = [] } = await Apis.item_type.listItemType({})
+      task.report(0.6)
 
       message.value = '获取签名'
       const source = new TextEncoder().encode(JSON.stringify(data))
@@ -88,6 +89,7 @@ export const useItemTypeStore = defineStore('global-item-type', () => {
       const hash = [...new Uint8Array(binaryHash)]
         .map(num => num.toString(16).padStart(2, '0'))
         .join('')
+      task.report(0.9)
 
       const newData = data.map(newOne => {
         return { ...newOne, __hash: hash }
@@ -102,19 +104,17 @@ export const useItemTypeStore = defineStore('global-item-type', () => {
       }
     },
 
-    commit: async (options, { message, startTime, updateCount }) => {
+    commit: async (options, { message, startTime, updateCount }, task) => {
+      if (!options) return
       message.value = '写入更新数据'
-      const { resolve, promise } = Promise.withResolvers<WorkerOutput>()
-      const worker = new BulkPutWorker({ name: '物品类型更新线程' })
-      worker.addEventListener('message', (ev: MessageEvent<WorkerOutput>) => resolve(ev.data))
-      worker.postMessage({ tableName: 'itemType', ...options } as WorkerInput<
-        number,
-        Hash<ItemTypeVo>
-      >)
-      const { error, message: workerMsg } = await promise
-      worker.terminate()
+      const { error, message: workerMessage } = await bulkWrite<number, Hash<ItemTypeVo>>({
+        name: '物品类型更新线程',
+        tableName: 'itemType',
+        ...options,
+        onProgress: (loaded, total) => task.report({ loaded, total }),
+      })
       if (error) {
-        message.value = workerMsg
+        message.value = workerMessage
         return
       }
       message.value = `更新 ${updateCount.value} 项, 耗时: ${((Date.now() - startTime.value) / 1000).toFixed(1)}s`
@@ -133,6 +133,7 @@ export const useItemTypeStore = defineStore('global-item-type', () => {
     managerError,
     nextUpdateTime,
     updateLoading,
+    progress,
     update,
 
     // 计算状态

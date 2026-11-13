@@ -1,3 +1,4 @@
+export * from './bulkWrite'
 export * from './createHashMap'
 export * from './createRenderMarkers'
 export * from './diffMarkers'

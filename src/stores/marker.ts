@@ -1,14 +1,12 @@
 import type { MarkerVo, TweakVo } from '@/api/alova/globals'
-import type { WorkerInput, WorkerOutput } from '@/worker/idb.worker'
 import { AddLocation, DeleteLocation, Location } from '@element-plus/icons-vue'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import Apis from '@/api/alova'
 import db from '@/database'
-import BulkPutWorker from '@/worker/idb.worker?worker'
 import { Logger } from '@/utils'
 import { useAccessStore, useSocketStore, useUserStore } from '.'
 import { useManager } from './hooks'
-import { diffMarkers, getCostTime, isAccessible } from './utils'
+import { bulkWrite, diffMarkers, getCostTime, isAccessible } from './utils'
 import { fetchMarkersByIds } from './utils/fetchMarkersByIds'
 
 const logger = new Logger('Marker')
@@ -145,6 +143,7 @@ export const useMarkerStore = defineStore('global-marker', () => {
     error: managerError,
     nextUpdateTime,
     loading: updateLoading,
+    progress,
     update,
   } = useManager<ManagerContext, DiffData | void>({
     timeoutPull: {
@@ -164,7 +163,7 @@ export const useMarkerStore = defineStore('global-marker', () => {
       if (!updateList.length && !deleteIds.length && !clear) {
         context.message.value = [
           `[${context.tag.value}] `,
-          '没有需要更新的数据，',
+          '检查完成，没有需要更新的数据，',
           `耗时 ${getCostTime(context.startTime.value).toFixed(1)}s`,
         ].join('')
         return
@@ -178,27 +177,20 @@ export const useMarkerStore = defineStore('global-marker', () => {
       ].join('')
     },
 
-    commit: data => {
+    commit: async (data, _context, task) => {
       if (!data) return
       const { updateList, deleteIds, clear } = data
       if (!updateList.length && !deleteIds.length && !clear) return
-      const worker = new BulkPutWorker({ name: '点位更新线程' })
-      worker.addEventListener('message', (ev: MessageEvent<WorkerOutput>) => {
-        worker.terminate()
-        const { error, message } = ev.data ?? {}
-        // 写入失败时至少留下痕迹，否则本地缓存与内存状态会静默错位
-        if (error) logger.error(`本地点位写入失败：${message}`)
-      })
-      worker.addEventListener('error', ev => {
-        worker.terminate()
-        logger.error(`本地点位写入线程异常：${ev.message}`)
-      })
-      worker.postMessage(<WorkerInput<number, MarkerVo>>{
+      const { error, message } = await bulkWrite<number, MarkerVo>({
+        name: '点位更新线程',
         tableName: 'marker',
         clear,
         bulkPutData: updateList,
         bulkDeleteKeys: deleteIds,
+        onProgress: (loaded, total) => task.report({ loaded, total }),
       })
+      // 写入失败时至少留下痕迹，否则本地缓存与内存状态会静默错位
+      if (error) logger.error(`本地点位写入失败：${message}`)
     },
 
     init: async context => {
@@ -209,30 +201,38 @@ export const useMarkerStore = defineStore('global-marker', () => {
       updateLocal({ updateList: localMarkers })
     },
 
-    diff: async context => {
+    diff: async (context, task) => {
       context.startTime.value = Date.now()
       context.tag.value = '差异'
-      context.message.value = `[${context.tag.value}] 拉取比对快照...`
+      context.message.value = `[${context.tag.value}] 正在查询比对快照...`
       // 快照请求期间可能有点位被新增，先记录当前本地 id，避免被误判为已删除
       const ownedIds = new Set(localMarkerMap.value.keys())
       const { snapshots } = await Apis.marker_doc.listMarkerDiffSnapshotByBinary()
       if (!Array.isArray(snapshots)) throw new Error('点位差异快照响应异常')
+      task.report(0.15)
+
       context.message.value = `[${context.tag.value}] 计算差异...`
       const { fetchIds, patches, deleteIds } = await diffMarkers(
         snapshots,
         localMarkerMap.value,
         ownedIds,
       )
+      task.report(0.3)
+
       let updateList: MarkerVo[] = []
       if (fetchIds.length) {
         context.message.value = `[${context.tag.value}] 拉取更新数据 (0/${fetchIds.length})...`
+        // 分批拉取是差异更新的主要耗时，占掉阶段内 30% ~ 95% 的进度
         updateList = await fetchMarkersByIds(fetchIds, {
           limit: QUERY_LIMIT,
           concurrency: QUERY_CONCURRENCY,
           onProgress: (loaded, total) => {
+            task.report({ loaded, total }, { from: 0.3, to: 0.95 })
             context.message.value = `[${context.tag.value}] 拉取更新数据 (${loaded}/${total})...`
           },
         })
+      } else {
+        task.report(0.95)
       }
       // 关联变更不会提升 version，快照里的 linkageId 已经是权威值，就地修正后一并写入本地缓存
       for (let i = 0; i < patches.length; i++) {
@@ -315,6 +315,7 @@ export const useMarkerStore = defineStore('global-marker', () => {
     managerError,
     nextUpdateTime,
     updateLoading,
+    progress,
     update,
     updateLocal,
 

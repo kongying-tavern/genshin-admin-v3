@@ -1,11 +1,10 @@
 import type { ItemVo } from '@/api/alova/globals'
-import type { WorkerInput } from '@/worker/idb.worker'
+import type { ManagerTask } from './hooks'
 import { Box } from '@element-plus/icons-vue'
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import BulkPutWorker from '@/worker/idb.worker?worker'
 import { useAccessStore, useSocketStore, useUserStore } from '.'
 import { useManager } from './hooks'
-import { getCostTime } from './utils'
+import { bulkWrite, getCostTime } from './utils'
 
 interface ManagerContext {
   startTime: Ref<number>
@@ -19,7 +18,7 @@ interface DiffData {
   clear?: boolean
 }
 
-const getAllItems = async (context: ManagerContext) => {
+const getAllItems = async (context: ManagerContext, task: ManagerTask) => {
   context.message.value = '正在获取区域列表'
   const areaIds = await Apis.area.listArea({
     data: { isTraverse: true },
@@ -44,6 +43,7 @@ const getAllItems = async (context: ManagerContext) => {
         itemMap.set(item.id!, item)
       }
       finished += 1
+      task.report({ loaded: finished, total })
       context.message.value = `正在获取物品列表 (${finished}/${total})`
     }),
   )
@@ -142,6 +142,7 @@ export const useItemStore = defineStore('global-item', () => {
     error: managerError,
     nextUpdateTime,
     loading: updateLoading,
+    progress,
     update,
   } = useManager<ManagerContext, DiffData | void>({
     timeoutPull: {
@@ -160,7 +161,7 @@ export const useItemStore = defineStore('global-item', () => {
       if (!data.updateList.length && !data.deleteIds.length) {
         context.message.value = [
           `[${context.tag.value}] `,
-          '没有需要更新的数据，',
+          '检查完成，没有需要更新的数据，',
           `耗时 ${getCostTime(context.startTime.value).toFixed(1)}s`,
         ].join('')
         return
@@ -175,41 +176,40 @@ export const useItemStore = defineStore('global-item', () => {
       ].join('')
     },
 
-    commit: data => {
+    commit: async (data, context, task) => {
       if (!data || (!data.updateList.length && !data.deleteIds.length)) return
-      const worker = new BulkPutWorker({ name: '物品更新线程' })
-      worker.addEventListener('message', () => {
-        worker.terminate()
-      })
-      worker.postMessage(<WorkerInput<number, ItemVo>>{
+      const { error, message } = await bulkWrite<number, ItemVo>({
+        name: '物品更新线程',
         tableName: 'item',
         clear: data.clear,
         bulkPutData: data.updateList,
         bulkDeleteKeys: data.deleteIds,
+        onProgress: (loaded, total) => task.report({ loaded, total }),
       })
+      if (error) context.message.value = `[${context.tag.value}] 物品写入失败：${message}`
     },
 
-    init: async context => {
+    init: async (context, task) => {
       context.startTime.value = Date.now()
       context.tag.value = '初始化'
       context.message.value = `[${context.tag.value}] 拉取最新数据...`
-      const localItems = await getAllItems(context)
+      const localItems = await getAllItems(context, task)
       updateLocal({ updateList: localItems })
       context.message.value = `[${context.tag.value}] 完毕: ${getCostTime(context.startTime.value).toFixed(1)}s`
     },
 
-    diff: async () => {
+    diff: async (context, task) => {
       context.startTime.value = Date.now()
       context.tag.value = '差异'
       context.message.value = '物品数据暂不支持差异更新'
-      const updateList = await getAllItems(context)
+      const updateList = await getAllItems(context, task)
       return { updateList, deleteIds: [] }
     },
 
-    full: async () => {
+    full: async (context, task) => {
       context.startTime.value = Date.now()
       context.tag.value = '全量'
-      const updateList = await getAllItems(context)
+      const updateList = await getAllItems(context, task)
       return { updateList, deleteIds: [] }
     },
   })
@@ -260,6 +260,7 @@ export const useItemStore = defineStore('global-item', () => {
     managerError,
     nextUpdateTime,
     updateLoading,
+    progress,
     update,
     createItem,
     updateItem,
