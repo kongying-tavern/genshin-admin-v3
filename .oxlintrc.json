@@ -18,7 +18,10 @@
     "coverage/**",
     "temp/**",
     "src/api/protobuf/compiled.js",
-    "src/api/protobuf/compiled.d.ts"
+    "src/api/protobuf/compiled.d.ts",
+    "src/api/alova/apiDefinitions.ts",
+    "src/api/alova/createApis.ts",
+    "src/api/alova/globals.d.ts"
   ],
   "rules": {
     // 一般情况下不允许使用 console

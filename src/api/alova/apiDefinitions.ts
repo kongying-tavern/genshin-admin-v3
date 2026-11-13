@@ -1,6 +1,6 @@
 /// <reference types='./globals.d.ts' />
 /* tslint:disable */
-/* oxlint-disable */
+/* eslint-disable */
 /**
  * OpenAPI definition - version v0
  *
@@ -47,6 +47,7 @@ export default {
   'archive.saveArchive': ['POST', '/system/archive/save/{slot_index}'],
   'archive.renameSlot': ['POST', '/system/archive/rename/{slot_index}/{new_name}'],
   'action_log.searchActionLog': ['POST', '/system/action_log/list'],
+  'dspVerifyController.verify': ['POST', '/dsp/verify'],
   'score.generate': ['POST', '/api/score/generate'],
   'score.getData': ['POST', '/api/score/data'],
   'route.updateRoute': ['POST', '/api/route'],
@@ -99,10 +100,7 @@ export default {
   'marker_link_doc.listAllMarkerLinkageBinary': ['GET', '/api/marker_link_doc/all_list_bin'],
   'marker_link_doc.listAllMarkerLinkageBinaryMD5': ['GET', '/api/marker_link_doc/all_list_bin_md5'],
   'marker_link_doc.graphAllMarkerLinkageBinary': ['GET', '/api/marker_link_doc/all_graph_bin'],
-  'marker_link_doc.graphAllMarkerLinkageBinaryMD5': [
-    'GET',
-    '/api/marker_link_doc/all_graph_bin_md5',
-  ],
+  'marker_link_doc.graphAllMarkerLinkageBinaryMD5': ['GET', '/api/marker_link_doc/all_graph_bin_md5'],
   'marker_doc.listMarkerBinaryMD5': ['GET', '/api/marker_doc/list_page_bin_md5'],
   'marker_doc.listPageMarkerByBinary': ['GET', '/api/marker_doc/list_page_bin/{md5}'],
   'marker_doc.listMarkersByBinary': ['GET', '/api/marker_doc/list_markers'],
@@ -135,5 +133,5 @@ export default {
   'cache.cleanIconCache': ['DELETE', '/api/cache/icon'],
   'cache.cleanCommonItemCache': ['DELETE', '/api/cache/commonItem'],
   'cache.cleanAreaCache': ['DELETE', '/api/cache/area'],
-  'area.deleteArea': ['DELETE', '/api/area/{areaId}'],
-}
+  'area.deleteArea': ['DELETE', '/api/area/{areaId}']
+};
