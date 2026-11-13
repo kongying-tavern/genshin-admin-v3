@@ -1,7 +1,9 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
   "include": ["types/**/*", "src/**/*", "tests/**/*"],
-  "exclude": ["./src/api/protobuf/compiled.js"],
+  // tests 下的 .mjs 是 Node 命令行编排脚本（run-parity / diff-report），不是浏览器侧代码，
+  // 由 tsconfig.node.json 接管；放在这里会被 checkJs 按 DOM+strict 规则逐行报隐式 any。
+  "exclude": ["./src/api/protobuf/compiled.js", "tests/**/*.mjs"],
   "compilerOptions": {
     "alwaysStrict": true,
     "checkJs": true,

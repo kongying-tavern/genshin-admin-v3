@@ -3,11 +3,17 @@
   "include": [
     "vite.config.ts",
     "vitest.config.ts",
+    "vitest.parity.config.ts",
     "./plugins/**/*",
     "./.vite/**/*",
-    "types/env.d.ts"
+    "types/env.d.ts",
+    // Node 命令行脚本：双环境 parity 编排与离线 diff 报告
+    "tests/api/parity/**/*.mjs"
   ],
   "compilerOptions": {
+    // 纳入 .mjs 仅为归属到此 Node 项目（拿到 node 全局与模块解析），不做 JS 类型检查
+    "allowJs": true,
+    "checkJs": false,
     "incremental": true,
     "composite": true,
     "noEmit": true,
