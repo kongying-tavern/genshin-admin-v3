@@ -23,7 +23,7 @@ const shortcutStore = useShortcutStore()
 const archiveStore = useArchiveStore()
 
 const existKeys = computed(() => {
-  return Object.entries(archiveStore.currentArchive.body.Preference)
+  return Object.entries(archiveStore.preference)
     .filter(([key]) => key.startsWith('app.shortcutKey'))
     .reduce((set, [_, value]) => {
       if (typeof value !== 'string' || !value) return set

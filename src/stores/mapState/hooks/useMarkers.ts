@@ -33,11 +33,9 @@ export const useMarkers = (options: MarkerHookOptions) => {
   const { markerFilterType } = useMarkerFilter(options)
   const { getMAFConfig } = useMarkerAdvancedFilter(options)
 
-  const archiveItemIds = computed(
-    () => archiveStore.currentArchive.body.Preference['markerFilter.state.itemIds'] ?? [],
-  )
+  const archiveItemIds = computed(() => archiveStore.preference['markerFilter.state.itemIds'] ?? [])
   const advancedFilter = computed(
-    () => archiveStore.currentArchive.body.Preference['markerFilter.filter.advancedFilter'] ?? [],
+    () => archiveStore.preference['markerFilter.filter.advancedFilter'] ?? [],
   )
 
   /** 当前基础筛选器（地区-类型-物品）条件表示下的所有点位 */

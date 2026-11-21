@@ -66,7 +66,7 @@ const stroke = ref('transparet')
 
 // ==================== 交互 ====================
 const shortcutKeys = computed(() => {
-  return archiveStore.currentArchive.body.Preference['app.shortcutKey.toggleMarkerState']
+  return archiveStore.preference['app.shortcutKey.toggleMarkerState']
 })
 
 const { focused } = useFocus(mapCanvasRef)

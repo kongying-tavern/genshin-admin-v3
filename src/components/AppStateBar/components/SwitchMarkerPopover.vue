@@ -6,10 +6,10 @@ const archiveStore = useArchiveStore()
 
 const isPopoverHide = computed({
   get: () => {
-    return archiveStore.currentArchive.body.Preference['map.setting.hideMarkerPopover']
+    return archiveStore.preference['map.setting.hideMarkerPopover']
   },
   set: v => {
-    archiveStore.currentArchive.body.Preference['map.setting.hideMarkerPopover'] = v
+    archiveStore.preference['map.setting.hideMarkerPopover'] = v
   },
 })
 

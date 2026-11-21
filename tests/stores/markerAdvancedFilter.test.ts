@@ -47,11 +47,7 @@ const createGroup = (): MAFGroup => ({
 
 /** hook 内部存在模块级单例缓存，测试间通过整体替换 Preference 夹具来隔离状态 */
 const archiveStore = reactive({
-  currentArchive: {
-    body: {
-      Preference: {} as Record<string, MAFGroup[]>,
-    },
-  },
+  preference: {} as Record<string, MAFGroup[]>,
 }) as unknown as ReturnType<typeof useArchiveStore>
 
 let hook: ReturnType<typeof useMarkerAdvancedFilter>
@@ -62,7 +58,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   setActivePinia(createPinia())
-  archiveStore.currentArchive.body.Preference = {
+  archiveStore.preference = {
     'markerFilter.filter.advancedFilter': [createGroup()],
     'markerFilter.filter.advancedFilterCache': [createGroup()],
   }

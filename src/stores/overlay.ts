@@ -27,7 +27,7 @@ export const useOverlayStore = defineStore('global-map-overlays', () => {
   }
 
   const showOverlay = computed(() => {
-    return archiveStore.currentArchive.body.Preference['map.state.showOverlay']
+    return archiveStore.preference['map.state.showOverlay']
   })
 
   const mergedPlugins = computed(() => {

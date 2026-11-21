@@ -72,7 +72,7 @@ export const createArchiveCommands = (): BridgeCommand[] => [
   {
     id: 'archive.flush',
     title: '立即同步存档',
-    description: '跳过自动去抖，立即将当前存档写入本地与远程槽位',
+    description: '立即同步待保存的点位进度和账号设置，登录后的设置写入 1 号槽位',
     access: 'write',
     params: objectSchema({}),
     returns: '{ synced }',

@@ -38,7 +38,7 @@ export const useTileStore = defineStore('global-map-tile', () => {
   const archiveStore = useArchiveStore()
 
   const areaCode = computed(() => {
-    return archiveStore.currentArchive.body.Preference['markerFilter.state.areaCode']
+    return archiveStore.preference['markerFilter.state.areaCode']
   })
 
   const mergedTiles = computed(() => {

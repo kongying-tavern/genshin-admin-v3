@@ -34,7 +34,7 @@ const _useMarkerControl = () => {
   const sync = useMapEntitySync()
 
   const hideMarkerPopover = computed(() => {
-    return archiveStore.currentArchive.body.Preference['map.setting.hideMarkerPopover']
+    return archiveStore.preference['map.setting.hideMarkerPopover']
   })
 
   /** 缓存的点位信息, 用于在关闭弹窗时保持信息，使动画显示状态平滑 */
@@ -193,7 +193,7 @@ const _useMarkerControl = () => {
       if (item?.areaId === undefined) return
       const area = areaStore.areaIdMap.get(item.areaId)
       if (area?.code === undefined) return
-      archiveStore.currentArchive.body.Preference['markerFilter.state.areaCode'] = area.code
+      archiveStore.preference['markerFilter.state.areaCode'] = area.code
     })()
 
     // 将视口移动到点位附近

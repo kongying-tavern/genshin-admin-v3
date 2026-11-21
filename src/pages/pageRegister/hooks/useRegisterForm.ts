@@ -5,7 +5,7 @@ import { ElMessage } from 'element-plus'
 import { reactive, ref } from 'vue'
 import Oauth from '@/api/oauth'
 import { useFetchHook } from '@/hooks'
-import { useArchiveStore, useUserStore } from '@/stores'
+import { useUserStore } from '@/stores'
 import { passwordCheck, qqCheck } from '@/utils'
 
 /** 注册逻辑封装 */
@@ -61,7 +61,6 @@ export const useRegisterForm = () => {
 
   const userStore = useUserStore()
   const router = useRouter()
-  const archiveStore = useArchiveStore()
 
   onSuccess(async auth => {
     ElMessage.success({
@@ -69,8 +68,6 @@ export const useRegisterForm = () => {
     })
     userStore.setAuth(auth)
     await router.push('/map')
-    await archiveStore.fetchArchive()
-    await archiveStore.loadLatestArchive()
   })
 
   onError(err =>

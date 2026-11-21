@@ -246,7 +246,7 @@ export const getMapState = () => {
       },
     },
     settings: {
-      hideMarkerPopover: Boolean(archive.body.Preference['map.setting.hideMarkerPopover']),
+      hideMarkerPopover: Boolean(archiveStore.preference['map.setting.hideMarkerPopover']),
       showZoneTag: preferenceStore.showZoneTag,
       transparentMarked: preferenceStore.transparentMarked,
     },

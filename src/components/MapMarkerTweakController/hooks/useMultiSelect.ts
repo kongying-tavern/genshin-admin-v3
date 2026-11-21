@@ -107,7 +107,7 @@ export const useMultiSelect = () => {
   })
 
   const shortcutKeys = computed(() => {
-    return archiveStore.currentArchive.body.Preference['app.shortcutKey.multiselectMarker']
+    return archiveStore.preference['app.shortcutKey.multiselectMarker']
   })
 
   const { focused } = useFocus(mapCanvasRef)

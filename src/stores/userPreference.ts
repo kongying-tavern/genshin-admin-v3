@@ -8,10 +8,10 @@ export const usePreferenceStore = defineStore('global-user-preference', () => {
   const model = <K extends keyof UserPreference>(key: K, defaultValue: () => UserPreference[K]) =>
     computed({
       get: () => {
-        return archiveStore.currentArchive.body.Preference[key] ?? defaultValue()
+        return archiveStore.preference[key] ?? defaultValue()
       },
       set: v => {
-        archiveStore.currentArchive.body.Preference[key] = v
+        archiveStore.preference[key] = v
       },
     }) as Ref<NonNullable<UserPreference[K]>>
 

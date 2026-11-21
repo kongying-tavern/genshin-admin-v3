@@ -20,9 +20,9 @@ const preferenceStore = usePreferenceStore()
 
 /** 是否显示限定地区数据 */
 const showRestrictedArea = computed({
-  get: () => archiveStore.currentArchive.body.Preference['userCenter.setting.showRestrictedArea'],
+  get: () => archiveStore.preference['userCenter.setting.showRestrictedArea'],
   set: v => {
-    archiveStore.currentArchive.body.Preference['userCenter.setting.showRestrictedArea'] = v
+    archiveStore.preference['userCenter.setting.showRestrictedArea'] = v
   },
 })
 

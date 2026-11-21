@@ -16,8 +16,7 @@ export const useMarkerFilter = (options: MarkerFilterHookOptions) => {
   const { markerAdvancedFilters } = useMarkerAdvancedFilter(options)
 
   const markerFilterType = computed(() => {
-    const type =
-      archiveStore.currentArchive.body.Preference['markerFilter.setting.filterType'] ?? 'basic'
+    const type = archiveStore.preference['markerFilter.setting.filterType'] ?? 'basic'
     return ['basic', 'advanced'].includes(type) ? type : 'basic'
   })
 

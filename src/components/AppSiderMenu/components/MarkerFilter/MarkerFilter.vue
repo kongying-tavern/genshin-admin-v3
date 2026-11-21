@@ -11,7 +11,7 @@ const archiveStore = useArchiveStore()
 const mapStateStore = useMapStateStore()
 
 const filterType = computed(() => {
-  return archiveStore.currentArchive.body.Preference['markerFilter.setting.filterType']
+  return archiveStore.preference['markerFilter.setting.filterType']
 })
 
 /** 筛选预设管理器 */

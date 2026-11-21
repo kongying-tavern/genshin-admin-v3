@@ -185,7 +185,9 @@ await __MAP_AI__.events.waitFor({
 | `archive.state` | R | 当前存档槽位、已完成点位数、时间戳 |
 | `archive.mark` | W | 标记点位完成，参数 `{ id }` |
 | `archive.unmark` | W | 取消点位完成，参数 `{ id }` |
-| `archive.flush` | W | 立即同步存档 |
+| `archive.flush` | W | 立即同步待保存的点位进度和账号设置 |
+
+点位进度属于激活的槽位。登录后，前端会自动补建 1 号槽位，所有槽位共用其中的账号设置。1 号槽位保留点位进度，在前端仅可读取当前版本。其他槽位可读取历史进度，读取时继续使用账号设置。
 
 ### 4.9 `forms`
 
@@ -272,7 +274,7 @@ await __MAP_AI__.call('ui.surfaces.open', {
 
 `ui.surfaces.open` 返回 `{ id, opened, queued, sinceSeq }`。如果已有其他全局弹窗，新弹窗会排队，`queued: true`。
 
-「点位在线核对」可在「设置 → 地图」开启，默认关闭，当前设置随存档保存。关闭时，点位弹层直接读取本地缓存，`state.loading` 为 false。开启时，`ui.surfaces.get` 的 `state.loading` 表示正在核对详情，成功后可读取 `state.title`。服务端确认删除时，弹层自动关闭。
+「点位在线核对」可在「设置 → 地图」开启，默认关闭，登录后随 1 号槽位的账号设置同步。关闭时，点位弹层直接读取本地缓存，`state.loading` 为 false。开启时，`ui.surfaces.get` 的 `state.loading` 表示正在核对详情，成功后可读取 `state.title`。服务端确认删除时，弹层自动关闭。
 
 ## 6. 表单反射
 

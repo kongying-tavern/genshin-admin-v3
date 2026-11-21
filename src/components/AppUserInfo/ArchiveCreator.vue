@@ -47,7 +47,7 @@ const {
     if (archiveName.value.length < 1) throw new Error('存档名称长度不能小于 1 个字符')
     await archiveStore.createArchiveSlot(archiveName.value, index.value, saveCurrent.value)
     await archiveStore.fetchArchive()
-    archiveStore.loadArchiveSlot(index.value)
+    await archiveStore.loadArchiveSlot(index.value)
   },
 })
 
@@ -86,7 +86,7 @@ onUnmounted(() => {
         <GSInput v-model="archiveName" placeholder="请输入存档名称" />
         <GSSwitch
           v-model="saveCurrent"
-          label="同时保存当前数据"
+          label="复制当前点位进度"
           label-inactive-color="#D1D5DB"
           label-active-color="#D1D5DB"
         />

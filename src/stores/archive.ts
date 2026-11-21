@@ -1,92 +1,67 @@
-import type { SysArchiveSlotVo, SysArchiveVo } from '@/api/alova/globals'
-import type { UserPreference } from '@/stores/types/userPreference'
+import type { UserArchiveBody } from 'types/database'
+import type { ArchiveData, StoredProgress } from './archiveSlots'
+import type { UserPreference } from './types'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import db from '@/database'
-import { useFetchHook } from '@/hooks'
 import { useUserStore } from '@/stores'
 import { Logger, messageFrom, sleep } from '@/utils'
+import {
+  emptySlots,
+  mergePreference,
+  readArchive,
+  readArchiveSlots,
+  readProgress,
+  SETTINGS_SLOT,
+  settingsBody,
+  SLOT_COUNT,
+  storeProgress,
+} from './archiveSlots'
 import { getDefaultPreference } from './types'
 
-export interface ArchiveBody {
-  /** 点位存档 */
-  Data_KYJG: Set<number>
-  /**
-   * 刷新时间存档
-   * @format `YYYY/MM/DD HH:mm:ss`
-   */
-  Time_KYJG: Record<number, string>
-  /** 用户首选项 */
-  Preference: Partial<UserPreference>
-}
+export type { ArchiveBody, ArchiveData, ArchiveSlotData } from './archiveSlots'
+export { SETTINGS_SLOT } from './archiveSlots'
 
-export interface ArchiveData {
-  id: number
-  slotIndex: number
-  body: ArchiveBody
-  timestamp: number
-  historyIndex?: number
-}
-
-export interface ArchiveSlotData extends SysArchiveSlotVo {
-  archiveList: ArchiveData[]
-  timestamp: number
-}
-
-/** 自动同步的去抖间隔（ms） */
 const SYNC_DEBOUNCE_DELAY = 300
-/** 同步失败后的重试间隔（ms），实际间隔会随尝试次数递增 */
 const SYNC_RETRY_DELAY = 2000
-/** 单次同步的最大尝试次数 */
 const SYNC_RETRY_LIMIT = 3
+const LOCAL_SLOT = -1
 
-const parserArchive = (
-  { archive = '', time = '', historyIndex }: SysArchiveVo,
-  options: { slotIndex: number; userId: number },
-): ArchiveData => {
-  const {
-    Data_KYJG: datas = [],
-    Time_KYJG: times = {},
-    Preference: preference = {},
-  } = JSON.parse(archive) as {
-    Data_KYJG?: (string | number)[]
-    Time_KYJG?: Record<number, string>
-    Preference?: Partial<UserPreference>
-  }
-  return {
-    id: options.userId,
-    slotIndex: options.slotIndex,
-    historyIndex,
-    body: {
-      Data_KYJG: new Set(datas.map(Number)),
-      Time_KYJG: times,
-      Preference: preference,
-    },
-    timestamp: new Date(time).getTime(),
-  }
-}
-
-const initArchiveList = (): Record<number, ArchiveSlotData | undefined> =>
-  Object.fromEntries(Array.from({ length: 5 }).map((_, index) => [index + 1, undefined]))
-
-const initArchive = (): ArchiveData => ({
-  id: -1,
-  slotIndex: -1,
-  body: {
-    Data_KYJG: new Set(),
-    Time_KYJG: {},
-    Preference: getDefaultPreference(),
-  },
-  timestamp: new Date().getTime(),
+const emptyArchive = (id: number): ArchiveData => ({
+  id,
+  slotIndex: LOCAL_SLOT,
+  body: readProgress(),
+  timestamp: 0,
 })
 
-/** 存档管理 */
+/** 账号设置与当前点位进度各自记录已同步的快照。所有读写按账号串行。 */
+const newSession = (id: number) => ({
+  id,
+  ready: false,
+  queue: Promise.resolve(),
+  fetching: undefined as Promise<void> | undefined,
+  syncedProgress: '',
+  syncedPreference: '',
+})
+type Session = ReturnType<typeof newSession>
+
 export const useArchiveStore = defineStore('global-archive', () => {
   const userStore = useUserStore()
   const logger = new Logger('存档同步')
+  const accountId = () => (userStore.validateToken() ? (userStore.auth.userId ?? -1) : -1)
+  let session = newSession(accountId())
+  const currentArchive = ref<ArchiveData>(emptyArchive(session.id))
+  const preference = ref<Partial<UserPreference>>(getDefaultPreference())
+  const archiveSlots = shallowRef(emptySlots())
+  const fetchLoading = ref(false)
+  const fetchError = ref('')
 
-  const currentArchive = ref<ArchiveData>(initArchive())
+  const progressJSON = () => JSON.stringify(storeProgress(currentArchive.value.body))
+  const preferenceJSON = () => JSON.stringify(preference.value)
+  const isDirty = (s: Session) =>
+    progressJSON() !== s.syncedProgress || preferenceJSON() !== s.syncedPreference
+  session.syncedProgress = progressJSON()
+  session.syncedPreference = preferenceJSON()
 
-  /** 点位存档 hash，用于触发地图点位重绘 */
   const hash = asyncComputed(async () => {
     const res = [...currentArchive.value.body.Data_KYJG.values()].join('')
     const digest = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(res))
@@ -95,278 +70,459 @@ export const useArchiveStore = defineStore('global-archive', () => {
       .join('')
   }, '')
 
-  const getJSONArchive = () =>
-    JSON.stringify({
-      Data_KYJG: [...currentArchive.value.body.Data_KYJG],
-      Time_KYJG: currentArchive.value.body.Time_KYJG,
-      Preference: currentArchive.value.body.Preference,
-    })
-
-  // ==================== 同步队列 ====================
-  /** 最近一次成功同步（本地 + 远程）的存档内容快照，用于跳过无变化的同步 */
-  let syncedSnapshot = getJSONArchive()
-  /** 自动同步的去抖定时器 */
-  let syncTimer: ReturnType<typeof setTimeout> | undefined
-  /** 串行同步链，保证同一时刻只有一个同步任务执行，避免远端写入乱序 */
-  let syncQueue: Promise<void> = Promise.resolve()
-
-  /** 捕获当前存档内容快照 */
-  const captureSnapshot = () => ({
-    json: getJSONArchive(),
-    timestamp: currentArchive.value.timestamp,
-  })
-
-  /** 将存档写入本地数据库 */
-  const persistLocalArchive = async (json: string, timestamp: number) => {
-    await db.userArchive.put({
-      // 未登录时存入 id 为 -1 的本地用户存档
-      id: userStore.validateToken() ? userStore.auth.userId! : -1,
-      body: JSON.parse(json),
-      timestamp,
-    })
+  const assertCurrent = (s: Session) => {
+    if (s !== session || accountId() !== s.id) throw new Error('存档账号已切换')
   }
 
-  /** 带重试地写入远程槽位 */
-  const saveRemoteArchive = async (slotIndex: number, json: string) => {
-    for (let attempt = 1; ; attempt += 1) {
+  const enqueue = <T>(s: Session, action: () => Promise<T>) => {
+    const task = s.queue.then(() => {
+      assertCurrent(s)
+      return action()
+    })
+    s.queue = task.then(
+      () => {},
+      () => {},
+    )
+    return task
+  }
+
+  const activate = (s: Session, archive: ArchiveData) => {
+    const progress = storeProgress(archive.body)
+    currentArchive.value = { ...archive, body: readProgress(progress) }
+    s.syncedProgress = JSON.stringify(progress)
+  }
+
+  const setPreference = (s: Session, value: Partial<UserPreference>) => {
+    preference.value = value
+    s.syncedPreference = preferenceJSON()
+  }
+
+  const acceptCloudPreference = (
+    s: Session,
+    cloud: Partial<UserPreference>,
+    baseline = s.syncedPreference,
+  ) => {
+    const merged = mergePreference(cloud, baseline, preference.value)
+    if (JSON.stringify(merged) !== preferenceJSON()) preference.value = merged
+    s.syncedPreference = JSON.stringify(cloud)
+  }
+
+  const localSnapshot = (): UserArchiveBody => {
+    const { id, slotIndex, timestamp, body } = currentArchive.value
+    const progress = storeProgress(body)
+    const settings = preferenceJSON()
+    const pending = {
+      progress: slotIndex !== LOCAL_SLOT && JSON.stringify(progress) !== session.syncedProgress,
+      preference: id !== -1 && settings !== session.syncedPreference,
+    }
+    return {
+      id,
+      slotIndex,
+      timestamp,
+      body: progress,
+      preference: JSON.parse(settings),
+      pending: pending.progress || pending.preference ? pending : undefined,
+    }
+  }
+
+  const saveRemote = async (s: Session, slotIndex: number, data: string) => {
+    for (let attempt = 1; ; attempt++) {
+      assertCurrent(s)
       try {
         await Apis.archive.saveArchive({
           pathParams: { slot_index: slotIndex },
-          data: json,
+          data,
+          shareRequest: false,
         })
+        assertCurrent(s)
         return
       } catch (err) {
+        assertCurrent(s)
         if (attempt >= SYNC_RETRY_LIMIT) throw err
         await sleep(SYNC_RETRY_DELAY * attempt)
       }
     }
   }
 
-  /**
-   * 执行一次同步
-   * @param force 忽略「内容未变化」的跳过判断，强制执行写入
-   * @param slotIndex 远程目标槽位
-   * @returns 是否同步成功，失败时保留脏数据以便重试
-   */
-  const performSync = async (force: boolean, slotIndex: number) => {
-    const { json, timestamp } = captureSnapshot()
-    // 内容未变化且非强制时跳过，避免重复写入
-    if (!force && json === syncedSnapshot) return true
-    try {
-      await persistLocalArchive(json, timestamp)
-      // 仅登录且目标为有效远程槽位时才写入远程
-      if (slotIndex > 0 && slotIndex <= 5 && userStore.validateToken())
-        await saveRemoteArchive(slotIndex, json)
-      // 仅当同步期间内容未再变化时，才将该快照标记为已同步，避免覆盖加载后的新快照
-      if (captureSnapshot().json === json) syncedSnapshot = json
-      return true
-    } catch (err) {
-      logger.error(`槽位 ${slotIndex} 同步失败：${messageFrom(err)}`)
-      return false
-    }
+  const readRemote = async (s: Session) => {
+    const { data } = await Apis.archive.getAllHistoryArchive({ shareRequest: false })
+    assertCurrent(s)
+    if (!Array.isArray(data)) throw new Error('云存档列表读取失败')
+    return readArchiveSlots(data, s.id)
   }
 
-  /** 将同步任务排入串行队列，保证同步顺序执行，失败时自动重试 */
-  const enqueueSync = (force: boolean, slotIndex?: number) => {
-    if (syncTimer !== undefined) {
-      clearTimeout(syncTimer)
-      syncTimer = undefined
-    }
-    const target = slotIndex ?? currentArchive.value.slotIndex
-    const task = syncQueue.then(async () => {
-      const synced = await performSync(force, target)
-      // 同步失败时保留脏数据，稍后自动重试
-      if (!synced) {
-        syncTimer = setTimeout(() => {
-          syncTimer = undefined
-          enqueueSync(false)
-        }, SYNC_RETRY_DELAY)
+  const latestProgress = (slots: ReturnType<typeof emptySlots>) =>
+    Object.values(slots)
+      .map(slot => slot?.latest)
+      .filter((archive): archive is ArchiveData => Boolean(archive))
+      .sort((a, b) => b.timestamp - a.timestamp)[0]
+
+  /** 仅在成功读取槽位列表后补建 1 号槽位。创建响应丢失或并发创建时，以回读为准。 */
+  const fetchSlots = async (s: Session) => {
+    let remote = await readRemote(s)
+    const migrationPreference = s.ready
+      ? preference.value
+      : (remote.legacyPreference ?? preference.value)
+    if (!remote.slots[SETTINGS_SLOT]) {
+      const local = currentArchive.value
+      const initial =
+        local.slotIndex === SETTINGS_SLOT || !latestProgress(remote.slots)
+          ? local
+          : emptyArchive(s.id)
+      const data = settingsBody(storeProgress(initial.body), migrationPreference, initial.timestamp)
+      let creationError: unknown
+      try {
+        await Apis.archive.createSlotAndSaveArchive({
+          pathParams: { slot_index: SETTINGS_SLOT, name: '默认存档' },
+          data,
+          shareRequest: false,
+        })
+      } catch (err) {
+        creationError = err
       }
-    })
-    syncQueue = task.catch(() => {})
-    return task
+      assertCurrent(s)
+      remote = await readRemote(s)
+      if (!remote.slots[SETTINGS_SLOT]) throw creationError ?? new Error('未能创建 1 号槽位')
+    }
+
+    const primary = remote.slots[SETTINGS_SLOT]!
+    if (!remote.preference) {
+      // 老槽位可能只有点位，或在旧客户端中已回退到空。只迁移一次设置。
+      const latest = primary.latest ?? { ...emptyArchive(s.id), slotIndex: SETTINGS_SLOT }
+      remote.preference = JSON.parse(JSON.stringify(migrationPreference)) as Partial<UserPreference>
+      await saveRemote(
+        s,
+        SETTINGS_SLOT,
+        settingsBody(storeProgress(latest.body), remote.preference, latest.timestamp),
+      )
+      primary.latest = latest
+    }
+    assertCurrent(s)
+    archiveSlots.value = remote.slots
+    const previousSettings = preferenceJSON()
+    acceptCloudPreference(s, remote.preference)
+
+    if (!s.ready) {
+      const previousSlot = remote.slots[currentArchive.value.slotIndex]?.latest
+      if (progressJSON() === s.syncedProgress) {
+        const active = previousSlot ?? latestProgress(remote.slots)
+        if (active) activate(s, active)
+      } else if (!previousSlot) {
+        // 原槽位已在其他设备删除，保留本地待保存进度。
+        currentArchive.value.slotIndex = LOCAL_SLOT
+      }
+    }
+    if (!s.ready || previousSettings !== preferenceJSON()) await db.userArchive.put(localSnapshot())
+    assertCurrent(s)
+    s.ready = true
+    if (isDirty(s)) scheduleSync()
   }
 
-  /** 延迟执行自动同步（去抖合并连续变更） */
+  const fetchArchive = () => {
+    const s = session
+    if (s.id === -1) return Promise.resolve()
+    if (s.fetching) return s.fetching
+    fetchLoading.value = true
+    fetchError.value = ''
+    s.fetching = enqueue(s, () => fetchSlots(s))
+      .catch(err => {
+        if (s === session) {
+          fetchError.value = messageFrom(err)
+          logger.error(`读取云存档失败：${fetchError.value}`)
+        }
+        throw err
+      })
+      .finally(() => {
+        s.fetching = undefined
+        if (s === session) fetchLoading.value = false
+      })
+    return s.fetching
+  }
+
+  const recordSave = (s: Session, slotIndex: number, progress: StoredProgress, time: number) => {
+    const slot = archiveSlots.value[slotIndex]
+    if (!slot) return
+    const latest = { id: s.id, slotIndex, body: readProgress(progress), timestamp: time }
+    archiveSlots.value = {
+      ...archiveSlots.value,
+      [slotIndex]: { ...slot, latest, updateTime: new Date().toISOString() },
+    }
+  }
+
+  /** 1 号包含进度和设置。只改其中一项时，从云端取另一项再写回。 */
+  const saveSettingsSlot = async (
+    s: Session,
+    changedProgress: StoredProgress | undefined,
+    changedPreference: Partial<UserPreference> | undefined,
+  ) => {
+    assertCurrent(s)
+    const { data } = await Apis.archive.getLastArchive({
+      pathParams: { slot_index: SETTINGS_SLOT },
+      shareRequest: false,
+    })
+    assertCurrent(s)
+    if (!data?.archive) throw new Error('未能读取 1 号槽位的当前存档')
+    const { archive: latest, preference: remotePreference } = readArchive(data, SETTINGS_SLOT, s.id)
+    const remoteProgress = storeProgress(latest.body)
+    const progress = changedProgress ?? remoteProgress
+    const time =
+      changedProgress && JSON.stringify(progress) !== JSON.stringify(remoteProgress)
+        ? Date.now()
+        : latest.timestamp
+    const cloudSettings = remotePreference ?? preference.value
+    const settings = changedPreference
+      ? mergePreference(cloudSettings, s.syncedPreference, changedPreference)
+      : cloudSettings
+    await saveRemote(s, SETTINGS_SLOT, settingsBody(progress, settings, time))
+    assertCurrent(s)
+    recordSave(s, SETTINGS_SLOT, progress, time)
+    if (
+      !changedProgress
+      && currentArchive.value.slotIndex === SETTINGS_SLOT
+      && JSON.stringify(progress) !== s.syncedProgress
+      && progressJSON() === s.syncedProgress
+    )
+      activate(s, latest)
+    acceptCloudPreference(
+      s,
+      settings,
+      changedPreference ? JSON.stringify(changedPreference) : s.syncedPreference,
+    )
+    return time
+  }
+
+  const syncChanges = async (s: Session, target?: number) => {
+    const local = localSnapshot()
+    const source = currentArchive.value.slotIndex
+    const slot = target ?? source
+    const progress = JSON.stringify(local.body)
+    const settings = JSON.stringify(local.preference)
+    const saveProgress = target !== undefined || progress !== s.syncedProgress
+    const savePreference = settings !== s.syncedPreference
+    if (!saveProgress && !savePreference) return
+
+    await db.userArchive.put(local)
+    assertCurrent(s)
+    if (s.id === -1) {
+      s.syncedProgress = progress
+      s.syncedPreference = settings
+      return
+    }
+    if (!s.ready) throw new Error('云存档尚未就绪')
+    try {
+      let progressError: unknown
+      if (saveProgress && slot !== SETTINGS_SLOT) {
+        try {
+          if (slot !== LOCAL_SLOT) {
+            await saveRemote(s, slot, progress)
+            assertCurrent(s)
+            const time = Date.now()
+            recordSave(s, slot, local.body, time)
+            if (slot === source) currentArchive.value.timestamp = time
+          }
+          if (slot === source) s.syncedProgress = progress
+        } catch (err) {
+          if (!savePreference) throw err
+          // 普通槽位的保存失败时，仍尝试独立保存账号设置。
+          progressError = err
+        }
+      }
+      const primaryProgress = saveProgress && slot === SETTINGS_SLOT
+      if (primaryProgress || savePreference) {
+        const time = await saveSettingsSlot(
+          s,
+          primaryProgress ? local.body : undefined,
+          savePreference ? local.preference : undefined,
+        )
+        assertCurrent(s)
+        if (primaryProgress && slot === source) {
+          s.syncedProgress = progress
+          currentArchive.value.timestamp = time
+        }
+      }
+      if (progressError) throw progressError
+    } finally {
+      // 两个槽位可能只有一个写入成功。下次登录只重试尚未确认的改动。
+      if (
+        s === session
+        && (local.pending
+          || settings !== preferenceJSON()
+          || local.timestamp !== currentArchive.value.timestamp)
+      )
+        await db.userArchive.put(localSnapshot())
+    }
+  }
+
+  let syncTimer: ReturnType<typeof setTimeout> | undefined
+  const cancelTimer = () => clearTimeout(syncTimer)
   const scheduleSync = (delay = SYNC_DEBOUNCE_DELAY) => {
-    if (syncTimer !== undefined) clearTimeout(syncTimer)
+    cancelTimer()
     syncTimer = setTimeout(() => {
-      syncTimer = undefined
-      enqueueSync(false)
+      void flush().catch(() => {})
     }, delay)
   }
 
-  /** 立即执行一次同步（跳过去抖等待） */
-  const flush = () => enqueueSync(false)
+  const sync = async (target?: number) => {
+    const s = session
+    cancelTimer()
+    try {
+      if (s.id !== -1 && !s.ready) {
+        if (target === undefined && !isDirty(s)) return s.queue
+        await db.userArchive.put(localSnapshot())
+        assertCurrent(s)
+        await fetchArchive()
+      }
+      await enqueue(s, () => syncChanges(s, target))
+      if (s === session && target !== undefined && progressJSON() !== s.syncedProgress)
+        scheduleSync()
+    } catch (err) {
+      if (s === session) {
+        logger.error(`存档同步失败：${messageFrom(err)}`)
+        scheduleSync(SYNC_RETRY_DELAY)
+      }
+      throw err
+    }
+  }
+  const flush = () => sync()
 
-  const setArchive = (archiveData: ArchiveData) => {
-    currentArchive.value = archiveData
-    // 将加载的存档视为已同步，避免 watcher 将其回写
-    syncedSnapshot = getJSONArchive()
+  const saveArchiveToSlot = (slotIndex = currentArchive.value.slotIndex) => {
+    if (
+      slotIndex !== LOCAL_SLOT
+      && (!Number.isInteger(slotIndex) || slotIndex < SETTINGS_SLOT || slotIndex > SLOT_COUNT)
+    )
+      throw new Error(`无效的存档槽位 ${slotIndex}`)
+    return sync(slotIndex)
   }
 
-  const {
-    data: archiveSlots,
-    loading: fetchLoading,
-    refresh: fetchArchive,
-  } = useFetchHook({
-    onRequest: async () => {
-      const slots = initArchiveList()
-      if (!userStore.validateToken()) return slots
-      const { data = [] } = await Apis.archive.getAllHistoryArchive({})
-      data.forEach(
-        ({ archive: historyArchives = [], slotIndex = -1, updateTime, ...rest } = {}) => {
-          const archive: ArchiveSlotData = {
-            ...rest,
-            updateTime,
-            slotIndex,
-            timestamp: (updateTime ? new Date(updateTime) : new Date()).getTime(),
-            archiveList: historyArchives
-              .map(body => parserArchive(body, { slotIndex, userId: userStore.auth.userId! }))
-              .sort(({ timestamp: a }, { timestamp: b }) => b - a),
-          }
-          slots[slotIndex] = archive
-        },
-      )
-      return slots
-    },
-  })
-
-  /** 加载指定槽位的最新存档 */
-  const loadArchiveSlot = (slotIndex = -1) => {
-    if (slotIndex < 0) return
-    const archiveSlot = archiveSlots.value[slotIndex]
-    if (!archiveSlot) throw new Error(`槽位 ${slotIndex} 没有存档`)
-    const latestArchive = archiveSlot.archiveList[0]
-    if (!latestArchive) throw new Error(`槽位 ${slotIndex} 没有存档历史`)
-    setArchive(latestArchive)
-  }
-
-  /**
-   * 创建新的存档槽位
-   * - `saveCurrent` 同时保存当前应用状态为存档
-   */
-  const createArchiveSlot = async (name: string, slotIndex: number, saveCurrent = true) => {
-    if (slotIndex < 0 || slotIndex >= 5) throw new Error(`无效的存档槽位 ${slotIndex}`)
-    const data = saveCurrent
-      ? getJSONArchive()
-      : JSON.stringify({ Data_KYJG: [], Time_KYJG: {}, Preference: {} })
-    await Apis.archive.createSlotAndSaveArchive({
-      pathParams: {
-        slot_index: slotIndex,
-        name,
-      },
-      data,
+  /** 切换前排空原槽位的待写进度。异步保存期间产生的新标记也属于原槽位。 */
+  const selectArchive = (select: () => ArchiveData | undefined) => {
+    const s = session
+    return enqueue(s, async () => {
+      do {
+        await syncChanges(s)
+        assertCurrent(s)
+      } while (progressJSON() !== s.syncedProgress)
+      const archive = select()
+      if (!archive) throw new Error('没有可读取的存档')
+      activate(s, archive)
+      await db.userArchive.put(localSnapshot())
     })
   }
 
-  /**
-   * 将当前存档写入指定槽位（强制写入，用于「保存到存档」等显式操作）
-   * @param slotIndex 目标槽位，默认取当前存档槽位
-   */
-  const saveArchiveToSlot = (slotIndex = -1) => enqueueSync(true, slotIndex)
+  const loadArchiveSlot = (slotIndex = LOCAL_SLOT) =>
+    slotIndex < 0 ? Promise.resolve() : selectArchive(() => archiveSlots.value[slotIndex]?.latest)
 
-  /** 删除指定槽位的存档 */
-  const deleteArchiveSlot = async (slotIndex = -1) => {
-    if (slotIndex < 0 || !userStore.validateToken()) return
-    if (slotIndex === currentArchive.value.slotIndex) currentArchive.value.slotIndex = -1
-    await Apis.archive.removeArchive({
-      pathParams: { slot_index: slotIndex },
+  const loadHistoryArchive = async (slotIndex: number, timestamp: number) => {
+    if (slotIndex === SETTINGS_SLOT) throw new Error('1 号槽位只提供当前存档')
+    return selectArchive(() =>
+      archiveSlots.value[slotIndex]?.archiveList.find(entry => entry.timestamp === timestamp),
+    )
+  }
+
+  const loadLatestArchive = () =>
+    latestProgress(archiveSlots.value)
+      ? selectArchive(() => latestProgress(archiveSlots.value))
+      : Promise.resolve()
+
+  const createArchiveSlot = async (name: string, slotIndex: number, saveCurrent = true) => {
+    if (!Number.isInteger(slotIndex) || slotIndex <= SETTINGS_SLOT || slotIndex > SLOT_COUNT)
+      throw new Error(`不能手动创建槽位 ${slotIndex}`)
+    const s = session
+    return enqueue(s, async () => {
+      if (!s.ready || s.id === -1) throw new Error('云存档尚未就绪')
+      const body = saveCurrent ? currentArchive.value.body : readProgress()
+      await Apis.archive.createSlotAndSaveArchive({
+        pathParams: { slot_index: slotIndex, name },
+        data: JSON.stringify(storeProgress(body)),
+        shareRequest: false,
+      })
+    })
+  }
+
+  const deleteArchiveSlot = async (slotIndex = LOCAL_SLOT) => {
+    if (slotIndex === SETTINGS_SLOT) throw new Error('1 号槽位不可删除')
+    if (slotIndex < 0 || session.id === -1) return
+    const s = session
+    await enqueue(s, async () => {
+      await Apis.archive.removeArchive({
+        pathParams: { slot_index: slotIndex },
+        shareRequest: false,
+      })
+      assertCurrent(s)
+      if (currentArchive.value.slotIndex === slotIndex) {
+        currentArchive.value.slotIndex = LOCAL_SLOT
+        await db.userArchive.put(localSnapshot())
+      }
     })
     await fetchArchive()
   }
 
-  /** 加载指定槽位的历史存档 */
-  const loadHistoryArchive = (slotIndex: number, timestamp: number) => {
-    if (slotIndex < 0) return
-    const archiveSlot = archiveSlots.value[slotIndex]
-    if (!archiveSlot) throw new Error(`槽位 ${slotIndex} 没有存档`)
-    const historyArchive = archiveSlot.archiveList.find(history => history.timestamp === timestamp)
-    if (!historyArchive)
-      throw new Error(`时间为 ${new Date(timestamp).toLocaleString()} 的存档历史为空`)
-    setArchive(historyArchive)
-  }
-
-  /** 加载最新槽位的最新存档 */
-  const loadLatestArchive = async () => {
-    let latestArchive: ArchiveSlotData | undefined
-
-    for (const slotIndex in archiveSlots.value) {
-      const slotArchive = archiveSlots.value[slotIndex]
-      if (!slotArchive) continue
-      if (!latestArchive || slotArchive.timestamp > latestArchive.timestamp)
-        latestArchive = slotArchive
+  const openAccount = async (id: number) => {
+    cancelTimer()
+    if (session.id !== id && isDirty(session)) {
+      // 登录态已经改变，原账号的未确认修改留在自己的缓存，等下次登录继续同步。
+      void db.userArchive.put(localSnapshot()).catch(err => logger.error(messageFrom(err)))
     }
-
-    const { userId } = userStore.auth
-    if (userId === undefined) return
-
-    // 如果没有存档，则读取用户的本地数据库存档。
-    if (!latestArchive) {
-      const localArchive = await db.userArchive.get(userId)
-      if (!localArchive) return
-      const { id, body, timestamp } = localArchive
-      setArchive({
+    const s = newSession(id)
+    session = s
+    archiveSlots.value = emptySlots()
+    fetchError.value = ''
+    fetchLoading.value = id !== -1
+    activate(s, emptyArchive(id))
+    setPreference(s, getDefaultPreference())
+    await enqueue(s, async () => {
+      const local = await db.userArchive.get(id)
+      assertCurrent(s)
+      if (!local) return
+      activate(s, {
         id,
-        slotIndex: -1,
-        body: {
-          Data_KYJG: new Set(body.Data_KYJG),
-          Time_KYJG: body.Time_KYJG,
-          Preference: body.Preference ?? getDefaultPreference(),
-        },
-        timestamp,
+        slotIndex: local.slotIndex ?? LOCAL_SLOT,
+        timestamp: local.timestamp,
+        body: readProgress(local.body),
       })
-      return
+      setPreference(s, local.preference ?? local.body.Preference ?? preference.value)
+      if (local.pending?.progress) s.syncedProgress = ''
+      if (local.pending?.preference) s.syncedPreference = ''
+    }).catch(err => {
+      if (s === session) throw err
+    })
+    if (s === session && id !== -1) {
+      // 云端请求在后台完成，首屏可以先使用这个账号的本地缓存。
+      void fetchArchive().catch(() => {})
     }
-
-    if (!latestArchive) return
-
-    loadArchiveSlot(latestArchive.slotIndex)
   }
 
   const init = async () => {
-    const localArchive = await db.userArchive.get(-1)
-    // 读取未登录存档
-    if (localArchive) {
-      const { id, body, timestamp } = localArchive
-      setArchive({
-        id,
-        slotIndex: -1,
-        body: {
-          Data_KYJG: new Set(body.Data_KYJG),
-          Time_KYJG: body.Time_KYJG,
-          Preference: body.Preference ?? getDefaultPreference(),
-        },
-        timestamp,
-      })
-    }
     watch(
-      () => userStore.auth.userId,
-      async () => {
-        await fetchArchive()
-        await loadLatestArchive()
+      accountId,
+      id => {
+        void openAccount(id).catch(err => logger.error(messageFrom(err)))
       },
-      { immediate: true },
+      { flush: 'sync' },
     )
-    // 监听存档内容变化并去抖同步；仅监听 body，避免 slotIndex / timestamp 造成无意义同步
-    watch(
-      () => currentArchive.value.body,
-      () => scheduleSync(),
-      { deep: true, immediate: true },
-    )
-    // 页面隐藏 / 关闭前尽力同步一次，避免去抖窗口内的变更丢失
+    await openAccount(accountId())
+    watch([() => currentArchive.value.body, preference], () => scheduleSync(), { deep: true })
+    const flushOnLeave = () => {
+      void flush().catch(() => {})
+    }
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') flush()
+      if (document.visibilityState === 'hidden') flushOnLeave()
     })
-    window.addEventListener('pagehide', () => flush())
+    window.addEventListener('pagehide', flushOnLeave)
+    window.addEventListener('online', () => {
+      void fetchArchive()
+        .then(flush)
+        .catch(() => {})
+    })
   }
 
   return {
     currentArchive,
+    preference,
     hash,
     fetchLoading,
+    fetchError,
     archiveSlots,
-
     fetchArchive,
     createArchiveSlot,
     saveArchiveToSlot,

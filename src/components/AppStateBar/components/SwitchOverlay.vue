@@ -10,10 +10,10 @@ const archiveStore = useArchiveStore()
 
 const overlayVisible = computed({
   get: () => {
-    return archiveStore.currentArchive.body.Preference['map.state.showOverlay']
+    return archiveStore.preference['map.state.showOverlay']
   },
   set: bool => {
-    archiveStore.currentArchive.body.Preference['map.state.showOverlay'] = bool
+    archiveStore.preference['map.state.showOverlay'] = bool
   },
 })
 

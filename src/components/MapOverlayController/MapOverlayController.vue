@@ -8,7 +8,7 @@ const overlayStore = useOverlayStore()
 const archiveStore = useArchiveStore()
 
 const areaCode = computed(() => {
-  return archiveStore.currentArchive.body.Preference['markerFilter.state.areaCode']
+  return archiveStore.preference['markerFilter.state.areaCode']
 })
 
 const overlayGroups = computed(() => {

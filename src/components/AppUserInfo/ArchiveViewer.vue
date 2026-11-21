@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-import type { ArchiveData, ArchiveSlotData } from '@/stores'
+import type { ArchiveData } from '@/stores'
 import { CaretBottom, CaretTop, DeleteFilled, Edit } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { GSButton, GSCard, GSDivider, GSInput } from '@/components'
 import { useFetchHook } from '@/hooks'
-import { useArchiveStore } from '@/stores'
-import { ArchiveHistory } from '.'
+import { SETTINGS_SLOT, useArchiveStore } from '@/stores'
+import ArchiveHistory from './ArchiveHistory.vue'
 
 const props = defineProps<{
   slotIndex?: number
@@ -21,11 +21,12 @@ const previewIndex = computed({
 
 const archiveStore = useArchiveStore()
 
-const archiveSlot = ref<ArchiveSlotData>()
-const initDialog = () => {
-  if (previewIndex.value === undefined) return
-  archiveSlot.value = archiveStore.archiveSlots[previewIndex.value]
-}
+// 关闭动画期间继续展示刚刚预览的槽位。
+const displayedIndex = ref(props.slotIndex)
+const archiveSlot = computed(() =>
+  displayedIndex.value === undefined ? undefined : archiveStore.archiveSlots[displayedIndex.value],
+)
+const isSettingsSlot = computed(() => displayedIndex.value === SETTINGS_SLOT)
 
 // ==================== 存档槽位名称 ====================
 const isNameEditMode = ref(false)
@@ -63,14 +64,11 @@ const {
         new_name: cachedArchiveName.value,
       },
     })
+    await archiveStore.fetchArchive()
   },
 })
 
-onSlotRenameSuccess(async () => {
-  await archiveStore.fetchArchive()
-  initDialog()
-  cancelNameEdit()
-})
+onSlotRenameSuccess(cancelNameEdit)
 
 onSlotRenameError(err => {
   erroeMessage.value = err.message
@@ -111,38 +109,50 @@ onError(err =>
 )
 
 /** 按住 3 秒以确认删除存档 */
-const onAnimationEnd = (ev: AnimationEvent) => {
+const onAnimationEnd = async (ev: AnimationEvent) => {
   if (!ev.animationName.startsWith('anime-delete-archive')) return
-  archiveStore.deleteArchiveSlot(previewIndex.value)
-  stopSignal.value = true
-  previewIndex.value = undefined
+  try {
+    await archiveStore.deleteArchiveSlot(previewIndex.value)
+    stopSignal.value = true
+    previewIndex.value = undefined
+  } catch (err) {
+    ElMessage.error(String(err))
+  }
 }
 
 /** 已选择的存档历史记录 */
 const selectedHistory = shallowRef<ArchiveData>()
+watch(previewIndex, index => {
+  if (index === undefined) return
+  displayedIndex.value = index
+  selectedHistory.value = undefined
+})
 
-const loadArchive = () => {
-  if (!selectedHistory.value) {
-    archiveStore.loadArchiveSlot(previewIndex.value)
+const {
+  refresh: loadArchive,
+  loading: reading,
+  onError: onReadError,
+} = useFetchHook({
+  onRequest: async () => {
+    if (!isSettingsSlot.value && selectedHistory.value)
+      await archiveStore.loadHistoryArchive(previewIndex.value!, selectedHistory.value.timestamp)
+    else await archiveStore.loadArchiveSlot(previewIndex.value)
     previewIndex.value = undefined
-    return
-  }
-  archiveStore.loadHistoryArchive(previewIndex.value!, selectedHistory.value.timestamp)
-  previewIndex.value = undefined
-}
+  },
+})
+onReadError(err => ElMessage.error(err.message))
 
 // ==================== 弹窗状态处理 ====================
 const onDialogClosed = () => {
   previewIndex.value = undefined
   stopSignal.value = false
-  archiveSlot.value = undefined
   selectedHistory.value = undefined
   clearValidate()
   cancelNameEdit()
 }
 
 const beforeClose = (done: () => void) => {
-  if (renameLoading.value || loading.value) return
+  if (renameLoading.value || loading.value || reading.value) return
   message.value = ''
   erroeMessage.value = ''
   done()
@@ -159,7 +169,6 @@ const beforeClose = (done: () => void) => {
     align-center
     width="500px"
     class="custom-dialog hidden-header bg-transparent"
-    @open="initDialog"
     @closed="onDialogClosed"
   >
     <GSCard v-if="!archiveSlot" title="存档为空" />
@@ -203,19 +212,23 @@ const beforeClose = (done: () => void) => {
         </template>
       </template>
 
-      <span class="flex items-center gap-1 text-white">
-        · 存档历史
-        <el-icon :size="16" title="未选择历史记录时，将会自动读取最新记录。">
-          <QuestionFilled />
-        </el-icon>
-      </span>
-
-      <ArchiveHistory v-model="selectedHistory" :data="archiveSlot.archiveList" />
+      <p v-if="isSettingsSlot" class="text-white">
+        所有存档共用 1 号槽位的账号设置。这里也保存该槽位的最新点位进度。
+      </p>
+      <template v-else>
+        <span class="flex items-center gap-1 text-white">
+          · 存档历史
+          <el-icon :size="16" title="未选择历史记录时，将会自动读取最新记录。">
+            <QuestionFilled />
+          </el-icon>
+        </span>
+        <ArchiveHistory v-model="selectedHistory" :data="archiveSlot.archiveList" />
+      </template>
 
       <GSDivider color="gray" :height="16" />
 
       <div class="flex justify-between gap-4">
-        <GSButton class="flex-1" :loading="loading" @click="saveArchive">
+        <GSButton class="flex-1" :loading="loading" :disabled="reading" @click="saveArchive">
           <template #icon>
             <el-icon color="#FFCC33">
               <CaretTop />
@@ -224,10 +237,15 @@ const beforeClose = (done: () => void) => {
           保存到存档
         </GSButton>
 
-        <el-tooltip :visible="Boolean(message)" :content="message" placement="bottom">
+        <el-tooltip
+          v-if="!isSettingsSlot"
+          :visible="Boolean(message)"
+          :content="message"
+          placement="bottom"
+        >
           <GSButton
             class="hold-and-delete"
-            :disabled="loading"
+            :disabled="loading || reading"
             @click="e => note(e, '持续按住删除按钮以确认删除')"
             @animationend="onAnimationEnd"
           >
@@ -239,7 +257,7 @@ const beforeClose = (done: () => void) => {
           </GSButton>
         </el-tooltip>
 
-        <GSButton class="flex-1" :disabled="loading" @click="loadArchive">
+        <GSButton class="flex-1" :disabled="loading" :loading="reading" @click="loadArchive">
           <template #icon>
             <el-icon color="#FFCC33">
               <CaretBottom />

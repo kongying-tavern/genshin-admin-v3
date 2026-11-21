@@ -34,7 +34,7 @@ const {
 
 // ==================== 交互事件 ====================
 const shortcutKeys = computed(() => {
-  return archiveStore.currentArchive.body.Preference['app.shortcutKey.draggingMarker']
+  return archiveStore.preference['app.shortcutKey.draggingMarker']
 })
 
 const { focused } = useFocus(mapCanvasRef)

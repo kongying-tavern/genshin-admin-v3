@@ -15,7 +15,7 @@ export const useSocketStore = defineStore('socket', () => {
   const sync = useMapEntitySync()
 
   const noticeEvents = computed(() => {
-    return new Set(archiveStore.currentArchive.body.Preference['socket.setting.noticeEvents'])
+    return new Set(archiveStore.preference['socket.setting.noticeEvents'])
   })
 
   /** 正在通知的事件 */

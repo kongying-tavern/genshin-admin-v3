@@ -16,7 +16,7 @@ const defaultPreference = getDefaultPreference()
       <SettingBar label="切换黑暗模式" :icon="Brush">
         <template #setting>
           <ShortcutKey
-            v-model="archiveStore.currentArchive.body.Preference['app.shortcutKey.toggleDarkMode']"
+            v-model="archiveStore.preference['app.shortcutKey.toggleDarkMode']"
             :default-value="defaultPreference['app.shortcutKey.toggleDarkMode']"
           />
         </template>
@@ -25,9 +25,7 @@ const defaultPreference = getDefaultPreference()
       <SettingBar label="批量编辑点位" :icon="Crop">
         <template #setting>
           <ShortcutKey
-            v-model="
-              archiveStore.currentArchive.body.Preference['app.shortcutKey.multiselectMarker']
-            "
+            v-model="archiveStore.preference['app.shortcutKey.multiselectMarker']"
             :default-value="defaultPreference['app.shortcutKey.multiselectMarker']"
           />
         </template>
@@ -36,9 +34,7 @@ const defaultPreference = getDefaultPreference()
       <SettingBar label="批量标记点位" :icon="Grape">
         <template #setting>
           <ShortcutKey
-            v-model="
-              archiveStore.currentArchive.body.Preference['app.shortcutKey.toggleMarkerState']
-            "
+            v-model="archiveStore.preference['app.shortcutKey.toggleMarkerState']"
             :default-value="defaultPreference['app.shortcutKey.toggleMarkerState']"
           />
         </template>
@@ -47,7 +43,7 @@ const defaultPreference = getDefaultPreference()
       <SettingBar label="拖拽点位" :icon="Grape">
         <template #setting>
           <ShortcutKey
-            v-model="archiveStore.currentArchive.body.Preference['app.shortcutKey.draggingMarker']"
+            v-model="archiveStore.preference['app.shortcutKey.draggingMarker']"
             :default-value="defaultPreference['app.shortcutKey.draggingMarker']"
             :focus-element="mapCanvasRef"
           />

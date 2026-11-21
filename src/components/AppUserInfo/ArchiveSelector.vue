@@ -2,7 +2,13 @@
 import { Flag } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import { storeToRefs } from 'pinia'
-import { useArchiveStore, useAreaStore, useItemStore, useMarkerStore } from '@/stores'
+import {
+  SETTINGS_SLOT,
+  useArchiveStore,
+  useAreaStore,
+  useItemStore,
+  useMarkerStore,
+} from '@/stores'
 import { ArchiveCreator, ArchiveViewer } from '.'
 
 const areaStore = useAreaStore()
@@ -11,6 +17,8 @@ const itemStore = useItemStore()
 const markerStore = useMarkerStore()
 
 const { archiveSlots } = storeToRefs(archiveStore)
+const refresh = () => archiveStore.fetchArchive().catch(() => {})
+onMounted(refresh)
 
 // 从米忽悠白嫖背景图
 const AREA_IMG_URLS: Record<string, string> = {
@@ -32,7 +40,7 @@ const lastestMarkerArea = computed(() => {
   }
   for (const key in archiveStore.archiveSlots) {
     const archiveSlot = archiveStore.archiveSlots[key]
-    const latestArchive = archiveSlot?.archiveList[0]
+    const latestArchive = archiveSlot?.latest
     const latestMarkerId = latestArchive ? [...latestArchive.body.Data_KYJG].at(-1) : undefined
     if (!latestMarkerId) {
       setUrl(archiveSlot?.slotIndex)
@@ -69,6 +77,10 @@ const timeFormater = (time?: string) => (time ? dayjs(time).format('YYYY-MM-DD H
 <template>
   <div class="flex h-full flex-col justify-between py-2 px-4">
     <div v-if="archiveStore.fetchLoading">正在加载存档...</div>
+    <div v-else-if="archiveStore.fetchError">
+      云存档加载失败：{{ archiveStore.fetchError }}
+      <el-button @click="refresh">重试</el-button>
+    </div>
 
     <template v-else>
       <template v-for="(archiveSlot, index) of archiveSlots">
@@ -117,13 +129,14 @@ const timeFormater = (time?: string) => (time ? dayjs(time).format('YYYY-MM-DD H
           >
             <div class="text-ellipsis overflow-hidden" :title="archiveSlot.name">
               {{ index }}. {{ archiveSlot.name }}
+              <small v-if="archiveSlot.slotIndex === SETTINGS_SLOT">（账号设置）</small>
             </div>
             <div>更新时间 {{ timeFormater(archiveSlot.updateTime) }}</div>
           </div>
         </div>
 
         <div
-          v-else
+          v-else-if="Number(index) !== SETTINGS_SLOT"
           :key="`empty-${Number(index)}`"
           class="archive-item outline-card item-enter-anime empty"
           @click="archiveCreateIndex = Number(index)"

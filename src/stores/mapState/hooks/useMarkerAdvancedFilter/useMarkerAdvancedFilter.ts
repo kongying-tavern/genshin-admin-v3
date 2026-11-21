@@ -83,18 +83,16 @@ const _useMarkerAdvancedFilter = (options: MarkerAdvancedFilterHookOptions) => {
   const { archiveStore } = options
 
   const advancedFilter = computed({
-    get: () =>
-      archiveStore.currentArchive.body.Preference['markerFilter.filter.advancedFilter'] ?? [],
+    get: () => archiveStore.preference['markerFilter.filter.advancedFilter'] ?? [],
     set: filter => {
-      archiveStore.currentArchive.body.Preference['markerFilter.filter.advancedFilter'] = filter
+      archiveStore.preference['markerFilter.filter.advancedFilter'] = filter
     },
   })
 
   const advancedFilterCache = computed({
-    get: () =>
-      archiveStore.currentArchive.body.Preference['markerFilter.filter.advancedFilterCache'] ?? [],
+    get: () => archiveStore.preference['markerFilter.filter.advancedFilterCache'] ?? [],
     set: cache => {
-      archiveStore.currentArchive.body.Preference['markerFilter.filter.advancedFilterCache'] = cache
+      archiveStore.preference['markerFilter.filter.advancedFilterCache'] = cache
     },
   })
 

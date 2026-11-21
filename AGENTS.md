@@ -302,5 +302,6 @@ await __MAP_AI__.call('ui.surfaces.close', { id: 'settings' })
 - `marker` 首次冷数据更新可能超过 60 秒；等待时使用 `datasets.waitIdle` 120 秒或 `events.waitFor`。
 - 全局弹窗有队列：已有弹窗关闭动画未结束时，`ui.surfaces.open` 可能返回 `queued: true`，先关闭当前弹窗或等待。
 - 设置弹窗通过 `preferenceStore.settingActivedKey` 定位页签；打开数据库页签会持久化该 UI preference，这是预期行为。
+- 登录后的账号设置统一由 1 号云存档槽位保存。通过 `usePreferenceStore()` 或 `archiveStore.preference` 读写设置，`currentArchive.body` 只含当前槽位的点位进度和刷新时间。前端自动补建 1 号槽位，并禁用其删除和历史读取。
 - `forms.submit('login')` 会等待用户信息加载（最多 10 秒）；需要更可控登录时优先用 `auth.login`。
 - `AppWindow` 的 `open()` 已是异步；新增窗口句柄时请 `await` 底层 open，避免 `opened: false` 的假象。

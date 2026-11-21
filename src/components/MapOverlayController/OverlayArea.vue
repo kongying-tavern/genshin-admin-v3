@@ -10,19 +10,19 @@ const overlayStore = useOverlayStore()
 
 const archiveParentAreaCode = computed({
   get: () => {
-    return archiveStore.currentArchive.body.Preference['markerFilter.state.parentAreaCode']
+    return archiveStore.preference['markerFilter.state.parentAreaCode']
   },
   set: code => {
-    archiveStore.currentArchive.body.Preference['markerFilter.state.parentAreaCode'] = code
+    archiveStore.preference['markerFilter.state.parentAreaCode'] = code
   },
 })
 
 const archiveAreaCode = computed({
   get: () => {
-    return archiveStore.currentArchive.body.Preference['markerFilter.state.areaCode']
+    return archiveStore.preference['markerFilter.state.areaCode']
   },
   set: code => {
-    archiveStore.currentArchive.body.Preference['markerFilter.state.areaCode'] = code
+    archiveStore.preference['markerFilter.state.areaCode'] = code
   },
 })
 

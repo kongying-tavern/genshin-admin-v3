@@ -72,7 +72,7 @@ const { width, height } = useElementSize(containerRef)
 // 响应主题色切换
 const { toggle: toggleDarkMode } = useTheme()
 shortcutStore.useKeys(
-  computed(() => archiveStore.currentArchive.body.Preference['app.shortcutKey.toggleDarkMode']),
+  computed(() => archiveStore.preference['app.shortcutKey.toggleDarkMode']),
   () => toggleDarkMode(),
 )
 

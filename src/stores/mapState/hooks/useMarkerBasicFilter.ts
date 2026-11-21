@@ -19,7 +19,7 @@ const _useMarkerBasicFilter = (options: MarkerBasicFilterHookOptions) => {
   const { itemIdMap } = storeToRefs(itemStore)
 
   const archiveItemIds = computed(() => {
-    return archiveStore.currentArchive.body.Preference['markerFilter.state.itemIds'] ?? []
+    return archiveStore.preference['markerFilter.state.itemIds'] ?? []
   })
 
   const conditions = computed(() => {

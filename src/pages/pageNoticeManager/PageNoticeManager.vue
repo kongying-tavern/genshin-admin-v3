@@ -10,15 +10,10 @@ const archiveStore = useArchiveStore()
 
 const sort = computed({
   get: () => {
-    return (
-      archiveStore.currentArchive.body.Preference['notice.setting.sort'] ?? [
-        'isValid-',
-        'sortIndex-',
-      ]
-    )
+    return archiveStore.preference['notice.setting.sort'] ?? ['isValid-', 'sortIndex-']
   },
   set: v => {
-    archiveStore.currentArchive.body.Preference['notice.setting.sort'] = v
+    archiveStore.preference['notice.setting.sort'] = v
   },
 })
 
