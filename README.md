@@ -1,34 +1,19 @@
 # 空荧酒馆地图点位标记系统
 
-<div align="center">
-  <img src="./public/favicon.ico" >
-  <h2>空荧后厨</h2>
-  <div>
-    <a href="https://www.typescriptlang.org" target="_blank">
-      <img src="https://img.shields.io/badge/typescript-6-blue">
-    </a>
-    <a href="https://nodejs.org" target="_blank">
-      <img src="https://img.shields.io/badge/node.js-24-green">
-    </a>
-    <a href="https://cn.vitejs.dev" target="_blank">
-      <img src="https://img.shields.io/badge/vite.js-8-green">
-    </a>
-    <a href="https://cn.vuejs.org" target="_blank">
-      <img src="https://img.shields.io/badge/vue.js-3-green">
-    </a>
-    <a href="https://deck.gl" target="_blank">
-      <img src="https://img.shields.io/badge/deck.gl-9-B77546">
-    </a>
-    <a href="https://tiptap.dev" target="_blank">
-      <img src="https://img.shields.io/badge/tiptap-3-B77546">
-    </a>
-    <a href="https://dexie.org" target="_blank">
-      <img src="https://img.shields.io/badge/dexie.js-3-B77546">
-    </a>
-    <a href="https://deepwiki.com/kongying-tavern/genshin-admin-v3" target="_blank">
-      <img src="https://deepwiki.com/badge.svg">
-    </a>
-</div>
+<div align="center" />
+![空荧后厨](./public/favicon.ico)
+
+## 空荧后厨
+
+[![typescript](https://img.shields.io/badge/typescript-6-blue)](https://www.typescriptlang.org)
+[![node.js](https://img.shields.io/badge/node.js-24-green)](https://nodejs.org)
+[![vite.js](https://img.shields.io/badge/vite.js-8-green)](https://cn.vitejs.dev)
+[![vue.js](https://img.shields.io/badge/vue.js-3-green)](https://cn.vuejs.org)
+[![deck.gl](https://img.shields.io/badge/deck.gl-9-B77546)](https://deck.gl)
+[![tiptap](https://img.shields.io/badge/tiptap-3-B77546)](https://tiptap.dev)
+[![dexie.js](https://img.shields.io/badge/dexie.js-3-B77546)](https://dexie.org)
+
+<div align="left" />
 
 ## 项目简介
 
@@ -52,43 +37,27 @@
 
 ## 应用预览
 
-<div align="center">
-  <img
-    src="https://github.com/user-attachments/assets/129aab31-8d89-41e5-b306-d8410517f14c"
-    alt="map-preview"
-  >
-  <div>地图主界面</div>
-</div>
+![map-preview](https://github.com/user-attachments/assets/129aab31-8d89-41e5-b306-d8410517f14c)
+
+地图主界面
 
 ---
 
-<div align="center">
-  <img
-    src="https://github.com/user-attachments/assets/7986c08c-aa0d-4557-b577-09fce239f2d1"
-    alt="map-marker"
-  >
-  <div>点位详情与关联网络</div>
-</div>
+![map-marker](https://github.com/user-attachments/assets/7986c08c-aa0d-4557-b577-09fce239f2d1)
+
+点位详情与关联网络
 
 ---
 
-<div align="center">
-  <img
-    src="https://github.com/user-attachments/assets/c975482b-6c18-450f-8509-eb6620697a63"
-    alt="个人中心"
-  >
-  <div>基于 CSS Houdini 实现的原神风格化个人中心面板</div>
-</div>
+![个人中心](https://github.com/user-attachments/assets/c975482b-6c18-450f-8509-eb6620697a63)
+
+基于 CSS Houdini 实现的原神风格化个人中心面板
 
 ---
 
-<div align="center">
-  <img
-    src="https://github.com/user-attachments/assets/371962b1-fdf2-4552-aa23-36965b376dbe"
-    alt="窗口化管理组件"
-  >
-  <div>窗口化管理组件</div>
-</div>
+![窗口化管理组件](https://github.com/user-attachments/assets/371962b1-fdf2-4552-aa23-36965b376dbe)
+
+窗口化管理组件
 
 ## 开发手册
 
@@ -111,9 +80,4 @@
 
 ## 项目贡献
 
-<div align="center">
-  <img
-    src="https://repobeats.axiom.co/api/embed/7910e599e7842fa48c48295b7fcbf0d4e39a9c6b.svg"
-    alt="项目贡献统计图"
-  >
-</div>
+![项目贡献统计图](https://repobeats.axiom.co/api/embed/7910e599e7842fa48c48295b7fcbf0d4e39a9c6b.svg)
