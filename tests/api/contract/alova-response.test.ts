@@ -134,4 +134,17 @@ describe('共享 alova 实例的响应处理', () => {
     expect(mocks.store.auth.accessToken).toBeUndefined()
     expect(mocks.store.auth.refreshToken).toBeUndefined()
   })
+
+  it('旧凭证发出的请求迟到时保留当前登录态', async () => {
+    mocks.store.setAuth(makeToken('AT-1'))
+    http.respond = () => {
+      mocks.store.setAuth(makeToken('AT-2'))
+      return new Response('', { status: 403 })
+    }
+
+    await expect(Apis.role.listRole({})).rejects.toThrow()
+
+    expect(mocks.store.logoutCount).toBe(0)
+    expect(mocks.store.auth.accessToken).toBe('AT-2')
+  })
 })

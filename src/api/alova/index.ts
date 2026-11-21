@@ -12,6 +12,19 @@ import { createApis, withConfigType } from './createApis'
 
 const logger = new Logger('Alova')
 
+export class ApiResponseError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly business = false,
+  ) {
+    super(message)
+  }
+}
+
+const authHeader = (token: string, type = 'bearer') =>
+  `${type.replace(/^./, c => c.toUpperCase())} ${token}`
+
 const { onAuthRequired } = createClientTokenAuthentication({
   refreshToken: {
     handler: async () => {
@@ -38,7 +51,7 @@ export const alovaInstance = createAlova({
     const { accessToken, tokenType = 'bearer' } = auth
     // 如果 token 不为空且不存在自定义 token，则为所有请求附加上 token
     if (accessToken && !headers.Authorization) {
-      headers.Authorization = `${tokenType.replace(/^./, c => c.toUpperCase())} ${accessToken}`
+      headers.Authorization = authHeader(accessToken, tokenType)
     }
   }),
 
@@ -50,11 +63,19 @@ export const alovaInstance = createAlova({
       logger.error('Response Error:', { response, method })
 
       // 处理 401/403 错误，调用 logout
-      if (status === 401 || status === 403) useUserStore().logout()
+      if (status === 401 || status === 403) {
+        const user = useUserStore()
+        const { accessToken, tokenType } = user.auth
+        if (
+          accessToken
+          && method.config.headers.Authorization === authHeader(accessToken, tokenType)
+        )
+          void user.logout()
+      }
 
       // HTTP/2 没有 reason phrase，`statusText` 恒为空串，
       // 直接抛出去会让上层拿到空错误信息，界面只能继续显示上一次的结论
-      throw new Error(statusText || `请求失败（HTTP ${status}）`)
+      throw new ApiResponseError(statusText || `请求失败（HTTP ${status}）`, status)
     }
 
     // 解析响应数据
@@ -66,8 +87,10 @@ export const alovaInstance = createAlova({
     const data = await response.json()
 
     if (data.error)
-      throw new Error(
+      throw new ApiResponseError(
         data.message || data.error_description || data.errorData || statusText || '服务端返回错误',
+        status,
+        true,
       )
 
     return data as unknown
