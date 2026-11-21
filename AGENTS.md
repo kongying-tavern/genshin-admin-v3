@@ -45,8 +45,8 @@
 
 ### 环境变量
 
-- 公共默认值在 `.env`、`.env.development`、`.env.production`。
-- 本地私有配置写在 `.env.development.local` / `.env.*.local`，**不要提交**。
+- 仓库只提交模板 `.env.example`，不再提交 `.env` / `.env.<环境>` 实体配置。
+- 所有配置由 `.env.<环境>.local` 提供，例如 `.env.development.local`、`.env.test.local`、`.env.production.local`；按 `.env.example` 复制后填写，**不要提交**。
 - 后端前置账号、接口地址、WebSocket 地址等敏感值不要写入源码、测试快照或文档。
 
 ***

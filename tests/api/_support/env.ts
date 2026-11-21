@@ -1,8 +1,8 @@
 /**
  * 接口测试运行环境
  *
- * vitest 以 `test` 模式启动，会自动加载 `.env.test`；
- * 若本地存在 `.env.test.local`（已被 .gitignore 忽略）则覆盖前者。
+ * vitest 以 `test` 模式启动，会从 `.env.test.local` 读取配置；
+ * 仓库不再提交 `.env.test`，字段清单见 `.env.example`。
  * 因此后端地址与凭据一律从 `import.meta.env` 读取，不在代码中硬编码。
  */
 

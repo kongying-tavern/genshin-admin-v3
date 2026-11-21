@@ -11,7 +11,7 @@ import { defineConfig } from 'vitest/config'
  *   --mode parity-rust  -> .env.development.rust.local  (Rust 待对齐)
  *
  * 为什么按文件名精确读取，而不是依赖 Vite 的隐式 env 加载：
- *   1. vitest 默认以 `test` mode 启动，只会加载 .env.test(.local)，与本次两套 dev 环境无关；
+ *   1. vitest 默认以 `test` mode 启动，只会加载 `.env.test.local`，与本次两套 dev 环境无关；
  *   2. `.env.development.rust.local` 不是 Vite 的标准 mode 文件名，隐式加载易错且来源不可标注；
  *   3. 每条观测结果都必须能追溯到「来自哪个 env 文件」，因此显式读文件并记录文件名。
  *

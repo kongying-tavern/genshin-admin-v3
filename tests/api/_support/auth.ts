@@ -10,5 +10,5 @@ export const loginAs = async (username: string, password: string) => {
   return await store.login({ grant_type: 'password', username, password })
 }
 
-/** 使用 `.env.test(.local)` 中配置的测试主账号登录 */
+/** 使用 `.env.test.local` 中配置的测试主账号登录 */
 export const loginAsTestAccount = () => loginAs(account.username, account.password)

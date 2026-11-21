@@ -49,10 +49,11 @@ debug.log
 *.njsproj
 *.sln
 
-# 忽略本地环境变量
-# 注意：parity 测试读取的 .env.development.local / .env.development.rust.local
-# 含真实开发环境凭据，同样由本规则覆盖，禁止入库
-.env.*local
+# 环境变量：只提交 .env.example 模板，其余一律本地保留，禁止入库
+# 包括 .env、.env.<环境> 与 .env.<环境>.local；
+# parity 测试读取的 .env.development.local / .env.development.rust.local 同受此规则覆盖
+.env*
+!.env.example
 
 # mock
 .mock
