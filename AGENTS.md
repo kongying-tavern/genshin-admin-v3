@@ -175,7 +175,7 @@
 | `userInfo`                 | dialog        | —                                        | 用户中心，需要登录                                                                      |
 | `notices`                  | dialog        | —                                        | 公告弹窗                                                                           |
 | `siderMenu`                | panel         | `{ tab?, collapsed? }`                   | 侧边栏；tab：`filter/marker-table/features`                                         |
-| `markerPopover`            | popover       | `{ markerId }`                           | 点位详情弹层                                                                         |
+| `markerPopover`            | popover       | `{ markerId }`                           | 点位详情弹层，开启「点位在线核对」时异步核对，核对中 `state.loading` 为 true                            |
 | `markerEditor`             | dialog + form | `{ markerId }`                           | 点位编辑，需 `MARKER_EDIT`                                                           |
 | `markerCreator`            | dialog + form | `{ coordinate, space?, defaultItemId? }` | 新增点位，需 `MARKER_CREATE`；`space:'map'` 时转换地图坐标                                   |
 | `window.itemManager`       | window        | —                                        | 物品管理                                                                           |

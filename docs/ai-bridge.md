@@ -155,7 +155,7 @@ await __MAP_AI__.events.waitFor({
 `scope`：
 
 - `all`：全部本地点位（已按当前用户 hiddenFlag 过滤）
-- `filtered`：当前底图 + 当前筛选器下的静态点位
+- `filtered`：当前底图 + 当前筛选器下的本地静态点位。开启「点位在线核对」后，按分片返回已核对的结果。
 - `visible`：当前地图可见点位（含临时点位）
 
 ### 4.6 `resources`
@@ -217,7 +217,7 @@ await __MAP_AI__.events.waitFor({
 | `userInfo` | dialog | — | 用户中心，需要登录 |
 | `notices` | dialog | — | 公告弹窗 |
 | `siderMenu` | panel | `{ tab?, collapsed? }` | 侧边栏，tab 可选 `filter/marker-table/features` |
-| `markerPopover` | popover | `{ markerId }` | 点位详情弹层 |
+| `markerPopover` | popover | `{ markerId }` | 点位详情弹层，开启「点位在线核对」时异步核对详情 |
 | `markerEditor` | dialog + form | `{ markerId }` | 点位编辑表单（需要 `MARKER_EDIT`） |
 | `markerCreator` | dialog + form | `{ coordinate, space?, defaultItemId? }` | 新增点位（需要 `MARKER_CREATE`） |
 | `window.itemManager` | window | — | 物品管理 |
@@ -271,6 +271,8 @@ await __MAP_AI__.call('ui.surfaces.open', {
 ```
 
 `ui.surfaces.open` 返回 `{ id, opened, queued, sinceSeq }`。如果已有其他全局弹窗，新弹窗会排队，`queued: true`。
+
+「点位在线核对」可在「设置 → 地图」开启，默认关闭，当前设置随存档保存。关闭时，点位弹层直接读取本地缓存，`state.loading` 为 false。开启时，`ui.surfaces.get` 的 `state.loading` 表示正在核对详情，成功后可读取 `state.title`。服务端确认删除时，弹层自动关闭。
 
 ## 6. 表单反射
 
