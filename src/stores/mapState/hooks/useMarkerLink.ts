@@ -4,7 +4,7 @@ import type { useMarkerLinkStore } from '@/stores'
 import { useFetchHook } from '@/hooks'
 
 interface MarkerLinkHookOptions {
-  markerIdMap: Map<number, MarkerVo>
+  markerIdMap: () => Map<number, MarkerVo>
   markerLinkStore: ReturnType<typeof useMarkerLinkStore>
   currentMarkerIdMap: ComputedRef<Map<number, GSMarkerInfo>>
   focusElements: Ref<Map<string, Set<unknown>>>
@@ -31,7 +31,7 @@ export const useMarkerLink = (options: MarkerLinkHookOptions) => {
       })
       const tempMarkers: MarkerVo[] = []
       tempMarkerIds.forEach(id => {
-        const marker = markerIdMap.get(id)
+        const marker = markerIdMap().get(id)
         marker && tempMarkers.push(marker)
       })
       setTempMarkers('markerLink', tempMarkers)
@@ -40,8 +40,16 @@ export const useMarkerLink = (options: MarkerLinkHookOptions) => {
   })
 
   watch(
-    () => focusElements.value.get('marker') as Set<number> | undefined,
-    markerIds => {
+    [
+      () => focusElements.value.get('marker') as Set<number> | undefined,
+      () => markerLinkStore.updateVersion,
+      () => {
+        const ids = focusElements.value.get('marker')
+        const id = ids?.values().next().value
+        return typeof id === 'number' ? currentMarkerIdMap.value.get(id)?.linkageId : undefined
+      },
+    ],
+    ([markerIds]) => {
       const list: MLRenderUnit[] = []
 
       if (!markerIds || !markerIds.size || markerIds.size > 1) {
@@ -57,8 +65,8 @@ export const useMarkerLink = (options: MarkerLinkHookOptions) => {
 
       const { linkageId } = focusedMarker!
 
-      markerLinkStore.markerLinkList.forEach(({ groupId, fromId, toId, linkAction }) => {
-        if (groupId !== linkageId) return
+      const links = markerLinkStore.groupIdMap.get(linkageId ?? '') ?? []
+      links.forEach(({ fromId, toId, linkAction }) => {
         list.push({
           source: fromId!,
           target: toId!,

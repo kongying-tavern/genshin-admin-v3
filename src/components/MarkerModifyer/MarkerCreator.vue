@@ -45,10 +45,17 @@ const initFormData = (): MarkerVo => {
 const form = ref(initFormData())
 const editorRef = useTemplateRef('editorRef')
 
-const { loading, isSuccess, submit, onSuccess, onError } = useMarkerCreate(
-  form,
-  editorRef as ShallowRef<InstanceType<typeof MarkerForm>>,
-)
+const {
+  loading,
+  isSuccess,
+  submit,
+  onSuccess,
+  onError,
+  unconfirmed,
+  recheck,
+  checking,
+  candidates,
+} = useMarkerCreate(form, editorRef as ShallowRef<InstanceType<typeof MarkerForm>>)
 
 onSuccess(() => emits('close'))
 
@@ -67,7 +74,7 @@ const unbindForm = registerForm({
   },
   submit: () => submit(),
   close: () => emits('close'),
-  isBusy: () => loading.value,
+  isBusy: () => loading.value || Boolean(unconfirmed.value),
   isDirty: () => false,
   events: {
     onSuccess: callback => onSuccess(() => callback()),
@@ -87,11 +94,17 @@ onUnmounted(unbindForm)
     @close="() => emits('close')"
   >
     <template #footer>
-      <div class="w-full flex justify-end">
+      <div v-if="unconfirmed" class="mr-auto pr-4 text-left text-xs" role="status">
+        <div>创建结果待确认。草稿已保存。</div>
+        <div v-if="candidates?.length">同坐标、同物品的点位 ID {{ candidates.join('、') }}</div>
+        <div v-else-if="candidates">本轮未找到相同坐标和物品的点位。</div>
+        <el-button text type="primary" :loading="checking" @click="recheck">核对已有点位</el-button>
+      </div>
+      <div class="flex justify-end ml-auto">
         <el-button
           :icon="Check"
           :loading="loading"
-          :disabled="isSuccess"
+          :disabled="isSuccess || Boolean(unconfirmed)"
           type="primary"
           @click="submit"
         >

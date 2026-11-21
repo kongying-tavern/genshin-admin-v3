@@ -147,7 +147,7 @@ await __MAP_AI__.events.waitFor({
 | `markers.list` | R | 分页查询点位，支持 scope/标题/地区/物品/类型/隐藏标记/排序等 |
 | `markers.get` | R | 按 id 读取完整点位；本地不存在时回源 |
 | `markers.focus` | R | 地图移动到点位并打开点位弹窗 |
-| `markers.create` | W | 直接调用 store 创建点位（绕过表单） |
+| `markers.create` | W | 直接调用 store 创建点位。返回 `{ marker: { id }, syncing: true }` 表示服务端已确认创建，随后按 ID 同步详情 |
 | `markers.update` | W | 直接调用 store 更新点位（需要完整 MarkerVo 与 version） |
 | `markers.delete` | W | 直接删除点位（不经过界面确认框） |
 | `markers.tweak` | W | 批量修改点位（TweakVo[]） |

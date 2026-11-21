@@ -105,6 +105,7 @@ export const useUserStore = defineStore('global-user', () => {
           userId,
         },
       })
+      if (auth.value.userId !== userId) return
       const { roleId = -1, username = '', ...rest } = data
       const role = roleMap.value.get(roleId)
 
@@ -126,7 +127,7 @@ export const useUserStore = defineStore('global-user', () => {
 
   const isLogin = computed(() => {
     if (!auth.value.accessToken) return false
-    return userInfo.value !== null
+    return userInfo.value !== null && auth.value.userId === userInfo.value.id
   })
 
   const logoutMessageHandler = shallowRef<MessageHandler>()
@@ -190,7 +191,7 @@ export const useUserStore = defineStore('global-user', () => {
       ).pipe(retry({ count: 3, delay: 1000 })),
     ).catch(() => null)
     // 如果刷新失败，跳过并等待下一轮刷新
-    if (!res) return
+    if (!res || auth.value.refreshToken !== refershToken) return
     logger.info('token 已刷新')
     setAuth(res)
   }

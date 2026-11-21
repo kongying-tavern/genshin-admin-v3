@@ -60,14 +60,15 @@ export const createRenderMarkers = (
 
     const { area, tileConfig } = config
     const [ox, oy] = tileConfig.tile.center
-    const [strX, strY] = marker.position!.split(',')
+    const [x, y] = marker.position?.split(',').map(Number) ?? []
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue
     normalizedMarkers.push({
       ...marker,
       render: {
         ...pickMainItem(marker, itemIdMap),
         area,
         tileCode: tileConfig.tile.code,
-        position: [Number(strX) + ox, Number(strY) + oy],
+        position: [x + ox, y + oy],
         isUnderground: marker.extra?.underground?.is_underground ?? false,
         isTemporary,
       },

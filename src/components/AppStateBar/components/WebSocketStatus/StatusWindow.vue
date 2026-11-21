@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import db from '@/database'
 import { useFetchHook } from '@/hooks'
 import { useSocketStore, useUserStore } from '@/stores'
 import MessageItem from './MessageItem.vue'
@@ -8,10 +7,7 @@ const socketStore = useSocketStore()
 const userStore = useUserStore()
 
 const { refresh: clearMessageList, loading: clearLoading } = useFetchHook({
-  onRequest: async () => {
-    await db.websocketEvents.clear()
-    socketStore.clearMessageList()
-  },
+  onRequest: () => socketStore.clearMessageList(),
 })
 
 const wrapperRef = shallowRef<HTMLDivElement>()

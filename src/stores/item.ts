@@ -1,276 +1,169 @@
 import type { ItemVo } from '@/api/alova/globals'
-import type { ManagerTask } from './hooks'
 import { Box } from '@element-plus/icons-vue'
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { useAccessStore, useSocketStore, useUserStore } from '.'
-import { useManager } from './hooks'
-import { bulkWrite, getCostTime } from './utils'
+import Apis from '@/api/alova'
+import { useAccessStore } from './access'
+import { useMapEntitySync } from './mapEntitySync'
+import { stageArchive } from './mapEntitySync/archives'
+import { isEntityId } from './mapEntitySync/model'
+import { checkDetails, fetchItemAreas } from './mapEntitySync/sources'
+import { useEntityManager } from './mapEntitySync/useEntityManager'
+import { useSocketStore } from './socket'
 
-interface ManagerContext {
-  startTime: Ref<number>
-  message: Ref<string>
-  tag: Ref<string>
-}
-
-interface DiffData {
-  updateList: ItemVo[]
-  deleteIds: number[]
-  clear?: boolean
-}
-
-const getAllItems = async (context: ManagerContext, task: ManagerTask) => {
-  context.message.value = '正在获取区域列表'
-  const areaIds = await Apis.area.listArea({
-    data: { isTraverse: true },
-    transform: res => (res.data ?? []).filter(area => area.parentId !== -1).map(({ id }) => id!),
-  })
-  context.message.value = '正在准备获取物品列表'
-  const itemMap = new Map<number, ItemVo>()
-  const total = areaIds.length
-  let finished = 0
-  await Promise.allSettled(
-    areaIds.map(async areaId => {
-      const { data: { record = [] } = {} } = await Apis.item.listItemIdByType({
-        data: {
-          areaIdList: [areaId],
-          current: 1,
-          size: 500,
-        },
-      })
-      const { length } = record
-      for (let i = 0; i < length; i++) {
-        const item = record[i]
-        itemMap.set(item.id!, item)
-      }
-      finished += 1
-      task.report({ loaded: finished, total })
-      context.message.value = `正在获取物品列表 (${finished}/${total})`
-    }),
-  )
-  return Array.from(itemMap.values())
-}
-
-/** 本地物品数据 */
 export const useItemStore = defineStore('global-item', () => {
-  const accessStore = useAccessStore()
-  const socketStore = useSocketStore()
-  const userStore = useUserStore()
+  const access = useAccessStore()
+  const socket = useSocketStore()
+  const sync = useMapEntitySync()
+  type Session = ReturnType<typeof sync.current>
 
-  // ============================== 内部状态 ==============================
+  const empty = new Map<number, ItemVo>()
+  const idMap = computed(() =>
+    sync.projection.state.resources.item?.baseline ? sync.projection.entities.item : empty,
+  )
+  const itemList = computed(() =>
+    [...idMap.value.values()]
+      .filter(row => access.checkHiddenFlag(row.hiddenFlag))
+      .sort((a, b) => (b.sortIndex ?? 0) - (a.sortIndex ?? 0)),
+  )
+  const total = computed(() => itemList.value.length)
+  const revision = computed(() => sync.projection.revisions.item)
 
-  /** 物品 id 索引表 */
-  const localItemMap = shallowRef(new Map<number, ItemVo>())
-
-  // ============================== 代理方法 ==============================
-
-  /**
-   * @local 更新本地物品
-   * - 已包含 version 比较逻辑
-   */
-  const updateLocal = (options: { updateList?: ItemVo[]; deleteIds?: number[] }) => {
-    const { updateList = [], deleteIds = [] } = options
-    if (!updateList.length && !deleteIds.length) return
-    const { length: deleteLength } = deleteIds
-    for (let i = 0; i < deleteLength; i++) {
-      const id = deleteIds[i]
-      localItemMap.value.delete(id)
+  const manager = useEntityManager(sync, 'item', async (session, full, task) => {
+    const { state, entities, pending } = await sync.refresh(session)
+    const resource = state.resources.item
+    if (!full) {
+      const staged = await stageArchive(sync, session, 'item', resource).catch(() => undefined)
+      if (staged?.entities)
+        return {
+          input: {
+            revision: state.revision,
+            batches: {
+              item: {
+                archive: true,
+                updates: staged.entities,
+                deletes: staged.removed,
+                state: { ...staged.state, baseline: true },
+              },
+            },
+          },
+        }
+      if (
+        staged?.unchanged
+        && resource?.baseline
+        && !resource.pendingRanges?.length
+        && !pending.item.size
+      )
+        return { input: { batches: {} } }
     }
-    const { length: updateLength } = updateList
-    for (let i = 0; i < updateLength; i++) {
-      const item = updateList[i]
-      const { id = 0, version = 0 } = item
-      const localItem = localItemMap.value.get(id!)
-      if (version < (localItem?.version ?? 0)) continue
-      localItemMap.value.set(id, item)
+    const { items, failed } = await fetchItemAreas(task)
+    const incomplete = failed.size ? `${failed.size} 个地区的物品尚待核对` : undefined
+    // 任一区域失败就保留缺失记录。物品可能已跨区移动到查询失败的地区。
+    const deletes = incomplete
+      ? []
+      : [...new Set([...entities.item.keys(), ...pending.item])].filter(id => !items.has(id))
+    return {
+      input: {
+        revision: state.revision,
+        batches: {
+          item: {
+            updates: [...items.values()],
+            deletes,
+            state: {
+              ...(incomplete ? {} : { baseline: true, checkedAt: Date.now() }),
+              pendingRanges: [...failed].map(String),
+            },
+          },
+        },
+      },
+      incomplete,
     }
-    triggerRef(localItemMap)
-  }
+  })
 
-  /** @server */
-  const createItem = async (itemForm: ItemVo) => {
-    const { data: itemId } = await Apis.item.createItem({ data: itemForm })
-    if (!itemId) throw new Error('服务器未返回新物品 id')
-    Apis.item.listItemById({ data: [itemId] }).then(({ data: [item] = [] }) => {
-      if (!item) return
-      updateLocal({ updateList: [item] })
+  async function readItems(session: Session, ids: number[]) {
+    const { state, entities } = await sync.refresh(session)
+    const { data, users = {} } = await Apis.item.listItemById({ data: ids })
+    if (!Array.isArray(data)) throw new Error('物品详情响应异常')
+    const missing = checkDetails(data, ids)
+    const moved = data.some(item => {
+      const oldArea = entities.item.get(item.id!)?.areaId
+      return oldArea !== undefined && oldArea !== item.areaId
     })
+    const { conflict } = await sync.commit(session, {
+      revision: state.revision,
+      batches: { item: { updates: data } },
+    })
+    sync.assertCurrent(session)
+    if (conflict || missing.length) throw new Error('物品详情尚待核对')
+    if (moved) void manager.update()
+    return {
+      items: ids.flatMap(id => {
+        const item = sync.projection.entities.item.get(id)
+        return item ? [item] : []
+      }),
+      users,
+    }
   }
 
-  /** @server */
-  const updateItem = async (itemForm: ItemVo) => {
-    if (!itemForm.id) throw new Error('物品 id 为空')
+  const readAfterMutation = (session: Session, ids: number[]) => {
+    if (!ids.length) return
+    void sync
+      .invalidate(session, 'item', ids)
+      .then(() => sync.enqueue(session, () => readItems(session, ids)))
+      .catch(cause => {
+        sync.reportError(session, cause)
+        if (sync.isCurrent(session)) void manager.update()
+      })
+  }
+
+  const createItem = async (form: ItemVo) => {
+    const session = sync.current()
+    const { data: id } = await Apis.item.createItem({ data: form })
+    if (!isEntityId(id)) throw new Error('服务器未返回新物品 ID')
+    readAfterMutation(session, [id])
+  }
+
+  const updateItem = async (form: ItemVo) => {
+    if (!isEntityId(form.id)) throw new Error('物品 ID 无效')
+    const session = sync.current()
     const { data: ids = [] } = await Apis.item.updateItem({
       pathParams: { editSame: 0 },
-      data: [itemForm],
+      data: [form],
     })
-    Apis.item
-      .listItemById({
-        data: ids,
-      })
-      .then(({ data: [item] = [] }) => {
-        if (!item) return
-        updateLocal({ updateList: [item] })
-      })
+    readAfterMutation(session, [...new Set([form.id, ...ids])])
   }
 
-  const deleteItem = async (itemId: number) => {
-    const { data: isSuccess, message } = await Apis.item.deleteItem({
-      pathParams: { itemId },
-    })
-    if (!isSuccess) throw new Error(message)
-    updateLocal({ deleteIds: [itemId] })
+  const deleteItem = async (id: number) => {
+    const session = sync.current()
+    const { data, message } = await Apis.item.deleteItem({ pathParams: { itemId: id } })
+    if (!data) throw new Error(message)
+    await sync.remove(session, 'item', [id])
   }
 
-  // ============================== 外部状态 ==============================
-
-  const list = computed(() => {
-    const res: ItemVo[] = []
-    localItemMap.value.forEach(item => {
-      if (!accessStore.checkHiddenFlag(item.hiddenFlag)) return
-      res.push(item)
-    })
-    return res.sort(({ sortIndex: ia = 0 }, { sortIndex: ib = 0 }) => ib - ia)
-  })
-
-  const total = computed(() => list.value.length)
-
-  // ============================== 数据更新 ==============================
-
-  const {
-    context,
-    isActive,
-    error: managerError,
-    nextUpdateTime,
-    loading: updateLoading,
-    progress,
-    update,
-  } = useManager<ManagerContext, DiffData | void>({
-    timeoutPull: {
-      time: 60 * 60 * 1000,
-      condition: () => userStore.info?.roleId !== undefined,
-    },
-
-    context: {
-      startTime: ref(0),
-      message: ref(''),
-      tag: ref(''),
-    },
-
-    syncState: async (data, context) => {
-      if (!data) return
-      if (!data.updateList.length && !data.deleteIds.length) {
-        context.message.value = [
-          `[${context.tag.value}] `,
-          '检查完成，没有需要更新的数据，',
-          `耗时 ${getCostTime(context.startTime.value).toFixed(1)}s`,
-        ].join('')
-        return
-      }
-      const { updateList, deleteIds } = data
-      updateLocal(data)
-      context.message.value = [
-        `[${context.tag.value}] `,
-        `更新(${updateList.length})，`,
-        `删除(${deleteIds.length})，`,
-        `耗时：${getCostTime(context.startTime.value).toFixed(1)}s`,
-      ].join('')
-    },
-
-    commit: async (data, context, task) => {
-      if (!data || (!data.updateList.length && !data.deleteIds.length)) return
-      const { error, message } = await bulkWrite<number, ItemVo>({
-        name: '物品更新线程',
-        tableName: 'item',
-        clear: data.clear,
-        bulkPutData: data.updateList,
-        bulkDeleteKeys: data.deleteIds,
-        onProgress: (loaded, total) => task.report({ loaded, total }),
+  for (const [event, action, color] of [
+    ['ItemAdded', '添加', 'success'],
+    ['ItemUpdated', '更新', 'primary'],
+    ['ItemDeleted', '删除', 'danger'],
+  ] as const) {
+    socket.appEvent.on(event, (item, { username, nickname }) => {
+      socket.notice(event, {
+        message: `${nickname ?? username ?? '其他用户'} ${action}了物品 ${item.name ?? ''} (id:${item.id})`,
+        icon: Box,
+        customClass: `text-[var(--el-color-${color})]`,
       })
-      if (error) context.message.value = `[${context.tag.value}] 物品写入失败：${message}`
-    },
-
-    init: async (context, task) => {
-      context.startTime.value = Date.now()
-      context.tag.value = '初始化'
-      context.message.value = `[${context.tag.value}] 拉取最新数据...`
-      const localItems = await getAllItems(context, task)
-      updateLocal({ updateList: localItems })
-      context.message.value = `[${context.tag.value}] 完毕: ${getCostTime(context.startTime.value).toFixed(1)}s`
-    },
-
-    diff: async (context, task) => {
-      context.startTime.value = Date.now()
-      context.tag.value = '差异'
-      context.message.value = '物品数据暂不支持差异更新'
-      const updateList = await getAllItems(context, task)
-      return { updateList, deleteIds: [] }
-    },
-
-    full: async (context, task) => {
-      context.startTime.value = Date.now()
-      context.tag.value = '全量'
-      const updateList = await getAllItems(context, task)
-      return { updateList, deleteIds: [] }
-    },
-  })
-
-  // ============================== 外部响应 ==============================
-  socketStore.appEvent.on('ItemAdded', async (itemInfo, userInfo) => {
-    const { id, name, updaterId } = itemInfo
-    if (!id) return
-    const { username = `(uid: ${updaterId})`, nickname } = userInfo
-    localItemMap.value.set(id, itemInfo)
-    triggerRef(localItemMap)
-    socketStore.notice('ItemAdded', {
-      message: `${nickname ?? username} 添加了物品 ${name} (id:${id})`,
-      icon: Box,
-      customClass: 'text-[var(--el-color-success)]',
     })
-  })
-
-  socketStore.appEvent.on('ItemUpdated', async (itemInfo, userInfo) => {
-    const { id, name, updaterId } = itemInfo
-    if (!id) return
-    const { username = `(uid: ${updaterId})`, nickname } = userInfo
-    localItemMap.value.set(id, itemInfo)
-    triggerRef(localItemMap)
-    socketStore.notice('ItemUpdated', {
-      message: `${nickname ?? username} 更新了物品 ${name} (id:${id})`,
-      icon: Box,
-      customClass: 'text-[var(--el-color-primary)]',
-    })
-  })
-
-  socketStore.appEvent.on('ItemDeleted', async (itemInfo, userInfo) => {
-    const { id, name, creatorId } = itemInfo
-    const { username = `(uid: ${creatorId})`, nickname } = userInfo
-    localItemMap.value.delete(id!)
-    triggerRef(localItemMap)
-    socketStore.notice('ItemDeleted', {
-      message: `${nickname ?? username} 删除了物品 ${name} (id:${id})`,
-      icon: Box,
-      customClass: 'text-[var(--el-color-danger)]',
-    })
-  })
+  }
 
   return {
-    // 数据更新
-    context,
-    isActive,
-    managerError,
-    nextUpdateTime,
-    updateLoading,
-    progress,
-    update,
+    ...manager,
+    idMap,
+    itemIdMap: idMap,
+    itemList,
+    revision,
+    total,
+    readItems,
     createItem,
     updateItem,
     deleteItem,
-
-    // 计算状态
-    itemList: list,
-    total,
-    idMap: localItemMap,
-    itemIdMap: localItemMap,
   }
 })
 

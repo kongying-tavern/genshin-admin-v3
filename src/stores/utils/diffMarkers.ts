@@ -46,7 +46,11 @@ export const diffMarkers = async (
   const deleteIds = new Set(ownedIds)
   const { length } = snapshots
   for (let i = 0; i < length; i++) {
-    if (i && i % 2000 === 0) await scheduler.yield() // 每 2000 个点位等一次，避免卡顿
+    if (i && i % 2000 === 0) {
+      // Safari 等环境可能尚未支持 scheduler.yield。
+      if (globalThis.scheduler?.yield) await globalThis.scheduler.yield()
+      else await new Promise<void>(resolve => setTimeout(resolve, 0))
+    }
     const { id, version: rawVersion, linkageId } = snapshots[i]
     // id 缺失的快照没有比对价值；version 可能为 0，不能用假值判断
     if (id === undefined) continue

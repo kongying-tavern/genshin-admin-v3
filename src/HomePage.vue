@@ -33,11 +33,14 @@ import {
 import {
   useAccessStore,
   useArchiveStore,
+  useItemStore,
+  useMarkerStore,
   useMapStateStore,
   useShortcutStore,
   useTileStore,
   useUserStore,
 } from '@/stores'
+import { useMapEntitySync } from '@/stores/mapEntitySync'
 
 // ================ 全局状态 ================
 const tileStore = useTileStore()
@@ -46,6 +49,18 @@ const accessStore = useAccessStore()
 const archiveStore = useArchiveStore()
 const shortcutStore = useShortcutStore()
 const mapStateStore = useMapStateStore()
+const entitySync = useMapEntitySync()
+const markerStore = useMarkerStore()
+const itemStore = useItemStore()
+const mapDataStatus = computed(() => {
+  if (!userStore.isLogin) return ''
+  if (!entitySync.online) return '地图数据离线'
+  if (markerStore.managerError || itemStore.managerError || entitySync.error)
+    return '地图数据同步失败'
+  if (!markerStore.syncState?.baseline || !itemStore.syncState?.baseline) return '正在加载地图数据'
+  if (markerStore.updateLoading || itemStore.updateLoading) return '正在核对地图数据'
+  return ''
+})
 
 // ================ 地图状态 ================
 const genshinDeck = shallowRef<GenshinMap | null>(null)
@@ -194,6 +209,13 @@ onMounted(() => {
     <MapMarkerTweakController />
 
     <AppStateBar />
+    <div
+      v-if="mapDataStatus"
+      class="absolute top-3 left-1/2 -translate-x-1/2 rounded px-3 py-1 text-sm bg-[var(--el-bg-color-overlay)] text-[var(--el-text-color-regular)]"
+      role="status"
+    >
+      {{ mapDataStatus }}
+    </div>
     <AppDevInfo />
     <AppSiderMenu />
     <AppWindowProvider />

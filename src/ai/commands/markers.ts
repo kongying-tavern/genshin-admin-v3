@@ -304,20 +304,20 @@ export const createMarkerCommands = (): BridgeCommand[] => [
   {
     id: 'markers.create',
     title: '创建点位',
-    description: '直接调用点位 store 创建点位（绕过表单），失败时抛出可靠业务错误',
+    description: '直接创建点位，返回服务端已确认的 ID 与详情同步状态',
     access: 'write',
     tags: ['danger-write'],
     params: objectSchema(
       { data: { type: 'object', additionalProperties: true, description: 'MarkerVo' } },
       ['data'],
     ),
-    returns: '{ marker }',
+    returns: '{ marker: { id }, syncing: true }',
     handler: async params => {
       assertLogin()
       assertAccess('MARKER_CREATE')
       const markerStore = useMarkerStore()
-      const marker = await markerStore.createMarker(params.data as MarkerVo)
-      return { marker }
+      const { id, syncing } = await markerStore.createMarker(params.data as MarkerVo)
+      return { marker: { id }, syncing }
     },
   },
   {

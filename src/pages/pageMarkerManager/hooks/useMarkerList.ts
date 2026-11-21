@@ -3,6 +3,7 @@ import type { ItemVo, MarkerVo, SysUserVo } from '@/api/alova/globals'
 import type { PaginationState } from '@/hooks'
 import { useFetchHook } from '@/hooks'
 import { useAreaStore, useItemStore, useItemTypeStore, useMarkerStore } from '@/stores'
+import { useMapEntitySync } from '@/stores/mapEntitySync'
 
 export interface MarkerSearchParams {
   areaIdList: number[]
@@ -16,8 +17,6 @@ export interface MarkerSearchHookOptions {
   getParams: () => MarkerSearchParams
 }
 
-const markerList = ref<MarkerVo[]>([]) as Ref<MarkerVo[]>
-
 /** 根据各种条件筛选查询点位信息 支持根据末端地区、末端类型、物品来进行查询，不填默认分页查询 */
 // TODO 接口分页
 export const useSearchMarkerList = (options: MarkerSearchHookOptions) => {
@@ -27,6 +26,8 @@ export const useSearchMarkerList = (options: MarkerSearchHookOptions) => {
   const itemStore = useItemStore()
   const markerStore = useMarkerStore()
   const itemTypeStore = useItemTypeStore()
+  const sync = useMapEntitySync()
+  const markerList = shallowRef<MarkerVo[]>([])
 
   const lastQueryFlag = shallowRef<string>('')
   const lastQueryCache = shallowRef<MarkerVo[]>([])
@@ -40,6 +41,7 @@ export const useSearchMarkerList = (options: MarkerSearchHookOptions) => {
     initialValue: {
       markers: [],
       total: 0,
+      scope: '',
     },
     onRequest: async () => {
       const { areaIdList, typeIdList, itemIdList, markerIdList } = getParams()
@@ -48,7 +50,15 @@ export const useSearchMarkerList = (options: MarkerSearchHookOptions) => {
       const { itemIdMap } = itemStore
       const { markerList } = markerStore
 
-      const dirtyFlag = JSON.stringify({ areaIdList, typeIdList, itemIdList, markerIdList })
+      const dirtyFlag = JSON.stringify([
+        sync.scope,
+        markerStore.revision,
+        itemStore.revision,
+        areaIdList,
+        typeIdList,
+        itemIdList,
+        markerIdList,
+      ])
 
       const areaIds = new Set<number>(areaIdList)
       const typeIds = new Set(typeIdList)
@@ -96,16 +106,14 @@ export const useSearchMarkerList = (options: MarkerSearchHookOptions) => {
               return true
             })
 
-      if (result.length > 0) {
-        lastQueryFlag.value = dirtyFlag
-        lastQueryCache.value = result
-      }
+      lastQueryFlag.value = dirtyFlag
+      lastQueryCache.value = result
 
       const offset = (current - 1) * size
       const total = result.length
       const markers = result.slice(offset, offset + size)
 
-      return { markers, total }
+      return { markers, total, scope: sync.scope }
     },
   })
 
@@ -131,9 +139,9 @@ export const useSearchMarkerList = (options: MarkerSearchHookOptions) => {
 
   watchDebounced(
     () => [
-      markerStore.markerList,
+      markerStore.revision,
       areaStore.areaList,
-      itemStore.itemList,
+      itemStore.revision,
       itemTypeStore.itemTypeList,
     ],
     updateMarkerList,
@@ -142,7 +150,20 @@ export const useSearchMarkerList = (options: MarkerSearchHookOptions) => {
     },
   )
 
-  onSuccess(({ markers, total }) => {
+  watch(
+    () => sync.scope,
+    () => {
+      markerList.value = []
+      pagination.value.total = 0
+      lastQueryFlag.value = ''
+      lastQueryCache.value = []
+      void updateMarkerList()
+    },
+    { flush: 'sync' },
+  )
+
+  onSuccess(({ markers, total, scope }) => {
+    if (scope !== sync.scope) return
     markerList.value = markers
     pagination.value.total = total
     fetchUserInfo(markers)

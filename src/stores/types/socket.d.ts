@@ -13,6 +13,7 @@ declare namespace Socket {
 
   interface DataEventRecord<K extends keyof DataEventMap = keyof DataEventMap> {
     key: string
+    scope: string
     type: K
     user: SysUserSmallVo & { id?: number }
     args: DataEventMap[K]

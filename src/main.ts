@@ -7,6 +7,7 @@ import { AppError } from '@/components'
 import { createLogger, createPWA, customPaint, ElementIcons } from '@/plugin'
 import { router } from '@/router'
 import { useArchiveStore, useBroadcastStore, useDadianStore, useUserStore } from '@/stores'
+import { startMapEntitySync } from '@/stores/mapEntitySync/start'
 import App from './App.vue'
 // 与迁移前 Tailwind 的样式顺序保持一致：preflight/reset、工具类、主题覆盖
 import '@unocss/reset/tailwind.css'
@@ -44,6 +45,7 @@ void (async () => {
     await useUserStore().init()
     await useDadianStore().init()
     await useArchiveStore().init()
+    app.runWithContext(startMapEntitySync)
     app.mount(container)
 
     if (bridgeMode.mode !== 'off') {

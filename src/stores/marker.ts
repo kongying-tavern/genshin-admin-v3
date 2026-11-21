@@ -1,337 +1,277 @@
 import type { MarkerVo, TweakVo } from '@/api/alova/globals'
+import type { MarkerCommand } from './mapEntitySync/model'
 import { AddLocation, DeleteLocation, Location } from '@element-plus/icons-vue'
+import { liveQuery } from 'dexie'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import Apis from '@/api/alova'
 import db from '@/database'
-import { Logger } from '@/utils'
-import { useAccessStore, useSocketStore, useUserStore } from '.'
-import { useManager } from './hooks'
-import { bulkWrite, diffMarkers, getCostTime, isAccessible } from './utils'
-import { fetchMarkersByIds } from './utils/fetchMarkersByIds'
+import { useAccessStore } from './access'
+import { useMapEntitySync } from './mapEntitySync'
+import { stageArchive } from './mapEntitySync/archives'
+import { sendMarkerCreate } from './mapEntitySync/markerCommands'
+import { isEntityId, validateEntities } from './mapEntitySync/model'
+import {
+  checkDetails,
+  fetchMarkerReconciliation,
+  verifyMarkerArchive,
+} from './mapEntitySync/sources'
+import { useEntityManager } from './mapEntitySync/useEntityManager'
+import { useSocketStore } from './socket'
+import { fetchMarkersWithUsersByIds } from './utils/fetchMarkersByIds'
 
-const logger = new Logger('Marker')
-
-/** 单次点位查询的数量上限，服务端对 `markerIdList` 有长度限制 */
-const QUERY_LIMIT = 100
-
-/** 分片查询的并发数 */
-const QUERY_CONCURRENCY = 4
-
-interface ManagerContext {
-  startTime: Ref<number>
-  message: Ref<string>
-  tag: Ref<string>
-}
-
-interface DiffData {
-  updateList: MarkerVo[]
-  deleteIds: number[]
-  clear?: boolean
-}
-
-/** 全量点位的全局数据 */
 export const useMarkerStore = defineStore('global-marker', () => {
-  const accessStore = useAccessStore()
-  const socketStore = useSocketStore()
-  const userStore = useUserStore()
+  const access = useAccessStore()
+  const socket = useSocketStore()
+  const sync = useMapEntitySync()
+  type Session = ReturnType<typeof sync.current>
 
-  // ============================== 内部状态 ==============================
+  const empty = new Map<number, MarkerVo>()
+  const idMap = computed(() =>
+    sync.projection.state.resources.marker?.baseline ? sync.projection.entities.marker : empty,
+  )
+  const markerList = computed(() =>
+    [...idMap.value.values()].filter(row => access.checkHiddenFlag(row.hiddenFlag)),
+  )
+  const revision = computed(() => sync.projection.revisions.marker)
+  const total = computed(() => markerList.value.length)
+  const pendingCreates = shallowRef<MarkerCommand[]>([])
 
-  /** 点位 id 索引表 */
-  const localMarkerMap = shallowRef(new Map<number, MarkerVo>())
+  watch(
+    () => sync.scope,
+    (scope, _, onCleanup) => {
+      pendingCreates.value = []
+      if (!scope) return
+      const session = sync.current()
+      const subscription = liveQuery(() =>
+        db.mapMarkerCommand.where('scope').equals(scope).toArray(),
+      ).subscribe({
+        next: commands => {
+          if (sync.isCurrent(session)) pendingCreates.value = commands
+        },
+        error: cause => sync.reportError(session, cause),
+      })
+      onCleanup(() => subscription.unsubscribe())
+    },
+    { immediate: true, flush: 'sync' },
+  )
 
-  // ============================== 代理方法 ==============================
+  const finishCreates = async (session: Session) => {
+    const commands = await db.mapMarkerCommand.where('scope').equals(session.scope).toArray()
+    if (!sync.isCurrent(session)) return
+    const completed = commands.filter(
+      command => command.markerId && sync.projection.entities.marker.has(command.markerId),
+    )
+    await db.mapMarkerCommand.bulkDelete(completed.map(({ scope, key }) => [scope, key]))
+  }
 
-  /**
-   * @local 更新本地点位
-   * - 已包含 version 比较逻辑
-   */
-  const updateLocal = (options: {
-    updateList?: MarkerVo[]
-    deleteIds?: number[]
-    /** 清空本地数据后再写入（全量更新时使用） */
-    clear?: boolean
-  }) => {
-    const { updateList = [], deleteIds = [], clear = false } = options
-    if (!updateList.length && !deleteIds.length && !clear) return
-    if (clear) localMarkerMap.value = new Map()
-    const { length: deleteLength } = deleteIds
-    for (let i = 0; i < deleteLength; i++) {
-      const id = deleteIds[i]
-      localMarkerMap.value.delete(id)
+  const manager = useEntityManager(sync, 'marker', async (session, full, task) => {
+    const { state, entities, pending } = await sync.refresh(session)
+    const resource = state.resources.marker
+    let archiveState: typeof resource
+    let rejectedArchiveKey = resource?.rejectedArchiveKey
+    const { updates, deletes, missing } = await fetchMarkerReconciliation(
+      entities.marker,
+      pending.marker,
+      full || !resource?.baseline,
+      task,
+      async detailBatches => {
+        const stage = await stageArchive(sync, session, 'marker', resource, {
+          maxDownloadPages: detailBatches,
+          readUnchanged: full || !resource?.baseline,
+        }).catch(() => undefined)
+        if (stage?.entities) {
+          const compatible = await verifyMarkerArchive(stage.entities).catch(() => undefined)
+          if (!compatible) {
+            if (compatible === false) rejectedArchiveKey = stage.state.archiveKey
+            return undefined
+          }
+          rejectedArchiveKey = undefined
+          archiveState = {
+            baseline: false,
+            checkedAt: 0,
+            ...stage.state,
+          }
+        }
+        return stage?.entities
+      },
+    )
+    return {
+      input: {
+        revision: state.revision,
+        batches: {
+          marker: {
+            updates,
+            deletes,
+            state: {
+              archiveKey: archiveState?.archiveKey ?? resource?.archiveKey,
+              archiveTime: archiveState?.archiveTime ?? resource?.archiveTime,
+              archivePages: archiveState?.archivePages ?? resource?.archivePages,
+              rejectedArchiveKey,
+              ...(missing.length ? {} : { baseline: true, checkedAt: Date.now() }),
+              pendingRanges: missing.map(String),
+            },
+          },
+        },
+      },
+      incomplete: missing.length ? `${missing.length} 个点位详情尚待核对` : undefined,
     }
-    const { length: updateLength } = updateList
-    for (let i = 0; i < updateLength; i++) {
-      const marker = updateList[i]
-      const { id, version = 0, linkageId } = marker
-      // 索引表以数值 id 为键，非法 id 写入后会污染整张表（例如 Long 实例）
-      if (typeof id !== 'number' || !Number.isFinite(id)) continue
-      const localMarker = localMarkerMap.value.get(id)
-      if (localMarker) {
-        // 服务端数据比本地旧（乱序到达的 socket 事件等），丢弃以免把本地改回旧版本
-        if (version < (localMarker.version ?? 0)) continue
-        // 版本与关联都没有变化，无需替换对象引用
-        if (
-          version === (localMarker.version ?? 0)
-          && (linkageId ?? '') === (localMarker.linkageId ?? '')
-        )
-          continue
-      }
-      localMarkerMap.value.set(id, marker)
+  })
+
+  async function readMarkers(session: Session, ids: number[]) {
+    const { state } = await sync.refresh(session)
+    const result = await fetchMarkersWithUsersByIds(ids)
+    const missing = checkDetails(result.markers, ids)
+    const { conflict } = await sync.commit(session, {
+      revision: state.revision,
+      batches: { marker: { updates: result.markers } },
+    })
+    sync.assertCurrent(session)
+    if (missing.length || conflict) throw new Error('点位详情尚待核对')
+    return {
+      markers: ids.flatMap(id => {
+        const marker = sync.projection.entities.marker.get(id)
+        return marker ? [marker] : []
+      }),
+      users: result.users,
     }
-    triggerRef(localMarkerMap)
   }
 
-  /** @server 创建点位 */
-  const createMarker = async (markerForm: MarkerVo) => {
-    const { data: markerId } = await Apis.marker.createMarker({ data: markerForm })
-    if (!markerId) throw new Error('服务器未返回新点位 id')
-    const { data: [marker] = [] } = await Apis.marker.listMarkerById({
-      data: { markerIdList: [markerId] },
-    })
-    if (!marker) throw new Error('服务器未返回新点位数据')
-    updateLocal({ updateList: [marker] })
-    return marker
+  const readAfterMutation = async (session: Session, id: number) => {
+    try {
+      await sync.invalidate(session, 'marker', [id])
+      return (await sync.enqueue(session, () => readMarkers(session, [id]))).markers[0]
+    } catch (cause) {
+      sync.reportError(session, cause)
+      if (sync.isCurrent(session)) void manager.update()
+      return undefined
+    }
   }
 
-  /** @server 更新点位 */
-  const updateMarker = async (markerForm: MarkerVo) => {
-    if (!markerForm.id) throw new Error('点位 id 为空')
-    const { data: isSuccess, message } = await Apis.marker.updateMarker({ data: markerForm })
-    if (!isSuccess) throw new Error(message)
-    const { data: [marker] = [] } = await Apis.marker.listMarkerById({
-      data: { markerIdList: [markerForm.id] },
-    })
-    if (!marker) throw new Error('服务器未返回新点位数据')
-    updateLocal({ updateList: [marker] })
-    return marker
+  const createMarker = async (form: MarkerVo) => {
+    const session = sync.current()
+    const record = await sendMarkerCreate(sync, session, form)
+    const id = record.markerId!
+    // 已接收创建回执，后续失败由同步恢复。立即返回 ID 供表单展示。
+    void readAfterMutation(session, id)
+      .then(() => finishCreates(session))
+      .catch(cause => sync.reportError(session, cause))
+    return { id, syncing: true as const }
   }
 
-  /** @server 删除点位 */
-  const deleteMarker = async (markerId: number) => {
-    const { data: isSuccess, message } = await Apis.marker.deleteMarker({
-      pathParams: { markerId },
-    })
-    if (!isSuccess) throw new Error(message)
-    updateLocal({ deleteIds: [markerId] })
+  const updateMarker = async (form: MarkerVo) => {
+    if (!isEntityId(form.id)) throw new Error('点位 ID 无效')
+    const session = sync.current()
+    const { data, message } = await Apis.marker.updateMarker({ data: form })
+    if (!data) throw new Error(message)
+    return (await readAfterMutation(session, form.id)) ?? { ...form, syncing: true }
+  }
+
+  const deleteMarker = async (id: number) => {
+    const session = sync.current()
+    const { data, message } = await Apis.marker.deleteMarker({ pathParams: { markerId: id } })
+    if (!data) throw new Error(message)
+    await sync.remove(session, 'marker', [id])
     return true
   }
 
-  /** @server 批量操作点位 */
   const tweakMarkers = async (tweaks: TweakVo[]) => {
+    const session = sync.current()
+    const { state } = await sync.refresh(session)
     const { data = [] } = await Apis.marker.tweakMarkers({ data: tweaks })
-    updateLocal({ updateList: data })
+    const ids = [...validateEntities(data)]
+    // 回执可能早于其他写入的响应。版本检查与后续回读共同确认结果。
+    const { conflict } = await sync.commit(session, {
+      revision: state.revision,
+      batches: { marker: { updates: data } },
+    })
+    if (conflict && sync.isCurrent(session)) {
+      await sync.invalidate(session, 'marker', ids)
+      void sync
+        .enqueue(session, () => readMarkers(session, ids))
+        .catch(cause => {
+          sync.reportError(session, cause)
+          if (sync.isCurrent(session)) void manager.update()
+        })
+    }
     return data
   }
 
-  // ============================== 外部状态 ==============================
-
-  /** 经过 hiddenFlag 过滤后的点位列表 */
-  const list = computed(() => {
-    const res: MarkerVo[] = []
-    const { userHiddenFlagMask } = accessStore
-    localMarkerMap.value.forEach(marker => {
-      if (!isAccessible(userHiddenFlagMask, marker.hiddenFlag)) return
-      res.push(marker)
-    })
-    return res
-  })
-
-  const total = computed(() => list.value.length)
-
-  // ============================== 数据更新 ==============================
-
-  const {
-    context,
-    isActive,
-    error: managerError,
-    nextUpdateTime,
-    loading: updateLoading,
-    progress,
-    update,
-  } = useManager<ManagerContext, DiffData | void>({
-    timeoutPull: {
-      time: 60 * 60 * 1000,
-      condition: () => userStore.info?.roleId !== undefined,
-    },
-
-    context: {
-      startTime: ref(0),
-      message: ref(''),
-      tag: ref(''),
-    },
-
-    syncState: async (data, context) => {
-      if (!data) return
-      const { updateList, deleteIds, clear } = data
-      if (!updateList.length && !deleteIds.length && !clear) {
-        context.message.value = [
-          `[${context.tag.value}] `,
-          '检查完成，没有需要更新的数据，',
-          `耗时 ${getCostTime(context.startTime.value).toFixed(1)}s`,
-        ].join('')
-        return
-      }
-      updateLocal(data)
-      context.message.value = [
-        `[${context.tag.value}] `,
-        `更新(${updateList.length})，`,
-        `删除(${deleteIds.length})，`,
-        `耗时：${getCostTime(context.startTime.value).toFixed(1)}s`,
-      ].join('')
-    },
-
-    commit: async (data, _context, task) => {
-      if (!data) return
-      const { updateList, deleteIds, clear } = data
-      if (!updateList.length && !deleteIds.length && !clear) return
-      const { error, message } = await bulkWrite<number, MarkerVo>({
-        name: '点位更新线程',
-        tableName: 'marker',
-        clear,
-        bulkPutData: updateList,
-        bulkDeleteKeys: deleteIds,
-        onProgress: (loaded, total) => task.report({ loaded, total }),
-      })
-      // 写入失败时至少留下痕迹，否则本地缓存与内存状态会静默错位
-      if (error) logger.error(`本地点位写入失败：${message}`)
-    },
-
-    init: async context => {
-      context.startTime.value = Date.now()
-      context.tag.value = '初始化'
-      context.message.value = `[${context.tag.value}] 拉取冷数据...`
-      const localMarkers = await db.marker.toArray()
-      updateLocal({ updateList: localMarkers })
-    },
-
-    diff: async (context, task) => {
-      context.startTime.value = Date.now()
-      context.tag.value = '差异'
-      context.message.value = `[${context.tag.value}] 正在查询比对快照...`
-      // 快照请求期间可能有点位被新增，先记录当前本地 id，避免被误判为已删除
-      const ownedIds = new Set(localMarkerMap.value.keys())
-      const { snapshots } = await Apis.marker_doc.listMarkerDiffSnapshotByBinary()
-      if (!Array.isArray(snapshots)) throw new Error('点位差异快照响应异常')
-      task.report(0.15)
-
-      context.message.value = `[${context.tag.value}] 计算差异...`
-      const { fetchIds, patches, deleteIds } = await diffMarkers(
-        snapshots,
-        localMarkerMap.value,
-        ownedIds,
-      )
-      task.report(0.3)
-
-      let updateList: MarkerVo[] = []
-      if (fetchIds.length) {
-        context.message.value = `[${context.tag.value}] 拉取更新数据 (0/${fetchIds.length})...`
-        // 分批拉取是差异更新的主要耗时，占掉阶段内 30% ~ 95% 的进度
-        updateList = await fetchMarkersByIds(fetchIds, {
-          limit: QUERY_LIMIT,
-          concurrency: QUERY_CONCURRENCY,
-          onProgress: (loaded, total) => {
-            task.report({ loaded, total }, { from: 0.3, to: 0.95 })
-            context.message.value = `[${context.tag.value}] 拉取更新数据 (${loaded}/${total})...`
-          },
-        })
-      } else {
-        task.report(0.95)
-      }
-      // 关联变更不会提升 version，快照里的 linkageId 已经是权威值，就地修正后一并写入本地缓存
-      for (let i = 0; i < patches.length; i++) {
-        const { id, linkageId } = patches[i]
-        const localMarker = localMarkerMap.value.get(id)
-        if (!localMarker) continue
-        localMarker.linkageId = linkageId
-        updateList.push(localMarker)
-      }
-      return { updateList, deleteIds }
-    },
-
-    full: async context => {
-      context.startTime.value = Date.now()
-      context.tag.value = '全量'
-      context.message.value = `[${context.tag.value}] 正在获取点位数据...`
-      const updateList = await Apis.marker_doc.listMarkersByBinary()
-      return { updateList, deleteIds: [] as number[], clear: true }
-    },
-  })
-
-  // ============================== 外部响应 ==============================
-
-  // 单个点位更新
-  socketStore.appEvent.on('MarkerUpdated', async (markerInfo, userInfo) => {
-    const { id, markerTitle, updaterId } = markerInfo
-    if (!id) return
-    const { username = `(uid: ${updaterId})`, nickname } = userInfo
-    updateLocal({ updateList: [markerInfo] })
-    socketStore.notice('MarkerUpdated', {
-      message: `${nickname ?? username} 更新了点位 ${markerTitle} (id:${id})`,
-      icon: Location,
-      customClass: 'text-[var(--el-color-primary)]',
-    })
-  })
-
-  // 单个点位新增
-  socketStore.appEvent.on('MarkerAdded', async (markerInfo, userInfo) => {
-    const { id, markerTitle, creatorId } = markerInfo
-    if (!id) return
-    const { username = `(uid: ${creatorId})`, nickname } = userInfo
-    updateLocal({ updateList: [markerInfo] })
-    socketStore.notice('MarkerAdded', {
-      message: `${nickname ?? username} 新增了点位 ${markerTitle} (id:${id})`,
+  socket.appEvent.on('MarkerAdded', (marker, { nickname, username }) => {
+    socket.notice('MarkerAdded', {
+      message: `${nickname ?? username ?? `(uid: ${marker.creatorId})`} 新增了点位 ${marker.markerTitle} (id:${marker.id})`,
       icon: AddLocation,
       customClass: 'text-[var(--el-color-success)]',
     })
   })
-
-  // 单个点位删除
-  socketStore.appEvent.on('MarkerDeleted', async (markerInfo, userInfo) => {
-    const { id, markerTitle, creatorId } = markerInfo
-    if (!id) return
-    const { username = `(uid: ${creatorId})`, nickname } = userInfo
-    updateLocal({ deleteIds: [id] })
-    socketStore.notice('MarkerDeleted', {
-      message: `${nickname ?? username} 删除了点位 ${markerTitle} (id:${id})`,
+  socket.appEvent.on('MarkerUpdated', (marker, { nickname, username }) => {
+    socket.notice('MarkerUpdated', {
+      message: `${nickname ?? username ?? `(uid: ${marker.updaterId})`} 更新了点位 ${marker.markerTitle} (id:${marker.id})`,
+      icon: Location,
+      customClass: 'text-[var(--el-color-primary)]',
+    })
+  })
+  socket.appEvent.on('MarkerDeleted', (marker, { nickname, username }) => {
+    socket.notice('MarkerDeleted', {
+      message: `${nickname ?? username ?? '其他用户'} 删除了点位 ${marker.markerTitle ?? ''} (id:${marker.id})`,
       icon: DeleteLocation,
       customClass: 'text-[var(--el-color-danger)]',
     })
   })
-
-  // 点位批量更新
-  socketStore.appEvent.on('MarkerTweaked', async (data, userInfo) => {
-    if (!data.length) return
-    const [{ updaterId }] = data
-    const { username = `(uid: ${updaterId})`, nickname } = userInfo
-    updateLocal({ updateList: data })
-    socketStore.notice('MarkerTweaked', {
-      message: `${nickname ?? username} 批量更新了 ${data.length} 个点位`,
+  socket.appEvent.on('MarkerTweaked', (markers, { nickname, username }) => {
+    socket.notice('MarkerTweaked', {
+      message: `${nickname ?? username ?? '其他用户'} 批量更新了 ${markers.length} 个点位`,
       icon: Location,
       customClass: 'text-[var(--el-color-success)]',
     })
   })
 
-  return {
-    // 数据更新
-    context,
-    isActive,
-    managerError,
-    nextUpdateTime,
-    updateLoading,
-    progress,
-    update,
-    updateLocal,
+  const update = async (options?: { isFull?: boolean }) => {
+    if (!sync.scope) return
+    const session = sync.current()
+    await manager.update(options)
+    if (!sync.isCurrent(session)) return
+    try {
+      const commands = await db.mapMarkerCommand.where('scope').equals(session.scope).toArray()
+      const ids = commands.flatMap(({ markerId }) =>
+        markerId && !sync.projection.entities.marker.has(markerId) ? [markerId] : [],
+      )
+      if (ids.length) {
+        await sync.invalidate(session, 'marker', ids)
+        await sync.enqueue(session, () => readMarkers(session, ids))
+      }
+      await finishCreates(session)
+    } catch (cause) {
+      sync.reportError(session, cause)
+    }
+  }
 
+  const acknowledgeUnknownCreate = async (key: string) => {
+    const session = sync.current()
+    await db.transaction('rw', db.mapMarkerCommand, async () => {
+      const record = await db.mapMarkerCommand.get([session.scope, key])
+      sync.assertCurrent(session)
+      if (
+        record?.status === 'unknown'
+        || (record?.status === 'sending' && Date.now() - record.createdAt > 5 * 60 * 1000)
+      )
+        await db.mapMarkerCommand.delete([session.scope, key])
+    })
+  }
+
+  return {
+    ...manager,
+    update,
+    idMap,
+    markerList,
+    revision,
+    total,
+    readMarkers,
     createMarker,
     updateMarker,
     deleteMarker,
     tweakMarkers,
-
-    // 计算状态
-    markerList: list,
-    total,
-    idMap: localMarkerMap,
+    pendingCreates,
+    acknowledgeUnknownCreate,
   }
 })
 

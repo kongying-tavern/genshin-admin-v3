@@ -8,6 +8,12 @@ import type {
   MarkerVo,
 } from '@/api/alova/globals'
 import { Dexie } from 'dexie'
+import type {
+  ArchivePage,
+  EntityRow,
+  MarkerCommand,
+  ScopeState,
+} from '@/stores/mapEntitySync/model'
 
 /** 本地通用数据库 */
 export class AppDexie extends Dexie {
@@ -41,8 +47,19 @@ export class AppDexie extends Dexie {
   /** 评分生成缓存月份 @仅限本地 */
   declare scoreCache: Dexie.Table<ScoreGeneratedCache, string>
 
+  declare mapEntity: Dexie.Table<EntityRow, [string, EntityRow['resource'], number]>
+
+  declare mapEntityState: Dexie.Table<ScopeState, string>
+
+  declare mapMarkerCommand: Dexie.Table<MarkerCommand, [string, string]>
+
+  declare mapArchivePage: Dexie.Table<
+    ArchivePage,
+    [string, ArchivePage['resource'], number, string]
+  >
+
   /** 数据库结构版本 */
-  readonly VERSION = 2
+  readonly VERSION = 3
 
   readonly STORES = {
     area: '&id',
@@ -58,6 +75,17 @@ export class AppDexie extends Dexie {
 
   constructor() {
     super('AppData')
-    this.version(this.VERSION).stores(this.STORES)
+    this.version(2).stores(this.STORES)
+    this.version(this.VERSION)
+      .stores({
+        mapEntity: '[scope+resource+id], scope, [scope+revision]',
+        mapEntityState: '&scope',
+        mapMarkerCommand: '[scope+key], scope',
+        mapArchivePage: '[scope+resource+format+digest], scope',
+        websocketEvents: '&key, [scope+time]',
+      })
+      .upgrade(tx =>
+        Promise.all(['marker', 'item', 'markerLink'].map(table => tx.table(table).clear())),
+      )
   }
 }

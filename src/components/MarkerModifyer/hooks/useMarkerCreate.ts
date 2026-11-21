@@ -5,6 +5,7 @@ import { ElMessage } from 'element-plus'
 import { omit } from 'lodash'
 import { useFetchHook } from '@/hooks'
 import { useMarkerStore, useUserStore } from '@/stores'
+import { MarkerCreateUnconfirmed } from '@/stores/mapEntitySync/markerCommands'
 import { usePictureUpload } from './usePictureUpload'
 
 /** 新增点位，已自动处理 version 和 methodType 字段 */
@@ -34,6 +35,31 @@ export const useMarkerCreate = (
 
   /** 是否存在正在进行的提交 */
   const isSubmitting = ref(false)
+  const unconfirmed = ref('')
+  const checking = ref(false)
+  const candidates = ref<number[]>()
+
+  const recheck = async () => {
+    const draft = markerData.value
+    if (!draft || checking.value) return
+    checking.value = true
+    try {
+      await markerStore.update()
+      if (markerStore.managerError) {
+        ElMessage.error(markerStore.managerError)
+        return
+      }
+      const itemIds = new Set(draft.itemList?.map(item => item.itemId))
+      candidates.value = markerStore.markerList
+        .filter(
+          row =>
+            row.position === draft.position && row.itemList?.some(item => itemIds.has(item.itemId)),
+        )
+        .flatMap(row => (row.id ? [row.id] : []))
+    } finally {
+      checking.value = false
+    }
+  }
 
   const {
     refresh: request,
@@ -46,7 +72,7 @@ export const useMarkerCreate = (
       await editorRef.value?.validate()
       const form = buildAdminMarkerForm(markerData.value)
       await tryUploadPicture(form)
-      await markerStore.createMarker(form)
+      return markerStore.createMarker(form)
     },
   })
 
@@ -57,7 +83,7 @@ export const useMarkerCreate = (
    * 因此需要在调用入口同步加锁，仅在失败时解锁以允许重试。
    */
   const submit = async () => {
-    if (isSubmitting.value || isSuccess.value) return
+    if (isSubmitting.value || isSuccess.value || unconfirmed.value) return
     isSubmitting.value = true
     try {
       return await request()
@@ -66,18 +92,31 @@ export const useMarkerCreate = (
     }
   }
 
-  onSuccess(async () => {
+  onSuccess(({ id }) => {
     isSuccess.value = true
     ElMessage.success({
-      message: '新增点位成功',
+      message: `点位 ${id} 已创建，详情同步中`,
     })
   })
 
-  onError(err =>
-    ElMessage.error({
-      message: `新增点位失败，原因为：${err.message}`,
-    }),
-  )
+  onError(err => {
+    if (err instanceof MarkerCreateUnconfirmed) {
+      unconfirmed.value = err.mutationId
+      ElMessage.warning(err.message)
+      return
+    }
+    ElMessage.error(`新增点位失败，原因为：${err.message}`)
+  })
 
-  return { isSuccess, submit, onSuccess, onError, ...rest }
+  return {
+    isSuccess,
+    submit,
+    onSuccess,
+    onError,
+    unconfirmed,
+    recheck,
+    checking,
+    candidates,
+    ...rest,
+  }
 }

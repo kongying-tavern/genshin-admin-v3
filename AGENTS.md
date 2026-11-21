@@ -245,7 +245,7 @@ await __MAP_AI__.events.waitFor({
 
 - 桥接是**页面内开发能力，不是认证/授权边界**；生产构建默认 `off`。
 - 只读模式拒绝所有写命令；写命令清单可通过 `manifest().commands` 按 `access` 过滤。
-- 高风险写命令：`markers.create/update/delete/tweak`、`forms.set/submit`、`archive.mark/unmark`；不要在未确认的环境中批量调用。
+- 高风险写命令：`markers.create/update/delete/tweak`、`forms.set/submit`、`archive.mark/unmark`；不要在未确认的环境中批量调用。`markers.create` 返回已确认的 ID，详情异步回读。
 - 快照、事件、错误日志已对 `password/token/secret/authorization` 等键脱敏。
 - 不要为了图省事直接暴露原始 Pinia store、token 或任意 JS eval 入口。
 - 不要用桥接绕过权限；匿名用户无法打开需要业务权限的句柄。

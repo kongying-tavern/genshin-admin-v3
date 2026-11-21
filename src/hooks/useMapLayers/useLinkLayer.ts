@@ -100,42 +100,13 @@ export const useLinkLayer = () => {
   })
 
   /** 用于渲染的真实关联连线（后端有实际数据） */
-  const renderRealLinks = shallowRef<MarkerLinkMission[]>([])
-
-  const fetchRenderRealLinks = async (groupIds: string[]): Promise<MarkerLinkMission[]> => {
-    if (!groupIds.length) return []
-    const { data: linkGroups = {} } = await Apis.marker_link.getMarkerLinkageList({
-      data: {
-        groupIds,
-      },
-    })
-    const links: MarkerLinkMission[] = Object.values(linkGroups)
-      .flat(1)
-      .map(link => ({
+  const renderRealLinks = computed<MarkerLinkMission[]>(() =>
+    renderRealLinkGroupIds.value.flatMap(group =>
+      (markerLinkStore.groupIdMap.get(group) ?? []).map(link => ({
         ...link,
-        meta: {
-          key: `${link.id}`,
-        },
-      }))
-    return links
-  }
-
-  // 异步查询实际的关联数据（避免本地污染）
-  watch(
-    () => [renderRealLinkGroupIds.value, markerLinkStore.updateVersion] as const,
-    async ([groupIds], oldState) => {
-      const oldIdSet = new Set(oldState?.[0])
-      const newIdSet = new Set(groupIds)
-      if (isSameSet(oldIdSet, newIdSet)) return
-      let expired = false
-      onWatcherCleanup(() => {
-        expired = true
-      })
-      const newMission = await fetchRenderRealLinks(groupIds)
-      if (expired) return
-      renderRealLinks.value = newMission
-    },
-    { immediate: true },
+        meta: { key: String(link.id) },
+      })),
+    ),
   )
 
   /** 用于渲染的临时关联 id */
@@ -159,7 +130,7 @@ export const useLinkLayer = () => {
 
   // 渲染被关联带出的点位
   watch(
-    renderLinks,
+    [renderLinks, () => markerStore.revision],
     () => {
       if (!renderLinks.value?.length) {
         mapStateStore.setTempMarkers('markerLink', [])

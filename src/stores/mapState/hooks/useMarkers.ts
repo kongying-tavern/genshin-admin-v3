@@ -10,6 +10,7 @@ import type {
 } from '@/stores'
 import type { MAFMeta } from '@/stores/types'
 import { toValue } from 'vue'
+import { useMapEntitySync } from '@/stores/mapEntitySync'
 import { createRenderMarkers } from '@/stores/utils'
 import { useMarkerAdvancedFilter, useMarkerFilter } from '.'
 
@@ -142,7 +143,32 @@ export const useMarkers = (options: MarkerHookOptions) => {
   const staticMarkerIds = computed(() => new Set(staticMarkers.value.map(marker => marker.id!)))
 
   /** 临时点位集合 */
-  const tempMarkerMap = shallowRef(new Map<keyof TempMarkerTypeMap, GSMarkerInfo[]>())
+  const tempSources = shallowRef(new Map<keyof TempMarkerTypeMap, MarkerVo[]>())
+  const tempMarkerMap = computed(() => {
+    const tileConfigs = tileStore.mergedTileConfigs
+    const areaIdMap = areaStore.areaIdMap
+    const itemIdMap = itemStore.itemIdMap
+    return new Map(
+      Array.from(tempSources.value, ([type, markers]) => [
+        type,
+        createRenderMarkers(markers, {
+          tileConfigs,
+          areaIdMap,
+          itemIdMap,
+          isTemporary: true,
+          reset: true,
+        }),
+      ]),
+    )
+  })
+  const sync = useMapEntitySync()
+  watch(
+    () => sync.scope,
+    () => {
+      tempSources.value = new Map()
+    },
+    { flush: 'sync' },
+  )
 
   /** 未去重的临时点位 */
   const undifferentiated = computed(() => {
@@ -170,20 +196,9 @@ export const useMarkers = (options: MarkerHookOptions) => {
     type: TempMarkerType,
     markers: TempMarkerTypeMap[K],
   ) => {
-    const { mergedTileConfigs: tileConfigs } = tileStore
-    const { areaIdMap } = areaStore
-    const { itemIdMap } = itemStore
-    const map = new Map(tempMarkerMap.value)
-    map.set(
-      type,
-      createRenderMarkers(markers, {
-        tileConfigs,
-        areaIdMap,
-        itemIdMap,
-        isTemporary: true,
-      }),
-    )
-    tempMarkerMap.value = map
+    const map = new Map(tempSources.value)
+    map.set(type, markers)
+    tempSources.value = map
   }
 
   const setTempMarkersBy = <K extends keyof TempMarkerTypeMap>(
@@ -196,7 +211,7 @@ export const useMarkers = (options: MarkerHookOptions) => {
   }
 
   const clearTempMarkes = () => {
-    tempMarkerMap.value = new Map()
+    tempSources.value = new Map()
   }
 
   // ====================  临时点位 - end  ====================

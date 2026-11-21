@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { Refresh, RefreshLeft, WarnTriangleFilled } from '@element-plus/icons-vue'
-import { ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import db from '@/database'
 import { now } from '@/shared'
+import { useMarkerStore } from '@/stores'
 import { listDatasets } from '@/stores/datasetStatus'
 import { MANAGER_PHASE_LABELS } from '@/stores/hooks'
+import { useMapEntitySync } from '@/stores/mapEntitySync'
+import { useSocketStore } from '@/stores/socket'
 import { SettingBar, SettingGroup, SettingPanel } from '../components'
 
 const dbList = listDatasets().map(dataset => ({
+  key: dataset.key,
   label: dataset.label,
   total: computed(dataset.total),
   loading: computed(dataset.updating),
@@ -19,6 +23,47 @@ const dbList = listDatasets().map(dataset => ({
   updateDiff: () => dataset.update(),
   updateFull: () => dataset.update({ full: true }),
 }))
+
+const entitySync = useMapEntitySync()
+const socket = useSocketStore()
+const marker = useMarkerStore()
+const checkingDrafts = ref(false)
+const recheckDrafts = async () => {
+  checkingDrafts.value = true
+  try {
+    await marker.update()
+    if (marker.managerError) ElMessage.error(marker.managerError)
+    else ElMessage.success('点位已重新核对')
+  } finally {
+    checkingDrafts.value = false
+  }
+}
+
+const acknowledgeDraft = async (key: string) => {
+  const scope = entitySync.scope
+  const confirmed = await ElMessageBox.confirm(
+    '请先核对点位及历史记录。确认后会移除这条待核对草稿。',
+    '确认处理草稿',
+    { confirmButtonText: '已人工核对', cancelButtonText: '返回', type: 'warning' },
+  ).then(
+    () => true,
+    () => false,
+  )
+  if (confirmed && scope === entitySync.scope) await marker.acknowledgeUnknownCreate(key)
+}
+const syncInfo = (key: (typeof dbList)[number]['key']) => {
+  if (key !== 'marker' && key !== 'item' && key !== 'markerLink') return ''
+  const state = entitySync.projection.state.resources[key]
+  if (!state) return ''
+  const result: string[] = []
+  if (state.checkedAt) result.push(`最近在线核对 ${new Date(state.checkedAt).toLocaleString()}`)
+  if (state.archiveTime) result.push(`归档 ${new Date(state.archiveTime).toLocaleString()}`)
+  const ranges = state.pendingRanges?.length ?? 0
+  const ids = entitySync.projection.pending[key].size
+  if (ranges) result.push(`${ranges} 个范围待核对`)
+  if (ids) result.push(`${ids} 个实体待核对`)
+  return result.join(' · ')
+}
 
 /** 进度条状态：失败优先，其次沿用管理器给出的完成态 */
 const progressStatus = (store: (typeof dbList)[number]) => {
@@ -63,6 +108,17 @@ const deleteDatabase = async () => {
 <template>
   <SettingPanel>
     <SettingGroup name="存储详情">
+      <SettingBar label="地图同步">
+        <template #note>
+          {{
+            !entitySync.online
+              ? '离线'
+              : socket.context.status === 'OPEN'
+                ? '实时连接已建立'
+                : '实时连接未建立'
+          }}
+        </template>
+      </SettingBar>
       <SettingBar v-for="store in dbList" :key="store.label" :label="store.label">
         <template #note>
           <div class="text-xs text-[var(--el-text-color-regular)] mb-0.5">
@@ -104,6 +160,12 @@ const deleteDatabase = async () => {
           >
             {{ store.error.value || store.message.value }}
           </div>
+          <div
+            v-if="syncInfo(store.key)"
+            class="text-xs mt-0.5 text-[var(--el-text-color-regular)]"
+          >
+            {{ syncInfo(store.key) }}
+          </div>
         </template>
 
         <template #setting>
@@ -128,6 +190,28 @@ const deleteDatabase = async () => {
               重新获取
             </el-button>
           </div>
+        </template>
+      </SettingBar>
+    </SettingGroup>
+
+    <SettingGroup v-if="marker.pendingCreates.length" name="待核对的点位创建">
+      <SettingBar
+        v-for="command in marker.pendingCreates"
+        :key="command.key"
+        :label="command.draft.markerTitle || '未命名点位'"
+        :note="`坐标 ${command.draft.position ?? '未知'} · ${command.markerId ? `已创建 #${command.markerId}，详情同步中` : '结果待确认'}`"
+      >
+        <template #setting>
+          <el-button text :loading="checkingDrafts" @click="recheckDrafts">核对点位</el-button>
+          <el-button
+            v-if="
+              command.status === 'unknown'
+              || (command.status === 'sending' && now - command.createdAt > 300000)
+            "
+            text
+            @click="acknowledgeDraft(command.key)"
+            >已人工核对</el-button
+          >
         </template>
       </SettingBar>
     </SettingGroup>

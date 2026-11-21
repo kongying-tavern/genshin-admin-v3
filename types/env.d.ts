@@ -17,6 +17,9 @@ interface ImportMetaEnv {
   /** @dev 接口反代理 */
   readonly VITE_API_PROXY_TARGET: string
 
+  /** 已通过当前后端和可见范围的归档契约验证，可按资源启用 */
+  readonly VITE_MAP_ENTITY_ARCHIVES?: string
+
   /** 路由创建历史记录的模式 */
   readonly VITE_ROUTER_MODE: 'history' | 'hash' | 'memory'
 
