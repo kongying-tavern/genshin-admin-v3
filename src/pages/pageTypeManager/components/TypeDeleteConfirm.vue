@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { TypeManager } from '../config'
 import { Check, Close, Delete } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { WinDialog, WinDialogFooter, WinDialogTitleBar } from '@/components'
 import { useTypeDelete } from '../hooks'
 
@@ -14,18 +15,25 @@ const emits = defineEmits<{
   close: [boolean]
 }>()
 
-const { loading, refresh: deleteType, onSuccess } = useTypeDelete(computed(() => props.manager))
+const {
+  loading,
+  refresh: deleteType,
+  onSuccess,
+  onError,
+} = useTypeDelete(computed(() => props.manager))
 
-onSuccess(() => emits('success'))
+onSuccess(() => {
+  emits('success')
+  emits('close', true)
+})
+
+onError(error => ElMessage.error(`删除${props.manager.info.label}失败：${error.message}`))
 
 const cancel = () => {
   emits('close', false)
 }
 
-const confirm = async () => {
-  await deleteType(props.data)
-  emits('close', true)
-}
+const confirm = () => deleteType(props.data)
 </script>
 
 <template>

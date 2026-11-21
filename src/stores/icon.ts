@@ -57,6 +57,7 @@ export const useIconStore = defineStore('global-icon', () => {
   // ============================== 内部状态 ==============================
 
   const localIconMap = shallowRef(new Map<number, IconVo>())
+  const iconsWithConfirmedTypes = new WeakSet<IconVo>()
 
   // ============================== 外部状态 ==============================
   const list = computed(() => [...localIconMap.value.values()])
@@ -84,12 +85,13 @@ export const useIconStore = defineStore('global-icon', () => {
    */
   const updateLocal = (options: { updateMap?: Map<number, IconVo>; deleteIds?: number[] }) => {
     const { updateMap, deleteIds = [] } = options
+    let changed = false
 
     // 处理删除
     const { length: deleteLength } = deleteIds
     for (let i = 0; i < deleteLength; i++) {
       const id = deleteIds[i]
-      localIconMap.value.delete(id)
+      if (localIconMap.value.delete(id)) changed = true
     }
 
     // 处理更新
@@ -97,9 +99,10 @@ export const useIconStore = defineStore('global-icon', () => {
       const { id, version = 0 } = icon
       if (!id || version <= (localIconMap.value.get(id)?.version ?? 0)) return
       localIconMap.value.set(id, icon)
+      changed = true
     })
 
-    triggerRef(localIconMap)
+    if (changed) triggerRef(localIconMap)
   }
 
   // ============================== 数据更新 ==============================
@@ -182,20 +185,42 @@ export const useIconStore = defineStore('global-icon', () => {
     },
   })
 
+  /** 用列表接口回读单个图标。同一版本的已确认分类优先于列表回读。 */
+  const refreshIcon = async (
+    iconId: number,
+    confirmedTypes?: { version: number; typeIdList: number[] },
+  ) => {
+    const { data } = await Apis.icon.listIcon({
+      data: { iconIdList: [iconId], current: 1, size: 1 },
+    })
+    const icon = data?.record?.find(({ id }) => id === iconId)
+    if (!icon) throw new Error('未找到图标')
+
+    const local = localIconMap.value.get(iconId)
+    if (local && (local.version ?? 0) > (icon.version ?? 0)) return local
+
+    // 列表可能在写入后返回新版本，却漏掉该版本的分类。
+    if (confirmedTypes && icon.version === confirmedTypes.version) {
+      const updated = { ...icon, typeIdList: confirmedTypes.typeIdList }
+      iconsWithConfirmedTypes.add(updated)
+      localIconMap.value.set(iconId, updated)
+      triggerRef(localIconMap)
+      return updated
+    }
+    if (local && local.version === icon.version && iconsWithConfirmedTypes.has(local)) {
+      return local
+    }
+
+    updateLocal({ updateMap: new Map([[iconId, icon]]) })
+    return icon
+  }
+
   /** @server 创建图标（封装 Apis.icon.createIcon 与本地更新逻辑） */
   const createIcon = async (iconForm: IconVo) => {
     const { data: id } = await Apis.icon.createIcon({ data: iconForm })
     if (!id) throw new Error('新增失败，返回 id 为空')
     try {
-      const {
-        data = {},
-        error,
-        message: getMsg = '',
-      } = await Apis.icon.getIcon({
-        pathParams: { iconId: id },
-      })
-      if (error) throw new Error(getMsg)
-      updateLocal({ updateMap: new Map([[data.id!, data]]) })
+      await refreshIcon(id)
     } catch (error) {
       console.warn('createIcon 本地更新失败', error)
     }
@@ -203,21 +228,59 @@ export const useIconStore = defineStore('global-icon', () => {
 
   /** @server 更新图标（封装 Apis.icon.updateIcon 与本地更新逻辑） */
   const updateIcon = async (iconForm: IconVo) => {
-    if (!iconForm.id) throw new Error('图标 id 为空')
-    await Apis.icon.updateIcon({ data: iconForm })
+    const { id, version, typeIdList } = iconForm
+    if (!id) throw new Error('图标 id 为空')
+    const submittedTypes = typeIdList?.slice()
+    const { data, message } = await Apis.icon.updateIcon({
+      data: { ...iconForm, typeIdList: submittedTypes },
+    })
+    if (!data) throw new Error(message || '更新图标失败')
+
+    const confirmedTypes =
+      version == null || submittedTypes === undefined
+        ? undefined
+        : { version: version + 1, typeIdList: submittedTypes }
     try {
-      const {
-        data = {},
-        error,
-        message: getMsg = '',
-      } = await Apis.icon.getIcon({
-        pathParams: { iconId: iconForm.id },
-      })
-      if (error) throw new Error(getMsg)
-      updateLocal({ updateMap: new Map([[data.id!, data]]) })
+      const updated = await refreshIcon(id, confirmedTypes)
+      if (version != null && (updated.version ?? 0) <= version) {
+        throw new Error('图标回读版本尚未更新')
+      }
+      return updated
     } catch (error) {
       console.warn('updateIcon 本地更新失败', error)
     }
+  }
+
+  const addIconToCategory = async (id: number, typeId: number) => {
+    const { typeIdList, version, tag, description, url, urlVariants } = await refreshIcon(id)
+    if (typeIdList?.includes(typeId)) return { added: false, synced: true }
+
+    const updated = await updateIcon({
+      id,
+      version,
+      tag,
+      description,
+      url,
+      urlVariants,
+      typeIdList: [...(typeIdList ?? []), typeId],
+    })
+    return { added: true, synced: updated !== undefined }
+  }
+
+  /** 分类接口确认删除后清理内存列表中的引用，避免后续编辑带上已删除的分类。 */
+  const removeDeletedCategory = (typeId: number) => {
+    let changed = false
+    for (const [id, icon] of localIconMap.value) {
+      if (!icon.typeIdList?.includes(typeId)) continue
+      const updated = {
+        ...icon,
+        typeIdList: icon.typeIdList.filter(id => id !== typeId),
+      }
+      if (iconsWithConfirmedTypes.has(icon)) iconsWithConfirmedTypes.add(updated)
+      localIconMap.value.set(id, updated)
+      changed = true
+    }
+    if (changed) triggerRef(localIconMap)
   }
 
   /** @server 删除图标（封装 Apis.icon.deleteIcon 与本地更新逻辑） */
@@ -252,11 +315,13 @@ export const useIconStore = defineStore('global-icon', () => {
 
     // 本地操作
     updateLocal,
+    removeDeletedCategory,
 
     // 服务器操作
     createIcon,
     updateIcon,
     deleteIcon,
+    addIconToCategory,
 
     // 计算状态
     iconList: list,

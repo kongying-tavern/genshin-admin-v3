@@ -62,7 +62,7 @@ const createType = async () => {
     </WinDialogTitleBar>
 
     <WinDialogTabPanel>
-      <TypeDetailForm v-model="form" :parent="parent" :manager="manager" />
+      <TypeDetailForm ref="formRef" v-model="form" :parent="parent" :manager="manager" />
     </WinDialogTabPanel>
 
     <WinDialogFooter>

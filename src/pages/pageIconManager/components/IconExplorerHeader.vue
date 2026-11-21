@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import type { IconTypeVo } from '@/api/alova/globals'
-import { ArrowDown, CircleCheck, CirclePlus, Sort } from '@element-plus/icons-vue'
+import { ArrowDown, CircleCheck, CirclePlus, Search, Sort } from '@element-plus/icons-vue'
+
+defineProps<{
+  categoryName: string
+}>()
 
 const emits = defineEmits<{
   createIcon: []
 }>()
 
 const queryName = defineModel<string>('queryName', {
-  required: true,
-})
-
-const queryType = defineModel<IconTypeVo>('queryType', {
   required: true,
 })
 
@@ -39,14 +38,13 @@ const handleSortCommand = (command: string) => {
 </script>
 
 <template>
-  <div
-    class="col-span-3 flex justify-end items-center p-2 border-b-[1px] border-[var(--el-border-color-lighter)]"
-  >
+  <div class="icon-explorer-tools">
     <!-- 搜索输入框 -->
     <el-input
       v-model="queryName"
-      style="max-width: 300px"
-      :placeholder="`在 ${queryType.name} 中搜索`"
+      class="icon-search"
+      :placeholder="`在 ${categoryName} 中搜索`"
+      aria-label="搜索图标"
       clearable
     >
       <template #prefix>
@@ -56,13 +54,11 @@ const handleSortCommand = (command: string) => {
       </template>
     </el-input>
 
-    <el-divider direction="vertical" />
-
     <!-- 排序选择器 -->
     <el-dropdown :hide-on-click="false" @command="handleSortCommand">
-      <el-button text :icon="Sort">
-        排序
-        <el-icon class="el-icon--right" :size="12">
+      <el-button class="toolbar-action" text :icon="Sort" aria-label="排序">
+        <span class="toolbar-label">排序</span>
+        <el-icon class="el-icon--right toolbar-label" :size="12">
           <ArrowDown />
         </el-icon>
       </el-button>
@@ -92,9 +88,46 @@ const handleSortCommand = (command: string) => {
       </template>
     </el-dropdown>
 
-    <el-divider direction="vertical" />
-
     <!-- 操作栏 -->
-    <el-button text :icon="CirclePlus" @click="() => emits('createIcon')"> 新建 </el-button>
+    <el-button
+      class="toolbar-action"
+      text
+      :icon="CirclePlus"
+      aria-label="新建图标"
+      @click="emits('createIcon')"
+    >
+      <span class="toolbar-label">新建</span>
+    </el-button>
   </div>
 </template>
+
+<style scoped>
+.icon-explorer-tools {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+
+.icon-search {
+  min-width: 0;
+  max-width: 300px;
+}
+
+.toolbar-action {
+  flex: none;
+  padding-inline: 8px;
+}
+
+@container (width < 520px) {
+  .toolbar-label {
+    display: none;
+  }
+
+  .toolbar-action :deep(.el-icon + span) {
+    margin-left: 0;
+  }
+}
+</style>

@@ -1,5 +1,7 @@
 import type { PageListQueryParams, TypeManager } from '../config'
 import type { IconTypeVo } from '@/api/alova/globals'
+import { invalidateIconTypes, ROOT_ICON_TYPE_ID } from '@/hooks/useIconType'
+import { useIconStore } from '@/stores/icon'
 
 export class IconTypeManager implements TypeManager<IconTypeVo> {
   get info() {
@@ -18,28 +20,41 @@ export class IconTypeManager implements TypeManager<IconTypeVo> {
     const { node, ...rest } = params
     return Apis.icon_type.listIconType({
       data: {
-        typeIdList: node === undefined ? [-1] : [node.id!],
+        typeIdList: [node?.id ?? ROOT_ICON_TYPE_ID],
         ...rest,
       },
     })
   }
 
-  create = (data: IconTypeVo, parent?: IconTypeVo) => {
+  create = async (data: IconTypeVo, parent?: IconTypeVo) => {
     const { name } = data
-    return Apis.icon_type.addIconType({
+    const result = await Apis.icon_type.addIconType({
       data: {
         name,
-        parentId: parent?.id ?? -1,
+        parentId: parent?.id ?? ROOT_ICON_TYPE_ID,
       },
     })
+    if (!result.data) throw new Error(result.message || '新增分类失败')
+    invalidateIconTypes()
+    return result
   }
 
-  delete = (data: IconTypeVo) =>
-    Apis.icon_type.deleteIconType({
-      pathParams: {
-        typeId: data.id!,
-      },
+  delete = async (data: IconTypeVo) => {
+    const { id } = data
+    if (id === undefined) throw new Error('分类 id 为空')
+    const result = await Apis.icon_type.deleteIconType({
+      pathParams: { typeId: id },
     })
+    if (!result.data) throw new Error(result.message || '删除分类失败')
+    useIconStore().removeDeletedCategory(id)
+    invalidateIconTypes()
+    return result
+  }
 
-  update = (data: IconTypeVo) => Apis.icon_type.updateIconType({ data })
+  update = async (data: IconTypeVo) => {
+    const result = await Apis.icon_type.updateIconType({ data })
+    if (!result.data) throw new Error(result.message || '更新分类失败')
+    invalidateIconTypes()
+    return result
+  }
 }
