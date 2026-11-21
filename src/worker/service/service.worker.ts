@@ -20,6 +20,9 @@ const logger = new ServiceWorkerLogger(ipc)
 
 const VERSION = 3
 const AVAILABLE_DESTINATION = new Set(['audio', 'font', 'image', 'video'])
+// 系统配置下发的 WOFF2 字体以 application/octet-stream 提供。
+const FONT_CONTENT_TYPE =
+  /^(?:font\/[\w.+-]+|application\/(?:(?:x-)?font(?:-[\w.+-]+)?|vnd\.ms-fontobject|octet-stream))\s*(?:;|$)/i
 const IMAGE_TYPES = new Set([
   'apng',
   'avif',
@@ -87,8 +90,7 @@ const matchCache = (
   if (pathname.includes('/d/underground/')) return { name: 'overlays', typeValidate: /^image\// }
 
   // 3. 字体
-  if (destination === 'font')
-    return { name: 'fonts', typeValidate: /^(application\/font)|(font\/)/ }
+  if (destination === 'font') return { name: 'fonts', typeValidate: FONT_CONTENT_TYPE }
 
   // 4. 图标
   if (host.startsWith('oss.') || pathname.includes('/icons/'))
@@ -132,6 +134,9 @@ globalThis.addEventListener('fetch', ev => {
   const storageMeta = matchCache(urlObject, destination)
   if (!storageMeta) return
 
+  const matchesContentType = (contentType: string | null) =>
+    !storageMeta.typeValidate || storageMeta.typeValidate.test(contentType ?? '')
+
   ev.respondWith(
     (async () => {
       try {
@@ -145,24 +150,24 @@ globalThis.addEventListener('fetch', ev => {
         const maybeCachedResponse = await storage.match(url)
 
         if (maybeCachedResponse) {
-          const contentType = maybeCachedResponse.headers.get('Content-Type') ?? ''
-          logger.info(
-            `cache "${url}" hit in storage "${storageName}" with contentType "${contentType}"`,
-          )
-          if (!storageMeta.typeValidate || storageMeta.typeValidate.test(contentType))
+          const contentType = maybeCachedResponse.headers.get('Content-Type')
+          if (matchesContentType(contentType)) {
+            logger.info(
+              `cache "${url}" hit in storage "${storageName}" with contentType "${contentType}"`,
+            )
             return maybeCachedResponse
+          }
           await storage.delete(url)
         }
 
         const res = await fetch(ev.request)
-        const clonedRes = res.clone()
 
-        if (res.status === 200) {
+        if (res.status === 200 && matchesContentType(res.headers.get('Content-Type'))) {
+          await storage.put(url, res.clone())
           logger.info(`cache "${url}" success in storage "${storageName}"`)
-          await storage.put(url, res)
         }
 
-        return clonedRes
+        return res
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Request Error'
         logger.error(`handle fetch "${url}" caused by "${message}"`)

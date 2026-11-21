@@ -34,8 +34,8 @@ export const createPWA = (): Plugin => ({
       logger[type](message)
     })
 
-    await navigator.serviceWorker?.register(
-      import.meta.env.MODE === 'production' ? '/service.worker.js' : '/dev-sw.js?dev-sw',
+    await navigator.serviceWorker.register(
+      import.meta.env.DEV ? '/dev-sw.js?dev-sw' : '/service.worker.js',
       { type: 'module' },
     )
     await navigator.serviceWorker.ready
