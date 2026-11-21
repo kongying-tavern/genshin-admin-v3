@@ -1,23 +1,26 @@
 <script lang="ts" setup>
-import type { GSMarkerInfo } from '@/packages/map'
 import { Check, CirclePlus, DeleteFilled, Edit, Rank, VideoCamera } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
+import { registerCapability } from '@/ai/bindings'
+import { MapAiError } from '@/ai/errors'
 import { AppBilibiliVideoPlayer, AppIconTagRenderer, GSButton } from '@/components'
 import { CloseFilled } from '@/components/GenshinUI/GSIcon'
+import { openMarkerEditorDialog } from '@/components/MarkerModifyer/actions'
 import { useFetchHook, useGlobalDialog, useMarkerControl } from '@/hooks'
-import { useAccessStore, useIconStore, useMapStateStore } from '@/stores'
+import { useAccessStore, useIconStore, useMapStateStore, useMarkerStore } from '@/stores'
 import { MapAffix } from '../MapAffix'
-import { MarkerEditor } from '../MarkerModifyer'
 import { MarkerPanel } from './components'
 import { useMarkerDelete, useMarkerExtra, useMarkerFinished, useMarkerMove } from './hooks'
 
 const accessStore = useAccessStore()
 const mapStateStore = useMapStateStore()
+const markerStore = useMarkerStore()
 
 const { iconTextureUrl: tagSpriteUrl, iconCoordMap } = storeToRefs(useIconStore())
 
-const { cachedMarkerVo, isSnapshot, isPopoverActived, focus, blur } = useMarkerControl()
+const { cachedMarkerVo, isSnapshot, isPopoverActived, focus, blur, focusMarker } =
+  useMarkerControl()
 
 const { isFinished, toggle: toggleFinished } = useMarkerFinished(cachedMarkerVo)
 
@@ -35,14 +38,6 @@ const copyId = async () => {
 }
 
 // ==================== 编辑点位 ====================
-const { DialogService } = useGlobalDialog()
-
-const {
-  isEnable: isEditable,
-  update: updateEditting,
-  clear: clearEditting,
-} = mapStateStore.subscribeMission('markerEditting', () => undefined)
-
 const { loading: queryMarkerLoading, refresh: queryMarker } = useFetchHook({
   onRequest: async (markerId: number) => {
     const markers = await Apis.marker.listMarkerById({
@@ -57,30 +52,58 @@ const { loading: queryMarkerLoading, refresh: queryMarker } = useFetchHook({
 })
 
 const editMarker = async () => {
-  if (!isEditable.value || !focus.value?.id) return
-  updateEditting(focus.value.id)
+  if (!focus.value?.id) return
   const marker = await queryMarker(focus.value.id)
-  if (!marker) {
-    clearEditting()
-    return
-  }
-  await DialogService.config({
-    width: 'fit-content',
-    alignCenter: true,
-    showClose: false,
-    closeOnClickModal: false,
-    closeOnPressEscape: false,
-  })
-    .props({
-      markerInfo: marker,
+  if (!marker) return
+  try {
+    openMarkerEditorDialog(marker)
+  } catch (error) {
+    ElMessage.error({
+      message: error instanceof Error ? error.message : String(error),
     })
-    .open(MarkerEditor)
-    .afterClosed<GSMarkerInfo>()
-  clearEditting()
+  }
 }
+
+// ==================== AI 页面句柄 ====================
+const unbindSurface = registerCapability({
+  id: 'markerPopover',
+  kind: 'popover',
+  title: '点位弹窗',
+  description: '按 markerId 打开点位详情弹层，或关闭当前弹层',
+  open: params => {
+    const record = (params ?? {}) as { markerId?: unknown }
+    const markerId = Number(record.markerId)
+    if (!Number.isInteger(markerId) || markerId <= 0) {
+      throw new MapAiError('E_INVALID_PARAMS', 'markerId 必须是正整数')
+    }
+    const marker = markerStore.idMap.get(markerId)
+    if (!marker) throw new MapAiError('E_NOT_FOUND', `点位不存在：${markerId}`)
+    focusMarker(marker)
+    return {
+      markerId,
+      title: marker.markerTitle ?? '',
+    }
+  },
+  close: () => {
+    blur()
+  },
+  getState: () => ({
+    open: Boolean(focus.value),
+    markerId: cachedMarkerVo.value?.id,
+    title: cachedMarkerVo.value?.markerTitle,
+    isSnapshot: isSnapshot.value,
+    isMoving: isMoving.value,
+  }),
+})
+
+onUnmounted(() => {
+  unbindSurface()
+})
 
 // ==================== 删除点位 ====================
 const { confirmDeleteMarker } = useMarkerDelete()
+
+const { DialogService } = useGlobalDialog()
 
 // 预览点位视频
 const playBilibiliVideo = (url: string) => {

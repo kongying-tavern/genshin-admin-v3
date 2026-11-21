@@ -2,6 +2,7 @@
 import type { ShallowRef } from 'vue'
 import type { ItemVo, MarkerVo } from '@/api/alova/globals'
 import { Check, Close } from '@element-plus/icons-vue'
+import { registerForm } from '@/ai/bindings'
 import { useUserStore } from '@/stores'
 import { MarkerForm } from './components'
 import { useMarkerCreate } from './hooks'
@@ -44,12 +45,37 @@ const initFormData = (): MarkerVo => {
 const form = ref(initFormData())
 const editorRef = useTemplateRef('editorRef')
 
-const { loading, isSuccess, submit, onSuccess } = useMarkerCreate(
+const { loading, isSuccess, submit, onSuccess, onError } = useMarkerCreate(
   form,
   editorRef as ShallowRef<InstanceType<typeof MarkerForm>>,
 )
 
 onSuccess(() => emits('close'))
+
+const unbindForm = registerForm({
+  id: 'markerCreator',
+  title: '新增点位',
+  description: '点位新增表单；通过 forms.get/set/validate/submit/close 驱动',
+  readonlyFields: ['id', 'createTime', 'updateTime', 'updaterId'],
+  getValues: () => (editorRef.value?.getForm?.() ?? form.value) as Record<string, unknown>,
+  setValues: patch => {
+    if (!editorRef.value) throw new Error('点位表单尚未挂载')
+    editorRef.value.setForm(patch)
+  },
+  validate: async () => {
+    await editorRef.value?.validate()
+  },
+  submit: () => submit(),
+  close: () => emits('close'),
+  isBusy: () => loading.value,
+  isDirty: () => false,
+  events: {
+    onSuccess: callback => onSuccess(() => callback()),
+    onError: callback => onError(error => callback(error)),
+  },
+})
+
+onUnmounted(unbindForm)
 </script>
 
 <template>

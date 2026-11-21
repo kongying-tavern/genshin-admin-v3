@@ -1,17 +1,14 @@
 <script lang="ts" setup>
 import type { FeatureGroupOption } from './components'
 import type { MapWindow, WindowContextHookReturnType } from '@/components'
-import type { ACCESS_BINARY_MASK } from '@/stores'
+import type { ManagerWindowOption } from './windowOptions'
 import * as ElIcons from '@element-plus/icons-vue'
-import {
-  AppSettings,
-  AppUserAvatar,
-  AppUserInfo,
-  AppWindowTeleporter,
-  useAppWindow,
-} from '@/components'
-import { IconInvitation, IconNotice } from '@/components/AppIcons'
-import { useGlobalDialog } from '@/hooks'
+import { registerCapability } from '@/ai/bindings'
+import { fail } from '@/ai/errors'
+import { AppUserAvatar, AppWindowTeleporter, useAppWindow } from '@/components'
+import { IconNotice } from '@/components/AppIcons'
+import { openSettingsDialog } from '@/components/AppSettings/open'
+import { openUserInfoDialog } from '@/components/AppUserInfo/open'
 import {
   useAccessStore,
   useMapStateStore,
@@ -27,14 +24,11 @@ import {
   SiderMenu,
   SiderMenuItem,
 } from './components'
+import { isSiderTabKey, SIDER_TAB_KEYS } from './tabKeys'
+import { MANAGER_WINDOW_OPTIONS, USER_MANUAL_WINDOW } from './windowOptions'
 
-interface ManagerModuleOption {
-  name: string
+interface ManagerWindowEntry extends ManagerWindowOption {
   hook: WindowContextHookReturnType
-  icon: Component
-  comp: Component
-  role: keyof typeof ACCESS_BINARY_MASK
-  cols?: number
 }
 
 const collapse = ref(true)
@@ -45,8 +39,6 @@ const noticeStore = useNoticeStore()
 const preferenceStore = usePreferenceStore()
 const userStore = useUserStore()
 
-const { DialogService } = useGlobalDialog()
-
 const commonWindowOptions: Omit<MapWindow.WindowOpenParams, 'id' | 'name'> = {
   minWidth: 887,
   minHeight: 500,
@@ -54,78 +46,10 @@ const commonWindowOptions: Omit<MapWindow.WindowOpenParams, 'id' | 'name'> = {
   sizeState: 'maximize',
 }
 
-const WINDOW_LIST: ManagerModuleOption[] = [
-  {
-    name: '物品管理',
-    hook: useAppWindow({ name: '物品管理', ...commonWindowOptions }),
-    icon: ElIcons.Box,
-    comp: defineAsyncComponent(() => import('@/pages/pageItemManager/ItemManager.vue')),
-    role: 'MANAGER_COMPONENT',
-  },
-  {
-    name: '地区管理',
-    hook: useAppWindow({ name: '地区管理', ...commonWindowOptions }),
-    icon: ElIcons.Coordinate,
-    comp: defineAsyncComponent(() => import('@/pages/pageAreaManager/AreaManager.vue')),
-    role: 'ADMIN_COMPONENT',
-  },
-  {
-    name: '点位管理',
-    hook: useAppWindow({ name: '点位管理', ...commonWindowOptions }),
-    icon: ElIcons.Location,
-    comp: defineAsyncComponent(() => import('@/pages/pageMarkerManager/MarkerManager.vue')),
-    role: 'MANAGER_COMPONENT',
-  },
-  {
-    name: '类型管理',
-    hook: useAppWindow({ name: '类型管理', ...commonWindowOptions }),
-    icon: ElIcons.FolderOpened,
-    comp: defineAsyncComponent(() => import('@/pages/pageTypeManager/TypeManager.vue')),
-    role: 'ADMIN_COMPONENT',
-  },
-  {
-    name: '图标管理',
-    hook: useAppWindow({ name: '图标管理', ...commonWindowOptions }),
-    icon: ElIcons.Picture,
-    comp: defineAsyncComponent(() => import('@/pages/pageIconManager/IconManager.vue')),
-    role: 'MANAGER_COMPONENT',
-  },
-  {
-    name: '公告管理',
-    hook: useAppWindow({ name: '公告管理', ...commonWindowOptions }),
-    icon: ElIcons.ChatLineRound,
-    comp: defineAsyncComponent(() => import('@/pages/pageNoticeManager/PageNoticeManager.vue')),
-    role: 'MANAGER_COMPONENT',
-  },
-  {
-    name: '用户统计',
-    hook: useAppWindow({ name: '用户统计', ...commonWindowOptions }),
-    icon: ElIcons.Star,
-    comp: defineAsyncComponent(() => import('@/pages/pageContribution/PageContribution.vue')),
-    role: 'ADMIN_COMPONENT',
-  },
-  {
-    name: '用户管理',
-    hook: useAppWindow({ name: '用户管理', ...commonWindowOptions }),
-    icon: ElIcons.User,
-    comp: defineAsyncComponent(() => import('@/pages/pageUserManager/UserManager.vue')),
-    role: 'ADMIN_COMPONENT',
-  },
-  {
-    name: '用户邀请',
-    hook: useAppWindow({ name: '用户邀请', ...commonWindowOptions }),
-    icon: IconInvitation,
-    comp: defineAsyncComponent(() => import('@/pages/invitationManager/InvitationManager.vue')),
-    role: 'ADMIN_COMPONENT',
-  },
-  {
-    name: '历史记录',
-    hook: useAppWindow({ name: '历史记录', ...commonWindowOptions }),
-    icon: ElIcons.Memo,
-    comp: defineAsyncComponent(() => import('@/pages/pageHistory/PageHistory.vue')),
-    role: 'MANAGER_COMPONENT',
-  },
-]
+const WINDOW_LIST: ManagerWindowEntry[] = MANAGER_WINDOW_OPTIONS.map(option => ({
+  ...option,
+  hook: useAppWindow({ name: option.name, ...commonWindowOptions }),
+}))
 
 const FEATURE_OPTIONS: FeatureGroupOption[] = [
   {
@@ -139,7 +63,7 @@ const FEATURE_OPTIONS: FeatureGroupOption[] = [
 ]
 
 const openSettingDialog = () => {
-  DialogService.open(AppSettings)
+  openSettingsDialog()
 }
 
 const featuresWithRole = computed(() =>
@@ -175,18 +99,89 @@ watch(isLogin, login => {
 })
 
 const handleAvatarClick = () => {
-  if (!isLogin.value) return
-  DialogService.open(AppUserInfo)
+  if (!isLogin.value || !userStore.info) return
+  openUserInfoDialog()
 }
 
-const ManualInfo = defineAsyncComponent(() => import('@/pages/document/PageDocument.vue'))
-const {
-  isOpen: isManulOpen,
-  info: manualInfo,
-  toggle: toggleManual,
-} = useAppWindow({
-  name: '用户手册',
+const manualWindow = useAppWindow({
+  name: USER_MANUAL_WINDOW.name,
   ...commonWindowOptions,
+})
+
+const { isOpen: isManulOpen, info: manualInfo, toggle: toggleManual } = manualWindow
+
+// ==================== AI 页面句柄 ====================
+const unbindSurfaces: (() => void)[] = []
+
+unbindSurfaces.push(
+  registerCapability({
+    id: 'siderMenu',
+    kind: 'panel',
+    title: '侧边栏',
+    description: '侧边栏页签：filter（筛选）/ marker-table（点位列表）/ features（系统管理）',
+    open: params => {
+      const record = (params ?? {}) as { tab?: unknown; collapsed?: unknown }
+      const tab = record.tab
+      if (tab !== undefined) {
+        if (!isSiderTabKey(tab)) {
+          fail('E_INVALID_PARAMS', `不支持的侧边栏页签：${String(tab)}`, {
+            details: { tabs: SIDER_TAB_KEYS },
+          })
+        }
+        preferenceStore.tabName = tab
+      }
+      collapse.value = record.collapsed === true
+      return { collapsed: collapse.value, tab: preferenceStore.tabName }
+    },
+    close: () => {
+      collapse.value = true
+    },
+    getState: () => ({
+      open: !collapse.value,
+      collapsed: collapse.value,
+      tab: preferenceStore.tabName,
+      tabs: [...SIDER_TAB_KEYS],
+      filterType: preferenceStore.filterType,
+    }),
+  }),
+)
+
+for (const appWindow of WINDOW_LIST) {
+  unbindSurfaces.push(
+    registerCapability({
+      id: `window.${appWindow.key}`,
+      kind: 'window',
+      title: appWindow.name,
+      description: `打开系统管理窗口：${appWindow.name}`,
+      enabled: () => accessStore.get(appWindow.role),
+      open: () => appWindow.hook.open(),
+      close: () => appWindow.hook.close(),
+      getState: () => ({
+        open: appWindow.hook.isOpen.value,
+        sizeState: appWindow.hook.info.value?.sizeState,
+      }),
+    }),
+  )
+}
+
+unbindSurfaces.push(
+  registerCapability({
+    id: `window.${USER_MANUAL_WINDOW.key}`,
+    kind: 'window',
+    title: USER_MANUAL_WINDOW.name,
+    description: '打开用户手册窗口',
+    enabled: () => accessStore.get(USER_MANUAL_WINDOW.role),
+    open: () => manualWindow.open(),
+    close: () => manualWindow.close(),
+    getState: () => ({
+      open: manualWindow.isOpen.value,
+      sizeState: manualWindow.info.value?.sizeState,
+    }),
+  }),
+)
+
+onUnmounted(() => {
+  unbindSurfaces.forEach(unbind => unbind())
 })
 </script>
 
@@ -200,7 +195,7 @@ const {
       </AppWindowTeleporter>
     </template>
     <AppWindowTeleporter v-if="accessStore.get('NORMAL_COMPONENT')" :info="manualInfo">
-      <ManualInfo />
+      <component :is="USER_MANUAL_WINDOW.comp" />
     </AppWindowTeleporter>
 
     <SiderMenuItem name="filter" :label="isAdvancedFilter ? '高级筛选' : '基础筛选'">

@@ -4,6 +4,7 @@ import type { GSMapState } from '@/stores/types/genshin-map-state'
 import { Check, Close, Right } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { cloneDeep, isEqual } from 'lodash'
+import { registerForm } from '@/ai/bindings'
 import { useUserStore } from '@/stores'
 import { MarkerForm } from './components'
 import { useMarkerEdit, useRemoteMarker } from './hooks'
@@ -45,9 +46,34 @@ const { data: remoteMarker, loading: remoteMarkerLoading } = useRemoteMarker(
 
 const editorRef = ref<InstanceType<typeof MarkerForm> | null>(null)
 
-const { loading, submit, onSuccess } = useMarkerEdit(form, editorRef)
+const { loading, submit, onSuccess, onError } = useMarkerEdit(form, editorRef)
 
 onSuccess(() => emits('close', form.value))
+
+const unbindForm = registerForm({
+  id: 'markerEditor',
+  title: '编辑点位',
+  description: '点位编辑表单；通过 forms.get/set/validate/submit/close 驱动',
+  readonlyFields: ['id', 'version', 'createTime', 'updateTime', 'updaterId'],
+  getValues: () => (editorRef.value?.getForm?.() ?? form.value) as Record<string, unknown>,
+  setValues: patch => {
+    if (!editorRef.value) throw new Error('点位表单尚未挂载')
+    editorRef.value.setForm(patch)
+  },
+  validate: async () => {
+    await editorRef.value?.validate()
+  },
+  submit: () => submit(),
+  close: () => emits('close', form.value),
+  isBusy: () => loading.value,
+  isDirty: () => modifiedFields.value.size > 0,
+  events: {
+    onSuccess: callback => onSuccess(() => callback()),
+    onError: callback => onError(error => callback(error)),
+  },
+})
+
+onUnmounted(unbindForm)
 
 /**
  * 比较两个值是否相等（深度比较）

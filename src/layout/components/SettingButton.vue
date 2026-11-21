@@ -1,16 +1,9 @@
 <script setup lang="ts">
 import { Setting } from '@element-plus/icons-vue'
-import { AppSettings } from '@/components'
-import { useGlobalDialog } from '@/hooks'
-
-const { DialogService } = useGlobalDialog()
+import { openSettingsDialog } from '@/components/AppSettings/open'
 
 const openSettingDIalog = () => {
-  DialogService.config({
-    alignCenter: true,
-    showClose: false,
-    closeOnPressEscape: false,
-  }).open(AppSettings)
+  openSettingsDialog()
 }
 </script>
 

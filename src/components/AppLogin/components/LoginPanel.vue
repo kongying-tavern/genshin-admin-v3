@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { User } from '@element-plus/icons-vue'
+import { registerForm } from '@/ai/bindings'
 import { WinDialog, WinDialogTitleBar } from '@/components/WinUI'
 import { useCountDown } from '@/hooks'
+import { useUserStore } from '@/stores'
 import { useLoginForm } from '../hooks'
 
 const emits = defineEmits<{
@@ -15,21 +17,64 @@ const isRegister = defineModel<boolean>('isRegister', {
 
 const title = import.meta.env.VITE_TITLE
 
-const {
-  // @ts-expect-error 模板 `ref="formRef"` 在运行时写入该 ref，脚本侧不读取
-  formRef,
-  isValid,
-  rules,
-  loginForm,
-  loading,
-  login,
-  onSuccess,
-  handleValidate,
-} = useLoginForm()
+const { formRef, isValid, rules, loginForm, loading, login, onSuccess, onError, handleValidate } =
+  useLoginForm()
 
 onSuccess(() => {
   emits('close')
   emits('success')
+})
+
+const userStore = useUserStore()
+let unbindForm: (() => void) | undefined
+
+const bindLoginForm = () => {
+  unbindForm?.()
+  unbindForm = registerForm({
+    id: 'login',
+    title: '登录',
+    description: '登录表单；通过 forms.get/set/validate/submit 驱动（不支持 close）',
+    sensitiveFields: ['password'],
+    fields: [
+      { key: 'username', label: '用户名', type: 'string', required: true },
+      { key: 'password', label: '密码', type: 'string', required: true, secret: true },
+    ],
+    getValues: () => ({
+      username: loginForm.value.username,
+      passwordSet: Boolean(loginForm.value.password),
+    }),
+    setValues: patch => {
+      if (typeof patch.username === 'string') loginForm.value.username = patch.username
+      if (typeof patch.password === 'string') loginForm.value.password = patch.password
+    },
+    validate: async () => {
+      await formRef.value?.validate()
+    },
+    submit: () => login(),
+    isBusy: () => loading.value,
+    events: {
+      onSuccess: callback => onSuccess(() => callback()),
+      onError: callback => onError(error => callback(error)),
+    },
+  })
+}
+
+// 登录弹窗只在不登录时可见；登录后立即注销表单句柄，退出后重新注册
+watch(
+  () => userStore.isLogin,
+  isLogin => {
+    if (isLogin) {
+      unbindForm?.()
+      unbindForm = undefined
+      return
+    }
+    bindLoginForm()
+  },
+  { immediate: true },
+)
+
+onUnmounted(() => {
+  unbindForm?.()
 })
 
 const { count, set: setCount } = useCountDown()

@@ -7,7 +7,7 @@ export interface WindowContextHookReturnType {
   id: ReturnType<typeof crypto.randomUUID>
   info: ComputedRef<MapWindow.Info | undefined>
   isOpen: ComputedRef<boolean>
-  open: () => void
+  open: () => Promise<void>
   close: () => void
   toggle: () => void
 }
@@ -33,8 +33,8 @@ export function useAppWindow(options?: MaybeRef<Omit<MapWindow.WindowOpenParams,
     return info.value !== undefined
   })
 
-  const open = () => {
-    context.openWindow({
+  const open = async () => {
+    await context.openWindow({
       ...unref(options),
       id,
     })
@@ -45,7 +45,8 @@ export function useAppWindow(options?: MaybeRef<Omit<MapWindow.WindowOpenParams,
   }
 
   const toggle = () => {
-    isOpen.value ? close() : open()
+    if (isOpen.value) close()
+    else void open()
   }
 
   if (isRef(options))

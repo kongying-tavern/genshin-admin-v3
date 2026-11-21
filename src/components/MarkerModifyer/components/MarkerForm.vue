@@ -191,6 +191,12 @@ defineExpose({
       throw new Error('表单校验失败')
     }
   },
+  /** 供 AI 表单句柄读取当前表单数据 */
+  getForm: () => form.value,
+  /** 供 AI 表单句柄写入字段，watcher 会同步回父组件 v-model */
+  setForm: (patch: Record<string, unknown>) => {
+    Object.assign(form.value, patch)
+  },
 })
 </script>
 

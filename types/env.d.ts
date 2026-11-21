@@ -44,6 +44,12 @@ interface ImportMetaEnv {
   /** WebSocket 地址 */
   readonly VITE_WS_BASE: string
 
+  /**
+   * AI 页面句柄默认模式（off | read | write）
+   * - 未设置时：开发环境 write，生产环境 off
+   */
+  readonly VITE_AI_BRIDGE?: string
+
   /** @test 接口集成测试账号 */
   readonly VITE_TEST_USERNAME: string
 

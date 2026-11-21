@@ -94,6 +94,15 @@
 
 详见 [空荧后厨 Wiki](https://github.com/kongying-tavern/genshin-admin-v3/wiki)
 
+## AI 页面句柄
+
+应用内置 `window.__MAP_AI__` 桥接层，让 AI 在不截图、不模拟点击的情况下读取页面状态、打开弹窗/窗口/表单并调用页面能力。
+
+- 详细说明：[docs/ai-bridge.md](./docs/ai-bridge.md)
+- 开发环境默认启用（`write`）；生产构建默认关闭，可通过 `?aiBridge=read|write|off`、`localStorage['__map_ai_bridge']` 或 `VITE_AI_BRIDGE` 显式开启。
+- 控制台输入 `__MAP_AI__.help()` 查看命令、页面句柄、事件与错误码。
+
+
 ## 项目贡献
 
 <div align="center">

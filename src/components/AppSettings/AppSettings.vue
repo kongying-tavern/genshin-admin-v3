@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { ElSwitch } from 'element-plus'
+import type { SettingSectionKey } from './sectionKeys'
 import * as El from '@element-plus/icons-vue'
 import { useTheme } from '@/hooks'
 import { usePreferenceStore } from '@/stores'
@@ -22,16 +23,17 @@ const emits = defineEmits<{
 const { isDark } = useTheme()
 const preferenceStore = usePreferenceStore()
 
-const settingOptions: { key: string; name: string; is: Component; icon?: Component }[] = [
-  { key: 'dashboard', name: '基本信息', is: ModuleDashboard, icon: El.Monitor },
-  { key: 'app', name: '快捷键', is: ModuleApp, icon: El.Box },
-  { key: 'mapsetting', name: '地图', is: ModuleMapSetting, icon: El.MapLocation },
-  { key: 'manager', name: '管理组件', is: ModuleManager, icon: El.Files },
-  { key: 'database', name: '数据库', is: ModuleDatabase, icon: El.Coin },
-  { key: 'network', name: '网络', is: ModuleNetwork, icon: El.MostlyCloudy },
-  { key: 'developer', name: '开发者', is: ModuleDeveloper, icon: El.TurnOff },
-  { key: 'about', name: '关于空荧后厨', is: ModuleAbout, icon: El.Star },
-]
+const settingOptions: { key: SettingSectionKey; name: string; is: Component; icon?: Component }[] =
+  [
+    { key: 'dashboard', name: '基本信息', is: ModuleDashboard, icon: El.Monitor },
+    { key: 'app', name: '快捷键', is: ModuleApp, icon: El.Box },
+    { key: 'mapsetting', name: '地图', is: ModuleMapSetting, icon: El.MapLocation },
+    { key: 'manager', name: '管理组件', is: ModuleManager, icon: El.Files },
+    { key: 'database', name: '数据库', is: ModuleDatabase, icon: El.Coin },
+    { key: 'network', name: '网络', is: ModuleNetwork, icon: El.MostlyCloudy },
+    { key: 'developer', name: '开发者', is: ModuleDeveloper, icon: El.TurnOff },
+    { key: 'about', name: '关于空荧后厨', is: ModuleAbout, icon: El.Star },
+  ]
 
 const activedKey = computed({
   get: () => preferenceStore.settingActivedKey || settingOptions[0].key,

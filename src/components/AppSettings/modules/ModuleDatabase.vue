@@ -3,98 +3,22 @@ import { Refresh, RefreshLeft, WarnTriangleFilled } from '@element-plus/icons-vu
 import { ElMessageBox } from 'element-plus'
 import db from '@/database'
 import { now } from '@/shared'
-import {
-  useAreaStore,
-  useIconStore,
-  useItemStore,
-  useItemTypeStore,
-  useMarkerLinkStore,
-  useMarkerStore,
-} from '@/stores'
+import { listDatasets } from '@/stores/datasetStatus'
 import { MANAGER_PHASE_LABELS } from '@/stores/hooks'
 import { SettingBar, SettingGroup, SettingPanel } from '../components'
 
-const areaStore = useAreaStore()
-const iconStore = useIconStore()
-const itemStore = useItemStore()
-const itemTypeStore = useItemTypeStore()
-const markerStore = useMarkerStore()
-const markerLinkStore = useMarkerLinkStore()
-
-const dbList = [
-  {
-    label: '地区',
-    total: computed(() => areaStore.total),
-    loading: computed(() => areaStore.updateLoading),
-    nextUpdateTime: computed(() => areaStore.nextUpdateTime),
-    message: computed(() => areaStore.context.message),
-    error: computed(() => areaStore.managerError),
-    progress: computed(() => areaStore.progress),
-    isActive: computed(() => areaStore.isActive),
-    updateDiff: () => areaStore.update(),
-    updateFull: () => areaStore.update({ isFull: true }),
-  },
-  {
-    label: '图标',
-    total: computed(() => iconStore.total),
-    loading: computed(() => iconStore.updateLoading),
-    nextUpdateTime: computed(() => iconStore.nextUpdateTime),
-    message: computed(() => iconStore.context.message),
-    error: computed(() => iconStore.managerError),
-    progress: computed(() => iconStore.progress),
-    isActive: computed(() => iconStore.isActive),
-    updateDiff: () => iconStore.update(),
-    updateFull: () => iconStore.update({ isFull: true }),
-  },
-  {
-    label: '物品',
-    total: computed(() => itemStore.total),
-    loading: computed(() => itemStore.updateLoading),
-    nextUpdateTime: computed(() => itemStore.nextUpdateTime),
-    message: computed(() => itemStore.context.message),
-    error: computed(() => itemStore.managerError),
-    progress: computed(() => itemStore.progress),
-    isActive: computed(() => itemStore.isActive),
-    updateDiff: () => itemStore.update(),
-    updateFull: () => itemStore.update({ isFull: true }),
-  },
-  {
-    label: '物品类型',
-    total: computed(() => itemTypeStore.total),
-    loading: computed(() => itemTypeStore.updateLoading),
-    nextUpdateTime: computed(() => itemTypeStore.nextUpdateTime),
-    message: computed(() => itemTypeStore.context.message),
-    error: computed(() => itemTypeStore.managerError),
-    progress: computed(() => itemTypeStore.progress),
-    isActive: computed(() => itemTypeStore.isActive),
-    updateDiff: () => itemTypeStore.update(),
-    updateFull: () => itemTypeStore.update({ isFull: true }),
-  },
-  {
-    label: '点位',
-    total: computed(() => markerStore.total),
-    loading: computed(() => markerStore.updateLoading),
-    nextUpdateTime: computed(() => markerStore.nextUpdateTime),
-    message: computed(() => markerStore.context.message),
-    error: computed(() => markerStore.managerError),
-    progress: computed(() => markerStore.progress),
-    isActive: computed(() => markerStore.isActive),
-    updateDiff: () => markerStore.update(),
-    updateFull: () => markerStore.update({ isFull: true }),
-  },
-  {
-    label: '点位关联',
-    total: computed(() => markerLinkStore.total),
-    loading: computed(() => markerLinkStore.updateLoading),
-    nextUpdateTime: computed(() => markerLinkStore.nextUpdateTime),
-    message: computed(() => markerLinkStore.context.message),
-    error: computed(() => markerLinkStore.managerError),
-    progress: computed(() => markerLinkStore.progress),
-    isActive: computed(() => markerLinkStore.isActive),
-    updateDiff: () => markerLinkStore.update(),
-    updateFull: () => markerLinkStore.update({ isFull: true }),
-  },
-]
+const dbList = listDatasets().map(dataset => ({
+  label: dataset.label,
+  total: computed(dataset.total),
+  loading: computed(dataset.updating),
+  nextUpdateTime: computed(dataset.nextUpdateTime),
+  message: computed(dataset.message),
+  error: computed(dataset.error),
+  progress: computed(dataset.progress),
+  isActive: computed(dataset.active),
+  updateDiff: () => dataset.update(),
+  updateFull: () => dataset.update({ full: true }),
+}))
 
 /** 进度条状态：失败优先，其次沿用管理器给出的完成态 */
 const progressStatus = (store: (typeof dbList)[number]) => {

@@ -26,3 +26,6 @@ export const context: NoticeContext = {
     context.closeHook.trigger(returnValue)
   },
 }
+
+/** AI/快照使用的别名，避免与全局 context 混淆 */
+export const noticeContext = context

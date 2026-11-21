@@ -18,6 +18,7 @@ import {
   MapMarkerToggleController,
   MapMarkerTweakController,
 } from '@/components'
+import { bindMapContext } from '@/ai/bindings'
 import { useMapLayers, useTheme } from '@/hooks'
 import { EaseoutInterpolator, GenshinMapDeck, GSZoomController } from '@/packages/map'
 import {
@@ -82,6 +83,20 @@ const viewState: Ref<GenshinMapViewState> = ref({
   transitionEasing: t => t,
   transitionInterruption: TRANSITION_EVENTS.BREAK,
 })
+
+// 暴露给 AI 页面句柄读取视口与容器尺寸
+const unbindMapContext = bindMapContext({
+  getViewState: () => ({
+    zoom: viewState.value.zoom,
+    minZoom: viewState.value.minZoom,
+    maxZoom: viewState.value.maxZoom,
+    target: [...viewState.value.target],
+    transitionDuration: viewState.value.transitionDuration,
+  }),
+  getContainerSize: () => ({ width: width.value, height: height.value }),
+})
+
+onUnmounted(unbindMapContext)
 
 // 将 viewState 变更事件响应到绑定对象上
 useSubscription(

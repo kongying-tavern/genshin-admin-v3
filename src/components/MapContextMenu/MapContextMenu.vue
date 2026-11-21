@@ -1,9 +1,11 @@
 <script lang="ts" setup>
 import { Plus, Setting } from '@element-plus/icons-vue'
 import { useSubscription } from '@vueuse/rxjs'
+import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
-import { AppSettings, GSButton } from '@/components'
-import { useGlobalDialog } from '@/hooks'
+import { GSButton } from '@/components'
+import { openSettingsDialog } from '@/components/AppSettings/open'
+import { openMarkerCreatorDialog } from '@/components/MarkerModifyer/actions'
 import { MapSubject } from '@/shared'
 import {
   useAccessStore,
@@ -13,7 +15,6 @@ import {
   useTileStore,
 } from '@/stores'
 import { MapAffix } from '../MapAffix'
-import { MarkerCreator } from '../MarkerModifyer'
 
 const isDev = import.meta.env.DEV
 
@@ -40,21 +41,15 @@ useSubscription(
   }),
 )
 
-const { DialogService } = useGlobalDialog()
-
-const openMarkerCreator = async () => {
-  DialogService.config({
-    width: 'fit-content',
-    alignCenter: true,
-    showClose: false,
-    closeOnClickModal: false,
-    closeOnPressEscape: false,
-  })
-    .props({
-      coordinate: tileStore.toMarkerCoordinate(coordinate.value as DTO.Coordinate2D),
-      defaultItem: markingItem.value,
+const openMarkerCreator = () => {
+  if (!coordinate.value) return
+  try {
+    openMarkerCreatorDialog(tileStore.toMarkerCoordinate(coordinate.value), markingItem.value)
+  } catch (error) {
+    ElMessage.error({
+      message: error instanceof Error ? error.message : String(error),
     })
-    .open(MarkerCreator)
+  }
   closeContextmenu()
 }
 
@@ -64,10 +59,7 @@ const copyCoordinate = (coord: DTO.Coordinate2D) => {
 }
 
 const openSettingDialog = () => {
-  DialogService.config({
-    alignCenter: true,
-    width: 'fit-content',
-  }).open(AppSettings)
+  openSettingsDialog()
   closeContextmenu()
 }
 </script>

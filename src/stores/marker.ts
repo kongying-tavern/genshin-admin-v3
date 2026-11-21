@@ -91,6 +91,7 @@ export const useMarkerStore = defineStore('global-marker', () => {
     })
     if (!marker) throw new Error('服务器未返回新点位数据')
     updateLocal({ updateList: [marker] })
+    return marker
   }
 
   /** @server 更新点位 */
@@ -103,6 +104,7 @@ export const useMarkerStore = defineStore('global-marker', () => {
     })
     if (!marker) throw new Error('服务器未返回新点位数据')
     updateLocal({ updateList: [marker] })
+    return marker
   }
 
   /** @server 删除点位 */
@@ -112,12 +114,14 @@ export const useMarkerStore = defineStore('global-marker', () => {
     })
     if (!isSuccess) throw new Error(message)
     updateLocal({ deleteIds: [markerId] })
+    return true
   }
 
   /** @server 批量操作点位 */
   const tweakMarkers = async (tweaks: TweakVo[]) => {
     const { data = [] } = await Apis.marker.tweakMarkers({ data: tweaks })
     updateLocal({ updateList: data })
+    return data
   }
 
   // ============================== 外部状态 ==============================
