@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="144" viewBox="0 0 320 144" fill="none">
+  <title>开启点位在线核对</title>
+  <desc>点位弹窗先显示骨架屏，服务端确认后再显示最新详情。</desc>
+  <defs>
+    <linearGradient id="map" x1="10" y1="0" x2="310" y2="144" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2b3d4b" />
+      <stop offset="1" stop-color="#17232f" />
+    </linearGradient>
+    <pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse">
+      <path d="M16 0H0v16" stroke="#b0c1cd" stroke-opacity=".09" />
+    </pattern>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="90" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f2ebde" />
+      <stop offset="1" stop-color="#dcd3c3" />
+    </linearGradient>
+    <linearGradient id="skeleton" x1="10" y1="0" x2="109" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#c0b7a8" />
+      <stop offset=".63" stop-color="#cec5b7" />
+      <stop offset="1" stop-color="#bdb4a5" />
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-20%" width="150%" height="160%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#0a1118" flood-opacity=".45" />
+    </filter>
+    <g id="popup">
+      <path d="M8 0h104a8 8 0 0 1 8 8v68a10 10 0 0 1-10 10H67l-7 7-7-7H10A10 10 0 0 1 0 76V8a8 8 0 0 1 8-8z" fill="url(#paper)" />
+      <path d="M8 0h104a8 8 0 0 1 8 8v14H0V8a8 8 0 0 1 8-8z" fill="#405065" />
+      <path d="m106 8 6 6m0-6-6 6" stroke="#e4dbca" stroke-width="1.3" stroke-linecap="round" />
+    </g>
+  </defs>
+
+  <path d="M0 0h320v144H0z" fill="url(#map)" />
+  <path d="M0 0h320v144H0z" fill="url(#grid)" />
+  <path
+    d="M0 104c30-6 32-32 65-32 31 0 45 21 80 19 46-3 52-29 88-39 30-8 65 4 87-13v105H0z"
+    fill="#809f9f"
+    fill-opacity=".11"
+  />
+  <g stroke="#adc1bb" stroke-opacity=".22" stroke-linecap="round">
+    <path d="M-9 83c42-6 52-27 78-29 25-2 37 13 56 13 45 1 55-30 92-42 35-11 67 8 111-15" />
+    <path d="M-9 95c39-3 50-31 78-32 26 0 38 16 59 16 42 1 65-31 94-40 36-11 65 9 106-14" />
+    <path d="M-6 111c33-3 46-32 77-33 28-1 35 21 70 19 38-3 48-24 83-37 38-13 75 8 103-11" />
+    <path d="M13 144c28-17 39-46 67-46 24 0 33 17 54 18m52 5c26 0 43-26 63-29 24-4 41 7 68-5" />
+    <path d="M38 144c18-20 29-35 48-35 12 0 26 8 37 12m77 17c20-6 30-26 51-33 22-7 44 6 63-5" />
+  </g>
+  <path d="M80 121c70 1 95-22 160 0" stroke="#bddeb8" stroke-opacity=".32" stroke-dasharray="2 5" stroke-linecap="round" />
+  <circle cx="80" cy="121" r="8" stroke="#c6c4b4" stroke-opacity=".4" />
+  <path d="m80 117 4 4-4 4-4-4z" fill="#c6c4b4" />
+  <circle cx="240" cy="121" r="13" fill="#bde0b6" fill-opacity=".13" />
+  <circle cx="240" cy="121" r="8" stroke="#bde0b6" stroke-opacity=".58" />
+  <path d="m240 117 4 4-4 4-4-4z" fill="#cbe9c5" />
+
+  <g transform="translate(20 19)" filter="url(#shadow)">
+    <use href="#popup" />
+    <circle cx="14" cy="11" r="4.5" stroke="#d7cbb6" stroke-opacity=".35" stroke-width="1.3" />
+    <path d="M14 6.5a4.5 4.5 0 0 1 4.5 4.5" stroke="#e8d0a3" stroke-width="1.3" stroke-linecap="round" />
+    <path d="M26 10h27" stroke="#e8d0a3" stroke-width="2.5" stroke-linecap="round" />
+    <g fill="url(#skeleton)">
+      <rect x="10" y="32" width="67" height="5" rx="2.5" />
+      <rect x="10" y="43" width="100" height="5" rx="2.5" />
+      <rect x="10" y="54" width="83" height="5" rx="2.5" />
+      <rect x="10" y="67" width="28" height="10" rx="3" />
+    </g>
+  </g>
+
+  <circle cx="160" cy="62" r="13" fill="#688b80" fill-opacity=".2" />
+  <path d="M154 62h12m-5-5 5 5-5 5" stroke="#c4dec1" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+
+  <g transform="translate(180 19)" filter="url(#shadow)">
+    <use href="#popup" />
+    <circle cx="14" cy="11" r="5" fill="#a7d4aa" fill-opacity=".2" />
+    <path d="m14 8 3 3-3 3-3-3z" fill="#c5e5bc" />
+    <path d="M26 10h39" stroke="#e8d0a3" stroke-width="2.5" stroke-linecap="round" />
+    <rect x="10" y="32" width="28" height="23" rx="4" fill="#b0c4a9" />
+    <path d="m12 51 7-10 6 6 4-4 7 8c0 1-1 2-2 2H14c-1 0-2-1-2-2z" fill="#5b806c" />
+    <circle cx="29" cy="38" r="2" fill="#f1e7bb" />
+    <g stroke="#716b61" stroke-linecap="round">
+      <path d="M46 35h56" stroke-width="2.4" />
+      <path d="M46 43h52m-52 8h40" stroke-width="1.8" stroke-opacity=".72" />
+    </g>
+    <rect x="10" y="66" width="27" height="10" rx="3" fill="#faf3e6" />
+    <path d="M16 71h15" stroke="#807669" stroke-width="1.3" stroke-linecap="round" />
+    <rect x="42" y="66" width="21" height="10" rx="3" fill="#faf3e6" />
+    <path d="M48 71h9" stroke="#807669" stroke-width="1.3" stroke-linecap="round" />
+    <circle cx="110" cy="74" r="12" fill="#d1e6c6" stroke="#e9f3e2" stroke-width="1.5" />
+    <path d="m105.5 74 3 3 6-6" stroke="#426853" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+</svg>

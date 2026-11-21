@@ -11,8 +11,10 @@ import type {
 import type { MAFMeta } from '@/stores/types'
 import { toValue } from 'vue'
 import { useMapEntitySync } from '@/stores/mapEntitySync'
+import { usePreferenceStore } from '@/stores/userPreference'
 import { createRenderMarkers } from '@/stores/utils'
 import { useMarkerAdvancedFilter, useMarkerFilter } from '.'
+import { useMarkerFilterFreshness } from './useMarkerFilterFreshness'
 
 interface MarkerHookOptions {
   archiveStore: ReturnType<typeof useArchiveStore>
@@ -25,12 +27,11 @@ interface MarkerHookOptions {
 
 export const useMarkers = (options: MarkerHookOptions) => {
   const { archiveStore, markerStore, tileStore, areaStore, itemStore } = options
+  const preferenceStore = usePreferenceStore()
+  const sync = useMapEntitySync()
 
   const { markerFilterType } = useMarkerFilter(options)
   const { getMAFConfig } = useMarkerAdvancedFilter(options)
-
-  /** 筛选处理状态 */
-  const markersFilterLoading = ref(false)
 
   const archiveItemIds = computed(
     () => archiveStore.currentArchive.body.Preference['markerFilter.state.itemIds'] ?? [],
@@ -134,11 +135,57 @@ export const useMarkers = (options: MarkerHookOptions) => {
 
   // ==================== 临时点位 - start ====================
 
-  const staticMarkers = computed(() => {
+  const layerCandidates = computed(() => {
     const { currentTileCode } = tileStore
     if (!currentTileCode) return []
     return markersGroupByTile.value[currentTileCode] ?? []
   })
+
+  const selectedConditions = computed(() =>
+    markerFilterType.value === 'advanced' ? advancedFilter.value : archiveItemIds.value,
+  )
+  const verification = useMarkerFilterFreshness({
+    enabled: () => preferenceStore.verifyMarkersOnline,
+    selection: () =>
+      JSON.stringify([
+        sync.scope,
+        tileStore.currentTileCode,
+        markerFilterType.value,
+        selectedConditions.value,
+      ]),
+    online: () => sync.online,
+    candidates: () => layerCandidates.value,
+    verify: (ids, signal) => markerStore.verifyMarkers(ids, signal),
+  })
+
+  let hiddenSince = 0
+  watch(useDocumentVisibility(), visibility => {
+    if (visibility === 'hidden') hiddenSince = Date.now()
+    else if (
+      preferenceStore.verifyMarkersOnline
+      && hiddenSince
+      && Date.now() - hiddenSince >= 30_000
+    )
+      verification.refresh()
+  })
+
+  /** 开启核对时，地图和列表只接收已确认且没有待更新标记的点位。 */
+  const staticMarkers = computed(() => {
+    const markers = verification.markers.value
+    if (!preferenceStore.verifyMarkersOnline) return markers
+    const pendingIds = sync.projection.pending.marker
+    return markers.filter(({ id }) => !pendingIds.has(id!))
+  })
+
+  const markersFilterLoading = computed(
+    () =>
+      preferenceStore.verifyMarkersOnline
+      && (verification.loading.value
+        || (sync.online
+          && selectedConditions.value.length > 0
+          && markerStore.updateLoading
+          && !markerStore.syncState?.baseline)),
+  )
 
   const staticMarkerIds = computed(() => new Set(staticMarkers.value.map(marker => marker.id!)))
 
@@ -151,17 +198,25 @@ export const useMarkers = (options: MarkerHookOptions) => {
     return new Map(
       Array.from(tempSources.value, ([type, markers]) => [
         type,
-        createRenderMarkers(markers, {
-          tileConfigs,
-          areaIdMap,
-          itemIdMap,
-          isTemporary: true,
-          reset: true,
-        }),
+        createRenderMarkers(
+          markers.flatMap(marker => {
+            if (type === 'focus' && '__gs_isSnapshot' in marker && marker.__gs_isSnapshot)
+              return [marker]
+            const current =
+              marker.id === undefined ? undefined : markerStore.getVisibleMarker(marker.id)
+            return current ? [current] : []
+          }),
+          {
+            tileConfigs,
+            areaIdMap,
+            itemIdMap,
+            isTemporary: true,
+            reset: true,
+          },
+        ),
       ]),
     )
   })
-  const sync = useMapEntitySync()
   watch(
     () => sync.scope,
     () => {
@@ -221,7 +276,7 @@ export const useMarkers = (options: MarkerHookOptions) => {
    * @note 根据 y 轴排序使得下方点位可以遮挡上方点位，降低视觉复杂度
    */
   const currentLayerMarkers = computed(() => {
-    return staticMarkers.value.sort(
+    return staticMarkers.value.toSorted(
       (
         {
           render: {
@@ -255,6 +310,9 @@ export const useMarkers = (options: MarkerHookOptions) => {
 
   return {
     markersFilterLoading,
+    markersFilterFailed: verification.failed,
+    markersFilterOffline: verification.offline,
+    retryMarkerFilter: verification.retry,
     markersGroupByTile,
     currentLayerMarkers,
     currentMarkers,

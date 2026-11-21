@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import type { GSMarkerInfo } from '@/packages/map'
 import { Check, CirclePlus, DeleteFilled, Edit, Rank, VideoCamera } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
@@ -7,8 +8,16 @@ import { MapAiError } from '@/ai/errors'
 import { AppBilibiliVideoPlayer, AppIconTagRenderer, GSButton } from '@/components'
 import { CloseFilled } from '@/components/GenshinUI/GSIcon'
 import { openMarkerEditorDialog } from '@/components/MarkerModifyer/actions'
-import { useFetchHook, useGlobalDialog, useMarkerControl } from '@/hooks'
-import { useAccessStore, useIconStore, useMapStateStore, useMarkerStore } from '@/stores'
+import { useGlobalDialog, useMarkerControl } from '@/hooks'
+import {
+  useAccessStore,
+  useIconStore,
+  useMapStateStore,
+  useMarkerStore,
+  usePreferenceStore,
+} from '@/stores'
+import { useMapEntitySync } from '@/stores/mapEntitySync'
+import Apis from '@/api/alova'
 import { MapAffix } from '../MapAffix'
 import { MarkerPanel } from './components'
 import { useMarkerDelete, useMarkerExtra, useMarkerFinished, useMarkerMove } from './hooks'
@@ -16,21 +25,99 @@ import { useMarkerDelete, useMarkerExtra, useMarkerFinished, useMarkerMove } fro
 const accessStore = useAccessStore()
 const mapStateStore = useMapStateStore()
 const markerStore = useMarkerStore()
+const preferenceStore = usePreferenceStore()
+const sync = useMapEntitySync()
 
 const { iconTextureUrl: tagSpriteUrl, iconCoordMap } = storeToRefs(useIconStore())
 
 const { cachedMarkerVo, isSnapshot, isPopoverActived, focus, blur, focusMarker } =
   useMarkerControl()
 
-const { isFinished, toggle: toggleFinished } = useMarkerFinished(cachedMarkerVo)
+type DetailStatus = 'checking' | 'ready' | 'offline' | 'unavailable' | 'error'
 
-const { isMoving, isEnable, position } = useMarkerMove(cachedMarkerVo)
+const requestedId = computed(() =>
+  preferenceStore.verifyMarkersOnline && !isSnapshot.value ? focus.value?.id : undefined,
+)
+const localMarker = computed(() => {
+  const id = focus.value?.id
+  return id === undefined ? undefined : markerStore.getVisibleMarker(id)
+})
+const pending = computed(() => {
+  const id = requestedId.value
+  return id !== undefined && sync.projection.pending.marker.has(id)
+})
+const detail = shallowRef<{ id: number; scope: string; status: DetailStatus }>()
+const refreshCount = ref(0)
+const retry = () => refreshCount.value++
 
-const { hiddenFlagType, refreshTimeText } = useMarkerExtra(cachedMarkerVo)
+const detailStatus = computed<DetailStatus>(() => {
+  if (isSnapshot.value) return 'ready'
+  if (!preferenceStore.verifyMarkersOnline) return localMarker.value ? 'ready' : 'unavailable'
+  if (!sync.online) return 'offline'
+  if (!detail.value || detail.value.id !== requestedId.value || detail.value.scope !== sync.scope)
+    return 'checking'
+  return detail.value.status === 'ready' && pending.value ? 'checking' : detail.value.status
+})
+
+const markerDetails = computed<GSMarkerInfo | null>(() => {
+  const anchor = focus.value
+  if (!anchor || detailStatus.value !== 'ready') return null
+  if (isSnapshot.value) return anchor
+  const marker = localMarker.value
+  return marker ? { ...marker, render: anchor.render } : null
+})
+
+watch(
+  [requestedId, () => sync.scope, () => sync.online, refreshCount],
+  ([id, scope, online], _, onCleanup) => {
+    detail.value = undefined
+    if (id === undefined || !scope || !online) return
+    const controller = new AbortController()
+    const { signal } = controller
+    const check = async () => {
+      try {
+        const markers = await markerStore.verifyMarkers([id], signal)
+        if (signal.aborted) return
+        if (markerStore.deletedIds.has(id)) {
+          blur(id)
+          return
+        }
+        detail.value = { id, scope, status: markers.has(id) ? 'ready' : 'unavailable' }
+      } catch {
+        if (!signal.aborted) detail.value = { id, scope, status: 'error' }
+      }
+    }
+    // 悬停经过多个点位时，只核对停留的点位。
+    const timeout = window.setTimeout(
+      () => void check(),
+      mapStateStore.interaction.isPopoverOnHover ? 120 : 0,
+    )
+    onCleanup(() => {
+      window.clearTimeout(timeout)
+      controller.abort()
+    })
+  },
+  { immediate: true },
+)
+
+watch(pending, value => {
+  if (value) retry()
+})
+watch(useDocumentVisibility(), visibility => {
+  if (visibility === 'visible' && requestedId.value !== undefined) retry()
+})
+
+const { isFinished, toggle: toggleFinished } = useMarkerFinished(markerDetails)
+
+const { isMoving, isEnable, position } = useMarkerMove(
+  computed(() => markerDetails.value ?? cachedMarkerVo.value),
+)
+
+const { hiddenFlagType, refreshTimeText } = useMarkerExtra(markerDetails)
 
 const copyId = async () => {
-  if (cachedMarkerVo.value?.id === undefined) return
-  const idStr = `${cachedMarkerVo.value.id}`
+  if (markerDetails.value?.id === undefined) return
+  const idStr = `${markerDetails.value.id}`
   await navigator.clipboard.writeText(idStr)
   ElMessage.success({
     message: `ID "${idStr}" 已复制到剪贴板`,
@@ -38,29 +125,32 @@ const copyId = async () => {
 }
 
 // ==================== 编辑点位 ====================
-const { loading: queryMarkerLoading, refresh: queryMarker } = useFetchHook({
-  onRequest: async (markerId: number) => {
-    const markers = await Apis.marker.listMarkerById({
-      data: {
-        markerIdList: [markerId],
-      },
-    })
-    const target = markers.data?.[0]
-    if (!target) throw new Error('无法查询到点位信息，点位可能已经被删除')
-    return target
-  },
-})
+const openingEditor = ref(false)
 
 const editMarker = async () => {
-  if (!focus.value?.id) return
-  const marker = await queryMarker(focus.value.id)
-  if (!marker) return
+  const id = markerDetails.value?.id
+  if (id === undefined || openingEditor.value) return
+  const scope = sync.scope
   try {
+    let marker = localMarker.value
+    if (!preferenceStore.verifyMarkersOnline) {
+      openingEditor.value = true
+      const { data } = await Apis.marker.listMarkerById({
+        data: { markerIdList: [id] },
+        shareRequest: false,
+      })
+      if (sync.scope !== scope || focus.value?.id !== id) return
+      marker = data?.find(row => row.id === id && accessStore.checkHiddenFlag(row.hiddenFlag))
+    }
+    if (!marker) throw new Error('点位当前不可用')
     openMarkerEditorDialog(marker)
   } catch (error) {
+    if (sync.scope !== scope || focus.value?.id !== id) return
     ElMessage.error({
       message: error instanceof Error ? error.message : String(error),
     })
+  } finally {
+    openingEditor.value = false
   }
 }
 
@@ -69,28 +159,26 @@ const unbindSurface = registerCapability({
   id: 'markerPopover',
   kind: 'popover',
   title: '点位弹窗',
-  description: '按 markerId 打开点位详情弹层，或关闭当前弹层',
+  description: '按 markerId 打开点位详情，开启点位在线核对时异步核对，或关闭当前弹层',
   open: params => {
     const record = (params ?? {}) as { markerId?: unknown }
     const markerId = Number(record.markerId)
     if (!Number.isInteger(markerId) || markerId <= 0) {
       throw new MapAiError('E_INVALID_PARAMS', 'markerId 必须是正整数')
     }
-    const marker = markerStore.idMap.get(markerId)
+    const marker = markerStore.getVisibleMarker(markerId)
     if (!marker) throw new MapAiError('E_NOT_FOUND', `点位不存在：${markerId}`)
     focusMarker(marker)
-    return {
-      markerId,
-      title: marker.markerTitle ?? '',
-    }
+    return { markerId }
   },
   close: () => {
     blur()
   },
   getState: () => ({
     open: Boolean(focus.value),
-    markerId: cachedMarkerVo.value?.id,
-    title: cachedMarkerVo.value?.markerTitle,
+    markerId: focus.value?.id,
+    title: markerDetails.value?.markerTitle,
+    loading: Boolean(focus.value) && detailStatus.value === 'checking',
     isSnapshot: isSnapshot.value,
     isMoving: isMoving.value,
   }),
@@ -121,36 +209,46 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
 <template>
   <MapAffix :pos="position" :pickable="Boolean(focus)" no-covert-coord integer>
     <template v-if="cachedMarkerVo" #default="{ zoom }">
-      <MarkerPanel :actived="isPopoverActived" :zoom="zoom">
+      <MarkerPanel
+        :actived="isPopoverActived"
+        :zoom="zoom"
+        :aria-hidden="!isPopoverActived"
+        :aria-busy="isPopoverActived && detailStatus === 'checking'"
+      >
         <template #header>
-          <AppIconTagRenderer
-            class="w-7 h-7 flex-shrink-0"
-            :src="tagSpriteUrl"
-            :mapping="iconCoordMap.get(cachedMarkerVo.render.mainIconId)"
-          />
+          <template v-if="markerDetails">
+            <AppIconTagRenderer
+              class="w-7 h-7 flex-shrink-0"
+              :src="tagSpriteUrl"
+              :mapping="iconCoordMap.get(markerDetails.render.mainIconId)"
+            />
 
-          <div
-            class="flex-1 px-1 whitespace-nowrap overflow-hidden text-ellipsis"
-            :title="cachedMarkerVo.markerTitle"
-          >
-            {{ cachedMarkerVo.markerTitle }}
-          </div>
+            <div
+              class="flex-1 px-1 whitespace-nowrap overflow-hidden text-ellipsis"
+              :title="markerDetails.markerTitle"
+            >
+              {{ markerDetails.markerTitle }}
+            </div>
+          </template>
+          <div v-else class="flex-1 text-sm px-2">点位详情</div>
 
-          <el-icon
-            :size="28"
-            color="#ECE5D8"
+          <button
+            type="button"
+            aria-label="关闭点位详情"
             class="flex-shrink-0 hover:brightness-90 active:brightness-50 cursor-pointer p-1"
-            @click="blur"
+            @click="blur()"
           >
-            <CloseFilled />
-          </el-icon>
+            <el-icon :size="20" color="#ECE5D8">
+              <CloseFilled />
+            </el-icon>
+          </button>
         </template>
 
-        <template #picture>
-          <div v-if="cachedMarkerVo.picture" class="w-[256px] h-[256px] overflow-hidden p-2">
+        <template v-if="markerDetails" #picture>
+          <div v-if="markerDetails.picture" class="w-[256px] h-[256px] overflow-hidden p-2">
             <el-image
-              :src="cachedMarkerVo.picture"
-              :preview-src-list="[cachedMarkerVo.picture]"
+              :src="markerDetails.picture"
+              :preview-src-list="[markerDetails.picture]"
               preview-teleported
               fit="contain"
               style="width: 100%; height: 100%; border-radius: 4px"
@@ -166,7 +264,7 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
           </div>
         </template>
 
-        <template #append>
+        <template v-if="markerDetails" #append>
           <div
             class="p-1 flex flex-wrap gap-1 text-xs mx-1 rounded bg-[#4A526540] text-[#676D7A] font-[HYWenHei-55S]"
           >
@@ -174,7 +272,7 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
               class="info-tag is-interactive decoration-dashed underline-offset-2 hover:underline active:decoration-solid"
               @click="copyId"
             >
-              ID {{ cachedMarkerVo.id }}
+              ID {{ markerDetails.id }}
             </div>
             <div v-if="hiddenFlagType !== undefined" class="info-tag">
               {{ hiddenFlagType }}
@@ -183,10 +281,10 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
               {{ refreshTimeText || '不刷新' }}
             </div>
             <div
-              v-if="cachedMarkerVo.videoPath"
+              v-if="markerDetails.videoPath"
               class="info-tag is-interactive"
               title="预览视频"
-              @click="() => playBilibiliVideo(cachedMarkerVo!.videoPath!)"
+              @click="() => playBilibiliVideo(markerDetails!.videoPath!)"
             >
               <el-icon :size="20">
                 <VideoCamera />
@@ -197,15 +295,41 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
 
         <template #content>
           <textarea
-            :value="cachedMarkerVo.content"
+            v-if="markerDetails"
+            :value="markerDetails.content"
             readonly
-            :rows="cachedMarkerVo.picture ? 8 : 16"
+            :rows="markerDetails.picture ? 8 : 16"
             class="custom-scrollbar block p-1 text-sm outline-none resize-none bg-[var(--card-bg-color)]"
             autocomplete="off"
           />
+          <div v-else-if="detailStatus === 'checking'" class="px-3 pt-3 pb-4" role="status">
+            <span class="sr-only">正在核对点位详情</span>
+            <el-skeleton class="detail-skeleton" loading animated>
+              <template #template>
+                <div class="flex flex-col gap-3" aria-hidden="true">
+                  <el-skeleton-item variant="text" class="w-3/4" />
+                  <el-skeleton-item v-for="row in 4" :key="row" variant="text" />
+                  <el-skeleton-item variant="text" class="w-1/2" />
+                  <el-skeleton-item variant="button" class="mt-1" />
+                </div>
+              </template>
+            </el-skeleton>
+          </div>
+          <div
+            v-else
+            class="min-h-28 p-3 grid place-content-center gap-3 text-sm text-center"
+            role="status"
+          >
+            <div v-if="detailStatus === 'offline'">联网后自动核对点位</div>
+            <div v-else-if="detailStatus === 'unavailable'">点位当前不可用</div>
+            <template v-else>
+              <div>暂时无法核对点位详情</div>
+              <GSButton size="small" @click="retry">重试</GSButton>
+            </template>
+          </div>
         </template>
 
-        <template #footer>
+        <template v-if="markerDetails" #footer>
           <template v-if="isSnapshot">
             <div class="w-full h-[40px] text-sm grid place-content-center">点位快照</div>
           </template>
@@ -216,7 +340,7 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
                 v-if="accessStore.get('MARKER_EDIT')"
                 size="small"
                 theme="dark"
-                :loading="queryMarkerLoading"
+                :loading="openingEditor"
                 :disabled="hasMapMission"
                 @click="editMarker"
               >
@@ -263,7 +387,7 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
                 theme="dark"
                 title="删除点位"
                 :disabled="hasMapMission"
-                @click="() => confirmDeleteMarker(cachedMarkerVo)"
+                @click="() => confirmDeleteMarker(markerDetails)"
               >
                 <template #icon>
                   <el-icon color="#CF5945">
@@ -280,6 +404,11 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
 </template>
 
 <style scoped>
+.detail-skeleton {
+  --el-skeleton-color: #bfb7aa;
+  --el-skeleton-to-color: #e8e0d4;
+}
+
 .info-tag {
   @apply h-6 px-1 rounded-sm
     grid place-content-center

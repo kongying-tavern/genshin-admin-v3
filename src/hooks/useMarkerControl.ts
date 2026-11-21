@@ -4,13 +4,16 @@ import { ElMessage } from 'element-plus'
 import { EaseoutInterpolator, GSMarkerLayer } from '@/packages/map'
 import { MapSubject } from '@/shared'
 import {
+  useAccessStore,
   useArchiveStore,
   useAreaStore,
   useItemStore,
   useMapStateStore,
   useMarkerStore,
+  usePreferenceStore,
   useSocketStore,
 } from '@/stores'
+import { useMapEntitySync } from '@/stores/mapEntitySync'
 import { createRenderMarkers } from '@/stores/utils'
 
 let cache: ReturnType<typeof _useMarkerControl>
@@ -21,11 +24,14 @@ const FLY_OFFSET = [-200, -200]
 
 const _useMarkerControl = () => {
   const areaStore = useAreaStore()
+  const accessStore = useAccessStore()
   const itemStore = useItemStore()
   const markerStore = useMarkerStore()
   const archiveStore = useArchiveStore()
   const mapStateStore = useMapStateStore()
+  const preferenceStore = usePreferenceStore()
   const socketStore = useSocketStore()
+  const sync = useMapEntitySync()
 
   const hideMarkerPopover = computed(() => {
     return archiveStore.currentArchive.body.Preference['map.setting.hideMarkerPopover']
@@ -33,11 +39,8 @@ const _useMarkerControl = () => {
 
   /** 缓存的点位信息, 用于在关闭弹窗时保持信息，使动画显示状态平滑 */
   const cachedMarkerId = ref<number>()
-
-  const cachedMarkerVo = computed<GSMarkerInfo | null>(() => {
-    if (cachedMarkerId.value === undefined) return null
-    return mapStateStore.currentMarkerIdMap.get(cachedMarkerId.value) ?? null
-  })
+  /** 本地没有详情时，只用调用方提供的坐标定位弹窗。 */
+  const focusPlaceholder = shallowRef<GSMarkerInfo>()
 
   const { hasHover, addFocus, addHover, removeFocus, removeHover } = mapStateStore.interaction
 
@@ -61,7 +64,13 @@ const _useMarkerControl = () => {
         | undefined
       if (!focusIds || focusIds.size > 1) return
       const markerId = focusIds.values().next().value!
-      return mapStateStore.currentMarkerIdMap.get(markerId)
+      const placeholder = focusPlaceholder.value
+      if (placeholder?.id === markerId && placeholder.__gs_isSnapshot) return placeholder
+      if (markerStore.deletedIds.has(markerId)) return
+      return (
+        mapStateStore.currentMarkerIdMap.get(markerId)
+        ?? (placeholder?.id === markerId ? placeholder : undefined)
+      )
     }
   })
 
@@ -76,62 +85,102 @@ const _useMarkerControl = () => {
   })
 
   /** 快照模式，点位只能查看不可交互 */
-  const isSnapshot = ref(false)
+  const isSnapshot = computed(() => {
+    const marker = focus.value
+    return Boolean(
+      marker
+      && (marker.__gs_isSnapshot
+        || (!preferenceStore.verifyMarkersOnline && marker === focusPlaceholder.value)),
+    )
+  })
+
+  const cachedMarkerVo = computed<GSMarkerInfo | null>(() => {
+    if (focus.value) return focus.value
+    if (cachedMarkerId.value === undefined) return null
+    return mapStateStore.currentMarkerIdMap.get(cachedMarkerId.value) ?? null
+  })
 
   /** 是否由 hover 触发弹窗而不是 focus */
   const isPopoverActived = computed(() => focus.value !== undefined)
 
-  whenever(
-    () => !focus.value,
-    () => {
-      mapStateStore.setTempMarkers('focus', [])
-    },
-  )
-
-  const normalizeMarker = (markerVo: MarkerVo | GSMarkerInfo): GSMarkerInfo => {
+  const normalizeMarker = (markerVo: MarkerVo | GSMarkerInfo): GSMarkerInfo | undefined => {
     return 'render' in markerVo ? markerVo : createRenderMarkers([markerVo])[0]
   }
 
-  const updateLoading = ref(false)
-
-  const delayTimer = ref<number>()
+  let delayTimer: number | undefined
+  let delayedMarkerId: number | undefined
 
   /** 与 focus 相反的行为 */
   const blur = (markerId?: number) => {
-    if (markerId !== undefined && focus.value?.id !== markerId) return
-    removeFocus(MARKER_INTERACTION_KEY)
+    if (markerId === undefined || delayedMarkerId === markerId) {
+      window.clearTimeout(delayTimer)
+      delayedMarkerId = undefined
+    }
+    if (markerId === undefined || focusPlaceholder.value?.id === markerId)
+      focusPlaceholder.value = undefined
+    removeFocus(MARKER_INTERACTION_KEY, markerId)
+    if (markerId !== undefined || mapStateStore.interaction.isPopoverOnHover)
+      removeHover(MARKER_INTERACTION_KEY, markerId)
   }
 
   socketStore.ipc.on('MarkerDeleted', id => {
+    if (!socketStore.hasCurrentCredentials) return
+    const focused = focus.value
+    if (focused?.id === id && focused.__gs_isSnapshot) return
+    if (
+      preferenceStore.verifyMarkersOnline
+      && (focused?.id === id || mapStateStore.staticMarkerIds.has(id))
+    )
+      ElMessage.warning({ message: '点位已删除', grouping: true })
     blur(id)
   })
+
+  watch(
+    () => sync.scope,
+    () => {
+      blur()
+      removeHover(MARKER_INTERACTION_KEY)
+      cachedMarkerId.value = undefined
+    },
+    { flush: 'sync' },
+  )
 
   const focusMarker = (
     markerVo: MarkerVo,
     {
       delay = 0,
       duration = 400,
+      snapshot = false,
     }: {
       /** 在将视口移动到点位附近后才真正执行 focus */
       delay?: number
       duration?: number
+      snapshot?: boolean
     } = {},
   ) => {
     blur()
-    window.clearTimeout(delayTimer.value)
 
-    if (markerVo.id === undefined) {
+    const markerId = markerVo.id
+    if (markerId === undefined) {
       ElMessage.error('点位 id 为空')
       return
     }
 
-    const existMarkerInfo = markerStore.idMap.get(markerVo.id)
-    const markerWithRender = existMarkerInfo
-      ? normalizeMarker(existMarkerInfo)
-      : normalizeMarker(markerVo)
+    if (!snapshot && markerStore.deletedIds.has(markerId)) {
+      ElMessage.warning({ message: '点位已删除', grouping: true })
+      return
+    }
+    const current = markerStore.getVisibleMarker(markerId)
+    const source = snapshot ? markerVo : (current ?? markerVo)
+    if (!accessStore.checkHiddenFlag(source.hiddenFlag)) return
+    const rendered = normalizeMarker(source)
+    if (!rendered) {
+      ElMessage.warning('点位当前无法在地图上定位')
+      return
+    }
+    const markerWithRender = snapshot ? { ...rendered, __gs_isSnapshot: true } : rendered
 
-    // 如果无法在当前数据中查询到所给的点位信息，则只能使用快照模式
-    isSnapshot.value = !existMarkerInfo
+    focusPlaceholder.value = snapshot || !current ? markerWithRender : undefined
 
     mapStateStore.setTempMarkers('focus', [markerWithRender])
 
@@ -161,12 +210,14 @@ const _useMarkerControl = () => {
     })
 
     if (delay > 0) {
-      delayTimer.value = window.setTimeout(() => {
-        addFocus(MARKER_INTERACTION_KEY, markerWithRender.id, true)
-        delayTimer.value = undefined
+      delayedMarkerId = markerId
+      delayTimer = window.setTimeout(() => {
+        delayedMarkerId = undefined
+        if (snapshot || !markerStore.deletedIds.has(markerId))
+          addFocus(MARKER_INTERACTION_KEY, markerId, true)
       }, delay)
     } else {
-      addFocus(MARKER_INTERACTION_KEY, markerWithRender.id, true)
+      addFocus(MARKER_INTERACTION_KEY, markerId, true)
     }
   }
 
@@ -176,21 +227,32 @@ const _useMarkerControl = () => {
       return
     }
     const markerWithRender = normalizeMarker(markerVo)
-    addHover(MARKER_INTERACTION_KEY, markerWithRender.id)
+    addHover(MARKER_INTERACTION_KEY, markerWithRender?.id)
   }
 
   /** 与 hover 相反的行为 */
   const out = () => removeHover(MARKER_INTERACTION_KEY)
 
   watch(
-    () => [focus.value, mapStateStore.interaction.isPopoverOnHover] as const,
-    ([currentFocus, isPopoverOnHover]) => {
-      if (!currentFocus) {
-        !isPopoverOnHover && mapStateStore.setTempMarkers('focus', [])
-        return
-      }
-      cachedMarkerId.value = currentFocus.id
-      !isPopoverOnHover && mapStateStore.setTempMarkers('focus', [currentFocus])
+    [() => focus.value?.id, () => mapStateStore.interaction.isPopoverOnHover],
+    ([id, isPopoverOnHover]) => {
+      if (id !== undefined) cachedMarkerId.value = id
+      if (id !== undefined || delayedMarkerId === undefined)
+        mapStateStore.setTempMarkers('focus', focus.value && !isPopoverOnHover ? [focus.value] : [])
+    },
+  )
+
+  watch(
+    () => {
+      const placeholder = focusPlaceholder.value
+      return (
+        placeholder?.id !== undefined
+        && !placeholder.__gs_isSnapshot
+        && markerStore.getVisibleMarker(placeholder.id)
+      )
+    },
+    current => {
+      if (current) focusPlaceholder.value = undefined
     },
   )
 
@@ -200,7 +262,6 @@ const _useMarkerControl = () => {
     cachedMarkerVo,
     hover,
     focus,
-    updateLoading,
     normalizeMarker,
     focusMarker,
     blur,

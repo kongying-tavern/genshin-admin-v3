@@ -5,6 +5,7 @@ import { useArchiveStore, useMapStateStore } from '@/stores'
 import { MarkerFilterAdvanced } from '../MarkerFilterAdvanced'
 import { MarkerFilterBasic } from '../MarkerFilterBasic'
 import { PresetManager } from '../PresetManager'
+import MarkerFilterStatus from './MarkerFilterStatus.vue'
 
 const archiveStore = useArchiveStore()
 const mapStateStore = useMapStateStore()
@@ -19,6 +20,7 @@ const conditionManagerVisible = ref(false)
 
 <template>
   <div class="marker-filter font-['HYWenHei-85W'] h-full flex flex-col">
+    <MarkerFilterStatus />
     <MarkerFilterAdvanced v-if="filterType === 'advanced'">
       <template #append>
         <GSButton class="flex-1" size="small" @click="conditionManagerVisible = true">

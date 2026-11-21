@@ -1,0 +1,231 @@
+import type { MarkerVo } from '@/api/alova/globals'
+import type { GSMarkerInfo } from '@/packages/map'
+import { mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { computed, nextTick, reactive, ref, shallowRef } from 'vue'
+import { getCapability, inspectSurface } from '@/ai/bindings'
+import MapMarkerPopover from '@/components/MapMarkerPopover/MapMarkerPopover.vue'
+
+const focus = shallowRef<GSMarkerInfo>()
+const sync = reactive({
+  scope: 'account',
+  online: true,
+  projection: { pending: { marker: new Set() } },
+})
+const local = reactive(new Map<number, GSMarkerInfo>())
+const preferences = reactive({ verifyMarkersOnline: true })
+const canEdit = ref(false)
+const { listMarkerById, openMarkerEditorDialog } = vi.hoisted(() => ({
+  listMarkerById: vi.fn(),
+  openMarkerEditorDialog: vi.fn(),
+}))
+const verifyMarkers =
+  vi.fn<(ids: number[], signal: AbortSignal) => Promise<Map<number, MarkerVo>>>()
+const deletedIds = new Set<number>()
+
+vi.mock('@/api/alova', () => ({ default: { marker: { listMarkerById } } }))
+vi.mock('@/stores/mapEntitySync', () => ({ useMapEntitySync: () => sync }))
+vi.mock('@/stores', () => ({
+  useAccessStore: () => ({
+    get: (permission: string) => permission === 'MARKER_EDIT' && canEdit.value,
+    checkHiddenFlag: () => true,
+  }),
+  usePreferenceStore: () => preferences,
+  useMapStateStore: () => ({ interaction: { isPopoverOnHover: false } }),
+  useIconStore: () => ({ iconTextureUrl: ref(''), iconCoordMap: shallowRef(new Map()) }),
+  useMarkerStore: () => ({
+    getVisibleMarker: (id: number) => local.get(id),
+    verifyMarkers,
+    deletedIds,
+  }),
+}))
+vi.mock('@/hooks', () => ({
+  useGlobalDialog: () => ({}),
+  useMarkerControl: () => ({
+    focus,
+    isPopoverActived: computed(() => Boolean(focus.value)),
+    isSnapshot: computed(() => Boolean(focus.value?.__gs_isSnapshot)),
+    cachedMarkerVo: computed(() => focus.value ?? null),
+    focusMarker: (marker: GSMarkerInfo) => {
+      focus.value = marker
+    },
+    blur: () => {
+      focus.value = undefined
+    },
+  }),
+}))
+vi.mock('@/components', () => ({
+  AppBilibiliVideoPlayer: {},
+  AppIconTagRenderer: { template: '<div />' },
+  GSButton: { template: '<button><slot /></button>' },
+}))
+vi.mock('@/components/GenshinUI/GSIcon', () => ({ CloseFilled: { template: '<span />' } }))
+vi.mock('@/components/MarkerModifyer/actions', () => ({ openMarkerEditorDialog }))
+vi.mock('@/components/MapAffix', () => ({
+  MapAffix: { template: '<div><slot :zoom="0" /></div>' },
+}))
+vi.mock('@/components/MapMarkerPopover/components', () => ({
+  MarkerPanel: {
+    template:
+      '<section><slot name="header" /><slot name="content" /><slot name="footer" /></section>',
+  },
+}))
+vi.mock('@/components/MapMarkerPopover/hooks', () => ({
+  useMarkerFinished: () => ({}),
+  useMarkerMove: () => ({ isMoving: ref(false) }),
+  useMarkerExtra: () => ({}),
+  useMarkerDelete: () => ({}),
+}))
+
+const makeMarker = (id: number, markerTitle: string): GSMarkerInfo =>
+  ({ id, markerTitle, render: { position: [0, 0], mainIconId: 1 } }) as GSMarkerInfo
+
+describe('点位弹窗句柄与加载状态', () => {
+  let wrapper: ReturnType<typeof mount>
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    focus.value = undefined
+    sync.scope = 'account'
+    sync.online = true
+    preferences.verifyMarkersOnline = true
+    canEdit.value = false
+    local.clear()
+    deletedIds.clear()
+    verifyMarkers.mockReset()
+    listMarkerById.mockReset()
+    openMarkerEditorDialog.mockReset()
+    wrapper = mount(MapMarkerPopover, {
+      global: {
+        stubs: ['el-icon', 'el-image', 'el-skeleton', 'el-skeleton-item'],
+      },
+    })
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    vi.useRealTimers()
+  })
+
+  it('关闭时离线可直接显示缓存，切换设置后立即应用当前弹窗', async () => {
+    preferences.verifyMarkersOnline = false
+    sync.online = false
+    const cached = makeMarker(1, '本地标题')
+    local.set(1, cached)
+    const read = Promise.withResolvers<Map<number, MarkerVo>>()
+    verifyMarkers.mockReturnValueOnce(read.promise)
+
+    getCapability('markerPopover')!.open!({ markerId: 1 })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(wrapper.text()).toContain(cached.markerTitle)
+    expect(inspectSurface('markerPopover')?.state).toMatchObject({
+      open: true,
+      markerId: 1,
+      title: cached.markerTitle,
+      loading: false,
+    })
+    expect(verifyMarkers).not.toHaveBeenCalled()
+    expect(listMarkerById).not.toHaveBeenCalled()
+
+    sync.online = true
+    preferences.verifyMarkersOnline = true
+    await vi.advanceTimersByTimeAsync(0)
+    expect(wrapper.find('el-skeleton-stub').exists()).toBe(true)
+    expect(verifyMarkers).toHaveBeenCalledTimes(1)
+
+    preferences.verifyMarkersOnline = false
+    await nextTick()
+    expect(verifyMarkers.mock.calls[0][1].aborted).toBe(true)
+    read.resolve(new Map())
+    await vi.advanceTimersByTimeAsync(0)
+    expect(wrapper.text()).toContain(cached.markerTitle)
+    expect(wrapper.find('el-skeleton-stub').exists()).toBe(false)
+    expect(verifyMarkers).toHaveBeenCalledTimes(1)
+  })
+
+  it('关闭浏览核对时点击编辑仍先读取服务端版本', async () => {
+    preferences.verifyMarkersOnline = false
+    canEdit.value = true
+    const cached = { ...makeMarker(1, '本地标题'), version: 1 }
+    const server = { id: 1, markerTitle: '服务端标题', version: 2 }
+    local.set(1, cached)
+    listMarkerById.mockResolvedValueOnce({ data: [server] })
+
+    getCapability('markerPopover')!.open!({ markerId: 1 })
+    await nextTick()
+    expect(listMarkerById).not.toHaveBeenCalled()
+    const button = wrapper.findAll('button').find(button => button.text() === '编辑')!
+    await button.trigger('click')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(listMarkerById).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { markerIdList: [1] } }),
+    )
+    expect(openMarkerEditorDialog).toHaveBeenCalledWith(server)
+    expect(verifyMarkers).not.toHaveBeenCalled()
+  })
+
+  it('打开时显示骨架屏，切换点位时只公开当前已核对的标题和内容', async () => {
+    const first = makeMarker(1, '缓存标题 A')
+    const second = makeMarker(2, '缓存标题 B')
+    local.set(1, first).set(2, second)
+    const firstRead = Promise.withResolvers<Map<number, MarkerVo>>()
+    const secondRead = Promise.withResolvers<Map<number, MarkerVo>>()
+    verifyMarkers.mockReturnValueOnce(firstRead.promise).mockReturnValueOnce(secondRead.promise)
+
+    getCapability('markerPopover')!.open!({ markerId: 1 })
+    await nextTick()
+    expect(wrapper.find('el-skeleton-stub').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain(first.markerTitle)
+    expect(inspectSurface('markerPopover')?.state).toMatchObject({
+      open: true,
+      markerId: 1,
+      loading: true,
+      title: undefined,
+    })
+    await vi.advanceTimersByTimeAsync(0)
+
+    getCapability('markerPopover')!.open!({ markerId: 2 })
+    await nextTick()
+    expect(verifyMarkers.mock.calls[0][1].aborted).toBe(true)
+    await vi.advanceTimersByTimeAsync(0)
+    firstRead.resolve(new Map([[1, makeMarker(1, '迟到标题 A')]]))
+    const confirmed = { ...second, markerTitle: '已核对标题 B', content: '已核对正文' }
+    local.set(2, confirmed)
+    secondRead.resolve(new Map([[2, confirmed]]))
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(wrapper.find('el-skeleton-stub').exists()).toBe(false)
+    expect(wrapper.get('textarea').element.value).toBe('已核对正文')
+    expect(wrapper.text()).toContain(confirmed.markerTitle)
+    expect(wrapper.text()).not.toContain('迟到标题 A')
+    expect(inspectSurface('markerPopover')?.state).toMatchObject({
+      open: true,
+      markerId: 2,
+      loading: false,
+      title: confirmed.markerTitle,
+    })
+  })
+
+  it('查询失败时只展示错误态并允许重试', async () => {
+    const cached = makeMarker(1, '过期标题')
+    local.set(1, cached)
+    const confirmed = { ...cached, markerTitle: '当前标题' }
+    verifyMarkers.mockRejectedValueOnce(new Error('网络暂不可用'))
+    verifyMarkers.mockImplementationOnce(async () => {
+      local.set(1, confirmed)
+      return new Map([[1, confirmed]])
+    })
+    getCapability('markerPopover')!.open!({ markerId: 1 })
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(wrapper.text()).toContain('暂时无法核对点位详情')
+    expect(wrapper.text()).not.toContain(cached.markerTitle)
+    expect(wrapper.find('textarea').exists()).toBe(false)
+
+    const retry = wrapper.findAll('button').find(button => button.text() === '重试')!
+    await retry.trigger('click')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(wrapper.text()).toContain(confirmed.markerTitle)
+  })
+})

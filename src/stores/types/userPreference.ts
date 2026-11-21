@@ -65,6 +65,9 @@ export interface UserPreference {
   /** 隐藏点位弹窗 */
   'map.setting.hideMarkerPopover'?: boolean
 
+  /** 打开点位弹窗和筛选时在线核对点位 */
+  'map.setting.verifyMarkersOnline'?: boolean
+
   /** 地图缩放时的过渡时间 */
   'map.setting.zoomTransitionDuration': number
 
@@ -167,6 +170,7 @@ export const getDefaultPreference = (): UserPreference => ({
   // map
   'map.setting.showZoneTag': true,
   'map.setting.transparentMarked': true,
+  'map.setting.verifyMarkersOnline': false,
   'map.setting.zoomTransitionDuration': 66,
 
   // mapSiderMenu

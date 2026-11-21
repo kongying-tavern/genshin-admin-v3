@@ -37,6 +37,7 @@ export const usePreferenceStore = defineStore('global-user-preference', () => {
     step: model('markerFilter.state.step', () => 0),
     tabName: model('mapSiderMenu.state.tabName', () => 'filter'),
     transparentMarked: model('map.setting.transparentMarked', () => false),
+    verifyMarkersOnline: model('map.setting.verifyMarkersOnline', () => false),
     zoomTransitionDuration: model('map.setting.zoomTransitionDuration', () => 66),
     markerDraggingCount: model('manager.setting.markerDraggingCount', () => 0),
   }

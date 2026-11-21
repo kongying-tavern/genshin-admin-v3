@@ -2,6 +2,7 @@ import type { MarkerVo, TweakVo } from '@/api/alova/globals'
 import type { MarkerCommand } from './mapEntitySync/model'
 import { AddLocation, DeleteLocation, Location } from '@element-plus/icons-vue'
 import { liveQuery } from 'dexie'
+import { ElMessage } from 'element-plus'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import Apis from '@/api/alova'
 import db from '@/database'
@@ -9,6 +10,7 @@ import { useAccessStore } from './access'
 import { useMapEntitySync } from './mapEntitySync'
 import { stageArchive } from './mapEntitySync/archives'
 import { sendMarkerCreate } from './mapEntitySync/markerCommands'
+import { verifyMarkerBatch } from './mapEntitySync/markerFreshness'
 import { isEntityId, validateEntities } from './mapEntitySync/model'
 import {
   checkDetails,
@@ -35,6 +37,20 @@ export const useMarkerStore = defineStore('global-marker', () => {
   const revision = computed(() => sync.projection.revisions.marker)
   const total = computed(() => markerList.value.length)
   const pendingCreates = shallowRef<MarkerCommand[]>([])
+  const deletedIds = computed(() => sync.projection.deletedMarkerIds)
+
+  const getVisibleMarker = (id: number) => {
+    const marker = sync.projection.entities.marker.get(id)
+    return marker && access.checkHiddenFlag(marker.hiddenFlag) ? marker : undefined
+  }
+
+  const verifyMarkers = (ids: number[], signal: AbortSignal) =>
+    verifyMarkerBatch(sync, sync.current(), ids, {
+      signal,
+      canReadHistory: access.get('NORMAL_COMPONENT'),
+      canSee: access.checkHiddenFlag,
+      onDeleted: () => ElMessage.warning({ message: '点位已删除', grouping: true }),
+    })
 
   watch(
     () => sync.scope,
@@ -265,6 +281,9 @@ export const useMarkerStore = defineStore('global-marker', () => {
     markerList,
     revision,
     total,
+    deletedIds,
+    getVisibleMarker,
+    verifyMarkers,
     readMarkers,
     createMarker,
     updateMarker,

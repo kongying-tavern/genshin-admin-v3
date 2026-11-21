@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { InfoFilled } from '@element-plus/icons-vue'
 import { useDadianStore, usePreferenceStore, useTileStore } from '@/stores'
+import cachedPopover from '../assets/marker-popover-cached.svg'
+import onlinePopover from '../assets/marker-popover-online.svg'
 import { SettingBar, SettingGroup, SettingPanel } from '../components'
 
 const tileStore = useTileStore()
@@ -54,6 +57,39 @@ const consoleConfig = () => {
           <el-switch v-model="preferenceStore.transparentMarked" />
         </template>
       </SettingBar>
+      <div class="marker-verification">
+        <SettingBar
+          label="点位在线核对"
+          note="开启后，打开点位弹窗或筛选时会向服务端核对，减少看到过期或已删除的点位。"
+        >
+          <template #setting>
+            <el-switch v-model="preferenceStore.verifyMarkersOnline" aria-label="点位在线核对" />
+          </template>
+        </SettingBar>
+
+        <div class="marker-verification-description">
+          <div class="marker-verification-previews">
+            <figure class="marker-verification-preview">
+              <img :src="cachedPopover" width="320" height="144" alt="" />
+              <figcaption>
+                <span class="marker-verification-mode">关闭</span>
+                <span>直接显示缓存详情</span>
+              </figcaption>
+            </figure>
+            <figure class="marker-verification-preview">
+              <img :src="onlinePopover" width="320" height="144" alt="" />
+              <figcaption>
+                <span class="marker-verification-mode is-online">开启</span>
+                <span>先显示骨架屏，再显示最新详情</span>
+              </figcaption>
+            </figure>
+          </div>
+          <p class="marker-verification-cost">
+            <el-icon :size="14" aria-hidden="true"><InfoFilled /></el-icon>
+            <span>会增加网络请求和等待时间，离线时需等到联网后才能确认结果。</span>
+          </p>
+        </div>
+      </div>
       <SettingBar
         label="滚轮缩放过渡时间（毫秒）"
         note="使用滚轮进行缩放时，过渡所消耗的时间，设置为 0 时则取消过渡"
@@ -73,3 +109,75 @@ const consoleConfig = () => {
     </SettingGroup>
   </SettingPanel>
 </template>
+
+<style scoped>
+.marker-verification {
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--el-fill-color-light);
+}
+
+.marker-verification-description {
+  padding: 0 16px 12px;
+}
+
+.marker-verification-previews {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 218px), 1fr));
+  gap: 10px;
+}
+
+.marker-verification-preview {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  background: var(--el-bg-color);
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    align-items: baseline;
+    padding: 8px 10px;
+    color: var(--el-text-color-regular);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+}
+
+.marker-verification-mode {
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-primary);
+  font-weight: 600;
+
+  &.is-online {
+    background: var(--el-color-success-light-9);
+    color: var(--el-color-success-dark-2);
+  }
+}
+
+.marker-verification-cost {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 9px 0 0;
+  color: var(--el-text-color-regular);
+  font-size: 12px;
+  line-height: 1.5;
+
+  .el-icon {
+    flex: none;
+    margin-top: 2px;
+  }
+}
+</style>

@@ -16,6 +16,7 @@ const createProjection = (scope = '') => ({
     markerLink: new Map<number, MapEntities['markerLink']>(),
   },
   pending: { marker: new Set<number>(), item: new Set<number>(), markerLink: new Set<number>() },
+  deletedMarkerIds: new Set<number>(),
   revisions: { marker: 0, item: 0, markerLink: 0 },
 })
 
@@ -63,9 +64,14 @@ export const useMapEntitySync = defineStore('map-entity-sync', () => {
     const revisions = { ...next.revisions }
     const entities = { ...next.entities }
     const pending = { ...next.pending }
+    let deletedMarkerIds = next.deletedMarkerIds
     const updatedResources = new Set<MapResource>()
     const pendingResources = new Set<MapResource>()
-    for (const { resource, id, entity, pending: needsCheck } of rows) {
+    for (const { resource, id, entity, deleted, pending: needsCheck } of rows) {
+      if (resource === 'marker' && deleted) {
+        if (deletedMarkerIds === next.deletedMarkerIds) deletedMarkerIds = new Set(deletedMarkerIds)
+        deletedMarkerIds.add(id)
+      }
       if (entities[resource].get(id) !== entity) {
         if (!updatedResources.has(resource)) {
           Object.assign(entities, {
@@ -94,7 +100,7 @@ export const useMapEntitySync = defineStore('map-entity-sync', () => {
       )
         revisions[resource]++
     }
-    projection.value = { ...next, entities, pending, revisions }
+    projection.value = { ...next, entities, pending, revisions, deletedMarkerIds }
   }
 
   const refresh = async (expected: SyncSession) => {

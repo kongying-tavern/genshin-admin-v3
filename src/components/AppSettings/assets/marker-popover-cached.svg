@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="144" viewBox="0 0 320 144" fill="none">
+  <title>关闭点位在线核对</title>
+  <desc>打开点位弹窗后，直接显示缓存中的详情。</desc>
+  <defs>
+    <linearGradient id="map" x1="10" y1="0" x2="310" y2="144" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2b3d4b" />
+      <stop offset="1" stop-color="#17232f" />
+    </linearGradient>
+    <pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse">
+      <path d="M16 0H0v16" stroke="#b0c1cd" stroke-opacity=".09" />
+    </pattern>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="90" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f2ebde" />
+      <stop offset="1" stop-color="#dcd3c3" />
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-20%" width="150%" height="160%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#0a1118" flood-opacity=".45" />
+    </filter>
+  </defs>
+
+  <path d="M0 0h320v144H0z" fill="url(#map)" />
+  <path d="M0 0h320v144H0z" fill="url(#grid)" />
+  <path
+    d="M0 104c30-6 32-32 65-32 31 0 45 21 80 19 46-3 52-29 88-39 30-8 65 4 87-13v105H0z"
+    fill="#809f9f"
+    fill-opacity=".11"
+  />
+  <g stroke="#adc1bb" stroke-opacity=".22" stroke-linecap="round">
+    <path d="M-9 83c42-6 52-27 78-29 25-2 37 13 56 13 45 1 55-30 92-42 35-11 67 8 111-15" />
+    <path d="M-9 95c39-3 50-31 78-32 26 0 38 16 59 16 42 1 65-31 94-40 36-11 65 9 106-14" />
+    <path d="M-6 111c33-3 46-32 77-33 28-1 35 21 70 19 38-3 48-24 83-37 38-13 75 8 103-11" />
+    <path d="M13 144c28-17 39-46 67-46 24 0 33 17 54 18m52 5c26 0 43-26 63-29 24-4 41 7 68-5" />
+    <path d="M38 144c18-20 29-35 48-35 12 0 26 8 37 12m77 17c20-6 30-26 51-33 22-7 44 6 63-5" />
+  </g>
+  <path d="M28 49c40 28 77 26 126 71h6c43-7 64-33 108-45" stroke="#e2c28f" stroke-opacity=".28" stroke-dasharray="2 5" stroke-linecap="round" />
+  <circle cx="160" cy="121" r="13" fill="#e3ba78" fill-opacity=".12" />
+  <circle cx="160" cy="121" r="8" stroke="#e3ba78" stroke-opacity=".55" />
+  <path d="m160 117 4 4-4 4-4-4z" fill="#f0d397" />
+
+  <g transform="translate(100 19)" filter="url(#shadow)">
+    <path d="M8 0h104a8 8 0 0 1 8 8v68a10 10 0 0 1-10 10H67l-7 7-7-7H10A10 10 0 0 1 0 76V8a8 8 0 0 1 8-8z" fill="url(#paper)" />
+    <path d="M8 0h104a8 8 0 0 1 8 8v14H0V8a8 8 0 0 1 8-8z" fill="#405065" />
+    <circle cx="14" cy="11" r="5" fill="#dac290" fill-opacity=".19" />
+    <path d="m14 8 3 3-3 3-3-3z" fill="#e2c68e" />
+    <path d="M26 10h39" stroke="#e8d0a3" stroke-width="2.5" stroke-linecap="round" />
+    <path d="m106 8 6 6m0-6-6 6" stroke="#e4dbca" stroke-width="1.3" stroke-linecap="round" />
+
+    <rect x="10" y="32" width="28" height="23" rx="4" fill="#a9bab1" />
+    <path d="m12 51 7-10 6 6 4-4 7 8c0 1-1 2-2 2H14c-1 0-2-1-2-2z" fill="#5b776f" />
+    <circle cx="29" cy="38" r="2" fill="#ece2bc" />
+    <g stroke="#716b61" stroke-linecap="round">
+      <path d="M46 35h56" stroke-width="2.4" />
+      <path d="M46 43h49m-49 8h33" stroke-width="1.8" stroke-opacity=".72" />
+    </g>
+    <rect x="10" y="66" width="27" height="10" rx="3" fill="#faf3e6" />
+    <path d="M16 71h15" stroke="#807669" stroke-width="1.3" stroke-linecap="round" />
+    <rect x="42" y="66" width="21" height="10" rx="3" fill="#faf3e6" />
+    <path d="M48 71h9" stroke="#807669" stroke-width="1.3" stroke-linecap="round" />
+    <circle cx="110" cy="74" r="12" fill="#f5dfb2" stroke="#f9edce" stroke-width="1.5" />
+    <g stroke="#806138" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+      <ellipse cx="110" cy="70.5" rx="4" ry="1.8" />
+      <path d="M106 70.5v7c0 1 1.8 1.8 4 1.8s4-.8 4-1.8v-7m-8 3.5c0 1 1.8 1.8 4 1.8s4-.8 4-1.8" />
+    </g>
+  </g>
+</svg>

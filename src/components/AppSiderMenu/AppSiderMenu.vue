@@ -232,7 +232,7 @@ onUnmounted(() => {
             class="absolute left-1/2 bottom-1 -translate-x-1/2 w-fit h-5 min-w-[20px] rounded-full p-0.5 grid place-items-center bg-[#68B11E]"
           >
             <span class="text-xs leading-none px-0.5 text-white">
-              {{ mapStateStore.currentLayerMarkers.length }}
+              {{ mapStateStore.currentLayerMarkers.length || '…' }}
             </span>
           </div>
         </div>

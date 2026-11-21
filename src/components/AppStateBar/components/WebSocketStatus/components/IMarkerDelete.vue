@@ -32,7 +32,7 @@ const iconId = computed(() => {
 
     <div
       class="flex items-center gap-2 p-1 px-2 pr-4 rounded cursor-pointer border-l-[2px] border-[var(--el-color-error)] bg-[var(--el-color-error-light-9)] hover:bg-[var(--el-color-error-light-7)] active:bg-[var(--el-color-error-light-9)]"
-      @click="() => focusMarker(markerInfo)"
+      @click="() => focusMarker(markerInfo, { snapshot: true })"
     >
       <AppIconTagRenderer
         :src="iconStore.iconTextureUrl"
