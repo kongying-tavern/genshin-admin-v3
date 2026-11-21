@@ -46,9 +46,9 @@
 
 ## 相关项目
 
-1. [地图标记系统后端 (java)](https://github.com/kongying-tavern/genshin-map-cloud)
-2. [地图标记系统后端 (rust)](https://github.com/kongying-tavern/genshin-cloud-rust)
-3. [地图文档 (vitepress)](https://github.com/kongying-tavern/docs)
+1. [地图标记系统后端 (Java)](https://github.com/kongying-tavern/genshin-cloud-api)
+2. [地图标记系统后端 (Rust)](https://github.com/kongying-tavern/genshin-cloud-rust)
+3. [地图文档 (VitePress)](https://github.com/kongying-tavern/docs)
 
 ## 应用预览
 
