@@ -8,26 +8,19 @@ export const useGenshinMap = (
 ) => {
   const instanceRef = shallowRef<GenshinMap | null>(null)
 
-  const finalize = () => {
-    instanceRef.value?.finalize()
-    instanceRef.value = null
-  }
-
-  onMounted(() => {
-    const canvas = canvasRef.value
-    if (!canvas) {
-      finalize()
-      return
-    }
-
-    const instance = new GenshinMap(canvas, options)
-
-    instanceRef.value = instance
-  })
-
-  onBeforeUnmount(() => {
-    finalize()
-  })
+  watch(
+    canvasRef,
+    (canvas, _, onCleanup) => {
+      if (!canvas) return
+      const instance = new GenshinMap(canvas, options)
+      instanceRef.value = instance
+      onCleanup(() => {
+        instance.finalize()
+        instanceRef.value = null
+      })
+    },
+    { flush: 'post', immediate: true },
+  )
 
   return {
     instanceRef,

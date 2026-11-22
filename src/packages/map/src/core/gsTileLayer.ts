@@ -13,7 +13,7 @@ const BASE_URL = import.meta.env.VITE_ASSETS_BASE
 /** 地图 zoom 为 0 时对应服务器资源的实际 zoom 值 */
 const ZOOM_MAPPING = 13
 
-export class GSTileLayer extends TileLayer<TileData | null> {
+export class GSTileLayer extends TileLayer<TileData | null, GSTileLayerProps> {
   static layerName = 'GenshinTileLayer'
 
   constructor(props: GSTileLayerProps) {
@@ -25,6 +25,8 @@ export class GSTileLayer extends TileLayer<TileData | null> {
     } = props
 
     super({
+      // 保留底图参数，供上下文恢复时由 Layer.clone() 重建切片图层。
+      ...props,
       id: `tile-layer-${code}`,
       data: undefined,
       tileSize: 256,

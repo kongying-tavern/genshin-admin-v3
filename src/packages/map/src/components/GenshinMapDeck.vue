@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { LayersList } from 'deck.gl'
+import type { Layer, LayersList } from 'deck.gl'
 import type { GenshinMap } from '../core'
 import type { GenshinMapProps, GenshinMapViewState } from '../types'
 import { useGenshinMap } from '../hooks'
@@ -32,19 +32,46 @@ const modelCanvasRef = defineModel<HTMLCanvasElement | undefined>('canvasRef', {
 })
 
 const canvasRef = shallowRef<HTMLCanvasElement>()
+const canvasKey = ref(0)
 
-onMounted(() => {
-  modelCanvasRef.value = canvasRef.value
+watch(canvasRef, canvas => {
+  modelCanvasRef.value = canvas
 })
 
-// WebGL 上下文丢失时刷新页面
-useEventListener(canvasRef, 'webglcontextlost', () => {
-  location.reload()
-})
+// 新 Deck 不能复用旧 Deck 已初始化的图层。相邻更新沿用仍在绘制的副本。
+let layerCopies = new Map<Layer, Layer>()
+const getRenderLayers = () => {
+  if (canvasKey.value === 0) return props.layers
+  const nextCopies = new Map<Layer, Layer>()
+  const copyLayer = (layer: LayersList[number]): LayersList[number] => {
+    if (Array.isArray(layer)) return layer.map(copyLayer)
+    if (!layer) return layer
+    const copy = layerCopies.get(layer) ?? layer.clone({})
+    nextCopies.set(layer, copy)
+    return copy
+  }
+  const layers = props.layers?.map(copyLayer)
+  layerCopies = nextCopies
+  return layers
+}
+
+const restoreCanvas = async () => {
+  const hadFocus = document.activeElement === canvasRef.value
+  layerCopies.clear()
+  canvasKey.value++
+  if (hadFocus) {
+    await nextTick()
+    canvasRef.value?.focus({ preventScroll: true })
+  }
+}
 
 const { instanceRef } = useGenshinMap(canvasRef, {
-  initialViewState: viewState.value,
-  layers: props.layers,
+  get initialViewState() {
+    return viewState.value
+  },
+  get layers() {
+    return getRenderLayers()
+  },
   controller: {
     scrollZoom: {
       transitionDuration: 60,
@@ -95,16 +122,19 @@ watch(
 )
 watch(
   () => props.layers,
-  layers => {
-    instanceRef.value?.setProps({ layers })
+  () => {
+    instanceRef.value?.setProps({ layers: getRenderLayers() })
   },
 )
 </script>
 
 <template>
   <canvas
+    :key="canvasKey"
     ref="canvasRef"
     draggable="false"
+    @webglcontextlost.prevent
+    @webglcontextrestored="restoreCanvas"
     @contextmenu.stop.prevent=""
     @focus="ev => $emit('focus', ev)"
     @blur="ev => $emit('blur', ev)"

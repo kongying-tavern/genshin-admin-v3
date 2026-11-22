@@ -61,6 +61,19 @@
 
 ## 开发手册
 
+### 标签页恢复后重新加载
+
+`pnpm dev` 使用 Vite 热更新。浏览器冻结后台标签页时，热更新连接可能断开。连接恢复后 Vite 会刷新整页，控制台可看到 `[vite] server connection lost`。
+
+本地需要长时间打开地图时，可以用开发环境配置打包并预览。预览服务提供静态构建产物，修改源码后需要重新构建。
+
+```bash
+pnpm build:dev
+pnpm preview
+```
+
+如果生产预览也发生整页重载，可以在桌面 Chrome 控制台检查 `document.wasDiscarded`。值为 `true` 表示浏览器回收了整个标签页，返回时重新创建了文档。[Chrome 页面生命周期说明](https://developer.chrome.com/docs/web-platform/page-lifecycle-api)
+
 ### 地图实体同步
 
 点位、物品和点位关联按后端实例、账号与可见权限保存独立的 IndexedDB 基线。设置中的「数据库」页可查看最近在线核对时间、待核对范围和待确认的点位创建。升级时会重建这三类实体的旧缓存，用户存档继续使用原表。
