@@ -247,7 +247,7 @@ describe('窗口生命周期', () => {
 })
 
 describe('工作区几何', () => {
-  it('最大化适配工作区，折叠移动后仍可恢复最大化与正常矩形', async () => {
+  it('最大化适配工作区，最小化后可恢复最大化与正常矩形', async () => {
     const context = createContext()
     context.setWorkspaceSize({ width: 640, height: 360 })
     const main = await openWindow(
@@ -256,11 +256,16 @@ describe('工作区几何', () => {
     )
     context.toggleMaximize('a')
     expect(context.getWindow('a')?.displayRect).toEqual({ x: 0, y: 0, width: 640, height: 360 })
-    context.toggleCollapse('a')
-    const folded = context.getWindow('a')!
-    expect(folded.displayRect).toEqual({ x: 0, y: 0, width: 300, height: 30 })
-    context.commitRect(folded, { ...folded.displayRect, x: 50, y: 100 })
-    context.toggleCollapse('a')
+    context.activate('a')
+    context.setMinimized('a', true)
+    const minimized = context.getWindow('a')!
+    expect(context.reader.list()[0]?.sizeState).toBe('minimize')
+    expect(context.activeId.value).toBeUndefined()
+    context.activate('a')
+    expect(context.activeId.value).toBeUndefined()
+    expect(context.isTop('a')).toBe(false)
+    context.commitRect(minimized, { ...main.normalRect, x: 50, y: 100 })
+    context.setMinimized('a', false)
     expect(context.getWindow('a')?.sizeState).toBe('maximize')
     context.toggleMaximize('a')
     expect(context.getWindow('a')?.displayRect).toEqual(main.normalRect)

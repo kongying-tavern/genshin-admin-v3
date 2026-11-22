@@ -89,7 +89,7 @@ const pointer = (
 }
 
 describe('窗口宿主', () => {
-  it('打开等待挂点，折叠移动焦点并保留业务内容，关闭恢复入口焦点', async () => {
+  it('最小化移入浮动任务栏，恢复业务内容和焦点，关闭时回到入口', async () => {
     const { wrapper, handle, onClosed } = mountWorkspace()
     const opener = wrapper.get<HTMLButtonElement>('.opener').element
     opener.focus()
@@ -99,11 +99,17 @@ describe('窗口宿主', () => {
     input.value = '保留的输入'
     input.focus()
 
-    await wrapper.get('button[aria-label="折叠窗口"]').trigger('click')
-    const expanded = wrapper.get('button[aria-label="展开窗口"]')
-    expect(document.activeElement).toBe(expanded.element)
-    expect(input.closest('.window-content')?.getAttribute('style')).toContain('display: none')
-    await expanded.trigger('click')
+    const minimize = wrapper.get<HTMLButtonElement>('button[aria-label="最小化窗口"]')
+    minimize.element.focus()
+    await minimize.trigger('click')
+    const task = wrapper.get('button[aria-label="恢复测试窗口"]')
+    expect(document.activeElement).toBe(task.element)
+    expect(handle.isOpen.value).toBe(true)
+    expect(handle.info.value?.sizeState).toBe('minimize')
+    expect(input.closest('.window-instance')?.getAttribute('style')).toContain('display: none')
+    await task.trigger('click')
+    expect(wrapper.find('.taskbar-item').exists()).toBe(false)
+    expect(document.activeElement).toBe(input)
     expect(wrapper.get('.window-input').element).toBe(input)
     expect(input.value).toBe('保留的输入')
 
@@ -113,6 +119,78 @@ describe('窗口宿主', () => {
     expect(document.activeElement).toBe(opener)
     expect(onClosed).toHaveBeenCalledExactlyOnceWith('user')
     wrapper.unmount()
+  })
+
+  it('多个最小化窗口独立恢复，窗口标题栏跟随焦点', async () => {
+    const { wrapper, context, handle } = mountWorkspace()
+    await handle.show()
+    await context.openWindow({ id: 'second', key: 'second', name: '第二个窗口' })
+    const firstPanel = wrapper.get<HTMLElement>(`[aria-labelledby="window-title-${handle.id}"]`)
+    const secondPanel = wrapper.get<HTMLElement>('[aria-labelledby="window-title-second"]')
+    const focusTitle = (panel: typeof firstPanel) =>
+      panel.get<HTMLElement>('.header-title').element.focus()
+    const minimize = (panel: typeof firstPanel) =>
+      panel.get('button[aria-label="最小化窗口"]').trigger('click')
+
+    expect(firstPanel.classes()).toContain('is-active')
+    expect(secondPanel.classes()).not.toContain('is-active')
+    await minimize(firstPanel)
+    focusTitle(secondPanel)
+    await nextTick()
+    expect(secondPanel.classes()).toContain('is-active')
+    await minimize(secondPanel)
+    expect(wrapper.findAll('.taskbar-item').map(item => item.text())).toEqual([
+      '测试窗口',
+      '第二个窗口',
+    ])
+    await wrapper.get('button[aria-label="恢复测试窗口"]').trigger('click')
+    expect(firstPanel.classes()).toContain('is-active')
+    expect(wrapper.findAll('.taskbar-item').map(item => item.text())).toEqual(['第二个窗口'])
+    wrapper.get<HTMLCanvasElement>('canvas').element.focus()
+    await nextTick()
+    expect(firstPanel.classes()).not.toContain('is-active')
+    wrapper.unmount()
+  })
+
+  it('最大化与还原先提交真实尺寸，来回切换时只动画变换和透明度', async () => {
+    const { wrapper, handle } = mountWorkspace()
+    await handle.open()
+    const panel = wrapper.get<HTMLElement>('.window-instance').element
+    vi.spyOn(panel, 'getBoundingClientRect').mockImplementation(
+      () =>
+        new DOMRect(
+          parseFloat(panel.style.left),
+          parseFloat(panel.style.top),
+          parseFloat(panel.style.width),
+          parseFloat(panel.style.height),
+        ),
+    )
+    const cancel = vi.fn()
+    const layouts: string[] = []
+    const animate = vi.fn((_: Keyframe[]) => {
+      layouts.push(panel.style.width)
+      return { cancel, finished: new Promise(() => {}) }
+    })
+    Object.assign(panel, { animate })
+
+    await wrapper.get('button[aria-label="最大化窗口"]').trigger('click')
+    await nextTick()
+    await wrapper.get('button[aria-label="还原窗口"]').trigger('click')
+    await nextTick()
+    expect(layouts).toEqual(['640px', '400px'])
+    expect(animate.mock.calls.map(([keyframes]) => keyframes)).toEqual([
+      [
+        { transform: `translate(30px, 20px) scale(0.625, ${320 / 360})`, opacity: 1 },
+        { transform: 'none', opacity: 1 },
+      ],
+      [
+        { transform: 'translate(-30px, -20px) scale(1.6, 1.125)', opacity: 1 },
+        { transform: 'none', opacity: 1 },
+      ],
+    ])
+    expect(cancel).toHaveBeenCalledTimes(1)
+    wrapper.unmount()
+    expect(cancel).toHaveBeenCalledTimes(2)
   })
 
   it('捕获单个主指针，抬起提交最后位置，丢捕获和卸载只收尾一次', async () => {

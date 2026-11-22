@@ -25,15 +25,17 @@ export const useWindowOperation = (context: WindowContext, getInfo: () => MapWin
   let frame: number | undefined
   let latestPoint: MapWindow.Coordinate | undefined
 
-  const canStart = (mode: MapWindow.Operation) => {
-    const state = getInfo().sizeState
-    return state !== 'maximize' && (state !== 'minimize' || mode === 'move')
-  }
-
   const start = (mode: MapWindow.Operation) => {
     const bounds = context.bounds.value
-    if (!bounds || !canStart(mode) || !workspace.startOperation(cancel)) return undefined
-    operation = { info: getInfo(), mode, bounds }
+    const info = getInfo()
+    if (
+      !bounds
+      || info.sizeState === 'maximize'
+      || info.sizeState === 'minimize'
+      || !workspace.startOperation(cancel)
+    )
+      return undefined
+    operation = { info, mode, bounds }
     context.setInteractionState(operation.info, 'manual')
     return operation
   }

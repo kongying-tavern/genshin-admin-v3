@@ -41,14 +41,14 @@ export function useAppWindow(options?: Options): WindowContext | WindowContextHo
   const show = async (event?: Event) => {
     const trigger = event?.currentTarget ?? document.activeElement
     if (!(await openWindow())) return
-    context.unfold(id)
-    await nextTick()
-    workspace?.focusWindow(id, trigger instanceof HTMLElement ? trigger : undefined)
+    if (workspace)
+      await workspace.showWindow(id, trigger instanceof HTMLElement ? trigger : undefined)
+    else context.setMinimized(id, false)
   }
 
   const toggle = (event?: Event) => {
-    if (context.hasWindow(id)) void close()
-    else void show(event)
+    if (info.value?.sizeState === 'minimize' || !context.hasWindow(id)) void show(event)
+    else void close()
   }
 
   if (isRef(options)) {

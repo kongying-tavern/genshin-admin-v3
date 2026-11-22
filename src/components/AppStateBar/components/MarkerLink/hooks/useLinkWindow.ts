@@ -1,3 +1,4 @@
+import { Link } from '@element-plus/icons-vue'
 import { Subject } from 'rxjs'
 import { useAppWindow } from '@/components'
 import { useAccessStore } from '@/stores/access'
@@ -15,6 +16,7 @@ export const useLinkWindow = (options: LinkWindowHookOptions) => {
   const window = useAppWindow({
     key: 'markerLink',
     name: '点位关联',
+    icon: Link,
     minWidth: 580,
     enabled: () => accessStore.get('MARKER_LINK'),
     beforeClose: () => !loading.value,

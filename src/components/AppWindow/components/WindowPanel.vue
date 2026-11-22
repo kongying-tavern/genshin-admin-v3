@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { MapWindow } from '../types'
 import * as ElIcons from '@element-plus/icons-vue'
-import { HEADER_HEIGHT } from '../core/geometry'
 import { useAppWindow } from '../hooks'
+import { useWindowMotion } from '../hooks/useWindowMotion'
 import { useWindowOperation } from '../hooks/useWindowOperation'
 import { useWindowWorkspace } from '../hooks/windowWorkspace'
 import WindowResizer from './WindowResizer.vue'
@@ -13,11 +13,11 @@ const workspace = useWindowWorkspace()
 const operation = useWindowOperation(context, () => props.info)
 const { preview, nudgeMode } = operation
 
+const HEADER_HEIGHT = 48
 const panel = shallowRef<HTMLElement>()
 const title = shallowRef<HTMLElement>()
 const content = shallowRef<HTMLElement>()
 const popups = shallowRef<HTMLElement>()
-const expandButton = shallowRef<HTMLButtonElement>()
 const menuButton = shallowRef<HTMLButtonElement>()
 const actions = shallowRef<HTMLElement>()
 const menuOpen = ref(false)
@@ -25,10 +25,15 @@ const menuOpen = ref(false)
 const titleId = computed(() => `window-title-${props.info.id}`)
 const contentId = computed(() => `window-content-${props.info.id}`)
 const menuId = computed(() => `window-actions-${props.info.id}`)
-const collapsed = computed(() => props.info.sizeState === 'minimize')
+const minimized = computed(() => props.info.sizeState === 'minimize')
 const maximized = computed(() => props.info.sizeState === 'maximize')
 const active = computed(() => context.activeId.value === props.info.id)
 const rect = computed(() => preview.value ?? props.info.displayRect)
+const { leaving, cancel: cancelMotion } = useWindowMotion(
+  panel,
+  () => props.info.sizeState,
+  () => workspace.takeTaskRect(props.info.id),
+)
 const actionsAbove = computed(() => {
   const height = context.bounds.value?.height ?? 0
   return height - rect.value.y - HEADER_HEIGHT < 116 && rect.value.y >= 116
@@ -41,15 +46,10 @@ const directions = [
   { key: 'ArrowRight', label: '向右', icon: ElIcons.ArrowRight, x: 1, y: 0 },
 ]
 
-const activate = (event: PointerEvent) => {
-  if (event.isPrimary) workspace.activate(props.info.id)
-}
-const onFocus = (event: FocusEvent) => workspace.activate(props.info.id, event.target)
-
-const toggleCollapse = () => {
+const minimize = () => {
   operation.cancel()
   menuOpen.value = false
-  context.toggleCollapse(props.info.id)
+  return workspace.minimizeWindow(props.info.id)
 }
 
 const toggleMaximize = () => {
@@ -102,15 +102,13 @@ const onActionKey = (event: KeyboardEvent) => {
   }
 }
 
-watch(collapsed, folded => {
-  if (
-    folded
-    && (content.value?.contains(document.activeElement)
-      || popups.value?.contains(document.activeElement))
-  ) {
-    expandButton.value?.focus()
-  }
-})
+watch(
+  () => props.info.interactionState,
+  state => {
+    if (state === 'manual') cancelMotion()
+  },
+)
+watch(context.bounds, cancelMotion)
 watch(active, value => {
   if (value) return
   menuOpen.value = false
@@ -145,11 +143,13 @@ onBeforeUnmount(() => workspace.unregister(props.info))
 
 <template>
   <div
+    v-show="!minimized || leaving"
     ref="panel"
     role="dialog"
     :aria-labelledby="titleId"
+    :inert="minimized || undefined"
     class="window-instance"
-    :class="{ 'is-active': active }"
+    :class="{ 'is-active': active, 'is-minimized': minimized }"
     :style="{
       width: `${rect.width}px`,
       height: `${rect.height}px`,
@@ -158,11 +158,9 @@ onBeforeUnmount(() => workspace.unregister(props.info))
       zIndex: order,
       '--header-height': `${HEADER_HEIGHT}px`,
     }"
-    @pointerdown.capture="activate"
-    @focusin="onFocus"
     @keydown="onActionKey"
   >
-    <div class="window-header" :class="{ 'is-collapsed': collapsed }">
+    <div class="window-header">
       <div
         :id="titleId"
         ref="title"
@@ -171,7 +169,8 @@ onBeforeUnmount(() => workspace.unregister(props.info))
         :class="{ 'is-draggable': !maximized }"
         @pointerdown="operation.startPointer($event, 'move')"
       >
-        {{ info.name }}
+        <component v-if="info.icon" :is="info.icon" class="header-icon" aria-hidden="true" />
+        <span class="header-label">{{ info.name }}</span>
       </div>
 
       <div class="header-actions">
@@ -181,6 +180,7 @@ onBeforeUnmount(() => workspace.unregister(props.info))
           type="button"
           class="header-action"
           aria-label="窗口操作"
+          title="窗口操作"
           :aria-expanded="menuOpen || Boolean(nudgeMode)"
           :aria-controls="menuId"
           @click="toggleMenu"
@@ -188,22 +188,20 @@ onBeforeUnmount(() => workspace.unregister(props.info))
           <ElIcons.More />
         </button>
         <button
-          ref="expandButton"
           type="button"
           class="header-action"
-          :aria-label="collapsed ? '展开窗口' : '折叠窗口'"
-          :aria-expanded="!collapsed"
-          :aria-controls="contentId"
-          @click="toggleCollapse"
+          aria-label="最小化窗口"
+          title="最小化"
+          data-window-minimize
+          @click="minimize"
         >
-          <ElIcons.Plus v-if="collapsed" />
-          <ElIcons.Minus v-else />
+          <ElIcons.Minus />
         </button>
         <button
-          v-if="!collapsed"
           type="button"
           class="header-action"
           :aria-label="maximized ? '还原窗口' : '最大化窗口'"
+          :title="maximized ? '还原' : '最大化'"
           @click="toggleMaximize"
         >
           <ElIcons.CopyDocument v-if="maximized" />
@@ -213,6 +211,7 @@ onBeforeUnmount(() => workspace.unregister(props.info))
           type="button"
           class="header-action close-action"
           aria-label="关闭窗口"
+          title="关闭"
           @click="context.requestClose(info.id)"
         >
           <ElIcons.Close />
@@ -220,16 +219,10 @@ onBeforeUnmount(() => workspace.unregister(props.info))
       </div>
     </div>
 
-    <div
-      v-show="!collapsed"
-      :id="contentId"
-      ref="content"
-      class="window-content"
-      :inert="collapsed || undefined"
-    />
-    <div v-show="active && !collapsed" ref="popups" class="window-popups" />
+    <div :id="contentId" ref="content" class="window-content" />
+    <div v-show="active && !minimized" ref="popups" class="window-popups" />
 
-    <WindowResizer v-if="!maximized && !collapsed" @start="operation.startPointer" />
+    <WindowResizer v-if="!maximized && !minimized" @start="operation.startPointer" />
 
     <div
       v-if="menuOpen || nudgeMode"
@@ -243,7 +236,7 @@ onBeforeUnmount(() => workspace.unregister(props.info))
     >
       <template v-if="menuOpen">
         <button type="button" @click="startNudge('move')">移动</button>
-        <button v-if="!collapsed" type="button" @click="startNudge('se')">调整大小</button>
+        <button type="button" @click="startNudge('se')">调整大小</button>
       </template>
       <template v-else>
         <div class="direction-buttons">
@@ -274,12 +267,18 @@ onBeforeUnmount(() => workspace.unregister(props.info))
   border-radius: 6px;
   pointer-events: auto;
   outline: 1px solid color-mix(in srgb, var(--el-border-color-darker) 50%, transparent 50%);
+  transform-origin: top left;
   animation: window-enter 150ms ease-out;
   @apply shadow-sm;
 
   &.is-active {
     --window-menu-visibility: visible;
+    outline-color: #73d7d26b;
     @apply shadow-2xl;
+  }
+
+  &.is-minimized {
+    pointer-events: none;
   }
 
   & :deep(.el-popper[role='menu']) {
@@ -302,29 +301,31 @@ onBeforeUnmount(() => workspace.unregister(props.info))
 .window-header {
   height: min(100%, var(--header-height));
   flex-shrink: 0;
-  background: #263240;
-  color: #c6c2ba;
+  background: #303944;
+  color: #c4ced6;
+  box-shadow: inset 0 -1px #ffffff0c;
   display: flex;
   justify-content: space-between;
   border-radius: 6px 6px 0 0;
   overflow: hidden;
   user-select: none;
+}
 
-  &.is-collapsed {
-    border-radius: 6px;
-  }
+.is-active .window-header {
+  background: linear-gradient(110deg, #294759, #263847);
+  color: #f4f8fa;
+  box-shadow: inset 0 -1px #99dddf3d;
 }
 
 .header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex: 1;
   min-width: 0;
-  padding: 0 8px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 12px;
-  font-weight: bold;
-  line-height: var(--header-height);
+  padding-inline: 12px;
+  font-size: 14px;
+  font-weight: 650;
 
   &.is-draggable {
     cursor: move;
@@ -332,20 +333,37 @@ onBeforeUnmount(() => workspace.unregister(props.info))
   }
 }
 
+.header-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.header-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
 .header-actions {
   display: flex;
   min-width: 0;
+  max-width: calc(100% - 48px);
 }
 
 .header-action {
   display: grid;
   place-items: center;
-  width: 30px;
+  width: var(--header-height);
+  min-width: 0;
   flex-shrink: 1;
-  color: white;
+  color: inherit;
+  touch-action: manipulation;
 
-  &:hover {
+  &:hover,
+  &:active {
     background: #ffffff20;
+    color: white;
   }
 
   &.close-action:hover {
@@ -354,8 +372,9 @@ onBeforeUnmount(() => workspace.unregister(props.info))
 }
 
 button svg {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
+  max-width: 100%;
 }
 
 button:focus-visible,
@@ -405,11 +424,12 @@ button:focus-visible,
   }
 
   button {
-    min-width: 32px;
-    min-height: 32px;
+    min-width: 44px;
+    min-height: 44px;
     padding: 4px;
     border-radius: 4px;
     background: #465464;
+    touch-action: manipulation;
   }
 }
 

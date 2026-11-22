@@ -1,13 +1,11 @@
 import type { MapWindow } from '../types'
 
-export const HEADER_HEIGHT = 30
 export const DEFAULT_WINDOW_SIZE: MapWindow.Size = { width: 300, height: 300 }
 
 interface WindowLayout {
   normalRect: MapWindow.Rect
   mode?: 'default' | 'maximize'
-  collapsed: boolean
-  foldedPosition?: MapWindow.Coordinate
+  minimized: boolean
   customized: boolean
 }
 
@@ -55,16 +53,11 @@ export const getInitialRect = (
 }
 
 export const getDisplayRect = (
-  layout: WindowLayout,
+  mode: WindowLayout['mode'],
   bounds: MapWindow.Size,
   normal: MapWindow.Rect,
 ): MapWindow.Rect => {
-  if (layout.collapsed) {
-    const position = layout.foldedPosition ?? normal
-    const header = { width: DEFAULT_WINDOW_SIZE.width, height: HEADER_HEIGHT }
-    return constrainRect({ ...header, x: position.x, y: position.y }, bounds, header)
-  }
-  if (layout.mode === 'maximize') return { x: 0, y: 0, ...bounds }
+  if (mode === 'maximize') return { x: 0, y: 0, ...bounds }
   return normal
 }
 

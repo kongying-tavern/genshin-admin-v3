@@ -15,11 +15,12 @@ interface MountedWindow extends WindowElements {
   generation: number
   opener?: HTMLElement
   lastFocus?: HTMLElement
+  restoreFrom?: DOMRect
 }
 
-const focus = (element: HTMLElement | undefined) => {
+const focus = (element: HTMLElement | undefined, preventScroll = true) => {
   if (!element?.isConnected || element.closest('[hidden], [inert], :disabled')) return false
-  element.focus({ preventScroll: true })
+  element.focus({ preventScroll })
   return document.activeElement === element
 }
 
@@ -30,6 +31,7 @@ export const createWindowWorkspace = (
   getContainer: () => HTMLElement | undefined,
 ) => {
   const windows = shallowReactive(new Map<string, MountedWindow>())
+  const taskButtons = new Map<string, HTMLElement>()
   const activationHistory = new Set<string>()
 
   const get = (info: MapWindow.Info) => {
@@ -52,15 +54,17 @@ export const createWindowWorkspace = (
   const activate = (id: string, target?: EventTarget | null) => {
     if (isModal()) return
     const mounted = windows.get(id)
-    if (!mounted || !context.isOpen(id)) return
-    if (target instanceof HTMLElement) mounted.lastFocus = target
+    if (!mounted || !context.isOpen(id) || context.getWindow(id)?.sizeState === 'minimize') return
+    if (target instanceof HTMLElement && !target.hasAttribute('data-window-minimize'))
+      mounted.lastFocus = target
     activationHistory.delete(id)
     activationHistory.add(id)
     context.activate(id)
   }
 
   const focusWindow = (id: string, opener?: HTMLElement) => {
-    if (isModal() || !context.isOpen(id)) return false
+    if (isModal() || !context.isOpen(id) || context.getWindow(id)?.sizeState === 'minimize')
+      return false
     const mounted = windows.get(id)
     if (!mounted) return false
     if (opener && !mounted.panel.contains(opener)) mounted.opener = opener
@@ -75,9 +79,57 @@ export const createWindowWorkspace = (
     focusMap()
   }
 
+  const setTaskButton = (id: string, button?: HTMLElement) => {
+    if (button) taskButtons.set(id, button)
+    else taskButtons.delete(id)
+  }
+
+  const takeTaskRect = (id: string) => {
+    const mounted = windows.get(id)
+    const stored = mounted?.restoreFrom
+    if (mounted) mounted.restoreFrom = undefined
+    return stored ?? taskButtons.get(id)?.getBoundingClientRect()
+  }
+
+  const minimizeWindow = async (id: string) => {
+    if (isModal()) return
+    const info = context.getWindow(id)
+    if (!info || info.sizeState === 'minimize') return
+    const wasActive = context.activeId.value === id
+    context.setMinimized(id, true)
+    if (!wasActive) return
+
+    await nextTick()
+    const current = context.getWindow(id)
+    if (
+      isModal()
+      || context.activeId.value
+      || current?.generation !== info.generation
+      || current.sizeState !== 'minimize'
+    )
+      return
+    if (!focus(taskButtons.get(id), false)) focusFallback()
+  }
+
+  const showWindow = async (id: string, opener?: HTMLElement) => {
+    if (isModal()) return
+    const info = context.getWindow(id)
+    if (!info || !context.isOpen(id)) return
+    const mounted = get(info)
+    if (info.sizeState === 'minimize') {
+      if (mounted) mounted.restoreFrom = taskButtons.get(id)?.getBoundingClientRect()
+      context.setMinimized(id, false)
+    }
+    await nextTick()
+    if (context.getWindow(id)?.generation === info.generation) focusWindow(id, opener)
+  }
+
   const restoreOnClose = (info: MapWindow.Info) => {
     const mounted = get(info)
-    if (!mounted || isModal() || context.activeId.value !== info.id) return
+    if (!mounted || isModal()) return
+    const focused =
+      context.activeId.value === info.id || document.activeElement === taskButtons.get(info.id)
+    if (!focused) return
     void nextTick(() => {
       if (isModal() || context.activeId.value) return
       if (!focus(mounted.opener)) focusFallback()
@@ -135,16 +187,42 @@ export const createWindowWorkspace = (
 
   const bodyPopupClass = (id: string, generation: number) => `map-window-popup-${id}-${generation}`
 
-  const onBodyPopupEvent = (event: Event) => {
+  const getEventWindow = (event: Event) => {
     const path = event.composedPath()
-    for (const [id, { generation }] of windows) {
+    for (const [id, { generation, panel }] of windows) {
       if (
-        path.some(
+        path.includes(panel)
+        || path.some(
           target =>
             target instanceof Element && target.classList.contains(bodyPopupClass(id, generation)),
         )
       ) {
-        activate(id, event.type === 'focusin' ? event.target : undefined)
+        return id
+      }
+    }
+  }
+
+  const onPointerDown = (event: PointerEvent) => {
+    if (!event.isPrimary || isModal()) return
+    const id = getEventWindow(event)
+    if (id) activate(id)
+  }
+
+  const onFocusIn = (event: FocusEvent) => {
+    if (isModal()) return
+    const id = getEventWindow(event)
+    if (id) activate(id, event.target)
+    else context.deactivate()
+  }
+
+  const onWindowBlur = () => {
+    cancelOperation()
+    const target = document.activeElement
+    if (!(target instanceof HTMLIFrameElement)) return
+    // iframe 内获得焦点时，父文档收到的是 window blur。
+    for (const [id, { panel }] of windows) {
+      if (panel.contains(target)) {
+        activate(id, target)
         return
       }
     }
@@ -154,12 +232,16 @@ export const createWindowWorkspace = (
     get,
     register,
     unregister,
-    activate,
-    focusWindow,
+    minimizeWindow,
+    showWindow,
+    setTaskButton,
+    takeTaskRect,
     restoreOnClose,
     isModal,
     bodyPopupClass,
-    onBodyPopupEvent,
+    onPointerDown,
+    onFocusIn,
+    onWindowBlur,
     startOperation,
     endOperation,
     cancelOperation,

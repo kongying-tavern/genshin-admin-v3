@@ -276,6 +276,8 @@ await __MAP_AI__.call('ui.surfaces.open', {
 
 窗口句柄 `window.<key>` 使用稳定的业务 key。`open` 等待工作区挂点就绪，异步业务页面可继续加载。当前角色无权打开窗口时返回 `E_FORBIDDEN`。`ui.surfaces.close` 会等待窗口关闭守卫，守卫拒绝时返回 `{ id, closed: false }`。已经关闭的窗口返回 `closed: true`，成功的关闭命令发布 `surface:close`。
 
+最小化的窗口仍处于打开状态，`sizeState` 为 `minimize`。从底部浮动任务栏恢复后，窗口沿用最小化前的尺寸和业务状态。
+
 「点位在线核对」可在「设置 → 地图」开启，默认关闭，登录后随 1 号槽位的账号设置同步。关闭时，点位弹层直接读取本地缓存，`state.loading` 为 false。开启时，`ui.surfaces.get` 的 `state.loading` 表示正在核对详情，成功后可读取 `state.title`。服务端确认删除时，弹层自动关闭。
 
 ## 6. 表单反射

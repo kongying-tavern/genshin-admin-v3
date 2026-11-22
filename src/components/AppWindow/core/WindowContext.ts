@@ -71,7 +71,9 @@ export class WindowContext {
 
   hasWindow = (id: string) => this.#instances.has(id) || this.#reopening.has(id)
 
-  isTop = (id: string) => this.panels.value.at(-1)?.info.id === id
+  isTop = (id: string) =>
+    this.panels.value.findLast(({ info }) => this.isOpen(info.id) && info.sizeState !== 'minimize')
+      ?.info.id === id
 
   setWorkspaceSize = (size: MapWindow.Size) => {
     const { width, height } = size
@@ -165,8 +167,9 @@ export class WindowContext {
   }
 
   activate = (id: string) => {
-    if (!this.isOpen(id)) return
-    if (!this.isTop(id)) this.#stack.value = [...this.#stack.value.filter(key => key !== id), id]
+    if (!this.isOpen(id) || this.getWindow(id)?.sizeState === 'minimize') return
+    if (this.#stack.value.at(-1) !== id)
+      this.#stack.value = [...this.#stack.value.filter(key => key !== id), id]
     this.#activeId.value = id
   }
 
@@ -174,23 +177,17 @@ export class WindowContext {
     this.#activeId.value = undefined
   }
 
-  unfold = (id: string) => {
-    if (this.getWindow(id)?.sizeState === 'minimize') this.toggleCollapse(id)
-  }
-
-  toggleCollapse = (id: string) => {
+  setMinimized = (id: string, minimized: boolean) => {
     const instance = this.#instances.get(id)
-    const info = this.getWindow(id)
-    if (!instance?.layout || !info) return
-    const { displayRect } = info
-    instance.layout.foldedPosition ??= { x: displayRect.x, y: displayRect.y }
-    instance.layout.collapsed = !instance.layout.collapsed
+    if (!instance?.layout || instance.layout.minimized === minimized) return
+    instance.layout.minimized = minimized
+    if (minimized && this.#activeId.value === id) this.deactivate()
     this.#publish(instance)
   }
 
   toggleMaximize = (id: string) => {
     const instance = this.#instances.get(id)
-    if (!instance?.layout || instance.layout.collapsed) return
+    if (!instance?.layout || instance.layout.minimized) return
     instance.layout.mode = instance.layout.mode === 'maximize' ? 'default' : 'maximize'
     this.#publish(instance)
   }
@@ -205,7 +202,13 @@ export class WindowContext {
   commitRect = (info: MapWindow.Info, rect: MapWindow.Rect) => {
     const instance = this.#getInstance(info)
     const current = this.getWindow(info.id)
-    if (!instance?.layout || !current || current.sizeState === 'maximize') return
+    if (
+      !instance?.layout
+      || !current
+      || current.sizeState === 'maximize'
+      || current.sizeState === 'minimize'
+    )
+      return
 
     const { layout } = instance
     const { displayRect } = current
@@ -218,18 +221,14 @@ export class WindowContext {
     )
       return
 
-    if (layout.collapsed) {
-      layout.foldedPosition = { x, y }
-    } else {
-      const previous = layout.normalRect
-      layout.normalRect = {
-        x: x === displayRect.x ? previous.x : x,
-        y: y === displayRect.y ? previous.y : y,
-        width: width === displayRect.width ? previous.width : width,
-        height: height === displayRect.height ? previous.height : height,
-      }
-      layout.customized = true
+    const previous = layout.normalRect
+    layout.normalRect = {
+      x: x === displayRect.x ? previous.x : x,
+      y: y === displayRect.y ? previous.y : y,
+      width: width === displayRect.width ? previous.width : width,
+      height: height === displayRect.height ? previous.height : height,
     }
+    layout.customized = true
     this.#publish(instance)
   }
 
@@ -295,7 +294,7 @@ export class WindowContext {
     const bounds = this.#bounds.value
     if (!bounds || !instance.allowed) return
     const { options, generation, interactionState } = instance
-    const { id, key, name } = options
+    const { id, key, name, icon } = options
     const initialRect = getInitialRect(options, bounds)
     const cached = this.#layouts.get(id)
     const layout = (instance.layout ??= cached
@@ -303,7 +302,7 @@ export class WindowContext {
       : {
           normalRect: initialRect,
           mode: options.sizeState === 'minimize' ? 'default' : options.sizeState,
-          collapsed: options.sizeState === 'minimize',
+          minimized: options.sizeState === 'minimize',
           customized: false,
         })
     if (!layout.customized) layout.normalRect = initialRect
@@ -314,10 +313,11 @@ export class WindowContext {
       key,
       generation,
       name,
+      icon,
       minimum,
       normalRect,
-      displayRect: getDisplayRect(layout, bounds, normalRect),
-      sizeState: layout.collapsed ? 'minimize' : layout.mode,
+      displayRect: getDisplayRect(layout.mode, bounds, normalRect),
+      sizeState: layout.minimized ? 'minimize' : layout.mode,
       interactionState,
     })
   }

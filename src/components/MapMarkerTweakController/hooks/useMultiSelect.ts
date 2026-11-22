@@ -1,3 +1,4 @@
+import { EditPen } from '@element-plus/icons-vue'
 import { useSubscription } from '@vueuse/rxjs'
 import KDBush from 'kdbush'
 import { filter, finalize, fromEvent, map, merge, switchMap, takeUntil, tap } from 'rxjs'
@@ -107,6 +108,7 @@ export const useMultiSelect = () => {
   } = useAppWindow({
     key: 'markerMultiSelect',
     name: '点位批量操作',
+    icon: EditPen,
     minWidth: 700,
     enabled: () => accessStore.get('MARKER_BATCH_EDIT'),
     onClosed: finalizeMission,

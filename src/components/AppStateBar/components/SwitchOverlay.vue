@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Files } from '@element-plus/icons-vue'
 import { AppWindowTeleporter, MapOverlayController, useAppWindow } from '@/components'
 import { useArchiveStore, useUserStore } from '@/stores'
 import BarItem from './BarItem.vue'
@@ -20,6 +21,7 @@ const overlayVisible = computed({
 const { info, open, close } = useAppWindow({
   key: 'overlay',
   name: '附加图层控制器',
+  icon: Files,
   minWidth: MIN_WIDTH,
   minHeight: 420,
   right: 6,

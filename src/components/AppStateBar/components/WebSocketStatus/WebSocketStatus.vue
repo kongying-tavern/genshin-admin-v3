@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChromeFilled } from '@element-plus/icons-vue'
+import { ChromeFilled, Memo } from '@element-plus/icons-vue'
 import { AppWindowTeleporter, useAppWindow } from '@/components'
 import { useSocketStore } from '@/stores'
 import BarItem from '../BarItem.vue'
@@ -10,6 +10,7 @@ const socketStore = useSocketStore()
 const { info, toggle } = useAppWindow({
   key: 'eventLog',
   name: '事件记录',
+  icon: Memo,
   minWidth: 320,
   minHeight: 400,
   right: 6,

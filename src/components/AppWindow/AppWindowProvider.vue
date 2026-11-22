@@ -2,6 +2,7 @@
 import { mapContainerKey } from '@/shared'
 import { useUserStore } from '@/stores/user'
 import { WindowPanel } from './components'
+import WindowTaskbar from './components/WindowTaskbar.vue'
 import { useAppWindow } from './hooks'
 import { useWindowWorkspace } from './hooks/windowWorkspace'
 
@@ -13,6 +14,11 @@ const container = inject(mapContainerKey)
 // DOM 按创建顺序排列。激活只修改 z-index，避免移动已加载的 iframe。
 const panels = computed(() =>
   context.panels.value.toSorted((a, b) => a.info.generation - b.info.generation),
+)
+const minimized = computed(() =>
+  panels.value
+    .filter(({ info }) => info.sizeState === 'minimize' && context.isOpen(info.id))
+    .map(({ info }) => info),
 )
 
 onMounted(() => {
@@ -32,9 +38,9 @@ watch(panels, async entries => {
   }
 })
 
-useEventListener(window, 'blur', workspace.cancelOperation)
-useEventListener(document, 'pointerdown', workspace.onBodyPopupEvent, { capture: true })
-useEventListener(document, 'focusin', workspace.onBodyPopupEvent)
+useEventListener(window, 'blur', workspace.onWindowBlur)
+useEventListener(document, 'pointerdown', workspace.onPointerDown, { capture: true })
+useEventListener(document, 'focusin', workspace.onFocusIn)
 useEventListener(document, 'keydown', event => {
   if (event.key === 'Escape' && !event.defaultPrevented && workspace.cancelOperation()) {
     event.preventDefault()
@@ -61,12 +67,15 @@ onBeforeUnmount(() => {
     class="map-window-manager"
     :class="{ 'has-pointer-operation': workspace.pointerActive.value }"
   >
-    <WindowPanel
-      v-for="{ info, order } in panels"
-      :key="info.generation"
-      :info="info"
-      :order="order"
-    />
+    <div class="window-panels">
+      <WindowPanel
+        v-for="{ info, order } in panels"
+        :key="info.generation"
+        :info="info"
+        :order="order"
+      />
+    </div>
+    <WindowTaskbar :windows="minimized" />
   </div>
 </template>
 
@@ -76,6 +85,12 @@ onBeforeUnmount(() => {
   inset: 0;
   pointer-events: none;
   z-index: var(--map-window-layer, 11);
+}
+
+.window-panels {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
 }
 
 .has-pointer-operation :deep(iframe) {

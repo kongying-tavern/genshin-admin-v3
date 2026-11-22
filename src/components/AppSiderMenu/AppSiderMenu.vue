@@ -49,6 +49,7 @@ const createWindow = (option: ManagerWindowOption) => {
     ...commonWindowOptions,
     key: option.key,
     name: option.name,
+    icon: option.icon,
     enabled,
   })
   return { ...option, hook, enabled }

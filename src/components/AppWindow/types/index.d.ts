@@ -1,3 +1,5 @@
+import type { Component } from 'vue'
+
 export declare namespace MapWindow {
   interface Coordinate {
     x: number
@@ -24,6 +26,7 @@ export declare namespace MapWindow {
     /** 业务 key 与运行实例 id 分开。 */
     key: string
     name: string
+    icon?: Component
     width?: number
     height?: number
     minWidth?: number
@@ -45,6 +48,7 @@ export declare namespace MapWindow {
     readonly key: string
     readonly generation: number
     readonly name: string
+    readonly icon?: Component
     readonly normalRect: Readonly<Rect>
     readonly displayRect: Readonly<Rect>
     readonly minimum: Readonly<Size>
