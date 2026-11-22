@@ -4,7 +4,13 @@ import { useSubscription } from '@vueuse/rxjs'
 import { ElMessage } from 'element-plus'
 import { openSettingsDialog } from '@/components/AppSettings/open'
 import { openMarkerCreatorDialog } from '@/components/MarkerModifyer/actions'
-import { mapCanvasRef, mapContainerHeightKey, mapContainerWidthKey, MapSubject } from '@/shared'
+import {
+  mapCanvasRef,
+  mapContainerHeightKey,
+  mapContainerWidthKey,
+  MapSubject,
+  mapViewStateKey,
+} from '@/shared'
 import {
   useAccessStore,
   useItemStore,
@@ -14,6 +20,7 @@ import {
   useUserStore,
 } from '@/stores'
 import { useMapProjection } from '../MapAffix/hooks'
+import PlacementMinimap from './PlacementMinimap.vue'
 
 const props = defineProps<{
   modalOpen: boolean
@@ -35,6 +42,10 @@ const blocked = computed(() => props.modalOpen || Boolean(mapStateStore.mission)
 const canPlace = computed(
   () => canCreate.value && !blocked.value && props.mapReady && Boolean(tileStore.currentTileConfig),
 )
+const showMinimap = computed(() => canPlace.value && preferenceStore.showPlacementMinimap)
+const mapViewState = inject(mapViewStateKey)
+// 原图箭头朝西南偏西。在本次打点期间沿用上一次调好的朝向。
+const heading = ref(252)
 
 const coordinate = shallowRef<DTO.Coordinate2D>()
 const trigger = useTemplateRef<HTMLButtonElement>('placementTrigger')
@@ -84,6 +95,8 @@ const contextMenuPosition = computed(() => {
     transformOrigin: `${horizontal.before ? 'right' : 'left'} ${vertical.before ? 'bottom' : 'top'}`,
     '--menu-shift-x': horizontal.before ? '8px' : '-8px',
     '--menu-shift-y': vertical.before ? '8px' : '-8px',
+    '--menu-direction': horizontal.before ? 'row-reverse' : 'row',
+    '--menu-align': vertical.before ? 'flex-end' : 'flex-start',
   }
 })
 
@@ -186,6 +199,13 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
     </span>
   </Transition>
 
+  <PlacementMinimap
+    v-if="placing && showMinimap && mapViewState"
+    v-model:heading="heading"
+    :target="mapViewState.target"
+    class="center-minimap"
+  />
+
   <div v-if="canCreate" class="placement-tools">
     <button
       v-if="!placing"
@@ -226,37 +246,40 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
       aria-label="地图操作"
       @contextmenu.prevent
     >
-      <button
-        v-if="canCreate"
-        type="button"
-        class="menu-step menu-button primary"
-        @click="openMarkerCreator(coordinate)"
-      >
-        <el-icon aria-hidden="true"><Plus /></el-icon>
-        添加点位
-      </button>
-      <button type="button" class="menu-step menu-button" @click="openSettingDialog">
-        <el-icon aria-hidden="true"><Setting /></el-icon>
-        系统设置
-      </button>
-      <template v-if="isDev">
+      <PlacementMinimap v-if="showMinimap" v-model:heading="heading" :target="coordinate" />
+      <div class="context-actions">
         <button
+          v-if="canCreate"
           type="button"
-          class="menu-step menu-button coordinate-button"
-          title="复制原始坐标"
-          @click="copyCoordinate(coordinate)"
+          class="menu-step menu-button primary"
+          @click="openMarkerCreator(coordinate)"
         >
-          原始坐标 {{ formatCoordinate(coordinate) }}
+          <el-icon aria-hidden="true"><Plus /></el-icon>
+          添加点位
         </button>
-        <button
-          type="button"
-          class="menu-step menu-button coordinate-button"
-          title="复制标记坐标"
-          @click="copyCoordinate(tileStore.toMarkerCoordinate(coordinate))"
-        >
-          标记坐标 {{ formatCoordinate(tileStore.toMarkerCoordinate(coordinate)) }}
+        <button type="button" class="menu-step menu-button" @click="openSettingDialog">
+          <el-icon aria-hidden="true"><Setting /></el-icon>
+          系统设置
         </button>
-      </template>
+        <template v-if="isDev">
+          <button
+            type="button"
+            class="menu-step menu-button coordinate-button"
+            title="复制原始坐标"
+            @click="copyCoordinate(coordinate)"
+          >
+            原始坐标 {{ formatCoordinate(coordinate) }}
+          </button>
+          <button
+            type="button"
+            class="menu-step menu-button coordinate-button"
+            title="复制标记坐标"
+            @click="copyCoordinate(tileStore.toMarkerCoordinate(coordinate))"
+          >
+            标记坐标 {{ formatCoordinate(tileStore.toMarkerCoordinate(coordinate)) }}
+          </button>
+        </template>
+      </div>
     </div>
   </Transition>
 </template>
@@ -401,7 +424,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 
 .placement-trigger,
 .placement-panel,
-.context-menu {
+.context-actions {
   color: #f2e8d5;
   border: 1px solid #a99065;
   background: #212937f5;
@@ -432,7 +455,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 }
 
 .placement-panel,
-.context-menu {
+.context-actions {
   padding: 8px;
   border-radius: 12px;
 }
@@ -461,11 +484,49 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 .context-menu {
   position: absolute;
   z-index: 10;
+  display: flex;
+  width: max-content;
+  max-width: calc(100% - 20px);
+  flex-direction: var(--menu-direction);
+  align-items: var(--menu-align);
+  gap: 8px;
+}
+
+.context-actions {
   display: grid;
-  width: min(208px, calc(100% - 20px));
-  max-height: calc(100% - 20px);
+  width: 208px;
+  min-width: 0;
+  max-height: calc(100dvh - 20px);
   gap: 5px;
   overflow-y: auto;
+}
+
+.context-menu .placement-minimap {
+  --minimap-size: min(188px, 35vw, 40vh);
+}
+
+.center-minimap {
+  position: absolute;
+  z-index: 8;
+  top: 50%;
+  left: calc(50% + 48px);
+  translate: 0 calc(var(--minimap-size) / -2);
+}
+
+@media (width <= 600px) and (orientation: portrait) {
+  .center-minimap {
+    --minimap-size: min(188px, 42vw, max(96px, calc(50dvh - 128px)));
+    top: calc(50% + 48px);
+    left: 50%;
+    translate: -50% 0;
+  }
+}
+
+@media (height <= 440px) and (orientation: landscape) {
+  .center-minimap {
+    right: calc(50% + 48px);
+    left: auto;
+  }
 }
 
 .menu-button {

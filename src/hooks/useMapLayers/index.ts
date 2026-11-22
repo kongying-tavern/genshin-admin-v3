@@ -8,15 +8,10 @@ import { useLinkLayer } from './useLinkLayer'
 import { useMarkerLayer } from './useMarkerLayer'
 import { useTagLayer } from './useTagLayer'
 
-export const useMapLayers = () => {
+/** 每个 Deck 实例独立持有图层，底图和当前楼层使用同一份地图配置。 */
+export const useTerrainLayers = () => {
   const tileStore = useTileStore()
   const overlayStore = useOverlayStore()
-  const mapStateStore = useMapStateStore()
-
-  const { data: markerDraggingMission } = mapStateStore.subscribeMission(
-    'markerDragging',
-    () => new Map(),
-  )
 
   // ============================== 底图图层 ==============================
   const tileLayer = computed(() => {
@@ -47,6 +42,17 @@ export const useMapLayers = () => {
       tileLikeChunks: overlayStore.visibleChunks.tile,
     })
   })
+
+  return computed<LayersList>(() => [tileLayer.value, overlayer.value])
+}
+
+export const useMapLayers = () => {
+  const terrainLayers = useTerrainLayers()
+  const mapStateStore = useMapStateStore()
+  const { data: markerDraggingMission } = mapStateStore.subscribeMission(
+    'markerDragging',
+    () => new Map(),
+  )
 
   // ============================== 标签图层 ==============================
   const { tagLayer } = useTagLayer()
@@ -82,9 +88,7 @@ export const useMapLayers = () => {
   // ============================== 图层汇总 ==============================
   const layers = computed<LayersList>(() => {
     const res = [
-      tileLayer.value,
-
-      overlayer.value,
+      ...terrainLayers.value,
 
       tagLayer.value,
 

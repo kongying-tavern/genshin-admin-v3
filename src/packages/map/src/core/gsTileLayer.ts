@@ -37,7 +37,7 @@ export class GSTileLayer extends TileLayer<TileData | null> {
         try {
           if (signal?.aborted) return null
           const url = `${BASE_URL}/tiles_${code}/${z + ZOOM_MAPPING}/${x}_${y}.${extension}`
-          const blob = await fetch(url, { mode: 'cors' }).then(res => res.blob())
+          const blob = await fetch(url, { mode: 'cors', signal }).then(res => res.blob())
           const image = await createImageBitmap(blob)
           return {
             byteLength: blob.size,

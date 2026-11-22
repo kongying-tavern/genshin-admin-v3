@@ -1,15 +1,21 @@
+import type { DeckProps, OrthographicView } from 'deck.gl'
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, reactive, ref } from 'vue'
 import MapContextMenu from '@/components/MapContextMenu/MapContextMenu.vue'
 import { mapContainerHeightKey, mapContainerWidthKey, MapSubject, mapViewStateKey } from '@/shared'
 
-const { openMarkerCreatorDialog, openSettingsDialog } = vi.hoisted(() => ({
-  openMarkerCreatorDialog: vi.fn(),
-  openSettingsDialog: vi.fn(),
-}))
+const { openMarkerCreatorDialog, openSettingsDialog, createDeck, setDeckProps, finalizeDeck } =
+  vi.hoisted(() => ({
+    openMarkerCreatorDialog: vi.fn(),
+    openSettingsDialog: vi.fn(),
+    createDeck: vi.fn<(props: DeckProps<OrthographicView>) => void>(),
+    setDeckProps: vi.fn(),
+    finalizeDeck: vi.fn(),
+  }))
 
 const permission = ref(true)
+const preference = reactive({ defaultMarkingItemId: 3, showPlacementMinimap: false })
 const user = reactive({ isLogin: true })
 const viewState = ref({ target: [50, 60] as DTO.Coordinate2D, zoom: 1 })
 const defaultItem = { id: 3, name: '甜甜花' }
@@ -24,13 +30,24 @@ const mapState = reactive({
 
 vi.mock('@/components/MarkerModifyer/actions', () => ({ openMarkerCreatorDialog }))
 vi.mock('@/components/AppSettings/open', () => ({ openSettingsDialog }))
+vi.mock('@/hooks/useMapLayers', () => ({ useTerrainLayers: () => ref([]) }))
+vi.mock('deck.gl', async importOriginal => ({
+  ...(await importOriginal<typeof import('deck.gl')>()),
+  Deck: class {
+    constructor(props: DeckProps<OrthographicView>) {
+      createDeck(props)
+    }
+    setProps = setDeckProps
+    finalize = finalizeDeck
+  },
+}))
 vi.mock('@/stores', () => ({
   useAccessStore: () => ({ get: () => permission.value }),
   useUserStore: () => user,
   useMapStateStore: () => mapState,
   useTileStore: () => tile,
   useItemStore: () => ({ itemIdMap: new Map([[3, defaultItem]]) }),
-  usePreferenceStore: () => ({ defaultMarkingItemId: 3 }),
+  usePreferenceStore: () => preference,
 }))
 
 const mountMenu = () => {
@@ -78,7 +95,9 @@ describe('地图点位创建入口', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     permission.value = true
+    preference.showPlacementMinimap = false
     user.isLogin = true
+    viewState.value.zoom = 1
     viewState.value.target = [50, 60]
     mapState.mission = false
     wrapper = mountMenu()
@@ -90,6 +109,7 @@ describe('地图点位创建入口', () => {
     await wrapper.get('.placement-trigger').trigger('click')
     expect(wrapper.get('[aria-label="点位选址"]').text()).toContain('中心十字')
     expect(wrapper.find('.reticle-center').exists()).toBe(true)
+    expect(createDeck).not.toHaveBeenCalled()
     expect(mapState.interaction.clearFocus).toHaveBeenCalledOnce()
     expect(mapState.interaction.clearHover).toHaveBeenCalledOnce()
     expect(openMarkerCreatorDialog).not.toHaveBeenCalled()
@@ -98,6 +118,60 @@ describe('地图点位创建入口', () => {
     await wrapper.get('.placement-actions .primary').trigger('click')
     expect(openMarkerCreatorDialog).toHaveBeenCalledWith([60, 70], defaultItem)
     expect(wrapper.find('.placement-reticle').exists()).toBe(false)
+  })
+
+  it('小地图跟随选址中心并固定缩放，旋转三角后仍按同一坐标创建', async () => {
+    preference.showPlacementMinimap = true
+    await nextTick()
+    expect(createDeck).not.toHaveBeenCalled()
+    await wrapper.get('.placement-trigger').trigger('click')
+    expect(createDeck).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        views: expect.objectContaining({
+          id: 'placement-minimap',
+          props: expect.objectContaining({ controller: false }),
+        }),
+        viewState: { target: [50, 60], zoom: 0 },
+      }),
+    )
+
+    viewState.value = { target: [70, 90], zoom: 3 }
+    await nextTick()
+    expect(setDeckProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        viewState: { target: [70, 90], zoom: 0 },
+      }),
+    )
+    setDeckProps.mockClear()
+    await wrapper.get('input[aria-label="三角朝向"]').setValue('90')
+    expect(wrapper.find('svg g[transform="rotate(90)"]').exists()).toBe(true)
+    expect(setDeckProps).not.toHaveBeenCalled()
+    await wrapper.get('.placement-actions .primary').trigger('click')
+    expect(openMarkerCreatorDialog).toHaveBeenCalledWith([60, 70], defaultItem)
+    expect(finalizeDeck).toHaveBeenCalledOnce()
+  })
+
+  it('右键小地图以点击位置为中心，关闭开关或撤权时释放视口', async () => {
+    rightClick([65, 95])
+    await nextTick()
+    expect(createDeck).not.toHaveBeenCalled()
+    preference.showPlacementMinimap = true
+    await nextTick()
+    expect(createDeck.mock.calls[0][0].viewState).toEqual({ target: [65, 95], zoom: 0 })
+    await wrapper.get('input[type="range"]').setValue('180')
+    preference.showPlacementMinimap = false
+    await nextTick()
+    expect(finalizeDeck).toHaveBeenCalledOnce()
+    expect(wrapper.find('canvas').exists()).toBe(false)
+    expect(wrapper.find('.context-menu .primary').exists()).toBe(true)
+
+    preference.showPlacementMinimap = true
+    await nextTick()
+    expect(wrapper.get('input[type="range"]').element).toHaveProperty('value', '180')
+    permission.value = false
+    await nextTick()
+    expect(finalizeDeck).toHaveBeenCalledTimes(2)
+    expect(wrapper.find('canvas').exists()).toBe(false)
   })
 
   it('支持 Escape 取消，并在地图任务或权限变化时退出选址', async () => {

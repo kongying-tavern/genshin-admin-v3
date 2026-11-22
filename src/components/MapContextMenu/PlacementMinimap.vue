@@ -1,0 +1,179 @@
+<script setup lang="ts">
+import { Deck, OrthographicView } from 'deck.gl'
+import { useTerrainLayers } from '@/hooks/useMapLayers'
+
+const props = defineProps<{ target: DTO.Coordinate2D }>()
+const heading = defineModel<number>('heading', { required: true })
+const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
+const layers = useTerrainLayers()
+const viewState = computed(() => ({ target: props.target, zoom: 0 }))
+const coneId = useId()
+let deck: Deck<OrthographicView> | undefined
+let releaseContext: (() => void) | undefined
+
+onMounted(() => {
+  if (!canvas.value) return
+  deck = new Deck({
+    canvas: canvas.value,
+    views: new OrthographicView({ id: 'placement-minimap', controller: false }),
+    viewState: viewState.value,
+    layers: layers.value,
+    onDeviceInitialized: device => {
+      // 连续打点会反复打开小地图，关闭时及时归还它独占的 WebGL 上下文。
+      releaseContext = () => device.loseDevice()
+    },
+  })
+})
+
+watch([viewState, layers], ([viewState, layers]) => deck?.setProps({ viewState, layers }))
+onBeforeUnmount(() => {
+  deck?.finalize()
+  releaseContext?.()
+})
+</script>
+
+<template>
+  <div class="placement-minimap" role="group" aria-label="选址小地图">
+    <div class="minimap-face" aria-hidden="true">
+      <div class="minimap-terrain">
+        <canvas ref="canvas" tabindex="-1" />
+        <!-- 原图圆心约 (529, 421)，半径 371。以圆心为原点描出三角，旋转时选址点保持在原处。 -->
+        <svg viewBox="-371 -371 742 742">
+          <defs>
+            <radialGradient :id="coneId" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="366">
+              <stop stop-color="#fff7df" stop-opacity=".4" />
+              <stop offset=".65" stop-color="#fff7df" stop-opacity=".16" />
+              <stop offset="1" stop-color="#fff7df" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <g :transform="`rotate(${heading})`">
+            <path d="M0 0 -213 -298a366 366 0 0 1 426 0Z" :fill="`url(#${coneId})`" />
+            <g class="minimap-arrow" stroke-linejoin="round">
+              <path
+                d="M0 -41 37 29 14 28 0 40 -14 28 -36 30Z"
+                fill="#19dffa"
+                stroke="#06bedf"
+                stroke-width="3"
+              />
+              <path d="M0 -39 0 4 -35 28Z" fill="#42f4ff" />
+              <path d="m0 4 35 24-21-2L0 36Z" fill="#00c4eb" />
+            </g>
+          </g>
+        </svg>
+      </div>
+      <span class="minimap-north">N</span>
+    </div>
+    <label class="minimap-heading">
+      <span>朝向</span>
+      <input
+        v-model.number="heading"
+        type="range"
+        min="0"
+        max="359"
+        step="1"
+        aria-label="三角朝向"
+        :aria-valuetext="`${heading} 度`"
+      />
+      <span class="minimap-degrees">{{ heading }}°</span>
+    </label>
+  </div>
+</template>
+
+<style scoped>
+.placement-minimap {
+  --minimap-size: min(188px, 42vw, 40vh);
+  width: var(--minimap-size);
+  flex: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+.minimap-face {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side, transparent 72%, #587db333 92%, transparent);
+}
+
+.minimap-face::after {
+  position: absolute;
+  inset: 0;
+  border: 1px solid #d4e6ff40;
+  border-radius: inherit;
+  content: '';
+}
+
+.minimap-terrain {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  background: #243951;
+  mask-image: radial-gradient(circle closest-side, black 67%, #000e 78%, #0006 92%, transparent);
+}
+
+.minimap-terrain canvas,
+.minimap-terrain svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.minimap-arrow {
+  filter: drop-shadow(0 0 5px #008cbf);
+}
+
+.minimap-north {
+  position: absolute;
+  top: 4%;
+  width: 100%;
+  color: #f6f2e9dc;
+  font:
+    bold calc(var(--minimap-size) * 0.095) / 1 Georgia,
+    serif;
+  text-align: center;
+  text-shadow: 0 1px 3px #18273e;
+}
+
+.minimap-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 0 9px;
+  border: 1px solid #dcc8a052;
+  border-radius: 20px;
+  background: #212937ed;
+  color: #f2e8d5;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+.minimap-heading input {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  margin: 0;
+  accent-color: #58e6f6;
+  cursor: pointer;
+}
+
+.minimap-heading:has(input:focus-visible) {
+  outline: 2px solid #ffe2a5;
+  outline-offset: 2px;
+}
+
+.minimap-heading input:focus-visible {
+  outline: none;
+}
+
+.minimap-degrees {
+  min-width: 3.6ch;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+</style>

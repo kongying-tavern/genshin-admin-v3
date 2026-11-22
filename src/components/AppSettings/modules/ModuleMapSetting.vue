@@ -3,6 +3,7 @@ import { InfoFilled } from '@element-plus/icons-vue'
 import { useDadianStore, usePreferenceStore, useTileStore } from '@/stores'
 import cachedPopover from '../assets/marker-popover-cached.svg'
 import onlinePopover from '../assets/marker-popover-online.svg'
+import placementMinimap from '../assets/placement-minimap.svg'
 import { SettingBar, SettingGroup, SettingPanel } from '../components'
 
 const tileStore = useTileStore()
@@ -50,6 +51,23 @@ const consoleConfig = () => {
       <SettingBar label="全幅十字线" note="指针在地图上时，显示横纵轴及地图坐标和点位坐标">
         <template #setting>
           <el-switch v-model="preferenceStore.showFullCrosshair" aria-label="全幅十字线" />
+        </template>
+      </SettingBar>
+      <SettingBar label="选址小地图">
+        <template #note>
+          <p class="text-xs text-[var(--el-text-color-regular)]">
+            在新增点位的罗盘旁，以固定比例显示选址处的地形。拖动朝向滑块，让三角与游戏内的箭头同向。
+          </p>
+          <img
+            :src="placementMinimap"
+            class="block max-w-full h-auto mt-2"
+            width="232"
+            height="84"
+            alt="左侧罗盘对准路口，右侧小地图中的三角绕同一路口旋转"
+          />
+        </template>
+        <template #setting>
+          <el-switch v-model="preferenceStore.showPlacementMinimap" aria-label="选址小地图" />
         </template>
       </SettingBar>
       <SettingBar label="显示区域标签" note="地图上各国、地区、子地区的标签">

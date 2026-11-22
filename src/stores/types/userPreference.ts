@@ -59,6 +59,9 @@ export interface UserPreference {
   /** 在地图上显示跟随指针的全幅十字线和坐标 */
   'map.setting.showFullCrosshair': boolean
 
+  /** 在新增点位的罗盘旁显示选址小地图 */
+  'map.setting.showPlacementMinimap'?: boolean
+
   /** 透明化状态为已完成的点位 */
   'map.setting.transparentMarked': boolean
 
@@ -173,6 +176,7 @@ export const getDefaultPreference = (): UserPreference => ({
   // map
   'map.setting.showZoneTag': true,
   'map.setting.showFullCrosshair': false,
+  'map.setting.showPlacementMinimap': false,
   'map.setting.transparentMarked': true,
   'map.setting.verifyMarkersOnline': false,
   'map.setting.zoomTransitionDuration': 66,
