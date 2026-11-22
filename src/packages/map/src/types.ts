@@ -56,6 +56,8 @@ export interface GSTileLayerProps {
 }
 
 export interface GSTagLayerProps {
+  id?: string
+
   /** 标签组 */
   tagGroups?: AreaTagTuple[][]
 
@@ -67,6 +69,9 @@ export interface GSTagLayerProps {
 
   /** 字体 */
   fontFamily?: string
+
+  /** 开发工具拾取文字包围盒，并将选中的标签置顶预览 */
+  editor?: { draft?: AreaTagTuple }
 }
 
 export interface GSOverlayerProps {

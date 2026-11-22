@@ -218,8 +218,38 @@ describe('地图点位创建入口', () => {
 
     expect(wrapper.find('.placement-trigger').exists()).toBe(false)
     expect(wrapper.find('.context-menu .primary').exists()).toBe(false)
+    expect(wrapper.get('.context-menu').text()).not.toContain('编辑地区标签')
     await wrapper.get('.context-menu button').trigger('click')
     expect(openSettingsDialog).toHaveBeenCalledOnce()
     expect(wrapper.find('.context-menu').exists()).toBe(false)
+  })
+
+  it('开发工具可用时把右键位置传给标签编辑器', async () => {
+    const openAreaTagEditor = vi.fn()
+    await wrapper.setProps({ areaTagAction: { label: '编辑地区标签', open: openAreaTagEditor } })
+    rightClick([65, 95])
+    await nextTick()
+
+    const editButton = wrapper
+      .findAll('.context-menu button')
+      .find(button => button.text() === '编辑地区标签')
+    expect(editButton).toBeDefined()
+    await editButton!.trigger('click')
+    expect(openAreaTagEditor).toHaveBeenCalledWith([65, 95])
+    expect(wrapper.find('.context-menu').exists()).toBe(false)
+
+    await wrapper.setProps({
+      editingAreaTags: true,
+      areaTagAction: { label: '在此新增标签', open: openAreaTagEditor },
+    })
+    rightClick([85, 100])
+    await nextTick()
+    expect(wrapper.find('.context-menu .primary').exists()).toBe(false)
+    const addButton = wrapper
+      .findAll('.context-menu button')
+      .find(button => button.text() === '在此新增标签')
+    expect(addButton).toBeDefined()
+    await addButton!.trigger('click')
+    expect(openAreaTagEditor).toHaveBeenLastCalledWith([85, 100])
   })
 })

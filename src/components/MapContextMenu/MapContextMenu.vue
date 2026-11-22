@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Check, Close, LocationInformation, Plus, Setting } from '@element-plus/icons-vue'
+import { Check, Close, Edit, LocationInformation, Plus, Setting } from '@element-plus/icons-vue'
 import { useSubscription } from '@vueuse/rxjs'
 import { ElMessage } from 'element-plus'
 import { openSettingsDialog } from '@/components/AppSettings/open'
@@ -26,6 +26,8 @@ const props = defineProps<{
   modalOpen: boolean
   mapReady: boolean
   getMapCenter: () => DTO.Coordinate2D | undefined
+  editingAreaTags?: boolean
+  areaTagAction?: { label: string; open: (coordinate: DTO.Coordinate2D) => void }
 }>()
 
 const placing = defineModel<boolean>('placing', { required: true })
@@ -40,7 +42,12 @@ const userStore = useUserStore()
 const canCreate = computed(() => userStore.isLogin && accessStore.get('MARKER_CREATE'))
 const blocked = computed(() => props.modalOpen || Boolean(mapStateStore.mission))
 const canPlace = computed(
-  () => canCreate.value && !blocked.value && props.mapReady && Boolean(tileStore.currentTileConfig),
+  () =>
+    canCreate.value
+    && !blocked.value
+    && !props.editingAreaTags
+    && props.mapReady
+    && Boolean(tileStore.currentTileConfig),
 )
 const showMinimap = computed(() => canPlace.value && preferenceStore.showPlacementMinimap)
 const mapViewState = inject(mapViewStateKey)
@@ -125,6 +132,15 @@ useSubscription(
 
 useSubscription(MapSubject.dragStart.subscribe(closeContextMenu))
 
+useEventListener(
+  mapCanvasRef,
+  'pointerdown',
+  (event: PointerEvent) => {
+    if (props.editingAreaTags && event.button === 0) closeContextMenu()
+  },
+  { capture: true },
+)
+
 const beginPlacement = () => {
   if (!canPlace.value) return
   closeContextMenu()
@@ -178,6 +194,11 @@ const openSettingDialog = () => {
   closeContextMenu()
 }
 
+const editAreaTags = (point: DTO.Coordinate2D) => {
+  props.areaTagAction?.open(point)
+  closeContextMenu()
+}
+
 const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 </script>
 
@@ -206,7 +227,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
     class="center-minimap"
   />
 
-  <div v-if="canCreate" class="placement-tools">
+  <div v-if="canCreate && !editingAreaTags" class="placement-tools">
     <button
       v-if="!placing"
       ref="placementTrigger"
@@ -249,7 +270,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
       <PlacementMinimap v-if="showMinimap" v-model:heading="heading" :target="coordinate" />
       <div class="context-actions">
         <button
-          v-if="canCreate"
+          v-if="canCreate && !editingAreaTags"
           type="button"
           class="menu-step menu-button primary"
           @click="openMarkerCreator(coordinate)"
@@ -262,6 +283,15 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
           系统设置
         </button>
         <template v-if="isDev">
+          <button
+            v-if="areaTagAction && mapReady && tileStore.currentTileConfig"
+            type="button"
+            class="menu-step menu-button"
+            @click="editAreaTags(coordinate)"
+          >
+            <el-icon aria-hidden="true"><Edit /></el-icon>
+            {{ areaTagAction.label }}
+          </button>
           <button
             type="button"
             class="menu-step menu-button coordinate-button"

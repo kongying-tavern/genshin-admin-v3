@@ -9,6 +9,7 @@ import UnoCSS from 'unocss/vite'
 import { defineConfig, loadEnv } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { injectAssetsManifest, postcssPlugins } from './plugins'
+import { areaTagEditor } from './plugins/area-tag-editor'
 
 export default defineConfig(async ({ mode }) => {
   const git = simpleGit()
@@ -26,6 +27,7 @@ export default defineConfig(async ({ mode }) => {
   }
 
   const plugins: Plugin[] = [
+    areaTagEditor(),
     injectAssetsManifest(),
     // 返回的是插件数组，需要展开
     ...UnoCSS(),

@@ -75,6 +75,30 @@ const mapDataStatus = computed(() => {
 // ================ 地图状态 ================
 const genshinDeck = shallowRef<GenshinMap | null>(null)
 const isPlacingMarker = ref(false)
+const areaTagEditorOrigin = shallowRef<DTO.Coordinate2D>()
+const canEditAreaTags =
+  import.meta.env.DEV
+  && import.meta.env.AREA_TAG_EDITOR
+  && ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)
+const MapAreaTagEditor = canEditAreaTags
+  ? defineAsyncComponent(() => import('@/components/MapAreaTagEditor/MapAreaTagEditor.vue'))
+  : undefined
+
+const areaTagAction = canEditAreaTags
+  ? computed(() => ({
+      label: areaTagEditorOrigin.value ? '在此新增标签' : '编辑地区标签',
+      open: (coordinate: DTO.Coordinate2D) => {
+        mapStateStore.interaction.clearFocus()
+        mapStateStore.interaction.clearHover()
+        areaTagEditorOrigin.value = coordinate
+      },
+    }))
+  : undefined
+
+watch(
+  [() => tileStore.currentTileConfig, () => mapStateStore.mission, () => userStore.isLogin],
+  () => (areaTagEditorOrigin.value = undefined),
+)
 
 const getMapCoordinate = (screenPoint?: DTO.Coordinate2D): DTO.Coordinate2D | undefined => {
   const viewport = genshinDeck.value?.getViewports()[0]
@@ -216,7 +240,7 @@ useSubscription(
 )
 
 // ================ 图层管理 ================
-const { layers } = useMapLayers()
+const { layers } = useMapLayers(() => Boolean(areaTagEditorOrigin.value))
 
 // ================ 依赖注入 ================
 provide(mapContainerKey, containerRef)
@@ -250,8 +274,16 @@ onMounted(() => {
         @focus="focusMap"
         @blur="event => MapSubject.blur.next(event)"
         @load="instance => (genshinDeck = instance)"
-        @click="(info, event) => !isPlacingMarker && MapSubject.click.next({ info, event })"
-        @hover="(info, event) => !isPlacingMarker && MapSubject.hover.next({ info, event })"
+        @click="
+          (info, event) =>
+            !isPlacingMarker
+            && (!areaTagEditorOrigin || event.rightButton)
+            && MapSubject.click.next({ info, event })
+        "
+        @hover="
+          (info, event) =>
+            !isPlacingMarker && !areaTagEditorOrigin && MapSubject.hover.next({ info, event })
+        "
         @drag="(info, event) => MapSubject.drag.next({ info, event })"
         @drag-end="(info, event) => MapSubject.dragEnd.next({ info, event })"
         @drag-start="(info, event) => MapSubject.dragStart.next({ info, event })"
@@ -270,6 +302,16 @@ onMounted(() => {
           :modal-open="isModal"
           :map-ready="Boolean(genshinDeck)"
           :get-map-center="getMapCoordinate"
+          :editing-area-tags="Boolean(areaTagEditorOrigin)"
+          :area-tag-action="areaTagAction"
+        />
+        <MapAreaTagEditor
+          v-if="MapAreaTagEditor && areaTagEditorOrigin && genshinDeck"
+          :origin="areaTagEditorOrigin"
+          :deck="genshinDeck"
+          :get-map-coordinate="getMapCoordinate"
+          :modal-open="isModal"
+          @close="areaTagEditorOrigin = undefined"
         />
       </div>
 

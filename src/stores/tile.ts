@@ -1,19 +1,16 @@
-import type { AreaTagTuple } from '@/configs'
 import { defaultsDeep, merge } from 'lodash'
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { AREA_ADDITIONAL_CONFIG_MAP } from '@/configs'
+import { AREA_ADDITIONAL_CONFIG_MAP, areaTags, groupAreaTags } from '@/configs'
 import { useAccessStore, useArchiveStore, useAreaStore, useDadianStore } from '@/stores'
 
 export interface TileInfo extends Required<
   Pick<DTO.TileConfig, 'code' | 'name' | 'extension' | 'tilesOffset' | 'size' | 'center'>
 > {}
 
-type AreaTagConfigs = Required<(typeof AREA_ADDITIONAL_CONFIG_MAP)[string]>['tags']
-
 /**
  * 与地区对应的 tile 配置，为什么没有设计为与 layer code 对应而是与地区 code 对应，见以下原因：
  * 1. 首先是为了匹配筛选器的操作逻辑，即选择地区自动切换地图
- * 2. 其次，有利于为地区附加对应的 tag 或边界等数据
+ * 2. 其次，有利于为地区附加对应的边界等数据
  * 3. 对于打点工具来说，关注地区信息比关注 tile 信息本身的时候会更多
  */
 export interface AreaTileConfig {
@@ -26,8 +23,6 @@ export interface AreaTileConfig {
     target: DTO.Coordinate2D
     zoom: number
   }
-  /** 地区标签 */
-  tags: AreaTagConfigs
 }
 
 /** 底图 */
@@ -69,11 +64,10 @@ export const useTileStore = defineStore('global-map-tile', () => {
         size = [0, 0],
         tilesOffset = [0, 0],
       } = tileConfig
-      const { tags = [], target: rewriteTarget } = AREA_ADDITIONAL_CONFIG_MAP[maybeAreaCode] ?? {}
+      const { target: rewriteTarget } = AREA_ADDITIONAL_CONFIG_MAP[maybeAreaCode] ?? {}
       const { center: target = [0, 0], zoom = 0 } = settings
 
       areaTileConfigs[maybeAreaCode] = {
-        tags,
         tile: {
           code,
           name,
@@ -115,11 +109,10 @@ export const useTileStore = defineStore('global-map-tile', () => {
         size = [0, 0],
         tilesOffset = [0, 0],
       } = tileConfig
-      const { tags = [], target: rewriteTarget } = AREA_ADDITIONAL_CONFIG_MAP[areaCode] ?? {}
+      const { target: rewriteTarget } = AREA_ADDITIONAL_CONFIG_MAP[areaCode] ?? {}
       const { center: target = [0, 0], zoom = 0 } = settings
 
       map.set(areaCode, {
-        tags,
         tile: {
           code,
           name,
@@ -175,20 +168,9 @@ export const useTileStore = defineStore('global-map-tile', () => {
   })
 
   /** 当前底图中可见的标签 */
-  const visibleTagGroups = computed((): AreaTagTuple[][] => {
-    const levelTagsMap: AreaTagTuple[][] = []
-    const tileConfigs = mergedTileConfigs.value
-    for (const areaCode in tileConfigs) {
-      const { tags, tile } = tileConfigs[areaCode]
-      if (tile.code !== currentTileCode.value) continue
-      for (const tag of tags) {
-        const { 2: level = 0 } = tag
-        if (!levelTagsMap[level as number]) levelTagsMap[level as number] = []
-        levelTagsMap[level as number].push(tag)
-      }
-    }
-    return levelTagsMap
-  })
+  const visibleTagGroups = computed(() =>
+    groupAreaTags([...visibleArea.value.codes].flatMap(code => areaTags.value[code] ?? [])),
+  )
 
   /** 地图贴片选项 */
   const mapTileOptions = computed(() => {
@@ -204,7 +186,7 @@ export const useTileStore = defineStore('global-map-tile', () => {
       else if (tileOptions[tileCode]) continue
 
       const { tile, initViewState } = tileConfig
-      tileOptions[tileCode] = { code: areaCode, tile, initViewState, tags: [] }
+      tileOptions[tileCode] = { code: areaCode, tile, initViewState }
     }
     return Object.entries(tileOptions).map(([_, v]) => v)
   })

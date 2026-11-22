@@ -46,7 +46,7 @@ export const useTerrainLayers = () => {
   return computed<LayersList>(() => [tileLayer.value, overlayer.value])
 }
 
-export const useMapLayers = () => {
+export const useMapLayers = (hideAreaTags = () => false) => {
   const terrainLayers = useTerrainLayers()
   const mapStateStore = useMapStateStore()
   const { data: markerDraggingMission } = mapStateStore.subscribeMission(
@@ -90,7 +90,7 @@ export const useMapLayers = () => {
     const res = [
       ...terrainLayers.value,
 
-      tagLayer.value,
+      hideAreaTags() ? undefined : tagLayer.value,
 
       linkLayer.value,
 

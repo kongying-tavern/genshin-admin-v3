@@ -2,6 +2,9 @@
 
 /** 拓展 ENV 环境变量对象的类型 */
 interface ImportMetaEnv {
+  /** @dev 地区标签保存路径，仅在 Vite 开发服务器中定义 */
+  readonly AREA_TAG_EDITOR?: string
+
   /** 标题 */
   readonly VITE_TITLE: string
 
