@@ -1,4 +1,6 @@
 <script setup lang="ts">
+defineOptions({ inheritAttrs: false })
+
 const props = defineProps<{
   label: string
   divider?: boolean
@@ -70,6 +72,7 @@ onClickOutside(contextmenuRef, () => {
   --fontend-cursor: pointer;
   --fontend-mask: unset;
 
+  display: flex;
   position: relative;
 
   &:not(.divider):not(:last-of-type) {
