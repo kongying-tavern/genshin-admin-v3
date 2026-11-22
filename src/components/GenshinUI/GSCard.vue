@@ -9,7 +9,7 @@ defineProps<{
     <slot name="header">
       <div
         v-if="title || $slots.title"
-        class="genshin-card-title font-['HYWenHei-85W'] text-center px-[36px]"
+        class="genshin-card-title font-['HYWenHei-85W'] text-center"
       >
         <slot name="title">
           {{ title }}
