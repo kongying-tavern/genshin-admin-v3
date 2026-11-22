@@ -183,12 +183,6 @@ const confirmPlacement = () => {
   if (placing.value && canPlace.value) openMarkerCreator(props.getMapCenter())
 }
 
-const formatCoordinate = (point: DTO.Coordinate2D) => `[${point.map(x => x.toFixed(0)).join(', ')}]`
-
-const copyCoordinate = (point: DTO.Coordinate2D) => {
-  void navigator.clipboard.writeText(formatCoordinate(point))
-}
-
 const openSettingDialog = () => {
   openSettingsDialog()
   closeContextMenu()
@@ -282,33 +276,15 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
           <el-icon aria-hidden="true"><Setting /></el-icon>
           系统设置
         </button>
-        <template v-if="isDev">
-          <button
-            v-if="areaTagAction && mapReady && tileStore.currentTileConfig"
-            type="button"
-            class="menu-step menu-button"
-            @click="editAreaTags(coordinate)"
-          >
-            <el-icon aria-hidden="true"><Edit /></el-icon>
-            {{ areaTagAction.label }}
-          </button>
-          <button
-            type="button"
-            class="menu-step menu-button coordinate-button"
-            title="复制原始坐标"
-            @click="copyCoordinate(coordinate)"
-          >
-            原始坐标 {{ formatCoordinate(coordinate) }}
-          </button>
-          <button
-            type="button"
-            class="menu-step menu-button coordinate-button"
-            title="复制标记坐标"
-            @click="copyCoordinate(tileStore.toMarkerCoordinate(coordinate))"
-          >
-            标记坐标 {{ formatCoordinate(tileStore.toMarkerCoordinate(coordinate)) }}
-          </button>
-        </template>
+        <button
+          v-if="isDev && areaTagAction && mapReady && tileStore.currentTileConfig"
+          type="button"
+          class="menu-step menu-button"
+          @click="editAreaTags(coordinate)"
+        >
+          <el-icon aria-hidden="true"><Edit /></el-icon>
+          {{ areaTagAction.label }}
+        </button>
       </div>
     </div>
   </Transition>
@@ -487,7 +463,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 .placement-panel,
 .context-actions {
   padding: 8px;
-  border-radius: 12px;
+  border-radius: 28px;
 }
 
 .placement-panel {
@@ -583,14 +559,6 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   border-color: #f8e0b2;
   background: #f2dfb9;
   color: #343044;
-}
-
-.coordinate-button {
-  min-height: 34px;
-  border-radius: 6px;
-  color: #e6d6ba;
-  font-family: ui-monospace, monospace;
-  font-size: 11px;
 }
 
 .menu-button:focus-visible,
