@@ -45,7 +45,7 @@ vi.mock('@/hooks', () => ({
     focus,
     isPopoverActived: computed(() => Boolean(focus.value)),
     isSnapshot: computed(() => Boolean(focus.value?.__gs_isSnapshot)),
-    cachedMarkerVo: computed(() => focus.value ?? null),
+    cachedMarkerVo: computed<GSMarkerInfo | null>(previous => focus.value ?? previous ?? null),
     focusMarker: (marker: GSMarkerInfo) => {
       focus.value = marker
     },
@@ -96,8 +96,15 @@ describe('点位弹窗句柄与加载状态', () => {
     listMarkerById.mockReset()
     openMarkerEditorDialog.mockReset()
     wrapper = mount(MapMarkerPopover, {
+      attachTo: document.body,
       global: {
-        stubs: ['el-icon', 'el-image', 'el-skeleton', 'el-skeleton-item'],
+        stubs: {
+          transition: false,
+          'el-icon': true,
+          'el-image': true,
+          'el-skeleton': true,
+          'el-skeleton-item': true,
+        },
       },
     })
   })
@@ -204,6 +211,63 @@ describe('点位弹窗句柄与加载状态', () => {
       loading: false,
       title: confirmed.markerTitle,
     })
+  })
+
+  it('关闭时保留标题和正文，淡出结束后移除弹窗', async () => {
+    preferences.verifyMarkersOnline = false
+    const marker = { ...makeMarker(1, '点位标题'), content: '点位正文' }
+    local.set(1, marker)
+    getCapability('markerPopover')!.open!({ markerId: 1 })
+    await nextTick()
+
+    const panel = wrapper.get('section')
+    const affix = panel.element.parentElement!
+    await panel.get('button[aria-label="关闭点位详情"]').trigger('click')
+
+    expect(inspectSurface('markerPopover')?.state).toMatchObject({
+      open: false,
+      markerId: undefined,
+      title: undefined,
+      loading: false,
+    })
+    expect(panel.element.isConnected).toBe(true)
+    expect(panel.text()).toContain(marker.markerTitle)
+    expect(panel.get('textarea').element.value).toBe(marker.content)
+    expect(affix.hasAttribute('inert')).toBe(true)
+
+    await vi.advanceTimersByTimeAsync(200)
+    expect(affix.isConnected).toBe(false)
+  })
+
+  it('核对中关闭会中止请求，淡出时可以打开另一个点位', async () => {
+    const first = makeMarker(1, '旧点位')
+    const second = { ...makeMarker(2, '新点位'), content: '新点位正文' }
+    local.set(1, first).set(2, second)
+    const read = Promise.withResolvers<Map<number, MarkerVo>>()
+    verifyMarkers.mockReturnValueOnce(read.promise).mockResolvedValueOnce(new Map([[2, second]]))
+    const surface = getCapability('markerPopover')!
+    surface.open!({ markerId: 1 })
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(0)
+
+    const leavingPanel = wrapper.get('section').element
+    surface.close!()
+    await nextTick()
+
+    expect(verifyMarkers.mock.calls[0][1].aborted).toBe(true)
+    expect(leavingPanel.isConnected).toBe(true)
+    expect(leavingPanel.querySelector('el-skeleton-stub')).not.toBeNull()
+
+    surface.open!({ markerId: 2 })
+    await nextTick()
+
+    expect(leavingPanel.isConnected).toBe(false)
+    expect(wrapper.get('section').element.closest('[inert]')).toBeNull()
+    expect(wrapper.find('el-skeleton-stub').exists()).toBe(true)
+    read.resolve(new Map([[1, first]]))
+    await vi.advanceTimersByTimeAsync(200)
+    expect(wrapper.text()).toContain(second.markerTitle)
+    expect(wrapper.get('textarea').element.value).toBe(second.content)
   })
 
   it('查询失败时只展示错误态并允许重试', async () => {

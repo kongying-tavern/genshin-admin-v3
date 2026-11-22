@@ -3,7 +3,6 @@ import { vCopyCleanText } from '@/utils'
 
 withDefaults(
   defineProps<{
-    actived: boolean
     zoom?: number
   }>(),
   {
@@ -16,7 +15,6 @@ withDefaults(
   <div
     v-bind="$attrs"
     class="genshin-marker-popover font-['HYWenHei-85W']"
-    :class="{ actived }"
     :style="{
       '--arrow-offset-y': `${32 * 2 ** (zoom > -2 ? 0 : zoom + 2)}px`,
     }"
@@ -48,16 +46,8 @@ withDefaults(
   --card-radius: 8px;
 
   width: 256px;
-  opacity: 0;
   position: absolute;
-  transition: opacity 150ms ease;
   translate: -50% calc(-100% - var(--arrow-offset-y) - var(--arrow-size));
-  pointer-events: none;
-
-  &.actived {
-    opacity: 1;
-    pointer-events: all;
-  }
 }
 
 .popover-content {

@@ -37,7 +37,7 @@ const _useMarkerControl = () => {
     return archiveStore.preference['map.setting.hideMarkerPopover']
   })
 
-  /** 缓存的点位信息, 用于在关闭弹窗时保持信息，使动画显示状态平滑 */
+  /** 记录上次聚焦的点位，用于弹窗关闭后读取点位移动状态。 */
   const cachedMarkerId = ref<number>()
   /** 本地没有详情时，只用调用方提供的坐标定位弹窗。 */
   const focusPlaceholder = shallowRef<GSMarkerInfo>()
@@ -100,7 +100,7 @@ const _useMarkerControl = () => {
     return mapStateStore.currentMarkerIdMap.get(cachedMarkerId.value) ?? null
   })
 
-  /** 是否由 hover 触发弹窗而不是 focus */
+  /** 点位弹窗当前是否打开 */
   const isPopoverActived = computed(() => focus.value !== undefined)
 
   const normalizeMarker = (markerVo: MarkerVo | GSMarkerInfo): GSMarkerInfo | undefined => {

@@ -207,14 +207,16 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
 </script>
 
 <template>
-  <MapAffix :pos="position" :pickable="Boolean(focus)" no-covert-coord integer>
-    <template v-if="cachedMarkerVo" #default="{ zoom }">
-      <MarkerPanel
-        :actived="isPopoverActived"
-        :zoom="zoom"
-        :aria-hidden="!isPopoverActived"
-        :aria-busy="isPopoverActived && detailStatus === 'checking'"
-      >
+  <Transition name="marker-popover" @before-leave="element => element.setAttribute('inert', '')">
+    <MapAffix
+      v-if="isPopoverActived"
+      v-slot="{ zoom }"
+      :pos="position"
+      pickable
+      no-covert-coord
+      integer
+    >
+      <MarkerPanel :zoom="zoom" :aria-busy="detailStatus === 'checking'">
         <template #header>
           <template v-if="markerDetails">
             <AppIconTagRenderer
@@ -399,11 +401,21 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
           </template>
         </template>
       </MarkerPanel>
-    </template>
-  </MapAffix>
+    </MapAffix>
+  </Transition>
 </template>
 
 <style scoped>
+.marker-popover-enter-active,
+.marker-popover-leave-active {
+  transition: opacity 150ms ease;
+}
+
+.marker-popover-enter-from,
+.marker-popover-leave-to {
+  opacity: 0;
+}
+
 .detail-skeleton {
   --el-skeleton-color: #bfb7aa;
   --el-skeleton-to-color: #e8e0d4;
