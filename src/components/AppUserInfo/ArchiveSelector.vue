@@ -75,7 +75,7 @@ const timeFormater = (time?: string) => (time ? dayjs(time).format('YYYY-MM-DD H
 </script>
 
 <template>
-  <div class="flex h-full flex-col justify-between py-2 px-4">
+  <div class="flex min-h-full flex-col justify-between gap-2 py-2 px-2">
     <div v-if="archiveStore.fetchLoading">正在加载存档...</div>
     <div v-else-if="archiveStore.fetchError">
       云存档加载失败：{{ archiveStore.fetchError }}
@@ -103,14 +103,14 @@ const timeFormater = (time?: string) => (time ? dayjs(time).format('YYYY-MM-DD H
               crossorigin=""
             >
               <template #placeholder>
-                <el-skeleton style="width: 536px; height: 99px" animated>
+                <el-skeleton class="h-full" animated>
                   <template #template>
                     <el-skeleton-item variant="image" style="width: 100%; height: 100%" />
                   </template>
                 </el-skeleton>
               </template>
               <template #error>
-                <div style="width: 536px; height: 99px" />
+                <div class="h-full" />
               </template>
             </el-image>
             <div
@@ -125,7 +125,7 @@ const timeFormater = (time?: string) => (time ? dayjs(time).format('YYYY-MM-DD H
           </div>
 
           <div
-            class="archive-name flex justify-between items-center gap-4 whitespace-nowrap overflow-hidden"
+            class="archive-name flex flex-wrap justify-between items-center gap-x-4 whitespace-nowrap overflow-hidden"
           >
             <div class="text-ellipsis overflow-hidden" :title="archiveSlot.name">
               {{ index }}. {{ archiveSlot.name }}

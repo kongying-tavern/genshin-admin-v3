@@ -11,7 +11,7 @@ const BANNER_FALLBACK_URL = import.meta.env.VITE_BANNER_IMAGE
 </script>
 
 <template>
-  <div class="w-full h-[260px] text-base pt-8 pb-0 flex rounded-t relative select-none">
+  <div class="user-banner w-full h-[260px] text-base pt-8 flex rounded-t relative select-none">
     <template v-if="!userStore.info"> 未登录 </template>
 
     <template v-else>
@@ -28,8 +28,8 @@ const BANNER_FALLBACK_URL = import.meta.env.VITE_BANNER_IMAGE
         </ElImage>
       </div>
 
-      <div class="flex mx-8 flex-col items-center shrink-0">
-        <div class="absolute left-4 top-4">
+      <div class="banner-account flex mx-8 flex-col items-center shrink-0">
+        <div class="banner-logout absolute left-4 top-4">
           <GSButton theme="plain" title="退出" @click="userStore.logout">
             <template #icon>
               <ElIcon :size="22">
@@ -40,7 +40,7 @@ const BANNER_FALLBACK_URL = import.meta.env.VITE_BANNER_IMAGE
         </div>
 
         <div
-          class="w-[144px] h-[144px] m-2 rounded-[80px] overflow-hidden bg-[#DAAB86] outline-[#ECE5D820] outline outline-8 border-[#ECE5D8] border-[5px]"
+          class="banner-avatar w-[144px] h-[144px] m-2 rounded-full overflow-hidden bg-[#DAAB86] outline-[#ECE5D820] outline outline-8 border-[#ECE5D8] border-[5px]"
         >
           <ElImage :src="userStore.info.logo" fit="cover" style="width: 100%; height: 100%">
             <template #placeholder>
@@ -61,37 +61,40 @@ const BANNER_FALLBACK_URL = import.meta.env.VITE_BANNER_IMAGE
         </div>
 
         <div
-          class="mt-2 text-[#ECE5D8] border border-[#ECE5D880] rounded-[16px] py-0.5 px-3 bg-[#00000040]"
+          class="banner-uid mt-2 text-[#ECE5D8] border border-[#ECE5D880] rounded-[16px] py-0.5 px-3 bg-[#00000040]"
           style="-webkit-text-stroke: 2px #363d4da0; paint-order: stroke"
         >
           {{ `UID ${userStore.info.id}` }}
         </div>
       </div>
 
-      <div class="flex-1 mr-8 text-white overflow-hidden">
+      <div class="banner-details flex-1 mr-8 text-white overflow-hidden">
         <div
           class="py-0.5 overflow-hidden bg-[linear-gradient(to_right,transparent,#00000020_10%,#00000020_90%,transparent)]"
         >
           <div
-            class="overflow-hidden whitespace-nowrap text-ellipsis text-3xl drop-shadow-[0_0_2px_#000]"
+            class="banner-name overflow-hidden whitespace-nowrap text-ellipsis text-3xl drop-shadow-[0_0_2px_#000]"
+            :title="userStore.info.nickname ?? userStore.info.username"
           >
             {{ userStore.info.nickname ?? userStore.info.username }}
           </div>
         </div>
 
-        <div class="text-xl leading-10 drop-shadow-[0_0_2px_#000]">
+        <div class="banner-role text-xl leading-10 drop-shadow-[0_0_2px_#000]">
           {{ userStore.info.role?.name }}
         </div>
 
         <div
-          class="h-[5.5em] grid place-content-center bg-[linear-gradient(to_right,transparent,#00000020_10%,#00000020_90%,transparent)]"
+          class="banner-placeholder h-[5.5em] grid place-content-center bg-[linear-gradient(to_right,transparent,#00000020_10%,#00000020_90%,transparent)]"
         >
           Feature Comming Soon
         </div>
 
-        <div class="flex justify-between drop-shadow-[0_0_2px_#000]">
-          <div class="leading-8">更新时间</div>
-          <div class="leading-8">
+        <div
+          class="banner-updated flex flex-wrap justify-between gap-x-2 leading-8 drop-shadow-[0_0_2px_#000]"
+        >
+          <div>更新时间</div>
+          <div>
             {{
               userStore.info.updateTime
                 ? new Date(userStore.info.updateTime).toLocaleString()
@@ -103,3 +106,57 @@ const BANNER_FALLBACK_URL = import.meta.env.VITE_BANNER_IMAGE
     </template>
   </div>
 </template>
+
+<style scoped>
+@container user-center (max-width: 920px) {
+  .user-banner {
+    height: auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 44px 12px 12px;
+  }
+
+  .banner-account {
+    margin: 0;
+    max-width: 32%;
+  }
+
+  .banner-logout {
+    inset: 4px 4px auto auto;
+  }
+
+  .banner-avatar {
+    width: clamp(56px, 16cqi, 80px);
+    height: auto;
+    aspect-ratio: 1;
+    border-width: 3px;
+  }
+
+  .banner-uid {
+    max-width: 100%;
+    margin-top: 2px;
+    padding-inline: 6px;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  .banner-details {
+    margin: 0;
+  }
+
+  .banner-name {
+    font-size: 20px;
+    line-height: 1.4;
+  }
+
+  .banner-role,
+  .banner-updated {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .banner-placeholder {
+    display: none;
+  }
+}
+</style>

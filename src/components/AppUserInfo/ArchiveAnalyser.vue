@@ -85,26 +85,23 @@ const countMap = computed(() => {
 </script>
 
 <template>
-  <div class="w-full flex-1 flex flex-col overflow-hidden">
+  <div class="w-full min-h-0 flex-1 flex flex-col overflow-hidden">
     <div
-      class="flex-shink-0 w-full px-4 flex justify-between items-center text-lg p-2"
+      class="shrink-0 w-full px-4 flex flex-wrap gap-2 items-center text-lg py-2"
       style="color: #84603d"
     >
-      <div
-        v-if="archiveStore.currentArchive.slotIndex < 0"
-        class="w-72 flex-shrink-0 overflow-hidden text-ellipsis whitespace-nowrap"
-      >
+      <div v-if="archiveStore.currentArchive.slotIndex < 0" class="min-w-0 grow basis-40 truncate">
         {{ '<未选取存档>' }}
       </div>
       <div
         v-else
-        class="w-72 flex-shrink-0 overflow-hidden text-ellipsis whitespace-nowrap"
+        class="min-w-0 grow basis-40 truncate"
         :title="archiveStore.archiveSlots[archiveStore.currentArchive.slotIndex]?.name"
       >
         宝箱收集进度({{ archiveStore.archiveSlots[archiveStore.currentArchive.slotIndex]?.name }})
       </div>
 
-      <div class="flex-1 flex justify-end">
+      <div class="ml-auto pl-[6.5rem]">
         <GSSwitch
           v-model="showRestrictedArea"
           label="包含限定地区"
@@ -114,9 +111,9 @@ const countMap = computed(() => {
       </div>
     </div>
 
-    <div class="flex-1 pb-6 overflow-hidden">
+    <div class="archive-areas min-h-0 flex-1 pb-6 overflow-hidden">
       <el-scrollbar>
-        <div class="gs-archive-analyser-container grid grid-cols-2 grid-rows-4 px-3">
+        <div class="gs-archive-analyser-container grid px-3">
           <div
             v-for="[areaId, { area, count, total }] in countMap"
             v-show="preferenceStore.showRestrictedArea || !RESTRICTED_AREA_CODES.has(area.code!)"
@@ -161,6 +158,16 @@ const countMap = computed(() => {
 </template>
 
 <style scoped>
+.gs-archive-analyser-container {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+}
+
+@container user-center (max-width: 920px) {
+  .archive-areas {
+    flex: auto;
+  }
+}
+
 @property --percentage {
   syntax: '<percentage>';
   inherits: false;

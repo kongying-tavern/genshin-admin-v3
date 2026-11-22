@@ -25,7 +25,10 @@ export const openUserInfoDialog = (): { id: string; opened: boolean } => {
     session = undefined
   }
 
-  const service = new GlobalDialogService()
+  const service = new GlobalDialogService().config({
+    title: '用户中心',
+    width: 'min(1150px, calc(100dvw - 32px))',
+  })
   const controller = service.open(AppUserInfo)
   const id = service._getId()
   session = { id, controller }

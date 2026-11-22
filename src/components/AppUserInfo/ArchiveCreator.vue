@@ -76,7 +76,7 @@ onUnmounted(() => {
     :before-close="onBeforeClose"
     append-to-body
     align-center
-    width="500px"
+    width="min(500px, calc(100dvw - 24px))"
     class="custom-dialog hidden-header bg-transparent"
     @closed="onCloseDialog"
     @open="onOpenDialog"

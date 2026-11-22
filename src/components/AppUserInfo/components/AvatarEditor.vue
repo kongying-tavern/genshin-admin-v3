@@ -38,12 +38,12 @@ const setSelectedIcon = (avatar: MiyousheAvatar) => {
 </script>
 
 <template>
-  <div class="w-full flex-1 flex gap-2 overflow-hidden select-none">
+  <div class="avatar-editor">
     <AppVirtualTable
       v-loading="avatarsLoading"
       element-loading-background="transparent"
       element-loading-text="正在加载头像列表..."
-      class="avatar-list w-[374px]"
+      class="avatar-list"
       :data="avatarList"
       :cached-rows="1"
       :item-width="84"
@@ -51,8 +51,11 @@ const setSelectedIcon = (avatar: MiyousheAvatar) => {
       :item-gap="[8, 8]"
     >
       <template #default="{ item }">
-        <div
+        <button
+          type="button"
           class="avatar-btn rounded overflow-hidden"
+          :aria-label="item.name"
+          :aria-pressed="item.id === selectedAvatar?.id"
           :class="{
             'is-selected': item.id === selectedAvatar?.id,
             'is-actived': item.icon === userStore.info?.logo,
@@ -62,15 +65,16 @@ const setSelectedIcon = (avatar: MiyousheAvatar) => {
           <img
             class="avatar-icon w-full h-full rounded-full object-contain"
             :src="item.icon"
+            alt=""
             crossorigin=""
             referrerpolicy="no-referrer"
             loading="lazy"
           />
-        </div>
+        </button>
       </template>
     </AppVirtualTable>
 
-    <div class="w-[150px] flex flex-col gap-8 justify-center items-center pb-1">
+    <div class="avatar-selection">
       <AvatarPreview :src="selectedAvatar?.icon" />
 
       <div class="avatar-name">{{ selectedAvatar?.name ?? '<???>' }}</div>
@@ -90,6 +94,59 @@ const setSelectedIcon = (avatar: MiyousheAvatar) => {
 </template>
 
 <style lang="scss" scoped>
+.avatar-editor {
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr) 150px;
+  gap: 8px;
+  width: 100%;
+  flex: 1 0 256px;
+  min-height: 0;
+  user-select: none;
+}
+
+.avatar-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding-bottom: 4px;
+}
+
+@container user-center (max-width: 920px) {
+  .avatar-editor {
+    flex: none;
+    height: 272px;
+  }
+}
+
+@container user-actions (max-width: 460px) {
+  .avatar-editor {
+    flex: none;
+    height: auto;
+    grid-template: clamp(168px, 30dvh, 256px) auto / minmax(0, 1fr);
+  }
+
+  .avatar-selection {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 4px;
+  }
+
+  .avatar-selection .avatar-preview {
+    width: 48px;
+    height: 48px;
+    border-width: 3px;
+  }
+
+  .avatar-selection .avatar-name {
+    padding: 4px;
+    font-size: 16px;
+    overflow-wrap: anywhere;
+  }
+}
+
 .avatar-list {
   --avatar-size: 84px;
 
@@ -105,6 +162,10 @@ const setSelectedIcon = (avatar: MiyousheAvatar) => {
     background-color: #ffffff;
     border-radius: 6px;
   }
+}
+
+.avatar-list :deep(.virtual-scroll-wrapper.is-grid) {
+  justify-content: center;
 }
 
 .avatar-btn {

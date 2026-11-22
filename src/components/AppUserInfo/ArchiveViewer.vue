@@ -167,14 +167,14 @@ const beforeClose = (done: () => void) => {
     :before-close="beforeClose"
     append-to-body
     align-center
-    width="500px"
+    width="min(500px, calc(100dvw - 24px))"
     class="custom-dialog hidden-header bg-transparent"
     @closed="onDialogClosed"
   >
     <GSCard v-if="!archiveSlot" title="存档为空" />
-    <GSCard v-else class="gap-4">
+    <GSCard v-else class="archive-viewer gap-4">
       <template #title>
-        <div v-if="isNameEditMode" class="w-full flex items-center gap-2">
+        <div v-if="isNameEditMode" class="archive-rename w-full flex items-center gap-2">
           <div class="flex items-center text-base">重命名</div>
           <el-tooltip
             placement="bottom"
@@ -195,8 +195,18 @@ const beforeClose = (done: () => void) => {
               @input="clearValidate"
             />
           </el-tooltip>
-          <GSButton :loading="renameLoading" icon="submit" @click="submitNameChanged" />
-          <GSButton :disabled="renameLoading" icon="cancel" @click="cancelNameEdit" />
+          <GSButton
+            :loading="renameLoading"
+            icon="submit"
+            aria-label="保存名称"
+            @click="submitNameChanged"
+          />
+          <GSButton
+            :disabled="renameLoading"
+            icon="cancel"
+            aria-label="取消重命名"
+            @click="cancelNameEdit"
+          />
         </div>
         <template v-else>
           <div
@@ -227,7 +237,7 @@ const beforeClose = (done: () => void) => {
 
       <GSDivider color="gray" :height="16" />
 
-      <div class="flex justify-between gap-4">
+      <div class="archive-actions flex justify-between gap-4">
         <GSButton class="flex-1" :loading="loading" :disabled="reading" @click="saveArchive">
           <template #icon>
             <el-icon color="#FFCC33">
@@ -245,6 +255,7 @@ const beforeClose = (done: () => void) => {
         >
           <GSButton
             class="hold-and-delete"
+            aria-label="按住删除存档"
             :disabled="loading || reading"
             @click="e => note(e, '持续按住删除按钮以确认删除')"
             @animationend="onAnimationEnd"
@@ -271,6 +282,48 @@ const beforeClose = (done: () => void) => {
 </template>
 
 <style lang="scss" scoped>
+.archive-viewer {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 480px) {
+  .archive-viewer {
+    padding: 24px 16px;
+  }
+
+  .archive-viewer :deep(.genshin-card-title) {
+    padding-inline: 0;
+    font-size: 22px;
+    overflow-wrap: anywhere;
+  }
+
+  .archive-rename {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  .archive-rename > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  .archive-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .archive-actions > button {
+    width: 100%;
+  }
+
+  .archive-actions .hold-and-delete {
+    grid-area: 1 / 2 / span 2;
+    align-self: center;
+  }
+}
+
 @property --angle {
   syntax: '<angle>';
   inherits: false;

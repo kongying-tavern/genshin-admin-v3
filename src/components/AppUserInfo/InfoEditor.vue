@@ -58,11 +58,14 @@ const { refresh: updateUserInfo, loading } = useFetchHook({
 </script>
 
 <template>
-  <div class="h-full flex flex-col justify-center items-center overflow-hidden">
+  <div class="info-editor">
     <el-form
       ref="formRef"
-      class="shrink-0"
-      style="--el-form-label-font-size: 18px; width: 370px; --el-text-color-regular: #424f65"
+      style="
+        --el-form-label-font-size: 18px;
+        width: min(100%, 370px);
+        --el-text-color-regular: #424f65;
+      "
       label-width="100px"
       label-position="left"
       :model="form"
@@ -86,7 +89,7 @@ const { refresh: updateUserInfo, loading } = useFetchHook({
       :disabled="!isDifference"
       theme="dark"
       icon="submit"
-      style="width: 370px"
+      style="width: min(100%, 370px)"
       @click="updateUserInfo"
     >
       保存
@@ -97,3 +100,16 @@ const { refresh: updateUserInfo, loading } = useFetchHook({
     <AvatarEditor v-model="form.logo" />
   </div>
 </template>
+
+<style scoped>
+.info-editor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.info-editor > * {
+  flex-shrink: 0;
+}
+</style>

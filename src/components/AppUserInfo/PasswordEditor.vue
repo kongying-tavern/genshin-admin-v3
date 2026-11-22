@@ -73,7 +73,11 @@ onSuccess(() => {
   <div class="flex flex-col justify-center items-center">
     <el-form
       ref="formRef"
-      style="--el-form-label-font-size: 18px; width: 370px; --el-text-color-regular: #424f65"
+      style="
+        --el-form-label-font-size: 18px;
+        width: min(100%, 370px);
+        --el-text-color-regular: #424f65;
+      "
       label-width="100px"
       label-position="left"
       :model="form"
@@ -93,7 +97,7 @@ onSuccess(() => {
     <GSButton
       icon="submit"
       theme="dark"
-      style="width: 370px"
+      style="width: min(100%, 370px)"
       :loading="loading"
       @click="updatePassword"
     >
