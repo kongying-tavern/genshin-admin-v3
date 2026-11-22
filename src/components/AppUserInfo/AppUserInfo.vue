@@ -224,7 +224,7 @@ const progressId = useId()
 
   .user-info-layout {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto;
+    grid-template-rows: max-content max-content;
     align-content: start;
     gap: 16px;
     height: calc(100% - 48px);
