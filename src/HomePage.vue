@@ -71,6 +71,14 @@ const mapDataStatus = computed(() => {
 
 // ================ 地图状态 ================
 const genshinDeck = shallowRef<GenshinMap | null>(null)
+const isPlacingMarker = ref(false)
+
+const getMapCenter = (): DTO.Coordinate2D | undefined => {
+  const viewport = genshinDeck.value?.getViewports()[0]
+  if (!viewport) return
+  const [x, y] = viewport.unproject([viewport.width / 2, viewport.height / 2])
+  return [x, y]
+}
 
 const mapAffixRef = shallowRef<HTMLDivElement>()
 const containerRef = shallowRef<HTMLDivElement>()
@@ -231,12 +239,13 @@ onMounted(() => {
         :cursor="mapStateStore.cursor"
         class="bg-black"
         tabindex="0"
+        aria-label="地图"
         @pointerdown="pressMap"
         @focus="focusMap"
         @blur="event => MapSubject.blur.next(event)"
         @load="instance => (genshinDeck = instance)"
-        @click="(info, event) => MapSubject.click.next({ info, event })"
-        @hover="(info, event) => MapSubject.hover.next({ info, event })"
+        @click="(info, event) => !isPlacingMarker && MapSubject.click.next({ info, event })"
+        @hover="(info, event) => !isPlacingMarker && MapSubject.hover.next({ info, event })"
         @drag="(info, event) => MapSubject.drag.next({ info, event })"
         @drag-end="(info, event) => MapSubject.dragEnd.next({ info, event })"
         @drag-start="(info, event) => MapSubject.dragStart.next({ info, event })"
@@ -245,7 +254,12 @@ onMounted(() => {
       <div ref="mapAffixRef" class="affix-layer">
         <MapMarkerPopover />
         <MapLinkPopover v-if="accessStore.get('MANAGER_COMPONENT')" />
-        <MapContextMenu />
+        <MapContextMenu
+          v-model:placing="isPlacingMarker"
+          :modal-open="isModal"
+          :map-ready="Boolean(genshinDeck)"
+          :get-map-center="getMapCenter"
+        />
       </div>
 
       <GSZoomController v-model="viewState" :transition-duration="TRANSITION_DURATION" />

@@ -31,12 +31,10 @@ export const useMapProjection = (options: MapProjectionHookOptions) => {
 
   /** 投影后元素显示在视口上的坐标 */
   const position = computed<DTO.Coordinate2D>(() => {
-    if (!tileStore.currentTileConfig) return [0, 0]
     const rawCoord = unref(coord)
-    if (!rawCoord) return [0, 0]
-    const [coordOffsetX, coordOffsetY] = unref(noCovertCoord)
-      ? [0, 0]
-      : tileStore.currentTileConfig.tile.center
+    const offset = unref(noCovertCoord) ? [0, 0] : tileStore.currentTileConfig?.tile.center
+    if (!rawCoord || !offset) return [0, 0]
+    const [coordOffsetX, coordOffsetY] = offset
     const { target, zoom } = viewState.value
     const scale = 2 ** zoom
     const [x, y] = rawCoord

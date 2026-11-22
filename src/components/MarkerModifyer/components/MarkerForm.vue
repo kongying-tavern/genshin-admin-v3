@@ -55,11 +55,8 @@ const handleUsingHistory = (history: MarkerVo) => {
 
 const { rules } = useRules()
 
-/**
- * 右侧额外面板识别 id
- * @default 默认展开点位描述
- */
-const addonId = ref('content')
+const compact = useMediaQuery('(max-width: 840px)')
+const addonId = ref(compact.value ? '' : 'content')
 
 /** 表单实例 */
 const formRef = ref<ElFormType>()
@@ -166,6 +163,14 @@ watch(
 const addonPanelRef = ref<HTMLDivElement>()
 provide(addonPanelRefKey, addonPanelRef)
 
+watch(
+  addonId,
+  id => {
+    if (id && compact.value) addonPanelRef.value?.scrollIntoView({ block: 'nearest' })
+  },
+  { flush: 'post' },
+)
+
 const addonPanelVisible = ref(true)
 const onAddonPanelTransitionStart = (ev: TransitionEvent) => {
   if (ev.propertyName === 'width') addonPanelVisible.value = false
@@ -202,6 +207,7 @@ defineExpose({
 
 <template>
   <WinDialog
+    class="marker-form-dialog"
     :style="{
       'border-color': `color-mix(in srgb, var(--el-color-primary-light-9) 50%, ${themeColor} 50%)`,
     }"
@@ -218,13 +224,14 @@ defineExpose({
       </slot>
     </WinDialogTitleBar>
 
-    <WinDialogTabPanel>
+    <WinDialogTabPanel class="marker-form-body">
       <div class="marker-editor-form grid h-full rounded-lg">
         <el-form
           ref="formRef"
           :rules="rules"
           :model="form"
-          class="form-content w-96"
+          class="form-content"
+          :label-position="compact ? 'top' : 'right'"
           label-width="80px"
         >
           <el-form-item label="点位名称" prop="markerTitle">
@@ -306,6 +313,7 @@ defineExpose({
           :class="{ visible: addonId }"
           @transitionstart="onAddonPanelTransitionStart"
           @transitionend="onAddonPanelTransitionEnd"
+          @transitioncancel="onAddonPanelTransitionEnd"
         >
           <div v-show="addonPanelVisible" ref="addonPanelRef" class="addon-panel-content" />
         </div>
@@ -319,8 +327,21 @@ defineExpose({
 </template>
 
 <style scoped>
+.marker-form-dialog {
+  max-height: calc(100dvh - 24px);
+}
+
+.marker-form-body {
+  overflow: auto;
+  min-height: 0;
+}
+
 .marker-editor-form {
   grid-template-columns: 1fr auto;
+}
+
+.form-content {
+  width: 384px;
 }
 
 .addon-panel {
@@ -355,5 +376,44 @@ defineExpose({
   top: 0;
   height: 100%;
   width: calc(100% - var(--padding-left));
+}
+
+@media (width <= 840px) {
+  .marker-form-dialog {
+    width: min(420px, calc(100vw - 24px));
+  }
+
+  .marker-editor-form {
+    height: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .form-content {
+    width: 100%;
+  }
+
+  .addon-panel {
+    width: 100%;
+    height: 0;
+    transition: none;
+
+    &.visible {
+      width: 100%;
+      height: auto;
+      padding: 8px 0 0;
+      border-top: 1px solid var(--el-border-color);
+    }
+
+    &::before {
+      display: none;
+    }
+  }
+
+  .addon-panel-content {
+    position: relative;
+    width: 100%;
+    height: clamp(240px, 60dvh, 420px);
+    overflow: auto;
+  }
 }
 </style>
