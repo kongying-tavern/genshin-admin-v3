@@ -7,7 +7,7 @@ const heading = defineModel<number>('heading', { required: true })
 const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
 const layers = useTerrainLayers()
 const viewState = computed(() => ({ target: props.target, zoom: 0 }))
-const coneId = useId()
+const overlayId = useId()
 let deck: Deck<OrthographicView> | undefined
 let releaseContext: (() => void) | undefined
 
@@ -37,26 +37,74 @@ onBeforeUnmount(() => {
     <div class="minimap-face" aria-hidden="true">
       <div class="minimap-terrain">
         <canvas ref="canvas" tabindex="-1" />
-        <!-- 原图圆心约 (529, 421)，半径 371。以圆心为原点描出三角，旋转时选址点保持在原处。 -->
+        <!-- 选址点是 SVG 原点，三角图标和视野扇形绕同一中心旋转。 -->
         <svg viewBox="-371 -371 742 742">
           <defs>
-            <radialGradient :id="coneId" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="366">
+            <radialGradient
+              :id="`${overlayId}-cone`"
+              gradientUnits="userSpaceOnUse"
+              cx="0"
+              cy="0"
+              r="366"
+            >
               <stop stop-color="#fff7df" stop-opacity=".4" />
               <stop offset=".65" stop-color="#fff7df" stop-opacity=".16" />
               <stop offset="1" stop-color="#fff7df" stop-opacity="0" />
             </radialGradient>
+            <path
+              :id="`${overlayId}-arrow-outline`"
+              d="M-2 -40Q0 -44 2 -40L38 29Q40 33 36 32L18 30 0 45 -18 30 -36 32
+                Q-40 33 -38 29Z"
+            />
+            <linearGradient
+              :id="`${overlayId}-arrow-body`"
+              gradientUnits="userSpaceOnUse"
+              x1="0"
+              y1="-42"
+              x2="0"
+              y2="32"
+            >
+              <stop stop-color="#00d6ff" />
+              <stop offset=".56" stop-color="#00eeff" />
+              <stop offset="1" stop-color="#00deff" />
+            </linearGradient>
+            <linearGradient
+              :id="`${overlayId}-arrow-tail`"
+              gradientUnits="userSpaceOnUse"
+              x1="0"
+              y1="15"
+              x2="0"
+              y2="45"
+            >
+              <stop stop-color="#00e5ff" />
+              <stop offset=".45" stop-color="#00fcff" />
+              <stop offset=".78" stop-color="#00fcff" />
+              <stop offset="1" stop-color="#56f7ff" />
+            </linearGradient>
+            <filter
+              :id="`${overlayId}-arrow-glow`"
+              filterUnits="userSpaceOnUse"
+              x="-64"
+              y="-64"
+              width="128"
+              height="128"
+            >
+              <feGaussianBlur stdDeviation="6.5" />
+            </filter>
           </defs>
           <g :transform="`rotate(${heading})`">
-            <path d="M0 0 -213 -298a366 366 0 0 1 426 0Z" :fill="`url(#${coneId})`" />
-            <g class="minimap-arrow" stroke-linejoin="round">
-              <path
-                d="M0 -41 37 29 14 28 0 40 -14 28 -36 30Z"
-                fill="#19dffa"
-                stroke="#06bedf"
-                stroke-width="3"
+            <path d="M0 0 -213 -298a366 366 0 0 1 426 0Z" :fill="`url(#${overlayId}-cone)`" />
+            <g>
+              <use
+                :href="`#${overlayId}-arrow-outline`"
+                :filter="`url(#${overlayId}-arrow-glow)`"
+                fill="#009cda"
+                opacity=".85"
               />
-              <path d="M0 -39 0 4 -35 28Z" fill="#42f4ff" />
-              <path d="m0 4 35 24-21-2L0 36Z" fill="#00c4eb" />
+              <use :href="`#${overlayId}-arrow-outline`" :fill="`url(#${overlayId}-arrow-body)`" />
+              <path d="M-1 -12Q0 -14 1 -12L22 25Q0 30 -22 25Z" fill="#00cfff" />
+              <path d="M0 15 18 30 0 45 -18 30Z" :fill="`url(#${overlayId}-arrow-tail)`" />
+              <path d="M-18 30 0 45 18 30 0 42Z" fill="#53f9ff" fill-opacity=".7" />
             </g>
           </g>
         </svg>
@@ -119,10 +167,6 @@ onBeforeUnmount(() => {
   inset: 0;
   width: 100%;
   height: 100%;
-}
-
-.minimap-arrow {
-  filter: drop-shadow(0 0 5px #008cbf);
 }
 
 .minimap-north {
