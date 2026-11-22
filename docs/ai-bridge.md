@@ -274,6 +274,8 @@ await __MAP_AI__.call('ui.surfaces.open', {
 
 `ui.surfaces.open` 返回 `{ id, opened, queued, sinceSeq }`。如果已有其他全局弹窗，新弹窗会排队，`queued: true`。
 
+窗口句柄 `window.<key>` 使用稳定的业务 key。`open` 等待工作区挂点就绪，异步业务页面可继续加载。当前角色无权打开窗口时返回 `E_FORBIDDEN`。`ui.surfaces.close` 会等待窗口关闭守卫，守卫拒绝时返回 `{ id, closed: false }`。已经关闭的窗口返回 `closed: true`，成功的关闭命令发布 `surface:close`。
+
 「点位在线核对」可在「设置 → 地图」开启，默认关闭，登录后随 1 号槽位的账号设置同步。关闭时，点位弹层直接读取本地缓存，`state.loading` 为 false。开启时，`ui.surfaces.get` 的 `state.loading` 表示正在核对详情，成功后可读取 `state.title`。服务端确认删除时，弹层自动关闭。
 
 ## 6. 表单反射
@@ -346,6 +348,7 @@ await __MAP_AI__.call('forms.close', { id: 'markerEditor' })
 注意：
 
 - `ui` 与 `map` 的 section 字段会随版本演进，新增字段属于兼容变更。
+- `ui.windows[].id` 是运行实例 id。窗口快照包含 `name`、`order`、`size`、`translate`，以及可选的 `sizeState`、`interactionState`。`size` 和 `translate` 使用工作区内的常规布局。传入 `includeWindowStates: false` 时，`ui.windows` 为空数组。
 - 长字符串默认截断到 20000 字符，可通过 `maxStringLength` 调整。
 - 不输出 access token / refresh token / 密码。
 
@@ -362,7 +365,7 @@ await __MAP_AI__.call('forms.close', { id: 'markerEditor' })
 | `dataset:update-start` / `dataset:update-phase` / `dataset:update-end` | 数据更新生命周期 |
 | `socket:status` | WebSocket 状态/延迟变化 |
 | `notice:open` / `notice:close` | 公告弹窗开关 |
-| `window:change` | 窗口列表变化 |
+| `window:change` | 窗口名称列表变化，payload 为排序后的 `{ names }`。拖动预览、置顶与尺寸变化沿用当前名称列表 |
 | `runtime:error` | 未捕获异常 / Promise rejection |
 
 `events.waitFor` 语义：

@@ -4,6 +4,8 @@ import { createPinia } from 'pinia'
 import { resolveBridgeMode } from '@/ai/mode'
 import Apis from '@/api/alova'
 import { AppError } from '@/components'
+import { WindowContext } from '@/components/AppWindow/core'
+import { windowContextKey } from '@/components/AppWindow/hooks/windowWorkspace'
 import { createLogger, createPWA, customPaint, ElementIcons } from '@/plugin'
 import { router } from '@/router'
 import { useArchiveStore, useBroadcastStore, useDadianStore, useUserStore } from '@/stores'
@@ -31,7 +33,9 @@ void (async () => {
   try {
     const pinia = createPinia()
     const app = createApp(App)
+    const windows = new WindowContext()
     app
+      .provide(windowContextKey, windows)
       .use(pinia)
       .use(createPWA())
       .use(createLogger())
@@ -55,6 +59,7 @@ void (async () => {
             mode: bridgeMode.mode as 'read' | 'write',
             source: bridgeMode.source,
             pinia,
+            windows: windows.reader,
           }),
         )
         .catch(err => {

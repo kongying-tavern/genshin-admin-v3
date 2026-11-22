@@ -6,7 +6,7 @@ export { default as FeatureGrid } from './FeatureGrid.vue'
 export interface FeatureOption {
   label: string
   icon: Component
-  cb: () => void
+  cb: (event: MouseEvent) => void
   hook?: WindowContextHookReturnType
   role?: Parameters<ReturnType<typeof useAccessStore>['get']>['0']
   cols?: number

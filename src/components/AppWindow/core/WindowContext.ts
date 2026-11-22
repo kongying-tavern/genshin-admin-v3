@@ -1,234 +1,371 @@
 import type { MapWindow } from '../types'
-import { clamp } from 'lodash'
+import type { WindowLayout } from './geometry'
+import { constrainRect, getDisplayRect, getInitialRect, getMinimumSize } from './geometry'
 
-export class WindowContext implements MapWindow.Context {
-  readonly HEADER_HEIGHT = 30
-  readonly MIN_WIDTH = 300
-  readonly MIN_HEIGHT = 300
+type Deferred<T> = ReturnType<typeof Promise.withResolvers<T>>
 
-  readonly dragHookId = [...crypto.getRandomValues(new Uint8Array(4))]
-    .map(num => num.toString(16).padStart(2, '0'))
-    .join('')
+interface WindowInstance {
+  options: MapWindow.WindowOpenParams
+  generation: number
+  opening: Deferred<boolean>
+  closing?: Deferred<boolean>
+  allowed: boolean
+  layout?: WindowLayout
+  interactionState?: MapWindow.InteractionState
+}
 
-  #transitionId = ref('')
-  get transitionId() {
-    return this.#transitionId.value
+interface QueuedOpen {
+  options: MapWindow.WindowOpenParams
+  opening: Deferred<boolean>
+}
+
+export class WindowContext {
+  #instances = new Map<string, WindowInstance>()
+  #infos = shallowReactive(new Map<string, MapWindow.Info>())
+  #mounted = shallowReactive(new Set<string>())
+  #stack = shallowRef<string[]>([])
+  #activeId = ref<string>()
+  #bounds = shallowRef<MapWindow.Size>()
+  #layouts = new Map<string, WindowLayout>()
+  #finishing = new Map<string, Promise<void>>()
+  #reopening = new Map<string, QueuedOpen>()
+  #generation = 0
+  #resetting = false
+
+  readonly activeId = computed(() => this.#activeId.value)
+  readonly bounds = computed(() => this.#bounds.value)
+  readonly panels = computed(() =>
+    this.#stack.value.flatMap((id, index) => {
+      const info = this.#infos.get(id)
+      return info ? [{ info, order: index + 1 }] : []
+    }),
+  )
+
+  readonly reader: MapWindow.Reader = {
+    list: () =>
+      this.panels.value
+        .filter(({ info }) => this.isOpen(info.id))
+        .map(({ info, order }) => {
+          const { id, name, normalRect, sizeState, interactionState } = info
+          const { x, y, width, height } = normalRect
+          return {
+            id,
+            name,
+            sizeState,
+            interactionState,
+            order,
+            size: { width, height },
+            translate: { x, y },
+          }
+        }),
+    names: () =>
+      this.panels.value
+        .filter(({ info }) => this.isOpen(info.id))
+        .map(({ info }) => info.name)
+        .sort(),
   }
 
-  protected panels: Ref<Map<string, MapWindow.Info>> = ref(new Map())
+  getWindow = (id: string) => this.#infos.get(id)
 
-  protected cachedInfos: Map<string, MapWindow.Info> = new Map()
+  isOpen = (id: string) => this.#mounted.has(id)
 
-  closeHook = createEventHook<string>()
+  hasWindow = (id: string) => this.#instances.has(id) || this.#reopening.has(id)
 
-  protected topOrder = computed(() => {
-    let order = 0
-    this.panels.value.forEach(panel => {
-      order = Math.max(order, panel.order)
-    })
-    return order
-  })
+  isTop = (id: string) => this.panels.value.at(-1)?.info.id === id
 
-  isTop = (id: string) => {
-    const panel = this.panels.value.get(id)
-    if (!panel) return false
-    return panel.order === this.topOrder.value
+  setWorkspaceSize = (size: MapWindow.Size) => {
+    const { width, height } = size
+    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return
+    if (width === this.#bounds.value?.width && height === this.#bounds.value?.height) return
+    this.#bounds.value = { width, height }
+    for (const instance of this.#instances.values()) this.#publish(instance)
   }
 
-  getWindow = (id: string) => {
-    return this.panels.value.get(id)
-  }
+  openWindow = (options: MapWindow.WindowOpenParams): Promise<boolean> => {
+    if (this.#resetting) return Promise.resolve(false)
+    const { id } = options
+    const current = this.#instances.get(id)
+    const closing = current?.closing?.promise ?? this.#finishing.get(id)
+    if (closing) return this.#queueReopen(options, closing)
+    if (current) return current.opening.promise
 
-  getWindows = () => {
-    return this.panels.value
-  }
-
-  openWindow = async (params: MapWindow.WindowOpenParams) => {
-    if (this.panels.value.has(params.id)) return
-
-    const openable = params.beforeOpen ? params.beforeOpen() : true
-    if (!openable) return
-
-    const { center = false, container = document.body } = params
-
-    let {
-      x: initX = 0,
-      y: initY = 0,
-      minWidth = this.MIN_WIDTH,
-      minHeight = this.MIN_HEIGHT,
-    } = params
-
-    minWidth = Math.min(minWidth, container.clientWidth)
-    minHeight = Math.min(minHeight, container.clientHeight)
-
-    // 如果指定了 center，则在首次打开窗口时将 xy 修改为对应的值使得窗口居中
-    if (center) {
-      // 获取容器中心点
-      const centerX = container.clientWidth / 2
-      const centerY = container.clientHeight / 2
-      // 计算窗口左上角坐标
-      initX = centerX - minWidth / 2
-      initY = centerY - minHeight / 2
+    const instance: WindowInstance = {
+      options,
+      generation: ++this.#generation,
+      opening: Promise.withResolvers<boolean>(),
+      allowed: false,
     }
+    this.#instances.set(id, instance)
+    this.#stack.value = [...this.#stack.value, id]
+    void this.#checkOpen(instance)
+    return instance.opening.promise
+  }
 
-    const {
-      translate: { x = initX, y = initY } = {},
-      sizeState = params.sizeState,
-      size,
-    } = this.cachedInfos.get(params.id) ?? {}
-
-    const info = {
-      ...params,
-      translate: { x, y },
-      size: size ?? { width: minWidth, height: minHeight },
-      order: this.topOrder.value + 1,
-      ref: null,
-      sizeState,
+  markMounted = (info: MapWindow.Info) => {
+    const instance = this.#getInstance(info)
+    if (!instance || !this.#infos.has(info.id)) return false
+    if (!this.#isEnabled(instance)) {
+      void this.dispose(info.id, 'permission')
+      return false
     }
-
-    this.#transitionId.value = params.id
-    ;(await document.startViewTransition?.(() => {
-      this.panels.value.set(params.id, info)
-    })?.ready) ?? this.panels.value.set(params.id, info)
-    this.#transitionId.value = ''
-
-    this.cachedInfos.set(params.id, info)
-    this.optimizeWindowPosition()
+    this.#mounted.add(info.id)
+    instance.opening.resolve(true)
+    return true
   }
 
-  updateWindow = (id: string, params: Partial<Omit<MapWindow.WindowOpenParams, 'id'>>) => {
-    if (!this.panels.value.has(id)) return
-
-    const currentInfo = this.panels.value.get(id)!
-
-    const {
-      minHeight: height = currentInfo.size.width,
-      minWidth: width = currentInfo.size.height,
-      beforeClose = currentInfo.beforeClose,
-      name = currentInfo.name,
-      x = currentInfo.translate.x,
-      y = currentInfo.translate.y,
-    } = params
-
-    currentInfo.beforeClose = beforeClose
-    currentInfo.size = { width, height }
-    currentInfo.translate = { x, y }
-    currentInfo.name = name
-
-    this.cachedInfos.set(id, currentInfo)
-    this.optimizeWindowPosition()
+  failMount = (info: MapWindow.Info) => {
+    const instance = this.#getInstance(info)
+    if (!instance || this.isOpen(info.id)) return
+    void this.#remove(instance, 'openFailed')
   }
 
-  setSizeState = (id: string, state: MapWindow.SizeState = 'default') => {
-    const panel = this.panels.value.get(id)
-    if (!panel) return
-    panel.sizeState = state === panel.sizeState ? 'default' : state
-    this.optimizeWindowPosition()
+  updateWindow = (id: string, options: Partial<Omit<MapWindow.WindowOpenParams, 'id'>>) => {
+    const queued = this.#reopening.get(id)
+    if (queued) queued.options = { ...queued.options, ...options }
+    const instance = this.#instances.get(id)
+    if (!instance) return
+    instance.options = { ...instance.options, ...options }
+    this.#publish(instance)
   }
 
-  setInteractionState = (id: string, state: MapWindow.InteractionState = 'default') => {
-    const panel = this.panels.value.get(id)
-    if (!panel) return
-    panel.interactionState = state
-    this.optimizeWindowPosition()
+  requestClose = (id: string, reason: MapWindow.RequestCloseReason = 'user'): Promise<boolean> => {
+    this.#cancelReopen(id)
+    const instance = this.#instances.get(id)
+    if (!instance) return Promise.resolve(this.#finishing.get(id)).then(() => true)
+    if (instance.closing) return instance.closing.promise
+
+    const closing = Promise.withResolvers<boolean>()
+    instance.closing = closing
+    if (this.isOpen(id)) void this.#checkClose(instance, closing, reason)
+    else void this.#remove(instance, 'cancelled')
+    return closing.promise
   }
 
-  closeWindow = async (id: string) => {
-    const panel = this.panels.value.get(id)
-    if (!panel) return
-
-    const closable = panel.beforeClose ? panel.beforeClose() : true
-    if (!closable) return
-
-    const { order } = panel
-    this.panels.value.forEach(iPanel => {
-      if (iPanel.order <= order) return
-      iPanel.order -= 1
-    })
-
-    this.panels.value.delete(id)
-    this.closeHook.trigger(id)
+  dispose = (id: string, reason: MapWindow.DisposeReason) => {
+    this.#cancelReopen(id)
+    this.#layouts.delete(id)
+    const instance = this.#instances.get(id)
+    if (instance) return this.#remove(instance, reason)
+    return this.#finishing.get(id) ?? Promise.resolve()
   }
 
-  clearWindow = () => {
-    this.panels.value.forEach(panel => this.closeWindow(panel.id))
-  }
-
-  topping = (id: string) => {
-    const target = this.panels.value.get(id)
-    if (!target || target.order === this.topOrder.value) return
-
-    let moveOrder = 0
-    this.panels.value.forEach(panel => {
-      if (panel.order <= target.order) return
-      panel.order -= 1
-      moveOrder += 1
-    })
-
-    target.order += moveOrder
-  }
-
-  move = (id: string, pos: { x: number; y: number }) => {
-    const target = this.panels.value.get(id)
-    if (!target) return
-
-    target.translate = pos
-    const cache = this.cachedInfos.get(id)
-    if (!cache) return
-    cache.translate = pos
-  }
-
-  resize = (id: string, rect: MapWindow.ResizeProps) => {
-    const cache = this.cachedInfos.get(id)
-    if (!cache) return
-
-    const target = this.panels.value.get(id)
-    if (!target) return
-
-    const { clientWidth, clientHeight } = document.body
-
-    const { translate, size, minWidth = this.MIN_WIDTH, minHeight = this.MIN_HEIGHT } = target
-
-    const { x = translate.x, y = translate.y, width = size.width, height = size.height } = rect
-
-    const resizeWidth = Math.min(Math.max(width, minWidth), clientWidth)
-    const resizeheight = Math.min(Math.max(height, minHeight), clientHeight)
-
-    target.translate = {
-      x: resizeWidth === size.width ? translate.x : x,
-      y: resizeheight === size.height ? translate.y : y,
+  clearWindow = (reason: 'logout' | 'workspace') => {
+    if (this.#resetting) return
+    this.#resetting = true
+    try {
+      this.#layouts.clear()
+      for (const id of this.#reopening.keys()) this.#cancelReopen(id)
+      for (const instance of this.#instances.values()) void this.#remove(instance, reason)
+      this.#finishing.clear()
+      this.#activeId.value = undefined
+      if (reason === 'workspace') this.#bounds.value = undefined
+    } finally {
+      this.#resetting = false
     }
-
-    target.size = {
-      width: resizeWidth,
-      height: resizeheight,
-    }
-
-    cache.translate = target.translate
-    cache.size = target.size
   }
 
-  optimizeWindowPosition = (box?: ResizeObserverSize) => {
-    const { clientWidth, clientHeight } = document.body
+  activate = (id: string) => {
+    if (!this.isOpen(id)) return
+    if (!this.isTop(id)) this.#stack.value = [...this.#stack.value.filter(key => key !== id), id]
+    this.#activeId.value = id
+  }
 
-    const { inlineSize = clientWidth, blockSize = clientHeight } = box ?? {}
-    this.panels.value.forEach(info => {
-      const { width, height } = info.size
-      const { x, y } = info.translate
-      info.translate =
-        info.sizeState === 'minimize'
-          ? {
-              x: clamp(x, 0, Math.max(0, inlineSize - this.MIN_WIDTH)),
-              y: clamp(y, 0, Math.max(0, blockSize - this.HEADER_HEIGHT)),
-            }
-          : {
-              x: clamp(x, 0, Math.max(0, inlineSize - width)),
-              y: clamp(y, 0, Math.max(0, blockSize - height)),
-            }
-      info.size = {
-        width: Math.min(clientWidth, info.size.width),
-        height: Math.min(clientHeight, info.size.height),
+  deactivate = () => {
+    this.#activeId.value = undefined
+  }
+
+  unfold = (id: string) => {
+    if (this.getWindow(id)?.sizeState === 'minimize') this.toggleCollapse(id)
+  }
+
+  toggleCollapse = (id: string) => {
+    const instance = this.#instances.get(id)
+    const info = this.getWindow(id)
+    if (!instance?.layout || !info) return
+    const { displayRect } = info
+    instance.layout.foldedPosition ??= { x: displayRect.x, y: displayRect.y }
+    instance.layout.collapsed = !instance.layout.collapsed
+    this.#publish(instance)
+  }
+
+  toggleMaximize = (id: string) => {
+    const instance = this.#instances.get(id)
+    if (!instance?.layout || instance.layout.collapsed) return
+    instance.layout.mode = instance.layout.mode === 'maximize' ? 'default' : 'maximize'
+    this.#publish(instance)
+  }
+
+  setInteractionState = (info: MapWindow.Info, state: MapWindow.InteractionState) => {
+    const instance = this.#getInstance(info)
+    if (!instance) return
+    instance.interactionState = state
+    this.#publish(instance)
+  }
+
+  commitRect = (info: MapWindow.Info, rect: MapWindow.Rect) => {
+    const instance = this.#getInstance(info)
+    const current = this.getWindow(info.id)
+    if (!instance?.layout || !current || current.sizeState === 'maximize') return
+
+    const { layout } = instance
+    const { displayRect } = current
+    const { x, y, width, height } = rect
+    if (
+      x === displayRect.x
+      && y === displayRect.y
+      && width === displayRect.width
+      && height === displayRect.height
+    )
+      return
+
+    if (layout.collapsed) {
+      layout.foldedPosition = { x, y }
+    } else {
+      const previous = layout.normalRect
+      layout.normalRect = {
+        x: x === displayRect.x ? previous.x : x,
+        y: y === displayRect.y ? previous.y : y,
+        width: width === displayRect.width ? previous.width : width,
+        height: height === displayRect.height ? previous.height : height,
       }
+      layout.customized = true
+    }
+    this.#publish(instance)
+  }
+
+  #getInstance = ({ id, generation }: MapWindow.Info) => {
+    const instance = this.#instances.get(id)
+    return instance?.generation === generation ? instance : undefined
+  }
+
+  #isCurrent = (instance: WindowInstance) => this.#instances.get(instance.options.id) === instance
+
+  #isEnabled = (instance: WindowInstance) => {
+    try {
+      return instance.options.enabled?.() ?? true
+    } catch (error) {
+      console.error('检查窗口权限失败', error)
+      return false
+    }
+  }
+
+  #checkOpen = async (instance: WindowInstance) => {
+    try {
+      const allowed =
+        this.#isEnabled(instance) && (await (instance.options.beforeOpen?.() ?? true)) === true
+      if (!this.#isCurrent(instance)) return
+      if (!allowed) {
+        await this.#remove(instance)
+        return
+      }
+      if (!this.#isEnabled(instance)) {
+        await this.dispose(instance.options.id, 'permission')
+        return
+      }
+      instance.allowed = true
+      this.#publish(instance)
+    } catch (error) {
+      if (!this.#isCurrent(instance)) return
+      console.error('打开窗口失败', error)
+      await this.#remove(instance)
+    }
+  }
+
+  #checkClose = async (
+    instance: WindowInstance,
+    closing: Deferred<boolean>,
+    reason: MapWindow.RequestCloseReason,
+  ) => {
+    let allowed = false
+    try {
+      allowed = (await (instance.options.beforeClose?.() ?? true)) === true
+    } catch (error) {
+      if (this.#isCurrent(instance)) console.error('关闭窗口失败', error)
+    }
+    if (!this.#isCurrent(instance)) return
+    if (allowed) {
+      await this.#remove(instance, reason, true)
+    } else {
+      instance.closing = undefined
+      closing.resolve(false)
+    }
+  }
+
+  #publish = (instance: WindowInstance) => {
+    const bounds = this.#bounds.value
+    if (!bounds || !instance.allowed) return
+    const { options, generation, interactionState } = instance
+    const { id, key, name } = options
+    const initialRect = getInitialRect(options, bounds)
+    const cached = this.#layouts.get(id)
+    const layout = (instance.layout ??= cached
+      ? { ...cached }
+      : {
+          normalRect: initialRect,
+          mode: options.sizeState === 'minimize' ? 'default' : options.sizeState,
+          collapsed: options.sizeState === 'minimize',
+          customized: false,
+        })
+    if (!layout.customized) layout.normalRect = initialRect
+    const minimum = getMinimumSize(options)
+    const normalRect = constrainRect(layout.normalRect, bounds, minimum)
+    this.#infos.set(id, {
+      id,
+      key,
+      generation,
+      name,
+      minimum,
+      normalRect,
+      displayRect: getDisplayRect(layout, bounds, normalRect),
+      sizeState: layout.collapsed ? 'minimize' : layout.mode,
+      interactionState,
     })
+  }
+
+  #remove = (instance: WindowInstance, reason?: MapWindow.CloseReason, remember = false) => {
+    const { id, onClosed } = instance.options
+    const finished = Promise.withResolvers<void>()
+    this.#finishing.set(id, finished.promise)
+    if (remember && instance.layout) this.#layouts.set(id, instance.layout)
+    this.#instances.delete(id)
+    this.#mounted.delete(id)
+    this.#infos.delete(id)
+    this.#stack.value = this.#stack.value.filter(key => key !== id)
+    if (this.#activeId.value === id) this.deactivate()
+    instance.opening.resolve(false)
+
+    void (async () => {
+      try {
+        if (reason) await onClosed?.(reason)
+      } catch (error) {
+        console.error('清理窗口失败', error)
+      } finally {
+        if (this.#finishing.get(id) === finished.promise) this.#finishing.delete(id)
+        instance.closing?.resolve(true)
+        finished.resolve()
+      }
+    })()
+    return finished.promise
+  }
+
+  #queueReopen = (options: MapWindow.WindowOpenParams, closing: Promise<unknown>) => {
+    const { id } = options
+    const existing = this.#reopening.get(id)
+    if (existing) return existing.opening.promise
+    const queued = { options, opening: Promise.withResolvers<boolean>() }
+    this.#reopening.set(id, queued)
+    void closing.then(async () => {
+      if (this.#reopening.get(id) !== queued) return
+      this.#reopening.delete(id)
+      queued.opening.resolve(await this.openWindow(queued.options))
+    })
+    return queued.opening.promise
+  }
+
+  #cancelReopen = (id: string) => {
+    const queued = this.#reopening.get(id)
+    if (!queued) return
+    this.#reopening.delete(id)
+    queued.opening.resolve(false)
   }
 }

@@ -132,6 +132,9 @@ export const createUiCommands = (): BridgeCommand[] => [
         Number(params.timeoutMs ?? 15000),
         id,
       )
+      if (capability.kind === 'window' && capability.enabled && !capability.enabled()) {
+        fail('E_FORBIDDEN', `当前账号或状态无法打开句柄：${id}`)
+      }
       const info = inspectSurface(id)
       const opened =
         typeof info?.open === 'boolean' ? info.open : isRecord(result) && result.opened === true
@@ -150,7 +153,7 @@ export const createUiCommands = (): BridgeCommand[] => [
     params: objectSchema({ id: { type: 'string', description: '句柄 id' } }, ['id']),
     returns: '{ id, closed }',
     examples: [{ title: '关闭设置弹窗', params: { id: 'settings' } }],
-    handler: (params, context) => {
+    handler: async (params, context) => {
       const id = params.id as string
       const capability = getCapability(id)
       if (!capability) {
@@ -160,9 +163,10 @@ export const createUiCommands = (): BridgeCommand[] => [
       if (!capability.close) {
         fail('E_UNSUPPORTED', `句柄 ${id} 不支持关闭`)
       }
-      capability.close()
-      context.emit('surface:close', { id })
-      return { id, closed: true }
+      const result = await capability.close()
+      const closed = capability.kind !== 'window' || result !== false
+      if (closed) context.emit('surface:close', { id })
+      return { id, closed }
     },
   },
   {

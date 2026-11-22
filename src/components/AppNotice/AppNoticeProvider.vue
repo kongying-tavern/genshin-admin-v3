@@ -4,10 +4,18 @@ import { NoticeCard } from './components'
 import { context } from './context'
 
 const selectedNotice = shallowRef<NoticeVo>()
+
+onBeforeUnmount(() => context.close())
 </script>
 
 <template>
-  <dialog :ref="context.dialogRef" class="app-notice-provider font-['HYWenHei-85W']">
+  <dialog
+    :ref="context.dialogRef"
+    class="app-notice-provider font-['HYWenHei-85W']"
+    aria-label="公告"
+    @cancel.prevent="context.close()"
+    @close="context.syncClosed()"
+  >
     <NoticeCard v-model:selected-notice="selectedNotice" />
   </dialog>
 </template>
@@ -26,7 +34,7 @@ const selectedNotice = shallowRef<NoticeVo>()
   --dialog-body-tr-timing: ease;
   --dialog-body-tr-duration: 0.2s;
 
-  display: grid;
+  display: none;
   place-items: center;
   align-content: center;
   place-content: center;
@@ -46,6 +54,7 @@ const selectedNotice = shallowRef<NoticeVo>()
     background-color ease 0.2s;
 
   &[open] {
+    display: grid;
     --opacity: 1;
     --dialog-body-scale: 1;
     --dialog-body-tr-timing: cubic-bezier(0.18, 0.89, 0.32, 1.28);

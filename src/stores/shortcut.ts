@@ -9,9 +9,18 @@ export const useShortcutStore = defineStore('shortcut-keys', () => {
   const isPaused = ref(false)
 
   const shortcut$ = globalKeydown$.pipe(
-    filter(ev =>
-      [!isPaused.value, !ev.repeat, !CONTROL_KEYS.has(ev.key.toLowerCase())].every(Boolean),
-    ),
+    filter(ev => {
+      if (isPaused.value || ev.repeat || ev.defaultPrevented || ev.isComposing) return false
+      if (CONTROL_KEYS.has(ev.key.toLowerCase())) return false
+      return !ev
+        .composedPath()
+        .some(
+          target =>
+            target instanceof HTMLElement
+            && (target.isContentEditable
+              || target.matches('input, textarea, select, [role="textbox"]')),
+        )
+    }),
     map(ev => {
       const hotKeys = ShortcutKeyUtil.buildKeysFromEvent(ev)
       const value = ShortcutKeyUtil.stringify(hotKeys)

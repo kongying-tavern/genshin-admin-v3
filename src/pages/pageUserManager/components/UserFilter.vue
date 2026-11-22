@@ -1,4 +1,8 @@
 <script lang="ts" setup>
+import {
+  useWindowDropdown,
+  useWindowPopupTarget,
+} from '@/components/AppWindow/hooks/useWindowPopup'
 import { ArrowDown, CircleCheck, Search, Sort } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 
@@ -35,6 +39,8 @@ const handleSortCommand = (command: string) => {
   sortInfo.value[key] = value
   emits('change')
 }
+const popupTarget = useWindowPopupTarget()
+const { popperClass } = useWindowDropdown('dropdown')
 </script>
 
 <template>
@@ -43,6 +49,7 @@ const handleSortCommand = (command: string) => {
   >
     <div class="flex gap-1">
       <el-select
+        :append-to="popupTarget"
         v-model="filterRoleIds"
         multiple
         clearable
@@ -59,7 +66,12 @@ const handleSortCommand = (command: string) => {
         />
       </el-select>
 
-      <el-select v-model="filterKey" style="width: 130px" @change="() => $emit('change')">
+      <el-select
+        :append-to="popupTarget"
+        v-model="filterKey"
+        style="width: 130px"
+        @change="() => $emit('change')"
+      >
         <el-option label="昵称" value="nickname" />
         <el-option label="用户名" value="username" />
       </el-select>
@@ -80,7 +92,12 @@ const handleSortCommand = (command: string) => {
 
     <el-divider direction="vertical" />
 
-    <el-dropdown :hide-on-click="false" @command="handleSortCommand">
+    <el-dropdown
+      ref="dropdown"
+      :popper-class="popperClass"
+      :hide-on-click="false"
+      @command="handleSortCommand"
+    >
       <el-button text :icon="Sort">
         排序
         <el-icon class="el-icon--right" :size="12">

@@ -1,4 +1,5 @@
 <script setup lang="ts" generic="T">
+import { useWindowPopupTarget } from '@/components/AppWindow/hooks/useWindowPopup'
 import type { ModifierConstructorOptions } from '..'
 import type { EnumModifierProps } from '../modifiers'
 import type { TweakConfigVo } from '@/api/alova/globals'
@@ -23,8 +24,9 @@ const enumValue = computed<T>({
     }
   },
 })
+const popupTarget = useWindowPopupTarget()
 </script>
 
 <template>
-  <el-select-v2 v-model="enumValue" :options="options.options" />
+  <el-select-v2 :append-to="popupTarget" v-model="enumValue" :options="options.options" />
 </template>

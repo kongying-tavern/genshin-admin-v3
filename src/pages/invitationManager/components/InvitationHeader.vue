@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import {
+  useWindowDropdown,
+  useWindowPopupTarget,
+} from '@/components/AppWindow/hooks/useWindowPopup'
 import type { InvitationFilterOptions, InvitationSortOptions } from '../types'
 import * as ElIcons from '@element-plus/icons-vue'
 
@@ -42,6 +46,8 @@ const filterKeys = [
 const filterKeyLabelMap = filterKeys.reduce((map, { label, value }) => {
   return map.set(value, label)
 }, new Map<string, string>())
+const popupTarget = useWindowPopupTarget()
+const { popperClass } = useWindowDropdown('dropdown')
 </script>
 
 <template>
@@ -66,14 +72,24 @@ const filterKeyLabelMap = filterKeys.reduce((map, { label, value }) => {
           </el-icon>
         </template>
         <template #prepend>
-          <el-select-v2 v-model="filter.key" :options="filterKeys" style="width: 100px" />
+          <el-select-v2
+            :append-to="popupTarget"
+            v-model="filter.key"
+            :options="filterKeys"
+            style="width: 100px"
+          />
         </template>
       </el-input>
     </div>
 
     <el-divider direction="vertical" />
 
-    <el-dropdown :hide-on-click="false" @command="handleSortCommand">
+    <el-dropdown
+      ref="dropdown"
+      :popper-class="popperClass"
+      :hide-on-click="false"
+      @command="handleSortCommand"
+    >
       <el-button text :icon="ElIcons.Sort">
         排序
         <el-icon class="el-icon--right" :size="12">

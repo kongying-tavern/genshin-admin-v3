@@ -276,6 +276,8 @@ onBeforeUnmount(clearDropTarget)
               v-if="canManage"
               trigger="click"
               placement="bottom-end"
+              :teleported="false"
+              :popper-options="{ strategy: 'fixed' }"
               @command="dialog => handleCategoryAction(dialog, data)"
             >
               <button

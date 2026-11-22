@@ -1,4 +1,5 @@
 import type { BridgeAccess, ModeSource, SnapshotContext, SnapshotSection } from '@/ai/types'
+import type { MapWindow } from '@/components/AppWindow/types'
 import type { ArchiveData } from '@/stores/archive'
 import { toValue } from 'vue'
 import {
@@ -10,7 +11,6 @@ import { getGlobalDialogState } from '@/components/AppDialog/state'
 import { getSettingsDialogState } from '@/components/AppSettings/open'
 import { getUserInfoDialogState } from '@/components/AppUserInfo/open'
 import { noticeContext } from '@/components/AppNotice/context'
-import { useAppWindow } from '@/components/AppWindow'
 import { useTheme } from '@/hooks/useTheme'
 import { router } from '@/router'
 import { listDatasets, toDatasetStatus } from '@/stores/datasetStatus'
@@ -36,6 +36,7 @@ export interface AppSnapshotSectionOptions {
   mode: BridgeAccess
   modeSource: ModeSource
   installedAt: number
+  windows: MapWindow.Reader
 }
 
 const safeBuild = (fn: () => unknown): unknown => {
@@ -131,20 +132,7 @@ export const getAuthStatus = () => {
 const buildAuthSection = (_options: AppSnapshotSectionOptions, _context: SnapshotContext) =>
   getAuthStatus()
 
-const buildUiSection = (_options: AppSnapshotSectionOptions, context: SnapshotContext) => {
-  const appWindow = useAppWindow()
-  const windows = context.includeWindowStates
-    ? [...appWindow.getWindows().values()].map(info => ({
-        id: info.id,
-        name: info.name,
-        sizeState: info.sizeState,
-        interactionState: info.interactionState,
-        order: info.order,
-        size: info.size,
-        translate: info.translate,
-      }))
-    : []
-
+const buildUiSection = (options: AppSnapshotSectionOptions, context: SnapshotContext) => {
   const noticeStore = useNoticeStore()
   const theme = useTheme()
 
@@ -161,7 +149,7 @@ const buildUiSection = (_options: AppSnapshotSectionOptions, context: SnapshotCo
     surfaces: inspectSurfaces({
       includeState: context.includeSurfaceStates,
     }),
-    windows,
+    windows: context.includeWindowStates ? options.windows.list() : [],
     dialogs: getGlobalDialogState(),
     settings: getSettingsDialogState(),
     userInfo: getUserInfoDialogState(),

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { useWindowPopupTarget } from '@/components/AppWindow/hooks/useWindowPopup'
 import type { ItemQueryForm } from '../hooks'
 import { CirclePlus, Menu, RefreshRight } from '@element-plus/icons-vue'
 import { AppDropdown } from '@/components'
@@ -50,6 +51,7 @@ const typeList = computed(() => {
 })
 
 const dropdownKey = ref('')
+const popupTarget = useWindowPopupTarget()
 </script>
 
 <template>
@@ -71,6 +73,7 @@ const dropdownKey = ref('')
 
       <el-form-item label="所属地区" style="margin-bottom: 0">
         <el-select-v2
+          :append-to="popupTarget"
           v-model="modelValue.areaId"
           :options="areaList"
           :props="{ label: 'name', value: 'id' }"
@@ -82,6 +85,7 @@ const dropdownKey = ref('')
 
       <el-form-item label="物品类型" style="margin-bottom: 0">
         <el-select-v2
+          :append-to="popupTarget"
           v-model="modelValue.itemTypeId"
           :options="typeList"
           :props="{ label: 'name', value: 'id' }"
@@ -93,6 +97,7 @@ const dropdownKey = ref('')
 
       <el-form-item label="物品属性" style="margin-bottom: 0">
         <el-select-v2
+          :append-to="popupTarget"
           v-model="modelValue.specialFlag"
           :options="SPECIALFLAG_OPTIONS"
           :props="{ label: 'label', value: 'mask' }"

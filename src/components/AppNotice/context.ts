@@ -6,6 +6,13 @@ export interface NoticeContext {
   closeHook: EventHook<string | undefined>
   show: () => void
   close: (returnValue?: string) => void
+  syncClosed: () => void
+}
+
+const finishClose = (returnValue?: string) => {
+  if (!context.visible.value) return
+  context.visible.value = false
+  void context.closeHook.trigger(returnValue)
 }
 
 export const context: NoticeContext = {
@@ -16,14 +23,24 @@ export const context: NoticeContext = {
   closeHook: createEventHook(),
 
   show: () => {
-    context.dialogRef.value?.showModal()
+    const dialog = context.dialogRef.value
+    if (!dialog || dialog.open) return
     context.visible.value = true
+    try {
+      dialog.showModal()
+    } catch (error) {
+      context.visible.value = false
+      throw error
+    }
   },
 
   close: (returnValue?: string) => {
     context.dialogRef.value?.close(returnValue)
-    context.visible.value = false
-    context.closeHook.trigger(returnValue)
+    finishClose(returnValue)
+  },
+
+  syncClosed: () => {
+    if (!context.dialogRef.value?.open) finishClose(context.dialogRef.value?.returnValue)
   },
 }
 

@@ -71,7 +71,7 @@ useEventListener('click', checkTooltip)
 
 <style scoped>
 .map-state-bar {
-  position: fixed;
+  position: absolute;
   bottom: 4px;
   right: 4px;
   z-index: 9;

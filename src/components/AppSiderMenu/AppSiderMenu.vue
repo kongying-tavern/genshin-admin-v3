@@ -25,11 +25,8 @@ import {
   SiderMenuItem,
 } from './components'
 import { isSiderTabKey, SIDER_TAB_KEYS } from './tabKeys'
+import { registerWindowCapability } from './windowCapabilities'
 import { MANAGER_WINDOW_OPTIONS, USER_MANUAL_WINDOW } from './windowOptions'
-
-interface ManagerWindowEntry extends ManagerWindowOption {
-  hook: WindowContextHookReturnType
-}
 
 const collapse = ref(true)
 
@@ -39,23 +36,32 @@ const noticeStore = useNoticeStore()
 const preferenceStore = usePreferenceStore()
 const userStore = useUserStore()
 
-const commonWindowOptions: Omit<MapWindow.WindowOpenParams, 'id' | 'name'> = {
+const commonWindowOptions: Partial<MapWindow.WindowOpenParams> = {
   minWidth: 887,
   minHeight: 500,
   center: true,
   sizeState: 'maximize',
 }
 
-const WINDOW_LIST: ManagerWindowEntry[] = MANAGER_WINDOW_OPTIONS.map(option => ({
-  ...option,
-  hook: useAppWindow({ name: option.name, ...commonWindowOptions }),
-}))
+const createWindow = (option: ManagerWindowOption) => {
+  const enabled = () => accessStore.get(option.role)
+  const hook: WindowContextHookReturnType = useAppWindow({
+    ...commonWindowOptions,
+    key: option.key,
+    name: option.name,
+    enabled,
+  })
+  return { ...option, hook, enabled }
+}
+
+const WINDOW_LIST = MANAGER_WINDOW_OPTIONS.map(createWindow)
+const manualWindow = createWindow(USER_MANUAL_WINDOW)
 
 const FEATURE_OPTIONS: FeatureGroupOption[] = [
   {
     items: WINDOW_LIST.map(({ name, hook, ...args }) => ({
       label: name,
-      cb: hook.open,
+      cb: hook.show,
       hook,
       ...args,
     })),
@@ -103,12 +109,7 @@ const handleAvatarClick = () => {
   openUserInfoDialog()
 }
 
-const manualWindow = useAppWindow({
-  name: USER_MANUAL_WINDOW.name,
-  ...commonWindowOptions,
-})
-
-const { isOpen: isManulOpen, info: manualInfo, toggle: toggleManual } = manualWindow
+const { isOpen: isManualOpen, info: manualInfo, toggle: toggleManual } = manualWindow.hook
 
 // ==================== AI 页面句柄 ====================
 const unbindSurfaces: (() => void)[] = []
@@ -146,39 +147,9 @@ unbindSurfaces.push(
   }),
 )
 
-for (const appWindow of WINDOW_LIST) {
-  unbindSurfaces.push(
-    registerCapability({
-      id: `window.${appWindow.key}`,
-      kind: 'window',
-      title: appWindow.name,
-      description: `打开系统管理窗口：${appWindow.name}`,
-      enabled: () => accessStore.get(appWindow.role),
-      open: () => appWindow.hook.open(),
-      close: () => appWindow.hook.close(),
-      getState: () => ({
-        open: appWindow.hook.isOpen.value,
-        sizeState: appWindow.hook.info.value?.sizeState,
-      }),
-    }),
-  )
+for (const appWindow of [...WINDOW_LIST, manualWindow]) {
+  unbindSurfaces.push(registerWindowCapability(appWindow, appWindow.hook, appWindow.enabled))
 }
-
-unbindSurfaces.push(
-  registerCapability({
-    id: `window.${USER_MANUAL_WINDOW.key}`,
-    kind: 'window',
-    title: USER_MANUAL_WINDOW.name,
-    description: '打开用户手册窗口',
-    enabled: () => accessStore.get(USER_MANUAL_WINDOW.role),
-    open: () => manualWindow.open(),
-    close: () => manualWindow.close(),
-    getState: () => ({
-      open: manualWindow.isOpen.value,
-      sizeState: manualWindow.info.value?.sizeState,
-    }),
-  }),
-)
 
 onUnmounted(() => {
   unbindSurfaces.forEach(unbind => unbind())
@@ -194,7 +165,7 @@ onUnmounted(() => {
         <component :is="appWindow.comp" />
       </AppWindowTeleporter>
     </template>
-    <AppWindowTeleporter v-if="accessStore.get('NORMAL_COMPONENT')" :info="manualInfo">
+    <AppWindowTeleporter v-if="manualWindow.enabled()" :info="manualInfo">
       <component :is="USER_MANUAL_WINDOW.comp" />
     </AppWindowTeleporter>
 
@@ -275,14 +246,10 @@ onUnmounted(() => {
         </template>
       </SiderMenuItem>
 
-      <SiderMenuItem
-        v-if="accessStore.get('NORMAL_COMPONENT')"
-        label="用户手册"
-        @click="toggleManual"
-      >
+      <SiderMenuItem v-if="manualWindow.enabled()" label="用户手册" @click="toggleManual">
         <template #icon="{ color }">
           <div class="w-full h-full">
-            <el-icon :color="isManulOpen ? '#68B11E' : color" :size="38">
+            <el-icon :color="isManualOpen ? '#68B11E' : color" :size="38">
               <ElIcons.Reading />
             </el-icon>
           </div>

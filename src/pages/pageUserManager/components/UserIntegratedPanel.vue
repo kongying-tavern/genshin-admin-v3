@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useWindowPopupTarget } from '@/components/AppWindow/hooks/useWindowPopup'
 import type { ElForm, FormItemRule } from 'element-plus'
 import type { ShallowRef } from 'vue'
 import type { SysUserPasswordUpdateVo, SysUserVo } from '@/api/alova/globals'
@@ -93,6 +94,7 @@ const passwordForm = ref<SysUserPasswordUpdateVo>({
 const { submit: submitPwsUpdate, loading: pwdUpdateLoading } = usePasswordUpdate(passwordForm, {
   loading: panelLoading,
 })
+const popupTarget = useWindowPopupTarget()
 </script>
 
 <template>
@@ -176,6 +178,7 @@ const { submit: submitPwsUpdate, loading: pwdUpdateLoading } = usePasswordUpdate
 
           <el-form-item label="角色" prop="roleId">
             <el-select-v2
+              :append-to="popupTarget"
               v-model="userInfoForm.roleId"
               :options="userStore.roleList"
               :props="{
@@ -187,6 +190,7 @@ const { submit: submitPwsUpdate, loading: pwdUpdateLoading } = usePasswordUpdate
 
           <el-form-item label="风控" prop="accessPolicy">
             <el-select-v2
+              :append-to="popupTarget"
               v-model="userInfoForm.accessPolicy"
               multiple
               collapse-tags

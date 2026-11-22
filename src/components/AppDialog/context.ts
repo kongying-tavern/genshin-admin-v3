@@ -11,10 +11,9 @@ export const context = new (class GlobalDialogContext {
   current = shallowRef<GlobalDialogOptions>()
 
   afterClosed = () => {
-    this.current.value = undefined
     const nextDialog = this.queue.shift()
-    if (!nextDialog) return
-    this.open(nextDialog)
+    this.current.value = nextDialog?._getOptions()
+    if (nextDialog) this.visible.value = true
   }
 
   open = (instance: GlobalDialogService) => {
@@ -39,6 +38,15 @@ export const context = new (class GlobalDialogContext {
     const index = this.queue.findIndex(instance => instance._getId() === targetId)
     if (index < 0) return
     this.queue.splice(index, 1)
+  }
+
+  clear = () => {
+    for (const instance of this.queue.splice(0)) {
+      const id = instance._getId()
+      this.resolves.get(id)?.forEach(resolve => resolve(undefined))
+      this.resolves.delete(id)
+    }
+    this.close(this.current.value?.id, undefined)
   }
 })()
 

@@ -1,7 +1,8 @@
 import { useSubscription } from '@vueuse/rxjs'
 import KDBush from 'kdbush'
-import { filter, finalize, map, switchMap, takeUntil, tap } from 'rxjs'
+import { filter, finalize, fromEvent, map, merge, switchMap, takeUntil, tap } from 'rxjs'
 import { useAppWindow } from '@/components'
+import { useWindowWorkspace } from '@/components/AppWindow/hooks/windowWorkspace'
 import { GSMarkerLayer } from '@/packages/map'
 import {
   globalPointerup$,
@@ -23,6 +24,7 @@ export const useMultiSelect = () => {
   const accessStore = useAccessStore()
   const mapStateStore = useMapStateStore()
   const shortcutStore = useShortcutStore()
+  const workspace = useWindowWorkspace()
 
   const height = inject(mapContainerHeightKey, ref(0))
   const width = inject(mapContainerWidthKey, ref(0))
@@ -45,6 +47,7 @@ export const useMultiSelect = () => {
 
   const {
     data: selectKey,
+    end$,
     isEmpty,
     update: setSelectKey,
     clear: clearSelect,
@@ -81,10 +84,12 @@ export const useMultiSelect = () => {
   const color = ref('transparent')
 
   // ==================== 框选实现 ====================
+  let task: symbol | undefined
   const finalizeMission = () => {
+    if (!task) return
+    task = undefined
     removeMultiSelecte()
-    clearSelect()
-    mapStateStore.setCursor()
+    if (isMatched.value) clearSelect()
     mapStateStore.setViewPortLocked(false)
     mapStateStore.interaction.setIsPopoverOnHover(false)
     mapStateStore.setCursor()
@@ -95,39 +100,51 @@ export const useMultiSelect = () => {
 
   const {
     info: windowInfo,
+    isOpen,
     open: openWindow,
     close: closeWindow,
+    dispose,
   } = useAppWindow({
+    key: 'markerMultiSelect',
     name: '点位批量操作',
     minWidth: 700,
-    beforeClose: () => {
-      finalizeMission()
-      return true
-    },
+    enabled: () => accessStore.get('MARKER_BATCH_EDIT'),
+    onClosed: finalizeMission,
   })
+
+  useSubscription(
+    end$.subscribe(() => {
+      if (!task) return
+      finalizeMission()
+      void dispose('mission')
+    }),
+  )
 
   const shortcutKeys = computed(() => {
     return archiveStore.preference['app.shortcutKey.multiselectMarker']
   })
 
-  const { focused } = useFocus(mapCanvasRef)
-
   useSubscription(
     shortcutStore.shortcut$
       .pipe(
-        filter(({ value }) =>
+        filter(({ ev, value }) =>
           [
             accessStore.get('MARKER_BATCH_EDIT'),
             isEmpty.value,
-            focused.value,
+            ev.target === mapCanvasRef.value,
+            !workspace.isModal(),
             shortcutKeys.value,
             value === shortcutKeys.value,
           ].every(Boolean),
         ),
 
         tap(() => {
+          const started = Symbol()
+          task = started
           setSelectKey(MultiSelect.MarkerTweak)
-          openWindow()
+          void openWindow().then(() => {
+            if (task === started && !isOpen.value) finalizeMission()
+          })
         }),
       )
       .subscribe(),
@@ -139,6 +156,7 @@ export const useMultiSelect = () => {
         filter(({ info, event }) => {
           return [
             isMatched.value,
+            !workspace.isModal(),
             event.leftButton || event.rightButton,
             event.srcEvent.ctrlKey,
             info.coordinate !== undefined,
@@ -198,11 +216,14 @@ export const useMultiSelect = () => {
               mapStateStore.interaction.setFocus(GSMarkerLayer.layerName, ids)
             }),
 
-            takeUntil(globalPointerup$),
+            takeUntil(
+              merge(globalPointerup$, fromEvent(window, 'pointercancel'), MapSubject.blur, end$),
+            ),
 
             // 注意！这里不是直接恢复初始状态，而是恢复到更新选择矩形之前的状态。
             // 只有当多选点位弹出的操作窗口关闭后才恢复到初始状态。
             finalize(() => {
+              if (!task) return
               mapStateStore.setCursor()
               mapStateStore.setViewPortLocked(false)
               mapStateStore.setTempMarkers('markerMultiSelect', markerList.value)

@@ -1,68 +1,70 @@
 import type { MaybeRef } from 'vue'
+import type { WindowContext } from '../core'
 import type { MapWindow } from '../types'
-import { WindowContext } from '../core'
+import { windowContextKey, windowWorkspaceKey } from './windowWorkspace'
 
 export interface WindowContextHookReturnType {
-  context: WindowContext
-  id: ReturnType<typeof crypto.randomUUID>
+  id: string
   info: ComputedRef<MapWindow.Info | undefined>
   isOpen: ComputedRef<boolean>
   open: () => Promise<void>
-  close: () => void
-  toggle: () => void
+  show: (event?: Event) => Promise<void>
+  close: (reason?: MapWindow.RequestCloseReason) => Promise<boolean>
+  dispose: (reason: MapWindow.DisposeReason) => Promise<void>
+  toggle: (event?: Event) => void
 }
 
-let context: WindowContext
+type Options = MaybeRef<Omit<MapWindow.WindowOpenParams, 'id'>>
 
 export function useAppWindow(): WindowContext
-export function useAppWindow(
-  options: MaybeRef<Omit<MapWindow.WindowOpenParams, 'id'>>,
-): WindowContextHookReturnType
-export function useAppWindow(options?: MaybeRef<Omit<MapWindow.WindowOpenParams, 'id'>>) {
-  if (!context) context = new WindowContext()
-
+export function useAppWindow(options: Options): WindowContextHookReturnType
+export function useAppWindow(options?: Options): WindowContext | WindowContextHookReturnType {
+  const context = inject(windowContextKey)
+  if (!context) throw new Error('窗口管理器未初始化')
   if (!options) return context
 
+  const workspace = inject(windowWorkspaceKey, null)
   const id = crypto.randomUUID()
-
-  const info = computed(() => {
-    return context.getWindow(id)
-  })
-
-  const isOpen = computed(() => {
-    return info.value !== undefined
-  })
+  let disposed = false
+  const info = computed(() => context.getWindow(id))
+  const isOpen = computed(() => context.isOpen(id))
+  const openWindow = () =>
+    disposed ? Promise.resolve(false) : context.openWindow({ ...unref(options), id })
 
   const open = async () => {
-    await context.openWindow({
-      ...unref(options),
-      id,
-    })
+    await openWindow()
   }
 
-  const close = () => {
-    context.closeWindow(id)
+  const close = (reason?: MapWindow.RequestCloseReason) => context.requestClose(id, reason)
+  const dispose = (reason: MapWindow.DisposeReason) => context.dispose(id, reason)
+
+  const show = async (event?: Event) => {
+    const trigger = event?.currentTarget ?? document.activeElement
+    if (!(await openWindow())) return
+    context.unfold(id)
+    await nextTick()
+    workspace?.focusWindow(id, trigger instanceof HTMLElement ? trigger : undefined)
   }
 
-  const toggle = () => {
-    if (isOpen.value) close()
-    else void open()
+  const toggle = (event?: Event) => {
+    if (context.hasWindow(id)) void close()
+    else void show(event)
   }
 
-  if (isRef(options))
+  if (isRef(options)) {
     watch(options, newOptions => context.updateWindow(id, newOptions), { deep: true })
-
-  onUnmounted(() => {
-    close()
+  }
+  watch(
+    () => unref(options).enabled?.() ?? true,
+    enabled => {
+      if (!enabled) void dispose('permission')
+    },
+    { flush: 'sync' },
+  )
+  onBeforeUnmount(() => {
+    disposed = true
+    void dispose('owner')
   })
 
-  return {
-    context,
-    id,
-    info,
-    isOpen,
-    open,
-    close,
-    toggle,
-  }
+  return { id, info, isOpen, open, show, close, dispose, toggle }
 }

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { useWindowPopupTarget } from '@/components/AppWindow/hooks/useWindowPopup'
 import type { TypeManagerKeys } from './definitions'
 import { CirclePlus, Delete, Edit } from '@element-plus/icons-vue'
 import { PgUnit, useGlobalDialog, usePagination } from '@/hooks'
@@ -101,6 +102,7 @@ const confirmDelete = (data: unknown) =>
     })
     .listeners({ success: updateTypeList })
     .open(TypeDeleteConfirm)
+const popupTarget = useWindowPopupTarget()
 </script>
 
 <template>
@@ -108,6 +110,7 @@ const confirmDelete = (data: unknown) =>
     <div class="p-2 flex justify-end border-b-[1px] border-[var(--el-border-color-lighter)]">
       <div class="flex-1 flex items-center gap-2 overflow-hidden">
         <el-select-v2
+          :append-to="popupTarget"
           v-model="typeKey"
           :options="TYPE_MANAGER_OPTIONS"
           style="width: 140px"

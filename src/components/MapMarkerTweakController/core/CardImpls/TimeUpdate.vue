@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useWindowPopupTarget } from '@/components/AppWindow/hooks/useWindowPopup'
 import type { TweakConfigVo } from '@/api/alova/globals'
 import { AppTimeSelect } from '@/components'
 import { useRefreshTime } from '@/hooks'
@@ -21,11 +22,16 @@ const time = computed<number>({
 })
 
 const { refreshTimeType, refreshTimeTypeOptions, isCustom } = useRefreshTime(time)
+const popupTarget = useWindowPopupTarget()
 </script>
 
 <template>
   <div class="w-full flex flex-col gap-2">
-    <el-select-v2 v-model="refreshTimeType" :options="refreshTimeTypeOptions" />
+    <el-select-v2
+      :append-to="popupTarget"
+      v-model="refreshTimeType"
+      :options="refreshTimeTypeOptions"
+    />
     <AppTimeSelect v-model="time" :disabled="!isCustom" disabled-autofucus class="h-8 flex-1" />
   </div>
 </template>

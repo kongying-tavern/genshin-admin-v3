@@ -25,19 +25,16 @@ const activeTab = (ev: MouseEvent) => {
 </script>
 
 <template>
-  <div
-    class="sider-menu-tab"
-    :class="{ actived }"
-    :data-tab-label="label"
-    @click="ev => activeTab(ev)"
-  >
-    <slot name="tab">
-      <div class="sider-menu-tab-button">
-        <slot name="icon" color="var(--icon-color)">
-          <component :is="icon ?? Grid" style="color: var(--icon-color)" />
-        </slot>
-      </div>
-    </slot>
+  <div class="sider-menu-tab" :class="{ actived }" :data-tab-label="label">
+    <button class="sider-menu-tab-hit" type="button" :aria-label="label" @click="activeTab">
+      <slot name="tab">
+        <span class="sider-menu-tab-button">
+          <slot name="icon" color="var(--icon-color)">
+            <component :is="icon ?? Grid" style="color: var(--icon-color)" />
+          </slot>
+        </span>
+      </slot>
+    </button>
     <Teleport v-if="contentRef && tabNameRef === name" :to="contentRef">
       <slot name="default" />
     </Teleport>
@@ -68,6 +65,7 @@ const activeTab = (ev: MouseEvent) => {
 }
 
 .sider-menu-tab-button {
+  display: block;
   width: 100%;
   height: 100%;
   padding: var(--icon-padding);
@@ -75,5 +73,16 @@ const activeTab = (ev: MouseEvent) => {
   border-radius: 50%;
   background: var(--button-bg);
   transition: all ease 150ms;
+}
+
+.sider-menu-tab-hit {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+
+  &:focus-visible {
+    outline: 2px solid #7ff5fe;
+  }
 }
 </style>

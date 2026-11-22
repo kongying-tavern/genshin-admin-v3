@@ -36,15 +36,19 @@ onClickOutside(contextmenuRef, () => {
       disabled,
     }"
   >
-    <div
+    <component
+      :is="interactive ? 'button' : 'div'"
       v-bind="$attrs"
       class="fontend"
+      :type="interactive ? 'button' : undefined"
+      :disabled="interactive ? disabled : undefined"
+      :aria-label="interactive ? label : undefined"
       :data-label="label"
       @click="handleClick"
       @contextmenu.prevent="toggleContextmenuVisible"
     >
       <slot name="default" />
-    </div>
+    </component>
 
     <div
       v-if="$slots.contextmenu"
@@ -129,6 +133,11 @@ onClickOutside(contextmenuRef, () => {
   &:active {
     --mask-color: #ffffff40;
   }
+}
+
+button.fontend:focus-visible {
+  outline: 2px solid #7ff5fe;
+  outline-offset: -2px;
 }
 
 .contextmenu {

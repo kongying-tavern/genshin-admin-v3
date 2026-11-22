@@ -20,25 +20,26 @@ defineProps<{
           {{ featureGroup.label }}
         </div>
 
-        <div
+        <button
           v-for="feature in featureGroup.items"
           :key="feature.label"
           :style="{ '--cols': feature.cols }"
           :class="{ 'is-opened': feature.hook?.isOpen.value }"
           class="grid-unit"
-          @click="() => feature.cb()"
+          type="button"
+          @click="feature.cb"
         >
-          <div class="grid-unit-icon">
+          <span class="grid-unit-icon">
             <component :is="feature.icon" class="h-full" />
-          </div>
-          <div class="grid-unit-label">
+          </span>
+          <span class="grid-unit-label">
             <span
               class="w-full inline-block whitespace-nowrap text-ellipsis overflow-hidden text-center"
             >
               {{ feature.label }}
             </span>
-          </div>
-        </div>
+          </span>
+        </button>
       </div>
     </div>
   </el-scrollbar>
@@ -94,9 +95,11 @@ defineProps<{
   user-select: none;
   transition: var(--transition);
   grid-column: span var(--cols, 1);
+  cursor: pointer;
 
-  &:not(.is-opened) {
-    cursor: pointer;
+  &:focus-visible {
+    outline: 2px solid #7ff5fe;
+    outline-offset: 2px;
   }
 
   &:not(.is-opened):hover {

@@ -44,16 +44,21 @@ const {
   data: linkMission,
 } = mapStateStore.subscribeMission('markerLink', () => [])
 
-const { loading, refresh: submit, onSuccess } = useLinkCreate()
+const { loading, submit, reset: resetSubmit } = useLinkCreate()
 
-const { info, close$, close, open } = useLinkWindow({ loading })
-onSuccess(() => close())
+const { info, isOpen, close$, close, open, dispose } = useLinkWindow({ loading })
+let task: symbol | undefined
+let closingWindow = false
 
 const { modifyLinks, deleteLink, extractLink, revestLink } = useLinkOperate()
 
 useSubscription(
   start$.subscribe(() => {
-    open()
+    const started = Symbol()
+    task = started
+    void open().then(() => {
+      if (task === started && !isOpen.value && isProcessing.value) clearMission()
+    })
     mapStateStore.interaction.clearFocus()
     mapStateStore.interaction.setIsPopoverOnHover(true)
     mapStateStore.interaction.pauseFocus(GSMarkerLayer.layerName)
@@ -62,20 +67,27 @@ useSubscription(
 
 useSubscription(
   end$.subscribe(() => {
-    // 注意：此处不再调用 close()，避免与 close$ 形成循环调用
-    // 窗口关闭由用户操作触发（关闭按钮 / 取消 / 提交成功）
-    // close$ 订阅中会负责清除任务
+    if (!task) return
+    task = undefined
+    resetSubmit()
     mapStateStore.interaction.resumeFocus(GSMarkerLayer.layerName)
+    clearSelect()
     mapStateStore.interaction.setIsPopoverOnHover(false)
     modifyLinks.value.clear()
     triggerRef(modifyLinks)
+    if (!closingWindow) void dispose('mission')
   }),
 )
 
 useSubscription(
   close$.subscribe(() => {
-    // 窗口关闭时统一清除任务，避免 end$ → close() → close$ → clearMission() 的循环竞态
-    if (isProcessing.value) clearMission()
+    if (!task || !isProcessing.value) return
+    closingWindow = true
+    try {
+      clearMission()
+    } finally {
+      closingWindow = false
+    }
   }),
 )
 
@@ -256,8 +268,7 @@ const resumeOnceFocus = (data: number[]) => {
 const toggleMission = () => {
   if (!isEnable.value) return
   if (isProcessing.value) {
-    clearMission()
-    close()
+    void close()
     return
   }
   update([])
@@ -265,7 +276,8 @@ const toggleMission = () => {
 
 /** 提交表单 */
 const submitLink = () => {
-  submit(linkMission.value, modifyLinks.value)
+  if (!isOpen.value) return
+  void submit(linkMission.value, modifyLinks.value, () => void close('completed'))
 }
 
 /** 自动更新任务 */
@@ -499,13 +511,6 @@ useSubscription(
       clearSelect()
     }),
 )
-
-onBeforeUnmount(() => {
-  if (isProcessing.value) {
-    clearMission()
-    close()
-  }
-})
 </script>
 
 <template>
@@ -513,6 +518,7 @@ onBeforeUnmount(() => {
     label="点位关联"
     class="grid place-content-center place-items-center"
     divider
+    interactive
     :disabled="!isEnable"
     @click="toggleMission"
   >

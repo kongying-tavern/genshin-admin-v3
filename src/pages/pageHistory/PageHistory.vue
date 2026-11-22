@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { useWindowPopupTarget } from '@/components/AppWindow/hooks/useWindowPopup'
 import { usePagination } from '@/hooks'
 import { HistoryActionType } from '@/shared'
 import { HistoryTable } from './components'
@@ -32,6 +33,7 @@ const { historyList, userMap, loading, updateHistoryList } = useHistoryList({
 })
 
 onPaginationChange(updateHistoryList)
+const popupTarget = useWindowPopupTarget()
 </script>
 
 <template>
@@ -40,6 +42,7 @@ onPaginationChange(updateHistoryList)
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8">
         <el-form-item label="记录项">
           <el-select-v2
+            :append-to="popupTarget"
             v-model="historyType"
             :options="HISTORY_OPTIONS"
             @change="updateHistoryList"
@@ -47,6 +50,7 @@ onPaginationChange(updateHistoryList)
         </el-form-item>
         <el-form-item label="操作类型">
           <el-select-v2
+            :append-to="popupTarget"
             v-model="editType"
             :options="HISTORY_ACTIONS"
             clearable

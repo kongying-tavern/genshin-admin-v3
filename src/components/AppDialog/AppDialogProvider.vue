@@ -1,5 +1,10 @@
 <script lang="ts" setup>
 import { context } from './context'
+
+onBeforeUnmount(() => {
+  context.clear()
+  context.afterClosed()
+})
 </script>
 
 <template>
@@ -10,6 +15,7 @@ import { context } from './context'
     append-to-body
     class="custom-dialog"
     :data-dialog-id="context.current.value?.id"
+    @close="context.close(context.current.value?.id, undefined)"
     @closed="() => context.afterClosed()"
   >
     <component

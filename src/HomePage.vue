@@ -19,6 +19,13 @@ import {
   MapMarkerTweakController,
 } from '@/components'
 import { bindMapContext } from '@/ai/bindings'
+import { context as dialogContext } from '@/components/AppDialog/context'
+import { noticeContext } from '@/components/AppNotice/context'
+import { useAppWindow } from '@/components/AppWindow/hooks'
+import {
+  createWindowWorkspace,
+  windowWorkspaceKey,
+} from '@/components/AppWindow/hooks/windowWorkspace'
 import { useMapLayers, useTheme } from '@/hooks'
 import { EaseoutInterpolator, GenshinMapDeck, GSZoomController } from '@/packages/map'
 import {
@@ -69,11 +76,46 @@ const mapAffixRef = shallowRef<HTMLDivElement>()
 const containerRef = shallowRef<HTMLDivElement>()
 const { width, height } = useElementSize(containerRef)
 
+const windows = useAppWindow()
+const loginModal = ref(!userStore.isLogin)
+watch(
+  () => userStore.isLogin,
+  isLogin => {
+    if (!isLogin) loginModal.value = true
+  },
+  { flush: 'sync' },
+)
+const isModal = computed(
+  () => loginModal.value || Boolean(dialogContext.current.value) || noticeContext.visible.value,
+)
+const workspace = createWindowWorkspace(
+  windows,
+  () => isModal.value,
+  () => mapCanvasRef.value?.focus({ preventScroll: true }),
+  () => containerRef.value,
+)
+provide(windowWorkspaceKey, workspace)
+userStore.onBeforeLogout(() => {
+  noticeContext.close()
+  dialogContext.clear()
+})
+
+const focusMap = (event: FocusEvent) => {
+  if (!isModal.value) windows.deactivate()
+  MapSubject.focus.next(event)
+}
+
+const pressMap = () => {
+  if (!isModal.value) windows.deactivate()
+}
+
 // 响应主题色切换
 const { toggle: toggleDarkMode } = useTheme()
 shortcutStore.useKeys(
   computed(() => archiveStore.preference['app.shortcutKey.toggleDarkMode']),
-  () => toggleDarkMode(),
+  () => {
+    if (!isModal.value) toggleDarkMode()
+  },
 )
 
 // ================ 视口状态 ================
@@ -180,45 +222,49 @@ onMounted(() => {
 
 <template>
   <div ref="containerRef" class="w-full h-full overflow-hidden relative">
-    <GenshinMapDeck
-      v-model:canvas-ref="mapCanvasRef"
-      v-model:view-state="viewState"
-      :layers="layers"
-      :disable-view-state-change="mapStateStore.isViewPortLocked"
-      :cursor="mapStateStore.cursor"
-      class="bg-black"
-      @focus="event => MapSubject.focus.next(event)"
-      @blur="event => MapSubject.blur.next(event)"
-      @load="instance => (genshinDeck = instance)"
-      @click="(info, event) => MapSubject.click.next({ info, event })"
-      @hover="(info, event) => MapSubject.hover.next({ info, event })"
-      @drag="(info, event) => MapSubject.drag.next({ info, event })"
-      @drag-end="(info, event) => MapSubject.dragEnd.next({ info, event })"
-      @drag-start="(info, event) => MapSubject.dragStart.next({ info, event })"
-    />
+    <div class="map-workspace" :inert="isModal || undefined">
+      <GenshinMapDeck
+        v-model:canvas-ref="mapCanvasRef"
+        v-model:view-state="viewState"
+        :layers="layers"
+        :disable-view-state-change="mapStateStore.isViewPortLocked"
+        :cursor="mapStateStore.cursor"
+        class="bg-black"
+        tabindex="0"
+        @pointerdown="pressMap"
+        @focus="focusMap"
+        @blur="event => MapSubject.blur.next(event)"
+        @load="instance => (genshinDeck = instance)"
+        @click="(info, event) => MapSubject.click.next({ info, event })"
+        @hover="(info, event) => MapSubject.hover.next({ info, event })"
+        @drag="(info, event) => MapSubject.drag.next({ info, event })"
+        @drag-end="(info, event) => MapSubject.dragEnd.next({ info, event })"
+        @drag-start="(info, event) => MapSubject.dragStart.next({ info, event })"
+      />
 
-    <div ref="mapAffixRef" class="affix-layer">
-      <MapMarkerPopover />
-      <MapLinkPopover v-if="accessStore.get('MANAGER_COMPONENT')" />
-      <MapContextMenu />
+      <div ref="mapAffixRef" class="affix-layer">
+        <MapMarkerPopover />
+        <MapLinkPopover v-if="accessStore.get('MANAGER_COMPONENT')" />
+        <MapContextMenu />
+      </div>
+
+      <GSZoomController v-model="viewState" :transition-duration="TRANSITION_DURATION" />
+      <MapMarkerMoveController />
+      <MapMarkerToggleController />
+      <MapMarkerTweakController />
+
+      <AppStateBar />
+      <div
+        v-if="mapDataStatus"
+        class="absolute top-3 left-1/2 -translate-x-1/2 rounded px-3 py-1 text-sm bg-[var(--el-bg-color-overlay)] text-[var(--el-text-color-regular)]"
+        role="status"
+      >
+        {{ mapDataStatus }}
+      </div>
+      <AppDevInfo />
+      <AppSiderMenu />
+      <AppWindowProvider />
     </div>
-
-    <GSZoomController v-model="viewState" :transition-duration="TRANSITION_DURATION" />
-    <MapMarkerMoveController />
-    <MapMarkerToggleController />
-    <MapMarkerTweakController />
-
-    <AppStateBar />
-    <div
-      v-if="mapDataStatus"
-      class="absolute top-3 left-1/2 -translate-x-1/2 rounded px-3 py-1 text-sm bg-[var(--el-bg-color-overlay)] text-[var(--el-text-color-regular)]"
-      role="status"
-    >
-      {{ mapDataStatus }}
-    </div>
-    <AppDevInfo />
-    <AppSiderMenu />
-    <AppWindowProvider />
     <AppNoticeProvider />
     <AppDialogProvider />
 
@@ -232,6 +278,7 @@ onMounted(() => {
       style="--el-dialog-bg-color: transparent"
       append-to-body
       width="fit-content"
+      @closed="loginModal = !userStore.isLogin"
     >
       <AppLogin />
     </el-dialog>
@@ -239,6 +286,13 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.map-workspace {
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+  --map-window-layer: 11;
+}
+
 .affix-layer {
   @apply absolute left-0 top-0 w-full h-full pointer-events-none;
 }

@@ -1,79 +1,62 @@
 import type { TweakControlInfo } from '.'
-import type { MarkerVo, TweakConfigMetaVo, TweakConfigVo, TweakVo } from '@/api/alova/globals'
+import type { MarkerVo, TweakConfigMetaVo, TweakConfigVo } from '@/api/alova/globals'
 import { ElMessage } from 'element-plus'
-import { useFetchHook } from '@/hooks'
-import { useMarkerStore } from '@/stores'
+import { useAccessStore, useMarkerStore } from '@/stores'
+import { messageFrom } from '@/utils'
 
 export interface TweakHookOptions {
   markerList: Ref<MarkerVo[]>
   tweakList: Ref<TweakControlInfo[]>
   tweakData: Ref<Map<string, TweakConfigMetaVo>>
+  getGeneration: () => number | undefined
 }
 
 export const useMarkerTweaks = (options: TweakHookOptions) => {
-  const { markerList, tweakList, tweakData } = options
+  const { markerList, tweakList, tweakData, getGeneration } = options
   const markerStore = useMarkerStore()
-
+  const accessStore = useAccessStore()
+  const pending = ref<number>()
+  const loading = computed(() => pending.value !== undefined && pending.value === getGeneration())
   const isDisabled = computed(() => !tweakList.value.length)
+  const isCurrent = (generation: number) =>
+    getGeneration() === generation && accessStore.get('MARKER_BATCH_EDIT')
 
-  const {
-    refresh: submit,
-    onSuccess,
-    onError,
-    ...rest
-  } = useFetchHook({
-    onRequest: async () => {
-      const markerIds = markerList.value.map(marker => marker.id!)
+  const submit = async () => {
+    const generation = getGeneration()
+    if (generation === undefined || loading.value || !isCurrent(generation)) return
+    pending.value = generation
 
-      // 处理自定义批量修改
-      const customTweaks = tweakList.value.filter(({ isCustom }) => isCustom)
+    try {
+      const markers = [...markerList.value]
+      const markerIds = markers.map(marker => marker.id!)
+      const changes = tweakList.value.map(({ id, prop, modifier, isCustom }) => ({
+        prop,
+        isCustom,
+        meta: tweakData.value.get(id)!,
+        options: modifier.options,
+      }))
+      const tweaks = changes.map(({ prop, meta, options }): TweakConfigVo => ({
+        prop,
+        type: options.type,
+        meta,
+      }))
 
       await Promise.all(
-        customTweaks.map(async ({ id, modifier }) => {
-          const meta = tweakData.value.get(id)!
-          await modifier.options.customModify?.(markerList.value, meta)
-        }),
+        changes
+          .filter(change => change.isCustom)
+          .map(({ options, meta }) => options.customModify?.(markers, meta)),
       )
-
-      // 处理通用批量修改
-      const tweaks = tweakList.value.map(({ id, prop, modifier }) => {
-        const meta = tweakData.value.get(id)!
-        const config: TweakConfigVo = {
-          prop,
-          type: modifier.options.type,
-          meta,
-        }
-        return config
-      })
-
-      const payload: TweakVo[] = [
-        {
-          markerIds,
-          tweaks,
-        },
-      ]
-
-      if (!tweaks.length) return []
-      await markerStore.tweakMarkers(payload)
-    },
-  })
-
-  onSuccess(() => {
-    ElMessage.success({
-      message: '批量编辑成功',
-    })
-  })
-
-  onError(err => {
-    ElMessage.error({
-      message: `批量编辑失败，原因为：${err.message}`,
-    })
-  })
-
-  return {
-    isDisabled,
-    submit,
-    onSuccess,
-    ...rest,
+      if (!isCurrent(generation)) return
+      if (tweaks.length) await markerStore.tweakMarkers([{ markerIds, tweaks }])
+      if (isCurrent(generation)) ElMessage.success({ message: '批量编辑成功' })
+    } catch (error) {
+      if (isCurrent(generation)) {
+        ElMessage.error({ message: `批量编辑失败，原因为：${messageFrom(error)}` })
+      }
+    } finally {
+      if (pending.value === generation) pending.value = undefined
+    }
   }
+
+  return { isDisabled, submit, loading }
 }

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { useWindowPopupTarget } from '@/components/AppWindow/hooks/useWindowPopup'
 import type { MarkerSearchParams } from '../hooks'
 import { useAreaStore } from '@/stores'
 import { useItemList, useItemType } from '../hooks'
@@ -52,6 +53,7 @@ watch(itemOptions, options => {
     }
   }
 })
+const popupTarget = useWindowPopupTarget()
 </script>
 
 <template>
@@ -72,6 +74,7 @@ watch(itemOptions, options => {
 
       <el-form-item label="所属地区" style="margin-bottom: 0">
         <el-select-v2
+          :append-to="popupTarget"
           v-model="modelValue.areaIdList"
           placeholder="请选择地区"
           clearable
@@ -88,6 +91,7 @@ watch(itemOptions, options => {
 
       <el-form-item label="类型" style="margin-bottom: 0">
         <el-select-v2
+          :append-to="popupTarget"
           v-model="modelValue.typeIdList"
           placeholder="请选择点位类型"
           node-key="id"
@@ -104,6 +108,7 @@ watch(itemOptions, options => {
 
       <el-form-item label="物品" style="margin-bottom: 0">
         <el-select-v2
+          :append-to="popupTarget"
           v-model="modelValue.itemIdList"
           placeholder="请选择物品"
           node-key="id"

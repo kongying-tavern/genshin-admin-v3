@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { AppWindowTeleporter, MapOverlayController, useAppWindow } from '@/components'
-import { bodyWidth } from '@/shared'
-import { useArchiveStore } from '@/stores'
+import { useArchiveStore, useUserStore } from '@/stores'
 import BarItem from './BarItem.vue'
 
 const MIN_WIDTH = window.matchMedia('(min-width: 600px)').matches ? 440 : 240
 
 const archiveStore = useArchiveStore()
+const userStore = useUserStore()
 
 const overlayVisible = computed({
   get: () => {
@@ -17,26 +17,33 @@ const overlayVisible = computed({
   },
 })
 
-const { info, open, close } = useAppWindow(
-  computed(() => ({
-    name: '附加图层控制器',
-    minWidth: MIN_WIDTH,
-    minHeight: 420,
-    x: bodyWidth.value - MIN_WIDTH - 6,
-    y: 8,
-    beforeClose: () => {
-      overlayVisible.value = false
-      return true
-    },
-  })),
-)
+const { info, open, close } = useAppWindow({
+  key: 'overlay',
+  name: '附加图层控制器',
+  minWidth: MIN_WIDTH,
+  minHeight: 420,
+  right: 6,
+  y: 8,
+  enabled: () => userStore.isLogin,
+  onClosed: reason => {
+    if (reason === 'user') overlayVisible.value = false
+  },
+})
 
-watch(overlayVisible, visible => (visible ? open() : close()), { immediate: true })
+watch(
+  [() => userStore.auth.userId, () => userStore.isLogin, overlayVisible],
+  ([, loggedIn, visible]) => {
+    if (loggedIn && visible) void open()
+    else void close('preference')
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
   <BarItem
     divider
+    interactive
     :label="`附加图层：${overlayVisible ? '显示' : '隐藏'}`"
     @click="overlayVisible = !overlayVisible"
   >

@@ -60,7 +60,7 @@
 | 主页面        | [src/HomePage.vue](./src/HomePage.vue)                                 | 地图、弹窗 Provider、窗口 Provider、侧边栏、点位弹窗/控制器、登录弹窗                   |
 | 路由         | [src/router/index.ts](./src/router/index.ts)                           | 只有 `/:pathMatch(.*)` 兜底路由，**不要擅自拆分路由**                         |
 | 全局弹窗       | `src/components/AppDialog/`                                            | `GlobalDialogService` + `context` + Provider；队列/afterClosed 语义 |
-| 窗口系统       | `src/components/AppWindow/`                                            | `WindowContext` + `useAppWindow` + Teleporter                  |
+| 窗口系统       | `src/components/AppWindow/`                                            | 应用注入 `WindowContext`，地图宿主测量边界并注册 Teleport 挂点                    |
 | 设置/用户中心/公告 | `src/components/AppSettings/`、`AppUserInfo/`、`AppNotice/`              | 设置页签由 `preferenceStore.settingActivedKey` 控制                   |
 | 点位 UI      | `src/components/MapMarkerPopover/`、`MarkerModifyer/`、`MapContextMenu/` | 点位弹窗、编辑/新增表单、右键菜单                                              |
 | 地图包        | `src/packages/map/`                                                    | deck.gl 图层、视口、地图交互                                             |
@@ -144,7 +144,7 @@
 | 命令组装                   | [src/ai/commands/index.ts](./src/ai/commands/index.ts)                                                                                                                                                                                       |
 | 数据库状态同源                | [src/stores/datasetStatus.ts](./src/stores/datasetStatus.ts)                                                                                                                                                                                 |
 | 设置/用户中心/点位表单打开         | [src/components/AppSettings/open.ts](./src/components/AppSettings/open.ts)、[src/components/AppUserInfo/open.ts](./src/components/AppUserInfo/open.ts)、[src/components/MarkerModifyer/actions.ts](./src/components/MarkerModifyer/actions.ts) |
-| 窗口定义                   | [src/components/AppSiderMenu/windowOptions.ts](./src/components/AppSiderMenu/windowOptions.ts)                                                                                                                                               |
+| 窗口定义与句柄                | [windowOptions.ts](./src/components/AppSiderMenu/windowOptions.ts)、[windowCapabilities.ts](./src/components/AppSiderMenu/windowCapabilities.ts)                                                                    |
 | 弹窗状态读取                 | [src/components/AppDialog/state.ts](./src/components/AppDialog/state.ts)                                                                                                                                                                     |
 | 单元测试                   | [tests/ai](./tests/ai)                                                                                                                                                                                                                       |
 
@@ -231,7 +231,7 @@ await __MAP_AI__.events.waitFor({
 | 新增命令    | 在 `src/ai/commands/<group>.ts` 增加带 `id/title/description/access/params/returns/examples/handler` 的命令；在 [commands/index.ts](./src/ai/commands/index.ts) 注册；写命令必须 `access: 'write'` |
 | 新增页面句柄  | 在常驻组件 setup 中 `registerCapability`，提供 `enabled/open/close/getState`，并在 `onUnmounted` 注销；参考 [AppSiderMenu.vue](./src/components/AppSiderMenu/AppSiderMenu.vue)                     |
 | 新增表单    | 在表单组件中 `registerForm`，提供 `getValues/setValues/validate/submit/close/events`；只读/敏感字段显式声明；参考 [MarkerEditor.vue](./src/components/MarkerModifyer/MarkerEditor.vue)                   |
-| 新增管理窗口  | 在 [windowOptions.ts](./src/components/AppSiderMenu/windowOptions.ts) 增加 key/name/icon/comp/role；`AppSiderMenu` 会自动创建 hook 并注册 `window.<key>`                                      |
+| 新增管理窗口  | 在 [windowOptions.ts](./src/components/AppSiderMenu/windowOptions.ts) 增加 key/name/icon/comp/role。`AppSiderMenu` 创建窗口句柄并注册 `window.<key>`，打开和撤权处置共用同一权限判断 |
 | 新增设置页签  | 同时改 [sectionKeys.ts](./src/components/AppSettings/sectionKeys.ts) 与 [AppSettings.vue](./src/components/AppSettings/AppSettings.vue)                                               |
 | 新增数据集状态 | 在 [datasetStatus.ts](./src/stores/datasetStatus.ts) 增加 key/label/store resolver；[ModuleDatabase.vue](./src/components/AppSettings/modules/ModuleDatabase.vue) 与桥接自动复用             |
 
@@ -305,4 +305,4 @@ await __MAP_AI__.call('ui.surfaces.close', { id: 'settings' })
 - 设置弹窗通过 `preferenceStore.settingActivedKey` 定位页签；打开数据库页签会持久化该 UI preference，这是预期行为。
 - 登录后的账号设置统一由 1 号云存档槽位保存。通过 `usePreferenceStore()` 或 `archiveStore.preference` 读写设置，`currentArchive.body` 只含当前槽位的点位进度和刷新时间。前端自动补建 1 号槽位，并禁用其删除和历史读取。
 - `forms.submit('login')` 会等待用户信息加载（最多 10 秒）；需要更可控登录时优先用 `auth.login`。
-- `AppWindow` 的 `open()` 已是异步；新增窗口句柄时请 `await` 底层 open，避免 `opened: false` 的假象。
+- `useAppWindow({ key, ... })` 按组件所有者分配实例 id。`open()` 等待挂点可用，明确要展开并聚焦时用 `show(event)`。业务状态收尾写在 `onClosed(reason)`，同步或异步的 `beforeClose` 负责守卫。登出、撤权和卸载通过处置路径释放窗口，普通关闭在当前会话记住布局。

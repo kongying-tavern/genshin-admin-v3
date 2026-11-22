@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useWindowDropdown } from '@/components/AppWindow/hooks/useWindowPopup'
 import { ArrowDown, CircleCheck, CirclePlus, Search, Sort } from '@element-plus/icons-vue'
 
 defineProps<{
@@ -35,6 +36,7 @@ const handleSortCommand = (command: string) => {
   if (role === 'key') sortKey.value = value
   else sortType.value = value
 }
+const { popperClass } = useWindowDropdown('dropdown')
 </script>
 
 <template>
@@ -55,7 +57,12 @@ const handleSortCommand = (command: string) => {
     </el-input>
 
     <!-- 排序选择器 -->
-    <el-dropdown :hide-on-click="false" @command="handleSortCommand">
+    <el-dropdown
+      ref="dropdown"
+      :popper-class="popperClass"
+      :hide-on-click="false"
+      @command="handleSortCommand"
+    >
       <el-button class="toolbar-action" text :icon="Sort" aria-label="排序">
         <span class="toolbar-label">排序</span>
         <el-icon class="el-icon--right toolbar-label" :size="12">

@@ -43,7 +43,11 @@ useEventListener('pointerdown', checkTooltip)
 </script>
 
 <template>
-  <div class="sider-menu absolute top-0 left-0 bottom-0 flex" :class="{ 'is-collapse': collapse }">
+  <div
+    class="sider-menu absolute top-0 left-0 bottom-0 flex"
+    :class="{ 'is-collapse': collapse }"
+    :inert="collapse || undefined"
+  >
     <div class="sider-menu-sidebar flex flex-col" :class="{ 'is-collapse': collapse }">
       <div
         class="w-full flex-shrink-0 aspect-square grid place-items-center transition-all"

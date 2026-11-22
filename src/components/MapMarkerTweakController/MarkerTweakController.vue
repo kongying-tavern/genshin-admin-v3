@@ -33,6 +33,7 @@ const { submit, isDisabled, loading } = useMarkerTweaks({
   markerList,
   tweakList,
   tweakData,
+  getGeneration: () => windowInfo.value?.generation,
 })
 
 /** @todo 基于 el 组件行为实现，不是很优雅，后期使用独立组件 */
@@ -83,7 +84,13 @@ onFinalize(() => {
       <div class="h-full flex overflow-hidden p-2">
         <div class="h-full w-[300px] flex flex-col pr-2">
           <div class="pb-2">
-            <ElDropdown ref="drownRef" placement="bottom-start" trigger="click" :teleported="false">
+            <ElDropdown
+              ref="drownRef"
+              placement="bottom-start"
+              trigger="click"
+              :teleported="false"
+              :popper-options="{ strategy: 'fixed' }"
+            >
               <el-button :icon="CirclePlus">
                 添加编辑操作
                 <ElIcon class="el-icon--right" :size="12">
@@ -123,7 +130,7 @@ onFinalize(() => {
             >
               应用
             </el-button>
-            <el-button :icon="Close" @click="closeWindow"> 取消 </el-button>
+            <el-button :icon="Close" @click="closeWindow()"> 取消 </el-button>
           </div>
         </div>
 

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { useWindowPopupTarget } from '@/components/AppWindow/hooks/useWindowPopup'
 import type { AreaVo } from '@/api/alova/globals'
 import { RefreshRight } from '@element-plus/icons-vue'
 import { useGlobalDialog } from '@/hooks'
@@ -86,6 +87,7 @@ const deleteArea = (area: AreaVo) =>
 onEditClick(([area, parent]) => openAreaEditor(area, parent))
 onAddClick(([parent]) => openAreaCreator(parent))
 onDeleteClick(([area]) => deleteArea(area))
+const popupTarget = useWindowPopupTarget()
 </script>
 
 <template>
@@ -96,7 +98,7 @@ onDeleteClick(([area]) => deleteArea(area))
       class="absolute left-4 bottom-4 border border-[var(--el-border-color)] bg-[var(--el-bg-color)]"
     />
     <AreaGraphSkeleton v-if="loading && !data.length" />
-    <el-tooltip content="刷新" placement="bottom">
+    <el-tooltip :append-to="popupTarget" content="刷新" placement="bottom">
       <el-button
         class="absolute right-4 top-4 z-20"
         :loading="loading"

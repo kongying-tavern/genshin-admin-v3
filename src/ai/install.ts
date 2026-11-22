@@ -1,4 +1,5 @@
 import type { BridgeAccess, BridgeCommand, MapAiBridge, ModeSource } from '@/ai/types'
+import type { MapWindow } from '@/components/AppWindow/types'
 import type { Pinia } from 'pinia'
 import { effectScope, toValue, watch } from 'vue'
 import { setActivePinia } from 'pinia'
@@ -20,17 +21,18 @@ import { registerStaticCapabilities } from '@/ai/capabilities'
 import { inspectSurfaces } from '@/ai/bindings'
 import { buildHelp, buildManifest } from '@/ai/help'
 import { noticeContext } from '@/components/AppNotice/context'
-import { useAppWindow } from '@/components/AppWindow'
 import { listDatasets } from '@/stores/datasetStatus'
 import { MANAGER_PHASE_LABELS } from '@/stores/hooks'
 import { useNoticeStore } from '@/stores/notice'
 import { useSocketStore } from '@/stores/socket'
 import { useUserStore } from '@/stores/user'
+import { watchWindowNames } from './windowState'
 
 export interface InstallAiBridgeOptions {
   mode: BridgeAccess
   source: ModeSource
   pinia?: Pinia
+  windows: MapWindow.Reader
 }
 
 interface SocketContextLike {
@@ -159,33 +161,6 @@ const setupNoticeWatcher = (
   })
 }
 
-const setupWindowWatcher = (
-  eventLog: ReturnType<typeof createEventLog>,
-  scope: ReturnType<typeof effectScope>,
-) => {
-  scope.run(() => {
-    const appWindow = useAppWindow()
-    let lastNames = [...appWindow.getWindows().values()]
-      .map(info => info.name)
-      .sort()
-      .join('|')
-    watch(
-      () =>
-        [...appWindow.getWindows().values()]
-          .map(info => info.name)
-          .sort()
-          .join('|'),
-      currentNames => {
-        if (currentNames === lastNames) return
-        eventLog.emit('window:change', {
-          names: currentNames ? currentNames.split('|') : [],
-        })
-        lastNames = currentNames
-      },
-    )
-  })
-}
-
 const setupRuntimeErrorListeners = (eventLog: ReturnType<typeof createEventLog>) => {
   const onError = (event: ErrorEvent) => {
     eventLog.emit('runtime:error', {
@@ -252,6 +227,7 @@ export const installAiBridge = (options: InstallAiBridgeOptions): (() => void) =
       mode: options.mode,
       modeSource: options.source,
       installedAt,
+      windows: options.windows,
     }),
   )
 
@@ -260,7 +236,9 @@ export const installAiBridge = (options: InstallAiBridgeOptions): (() => void) =
     setupAuthWatcher(eventLog, scope)
     setupSocketWatcher(eventLog, scope)
     setupNoticeWatcher(eventLog, scope)
-    setupWindowWatcher(eventLog, scope)
+    scope.run(() =>
+      watchWindowNames(options.windows, payload => eventLog.emit('window:change', payload)),
+    )
 
     commandList = createCommands({
       mode: options.mode,

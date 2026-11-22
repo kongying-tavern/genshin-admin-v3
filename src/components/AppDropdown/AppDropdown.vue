@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ElDropdown } from 'element-plus'
+import { useWindowDropdown } from '@/components/AppWindow/hooks/useWindowPopup'
 import DropdownButton from './components/DropdownButton.vue'
 
 const props = withDefaults(
@@ -24,7 +25,7 @@ const modelValue = defineModel<string>('modelValue', {
   default: '',
 })
 
-const dropdownRef = ref<InstanceType<typeof ElDropdown>>()
+const { dropdown: dropdownRef, popperClass } = useWindowDropdown('dropdownRef')
 
 const internalVisible = ref(false)
 
@@ -52,6 +53,7 @@ defineExpose({
     ref="dropdownRef"
     :trigger
     :hide-on-click="hideOnClick"
+    :popper-class="popperClass"
     @visible-change="v => handleVisibleChange(v)"
     @command="command => $emit('command', command)"
   >

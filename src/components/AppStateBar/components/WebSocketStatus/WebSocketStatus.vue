@@ -7,20 +7,14 @@ import StatusWindow from './StatusWindow.vue'
 
 const socketStore = useSocketStore()
 
-const { width, height } = useElementSize(document.body, {
-  width: 960,
-  height: 540,
+const { info, toggle } = useAppWindow({
+  key: 'eventLog',
+  name: '事件记录',
+  minWidth: 320,
+  minHeight: 400,
+  right: 6,
+  bottom: 50,
 })
-
-const { info, toggle } = useAppWindow(
-  computed(() => ({
-    name: '事件记录',
-    minWidth: 320,
-    minHeight: 400,
-    x: width.value - 320 - 6,
-    y: height.value - 400 - 50,
-  })),
-)
 
 const delay = computed(() => Math.min(999, Math.max(0, socketStore.context.delay)))
 
@@ -48,7 +42,7 @@ const color = computed(() => {
 </script>
 
 <template>
-  <BarItem label="连接状态" divider @click="toggle">
+  <BarItem label="连接状态" divider interactive @click="toggle">
     <div
       class="h-full flex items-center px-1"
       :style="{

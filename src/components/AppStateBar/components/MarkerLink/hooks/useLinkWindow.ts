@@ -1,5 +1,6 @@
 import { Subject } from 'rxjs'
 import { useAppWindow } from '@/components'
+import { useAccessStore } from '@/stores/access'
 
 interface LinkWindowHookOptions {
   loading: Ref<boolean>
@@ -8,26 +9,18 @@ interface LinkWindowHookOptions {
 export const useLinkWindow = (options: LinkWindowHookOptions) => {
   const { loading } = options
 
-  const open$ = new Subject<void>()
   const close$ = new Subject<void>()
+  const accessStore = useAccessStore()
 
-  const { ...rest } = useAppWindow({
+  const window = useAppWindow({
+    key: 'markerLink',
     name: '点位关联',
     minWidth: 580,
-    beforeOpen: () => {
-      open$.next()
-      return true
-    },
-    beforeClose: () => {
-      if (loading.value) return false
-      close$.next()
-      return true
-    },
+    enabled: () => accessStore.get('MARKER_LINK'),
+    beforeClose: () => !loading.value,
+    onClosed: () => close$.next(),
   })
 
-  return {
-    open$,
-    close$,
-    ...rest,
-  }
+  onUnmounted(() => close$.complete())
+  return { ...window, close$ }
 }
