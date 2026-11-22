@@ -56,6 +56,9 @@ export interface UserPreference {
   /** 显示区域名称标签 */
   'map.setting.showZoneTag': boolean
 
+  /** 在地图上显示跟随指针的全幅十字线和坐标 */
+  'map.setting.showFullCrosshair': boolean
+
   /** 透明化状态为已完成的点位 */
   'map.setting.transparentMarked': boolean
 
@@ -169,6 +172,7 @@ export const getDefaultPreference = (): UserPreference => ({
 
   // map
   'map.setting.showZoneTag': true,
+  'map.setting.showFullCrosshair': false,
   'map.setting.transparentMarked': true,
   'map.setting.verifyMarkersOnline': false,
   'map.setting.zoomTransitionDuration': 66,

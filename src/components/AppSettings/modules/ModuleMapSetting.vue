@@ -47,6 +47,11 @@ const consoleConfig = () => {
     </SettingGroup>
 
     <SettingGroup name="地图设置">
+      <SettingBar label="全幅十字线" note="指针在地图上时，显示横纵轴及地图坐标和点位坐标">
+        <template #setting>
+          <el-switch v-model="preferenceStore.showFullCrosshair" aria-label="全幅十字线" />
+        </template>
+      </SettingBar>
       <SettingBar label="显示区域标签" note="地图上各国、地区、子地区的标签">
         <template #setting>
           <el-switch v-model="preferenceStore.showZoneTag" />

@@ -26,6 +26,7 @@ import {
   createWindowWorkspace,
   windowWorkspaceKey,
 } from '@/components/AppWindow/hooks/windowWorkspace'
+import MapPointerCrosshair from '@/components/MapPointerCrosshair/MapPointerCrosshair.vue'
 import { useMapLayers, useTheme } from '@/hooks'
 import { EaseoutInterpolator, GenshinMapDeck, GSZoomController } from '@/packages/map'
 import {
@@ -43,6 +44,7 @@ import {
   useItemStore,
   useMarkerStore,
   useMapStateStore,
+  usePreferenceStore,
   useShortcutStore,
   useTileStore,
   useUserStore,
@@ -54,6 +56,7 @@ const tileStore = useTileStore()
 const userStore = useUserStore()
 const accessStore = useAccessStore()
 const archiveStore = useArchiveStore()
+const preferenceStore = usePreferenceStore()
 const shortcutStore = useShortcutStore()
 const mapStateStore = useMapStateStore()
 const entitySync = useMapEntitySync()
@@ -73,10 +76,13 @@ const mapDataStatus = computed(() => {
 const genshinDeck = shallowRef<GenshinMap | null>(null)
 const isPlacingMarker = ref(false)
 
-const getMapCenter = (): DTO.Coordinate2D | undefined => {
+const getMapCoordinate = (screenPoint?: DTO.Coordinate2D): DTO.Coordinate2D | undefined => {
   const viewport = genshinDeck.value?.getViewports()[0]
   if (!viewport) return
-  const [x, y] = viewport.unproject([viewport.width / 2, viewport.height / 2])
+  const position = screenPoint
+    ? [screenPoint[0] - viewport.x, screenPoint[1] - viewport.y]
+    : [viewport.width / 2, viewport.height / 2]
+  const [x, y] = viewport.unproject(position)
   return [x, y]
 }
 
@@ -251,6 +257,11 @@ onMounted(() => {
         @drag-start="(info, event) => MapSubject.dragStart.next({ info, event })"
       />
 
+      <MapPointerCrosshair
+        v-if="preferenceStore.showFullCrosshair && !isModal && genshinDeck"
+        :get-coordinate="getMapCoordinate"
+      />
+
       <div ref="mapAffixRef" class="affix-layer">
         <MapMarkerPopover />
         <MapLinkPopover v-if="accessStore.get('MANAGER_COMPONENT')" />
@@ -258,7 +269,7 @@ onMounted(() => {
           v-model:placing="isPlacingMarker"
           :modal-open="isModal"
           :map-ready="Boolean(genshinDeck)"
-          :get-map-center="getMapCenter"
+          :get-map-center="getMapCoordinate"
         />
       </div>
 

@@ -32,6 +32,7 @@ export const usePreferenceStore = defineStore('global-user-preference', () => {
     parentAreaCode: model('markerFilter.state.parentAreaCode', () => ''),
     presets: model('markerFilter.setting.presets', () => []),
     settingActivedKey: model('settingPanel.state.activedKey', () => ''),
+    showFullCrosshair: model('map.setting.showFullCrosshair', () => false),
     showRestrictedArea: model('userCenter.setting.showRestrictedArea', () => false),
     showZoneTag: model('map.setting.showZoneTag', () => true),
     step: model('markerFilter.state.step', () => 0),
