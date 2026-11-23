@@ -6,25 +6,26 @@ import Vue from '@vitejs/plugin-vue'
 import { simpleGit } from 'simple-git'
 import AutoImport from 'unplugin-auto-import/vite'
 import UnoCSS from 'unocss/vite'
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { injectAssetsManifest, postcssPlugins } from './plugins'
 import { areaTagEditor } from './plugins/area-tag-editor'
+import { loadValidatedEnv } from './plugins/validate-env'
 
-export default defineConfig(async ({ mode }) => {
+export default defineConfig(async configEnv => {
+  const envDir = import.meta.dirname
+  const ENV = loadValidatedEnv(configEnv, envDir)
   const git = simpleGit()
 
-  const ENV = loadEnv(mode, '.') as ImportMetaEnv
-
-  console.log('[ENV]', ENV)
-
-  const proxy: Record<string, string | ProxyOptions> = {
-    [ENV.VITE_API_BASE]: {
-      target: ENV.VITE_API_PROXY_TARGET,
-      changeOrigin: true,
-      rewrite: path => path.replace(new RegExp(`${ENV.VITE_API_BASE}`), ''),
-    },
-  }
+  const proxy: Record<string, ProxyOptions> = ENV.VITE_API_PROXY_TARGET
+    ? {
+        [ENV.VITE_API_BASE]: {
+          target: ENV.VITE_API_PROXY_TARGET,
+          changeOrigin: true,
+          rewrite: path => path.replace(new RegExp(`${ENV.VITE_API_BASE}`), ''),
+        },
+      }
+    : {}
 
   const plugins: Plugin[] = [
     areaTagEditor(),
@@ -78,6 +79,7 @@ export default defineConfig(async ({ mode }) => {
   const VERSION = JSON.parse(packageJSON).version as string
 
   return {
+    envDir,
     define: {
       // el-tree-select 内部的 option 组件依赖选项式 API 的 extends 继承 ElOption 的 render，
       // 关闭后会出现 "Component is missing template or render function" 警告且树节点渲染为空白，故必须开启
