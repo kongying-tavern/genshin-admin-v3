@@ -1,4 +1,5 @@
 import type { ItemVo } from '@/api/alova/globals'
+import type { DetailReadObserver } from './mapEntitySync/model'
 import { Box } from '@element-plus/icons-vue'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import Apis from '@/api/alova'
@@ -79,11 +80,13 @@ export const useItemStore = defineStore('global-item', () => {
     }
   })
 
-  async function readItems(session: Session, ids: number[]) {
+  async function readItems(session: Session, ids: number[], observer?: DetailReadObserver) {
     const { state, entities } = await sync.refresh(session)
+    observer?.start()
     const { data, users = {} } = await Apis.item.listItemById({ data: ids })
     if (!Array.isArray(data)) throw new Error('物品详情响应异常')
     const missing = checkDetails(data, ids)
+    observer?.received(missing)
     const moved = data.some(item => {
       const oldArea = entities.item.get(item.id!)?.areaId
       return oldArea !== undefined && oldArea !== item.areaId

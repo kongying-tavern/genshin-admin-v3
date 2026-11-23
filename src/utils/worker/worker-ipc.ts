@@ -1,4 +1,4 @@
-import type { EventMap, ResponseMessage } from './types'
+import type { EventMap, RequestMessage, ResponseMessage } from './types'
 import { isRequest } from './utils'
 
 type Handler<A extends unknown[] = unknown[], T = void> = (...args: A) => MaybePromise<T>
@@ -11,6 +11,7 @@ interface PortLike {
 export class WorkerIPC<
   MainEvents extends EventMap = EventMap,
   WorkerEvents extends EventMap = EventMap,
+  Metadata = never,
 > {
   #handlers: Map<keyof MainEvents, Handler> = new Map()
   #port: PortLike
@@ -23,6 +24,7 @@ export class WorkerIPC<
       try {
         if (!handler) throw new Error(`Channel ${data.channel} is unhandle`)
         const result = await handler(...data.args)
+        if (data.notify) return
         const response = {
           type: 'response',
           id: data.id,
@@ -30,6 +32,7 @@ export class WorkerIPC<
         } satisfies ResponseMessage
         port.postMessage(response)
       } catch (err) {
+        if (data.notify) return
         const { message, stack } = err as Error
         port.postMessage({
           type: 'response',
@@ -68,11 +71,21 @@ export class WorkerIPC<
 
   /** 向主线程发送事件 */
   emit = <C extends keyof WorkerEvents>(channel: C, ...args: WorkerEvents[C]['args']): void => {
-    this.#port.postMessage({
+    this.emitWithMetadata(undefined, channel, ...args)
+  }
+
+  emitWithMetadata = <C extends keyof WorkerEvents>(
+    metadata: Metadata | undefined,
+    channel: C,
+    ...args: WorkerEvents[C]['args']
+  ): void => {
+    const payload: RequestMessage<WorkerEvents[C]['args'], Metadata> = {
       id: crypto.randomUUID(),
       type: 'request',
       channel: channel as string,
       args,
-    })
+      ...(metadata === undefined ? {} : { metadata }),
+    }
+    this.#port.postMessage(payload)
   }
 }

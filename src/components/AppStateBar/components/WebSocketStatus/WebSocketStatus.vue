@@ -17,10 +17,12 @@ const { info, toggle } = useAppWindow({
   bottom: 50,
 })
 
-const delay = computed(() => Math.min(999, Math.max(0, socketStore.context.delay)))
+const sample = computed(() => socketStore.context.delay)
+const delay = computed(() => Math.min(999, Math.round(sample.value ?? 0)))
 
 const isOpen = computed(() => socketStore.context.status === 'OPEN')
 const isConnecting = computed(() => socketStore.context.status === 'CONNECTING')
+const hasSignal = computed(() => isOpen.value && sample.value !== null)
 
 const statusText = computed(() => {
   const { status } = socketStore.context
@@ -29,13 +31,17 @@ const statusText = computed(() => {
     CONNECTING: '连接中',
     CLOSED: '未连接',
     CLOSING: '关闭中',
-    OPEN: `${delay.value}ms`,
+    OPEN: hasSignal.value
+      ? `${delay.value}ms`
+      : socketStore.context.measurement?.outcome === 'timeout'
+        ? '超时'
+        : '待测',
   }[status]
 })
 
 const color = computed(() => {
   if (isConnecting.value) return 'var(--color-conn)'
-  if (!isOpen.value) return 'var(--color-null)'
+  if (!hasSignal.value) return 'var(--color-null)'
   if (delay.value > 500) return 'var(--color-slow)'
   if (delay.value > 200) return 'var(--color-norm)'
   return 'var(--color-fast)'
@@ -72,30 +78,22 @@ const color = computed(() => {
           >
             <path
               d="M944.35555555 2.27555555H780.51555555c-20.13866667 0-36.40888889 16.27022222-36.40888888 36.4088889v946.6311111c0 20.13866667 16.27022222 36.40888889 36.40888888 36.4088889h163.84c20.13866667 0 36.40888889-16.27022222 36.4088889-36.4088889V38.68444445c0-20.13866667-16.27022222-36.40888889-36.4088889-36.4088889z"
-              :fill="
-                !isOpen
-                  ? 'var(--color-null)'
-                  : delay > 200
-                    ? 'var(--color-null)'
-                    : 'var(--color-fast)'
-              "
+              :fill="!hasSignal || delay > 200 ? 'var(--color-null)' : 'var(--color-fast)'"
             />
             <path
               d="M593.92 329.95555555H430.08c-20.13866667 0-36.40888889 16.27022222-36.40888889 36.4088889v618.9511111c0 20.13866667 16.27022222 36.40888889 36.40888889 36.4088889h163.84c20.13866667 0 36.40888889-16.27022222 36.40888889-36.4088889V366.36444445c0-20.13866667-16.27022222-36.40888889-36.40888889-36.4088889z"
               :fill="
-                !isOpen
+                !hasSignal || delay > 500
                   ? 'var(--color-null)'
-                  : delay > 500
-                    ? 'var(--color-null)'
-                    : delay > 200
-                      ? 'var(--color-norm)'
-                      : 'var(--color-fast)'
+                  : delay > 200
+                    ? 'var(--color-norm)'
+                    : 'var(--color-fast)'
               "
             />
             <path
               d="M243.48444445 657.63555555H79.64444445c-20.13866667 0-36.40888889 16.27022222-36.4088889 36.4088889v291.2711111c0 20.13866667 16.27022222 36.40888889 36.4088889 36.4088889h163.84c20.13866667 0 36.40888889-16.27022222 36.40888888-36.4088889V694.04444445c0-20.13866667-16.27022222-36.40888889-36.40888888-36.4088889z"
               :fill="
-                !isOpen
+                !hasSignal
                   ? 'var(--color-null)'
                   : delay > 500
                     ? 'var(--color-slow)'

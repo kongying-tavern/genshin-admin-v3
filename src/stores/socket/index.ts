@@ -31,16 +31,18 @@ export const useSocketStore = defineStore('socket', () => {
 
   const notice = (key: WebSocketAPI.WSEventType, ...options: Parameters<typeof ElNotification>) => {
     // 检查用户设置是否允许通知
-    if (!noticeEvents.value.has(key)) return
+    if (!archiveStore.preference['socket.setting.enableNotice'] || !noticeEvents.value.has(key))
+      return
     // 清除同类通知
     isNoticing.value.get(key)?.close()
     // 本次通知
     isNoticing.value.set(key, ElNotification(...options))
   }
 
-  const { context, ipc, socketEvent, open, close } = useSocket()
+  const { context, ipc, socketEvent, open, close, recordPageStep } = useSocket()
+  const { event: appEvent } = useAppEvent(ipc, recordPageStep)
 
-  ipc.on('AppUpdated', () => {
+  appEvent.on('AppUpdated', () => {
     ElNotification.warning({
       title: '系统提示',
       message: '应用已更新，页面将在 5 分钟后重载。',
@@ -54,7 +56,7 @@ export const useSocketStore = defineStore('socket', () => {
     )
   })
 
-  ipc.on('UserKickedOut', () => {
+  appEvent.on('UserKickedOut', () => {
     ElNotification.error({
       title: '系统提示',
       message: '您已被管理员强制下线。',
@@ -63,7 +65,6 @@ export const useSocketStore = defineStore('socket', () => {
     userStore.logout()
   })
 
-  const { event: appEvent } = useAppEvent(ipc)
   const { messageList, clearMessageList } = useMessageList(appEvent, () => sync.scope)
 
   const credentials = computed<{ id: number; token: string } | undefined>(previous => {
@@ -109,6 +110,7 @@ export const useSocketStore = defineStore('socket', () => {
     messageList,
     clearMessageList,
     notice,
+    recordPageStep,
     hasCurrentCredentials,
   }
 })

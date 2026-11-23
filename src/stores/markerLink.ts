@@ -1,5 +1,6 @@
 import type { MarkerLinkageVo } from '@/api/alova/globals'
 import type { MapEntitySync } from './mapEntitySync'
+import type { DetailReadObserver } from './mapEntitySync/model'
 import type { MarkerWithUsers } from './utils/fetchMarkersByIds'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import Apis from '@/api/alova'
@@ -47,7 +48,11 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
     return groups
   })
 
-  const createBatch = async (session: Session, change?: LinkChange) => {
+  const createBatch = async (
+    session: Session,
+    change?: LinkChange,
+    observer?: DetailReadObserver,
+  ) => {
     const { state, entities } = await sync.refresh(session)
     const groups = new Set(change?.groups.filter(Boolean))
     for (const id of change?.markers ?? []) {
@@ -59,6 +64,7 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
       if (group) groups.add(group)
     }
     const full = !groups.size
+    observer?.start()
     const updates = await fetchLinkGroups(full ? undefined : [...groups])
     const notifiedIds = new Set(change?.markers)
     const details: MarkerWithUsers = { markers: [], users: {} }
@@ -117,6 +123,7 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
     ])
     if ([...confirmedDeletes].some(id => newIds.has(id)))
       throw new Error('关联回读仍包含已删除的边')
+    observer?.received()
     const deletes = oldEdges.flatMap(({ id }) => (newIds.has(id!) ? [] : [id!]))
     return {
       input: {
@@ -175,8 +182,12 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
     return createBatch(session)
   })
 
-  const readLinkChange = async (session: Session, change: LinkChange) => {
-    const { input, details, notified, updaterId } = await createBatch(session, change)
+  const readLinkChange = async (
+    session: Session,
+    change: LinkChange,
+    observer?: DetailReadObserver,
+  ) => {
+    const { input, details, notified, updaterId } = await createBatch(session, change, observer)
     const { conflict } = await sync.commit(session, input)
     if (conflict) throw new Error('关联组在回读期间发生变化')
     sync.assertCurrent(session)

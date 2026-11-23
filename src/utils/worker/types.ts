@@ -5,11 +5,13 @@ export interface EventMap {
   }
 }
 
-export interface RequestMessage<Args extends unknown[] = unknown[]> {
+export interface RequestMessage<Args extends unknown[] = unknown[], Metadata = unknown> {
   type: 'request'
   id: string
   channel: string
   args: Args
+  metadata?: Metadata
+  notify?: true
 }
 
 export interface ResponseMessage<Result = unknown> {

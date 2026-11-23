@@ -1,5 +1,5 @@
 import type { MarkerVo, TweakVo } from '@/api/alova/globals'
-import type { MarkerCommand } from './mapEntitySync/model'
+import type { DetailReadObserver, MarkerCommand } from './mapEntitySync/model'
 import { AddLocation, DeleteLocation, Location } from '@element-plus/icons-vue'
 import { liveQuery } from 'dexie'
 import { ElMessage } from 'element-plus'
@@ -133,10 +133,12 @@ export const useMarkerStore = defineStore('global-marker', () => {
     }
   })
 
-  async function readMarkers(session: Session, ids: number[]) {
+  async function readMarkers(session: Session, ids: number[], observer?: DetailReadObserver) {
     const { state } = await sync.refresh(session)
+    observer?.start()
     const result = await fetchMarkersWithUsersByIds(ids)
     const missing = checkDetails(result.markers, ids)
+    observer?.received(missing)
     const { conflict } = await sync.commit(session, {
       revision: state.revision,
       batches: { marker: { updates: result.markers } },

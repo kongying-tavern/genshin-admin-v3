@@ -9,6 +9,11 @@ export interface MapEntities {
 export type MapResource = keyof MapEntities
 export const mapResources: MapResource[] = ['item', 'marker', 'markerLink']
 
+export interface DetailReadObserver {
+  start: () => void
+  received: (missingIds?: number[]) => void
+}
+
 export interface EntityRow {
   scope: string
   resource: MapResource

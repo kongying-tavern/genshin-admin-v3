@@ -9,7 +9,7 @@ export const isResponse = (v: unknown): v is ResponseMessage => {
 export const isRequest = (v: unknown): v is RequestMessage => {
   if (typeof v !== 'object') return false
   if (v === null) return false
-  return 'type' in v && v.type !== 'response'
+  return 'type' in v && v.type === 'request' && 'args' in v && Array.isArray(v.args)
 }
 
 export const isSharedWorker = (v: WorkerGlobalScope): v is SharedWorkerGlobalScope => {
