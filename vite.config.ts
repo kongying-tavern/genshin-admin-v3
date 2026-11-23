@@ -8,9 +8,9 @@ import AutoImport from 'unplugin-auto-import/vite'
 import UnoCSS from 'unocss/vite'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
-import { injectAssetsManifest, postcssPlugins } from './plugins'
-import { areaTagEditor } from './plugins/area-tag-editor'
-import { loadValidatedEnv } from './plugins/validate-env'
+import { areaTagEditor } from './plugins/area-tag-editor.ts'
+import { injectAssetsManifest, postcssPlugins } from './plugins/index.ts'
+import { loadValidatedEnv } from './plugins/validate-env.ts'
 
 export default defineConfig(async configEnv => {
   const envDir = import.meta.dirname
@@ -145,7 +145,7 @@ export default defineConfig(async configEnv => {
       alias: [
         {
           find: /^@\//,
-          replacement: `${path.resolve(__dirname, 'src')}/`,
+          replacement: `${path.resolve(import.meta.dirname, 'src')}/`,
         },
       ],
     },

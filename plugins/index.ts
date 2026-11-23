@@ -1,2 +1,2 @@
-export { injectAssetsManifest } from './inject-assets-manifest'
-export { postcssPlugins } from './postcss'
+export { injectAssetsManifest } from './inject-assets-manifest.ts'
+export { postcssPlugins } from './postcss.ts'
