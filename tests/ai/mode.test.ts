@@ -7,6 +7,8 @@ describe('ai/mode', () => {
     expect(normalizeBridgeMode('read')).toBe('read')
     expect(normalizeBridgeMode('2')).toBe('write')
     expect(normalizeBridgeMode('rw')).toBe('write')
+    expect(normalizeBridgeMode(' ReadOnly ')).toBe('read')
+    expect(normalizeBridgeMode('DISABLED')).toBe('off')
     expect(normalizeBridgeMode('0')).toBe('off')
     expect(normalizeBridgeMode('nope')).toBeUndefined()
     expect(normalizeBridgeMode('')).toBeUndefined()

@@ -5,6 +5,7 @@
   // 由 tsconfig.node.json 接管；放在这里会被 checkJs 按 DOM+strict 规则逐行报隐式 any。
   "exclude": ["./src/api/protobuf/compiled.js", "tests/**/*.mjs"],
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "alwaysStrict": true,
     "checkJs": true,
     "incremental": true,

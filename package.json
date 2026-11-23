@@ -13,6 +13,7 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview --mode development",
     "preview:stage": "vite preview --mode stage",
+    "check:env": "node scripts/check-env.ts",
     "typecheck": "vue-tsc --build --force",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",

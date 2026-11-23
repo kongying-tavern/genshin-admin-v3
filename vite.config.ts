@@ -64,7 +64,7 @@ export default defineConfig(async configEnv => {
     }),
   ]
 
-  if (ENV.VITE_HTTPS) {
+  if (ENV.VITE_HTTPS === '1') {
     plugins.push(
       BaseSSL({
         name: 'test',

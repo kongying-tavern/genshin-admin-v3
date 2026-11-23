@@ -14,25 +14,28 @@ const requiredEnv = {
   VITE_API_AUTH_PASSWORD: 'fixture-password',
 }
 
-describe('Vite 必填环境变量', () => {
+describe('Vite 环境变量校验', () => {
   let envDir: string
+  const writtenFiles = new Set<string>()
 
   const writeEnv = (file: string, env: Record<string, string>) => {
     const contents = Object.entries(env).map(([key, value]) => `${key}="${value}"`)
     writeFileSync(join(envDir, file), contents.join('\n'))
+    writtenFiles.add(file)
   }
 
   beforeEach(() => {
     envDir = mkdtempSync(join(tmpdir(), 'map-env-'))
-    for (const key of [...Object.keys(requiredEnv), 'VITE_API_PROXY_TARGET', 'MAP_TEST_WS_BASE']) {
+    for (const key of Object.keys(process.env).filter(key => key.startsWith('VITE_'))) {
       vi.stubEnv(key, undefined)
     }
+    vi.stubEnv('MAP_TEST_WS_BASE', undefined)
   })
 
   afterEach(() => {
     vi.unstubAllEnvs()
-    rmSync(join(envDir, envFile), { force: true })
-    rmSync(join(envDir, '.env.local'), { force: true })
+    for (const file of writtenFiles) rmSync(join(envDir, file), { force: true })
+    writtenFiles.clear()
     rmdirSync(envDir)
   })
 
@@ -61,8 +64,11 @@ describe('Vite 必填环境变量', () => {
 
     expect(() => loadValidatedEnv(build, envDir)).toThrow('VITE_WS_BASE 不能为空')
 
-    writeEnv('.env.local', { MAP_TEST_WS_BASE: requiredEnv.VITE_WS_BASE })
+    vi.stubEnv('MAP_TEST_WS_BASE', requiredEnv.VITE_WS_BASE)
     expect(loadValidatedEnv(build, envDir)).toMatchObject(requiredEnv)
+
+    vi.stubEnv('VITE_WS_BASE', 'ftp://socket.example.test')
+    expect(() => loadValidatedEnv(build, envDir)).toThrow('VITE_WS_BASE 应为 HTTP(S) 或 WS(S)')
 
     vi.stubEnv('VITE_API_AUTH_USERNAME', ' ')
     expect(() => loadValidatedEnv(build, envDir)).toThrow('VITE_API_AUTH_USERNAME 不能为空')
@@ -80,5 +86,86 @@ describe('Vite 必填环境变量', () => {
     const proxyEnv = { ...relativeEnv, VITE_API_PROXY_TARGET: 'https://api.example.test' }
     writeEnv(envFile, proxyEnv)
     expect(loadValidatedEnv(serve, envDir)).toMatchObject(proxyEnv)
+  })
+
+  it.each(['.env', '.env.local', `.env.${build.mode}`, envFile])(
+    '拒绝 %s 中未声明的环境变量',
+    file => {
+      writeEnv(envFile, requiredEnv)
+      writeEnv(file, { ...requiredEnv, VITE_API_BAES: 'typo', EXTRA_KEY: 'unknown' })
+
+      expect(() => loadValidatedEnv(build, envDir)).toThrow('VITE_API_BAES 是未知环境变量')
+      expect(() => loadValidatedEnv(build, envDir)).toThrow('EXTRA_KEY 是未知环境变量')
+    },
+  )
+
+  it('拒绝由进程环境注入的未知 VITE_ 键', () => {
+    writeEnv(envFile, requiredEnv)
+    vi.stubEnv('VITE_UNKNOWN_ENV', 'unknown')
+
+    expect(() => loadValidatedEnv(build, envDir)).toThrow('VITE_UNKNOWN_ENV 是未知环境变量')
+  })
+
+  it.each([
+    ['VITE_API_BASE', 'api-dev', '应为 HTTP(S) 绝对 URL 或以 / 开头的同源路径'],
+    ['VITE_API_BASE', '//api.example.test', '应为 HTTP(S) 绝对 URL 或以 / 开头的同源路径'],
+    ['VITE_API_PROXY_TARGET', 'ftp://proxy.example.test', '应为 HTTP(S) 绝对 URL'],
+    ['VITE_WS_BASE', 'http://', '应为 HTTP(S) 或 WS(S) 绝对 URL'],
+    ['VITE_BANNER_IMAGE', 'https://assets.example.test/bad image.png', '应为 HTTP(S) 绝对 URL'],
+    ['VITE_DOCUMENT_URL', 'https:docs.example.test', '应为 HTTP(S) 绝对 URL'],
+    ['VITE_ASSETS_BASE', 'https:///assets.example.test', '应为 HTTP(S) 绝对 URL'],
+    ['VITE_CONFIG_ARCHIVE', '/system.json.bz2', '应为 HTTP(S) 绝对 URL'],
+    ['VITE_ROUTER_MODE', 'malformed', '应为 history、hash、memory 之一'],
+    ['VITE_DEVELOPMENT_MODE', 'online', '应为 default、offline 之一'],
+    ['VITE_HTTPS', 'false', '应为 0、1 之一'],
+    ['VITE_AI_BRIDGE', 'maybe', '应为 off、read、write 或桥接支持的别名'],
+    ['VITE_MAP_ENTITY_ARCHIVES', 'marker,area', '应为 marker、item、markerLink'],
+  ])('拒绝 %s 中格式错误的值 %s', (key, value, message) => {
+    writeEnv(envFile, { ...requiredEnv, [key]: value })
+
+    expect(() => loadValidatedEnv(build, envDir)).toThrow(`${key} ${message}`)
+  })
+
+  it('接受既有地址格式、枚举、桥接别名和归档列表', () => {
+    const sharedEnv = {
+      VITE_DOCUMENT_URL: 'https://docs.example.test/dash',
+      VITE_ASSETS_BASE: 'https://assets.example.test',
+      VITE_BANNER_IMAGE: 'https://assets.example.test/banner.png',
+      VITE_CONFIG_ARCHIVE: 'https://assets.example.test/system.json.bz2',
+      VITE_ROUTER_MODE: 'hash',
+      VITE_DEVELOPMENT_MODE: 'offline',
+      VITE_HTTPS: '0',
+      VITE_AI_BRIDGE: ' ReadWrite ',
+      VITE_MAP_ENTITY_ARCHIVES: 'marker, markerLink',
+    }
+    writeEnv('.env.local', sharedEnv)
+
+    for (const protocol of ['http', 'https', 'ws', 'wss']) {
+      const env = { ...requiredEnv, VITE_WS_BASE: `${protocol}://socket.example.test/socket.io` }
+      writeEnv(envFile, env)
+      expect(loadValidatedEnv(serve, envDir)).toMatchObject({ ...sharedEnv, ...env })
+    }
+  })
+
+  it('测试模式要求集成测试账号和绝对接口地址', () => {
+    const testConfig = { ...build, mode: 'test' }
+    const file = '.env.test.local'
+    writeEnv(file, requiredEnv)
+
+    expect(() => loadValidatedEnv(testConfig, envDir)).toThrow('VITE_TEST_USERNAME 缺失')
+    expect(() => loadValidatedEnv(testConfig, envDir)).toThrow('VITE_TEST_PASSWORD 缺失')
+
+    const testEnv = {
+      ...requiredEnv,
+      VITE_TEST_USERNAME: 'test-user',
+      VITE_TEST_PASSWORD: 'test-password',
+    }
+    writeEnv(file, { ...testEnv, VITE_API_BASE: '/api-dev' })
+    expect(() => loadValidatedEnv(testConfig, envDir)).toThrow(
+      'VITE_API_BASE 应为 HTTP(S) 绝对 URL',
+    )
+
+    writeEnv(file, testEnv)
+    expect(loadValidatedEnv(testConfig, envDir)).toMatchObject(testEnv)
   })
 })

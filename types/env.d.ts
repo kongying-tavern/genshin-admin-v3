@@ -12,7 +12,7 @@ interface ImportMetaEnv {
   readonly VITE_DOCUMENT_URL: string
 
   /** @dev 是否启用 HTTPS */
-  readonly VITE_HTTPS?: string
+  readonly VITE_HTTPS?: '0' | '1'
 
   /** 接口地址 */
   readonly VITE_API_BASE: string

@@ -61,6 +61,18 @@
 
 ## 开发手册
 
+### 环境变量校验
+
+从模板复制并填写对应的 `.env.<mode>.local` 文件。`dev`、`preview` 和 `build` 会自动校验，也可以单独运行以下命令。 [环境变量模板](./.env.example)
+
+```bash
+pnpm check:env
+pnpm check:env --command build
+pnpm check:env --mode stage --command preview
+```
+
+`check:env` 默认按开发服务校验 `development`，`--command build` 默认使用 `production`。`--mode` 可覆盖模式。检查覆盖未知键、必填项以及 Vite 加载后的值格式，失败时退出码为 `1`。
+
 ### 标签页恢复后重新加载
 
 `pnpm dev` 使用 Vite 热更新。浏览器冻结后台标签页时，热更新连接可能断开。连接恢复后 Vite 会刷新整页，控制台可看到 `[vite] server connection lost`。

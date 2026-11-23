@@ -22,7 +22,7 @@
 | --- | --- | --- |
 | `pnpm dev` | `write` | 本地开发完整能力 |
 | `pnpm build` / preview / 生产 | `off` | 不定义全局，不加载桥接 chunk |
-| `VITE_AI_BRIDGE` | 按配置 | 用于测试/预发构建，值 `off` / `read` / `write` |
+| `VITE_AI_BRIDGE` | 按配置 | 接受 `off` / `read` / `write` 及运行时别名，如 `0` / `1` / `2` |
 | URL `?aiBridge=read\|write\|off\|1\|2\|0` | 覆盖一切 | 仅本次页面加载生效，不持久化 |
 | `localStorage['__map_ai_bridge']` | 覆盖 env/默认 | 显式持久开启，适合自动化复用 |
 

@@ -5,16 +5,9 @@ import {
   AI_BRIDGE_QUERY_KEY,
   AI_BRIDGE_STORAGE_KEY,
 } from './constants'
+import { normalizeBridgeMode } from './normalizeMode'
 
-/** 归一化输入，无法识别时返回 undefined */
-export const normalizeBridgeMode = (raw: string | null | undefined): BridgeMode | undefined => {
-  const value = raw?.trim().toLowerCase()
-  if (!value) return undefined
-  if (['1', 'on', 'true', 'read', 'query', 'ro', 'readonly'].includes(value)) return 'read'
-  if (['2', 'write', 'rw', 'full', 'readwrite'].includes(value)) return 'write'
-  if (['0', 'off', 'false', 'none', 'disabled'].includes(value)) return 'off'
-  return undefined
-}
+export { normalizeBridgeMode }
 
 export interface ModeResolveInput {
   /** 同 location.search，默认读取当前页面 */

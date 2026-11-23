@@ -5,6 +5,8 @@
     "vitest.config.ts",
     "vitest.parity.config.ts",
     "./plugins/**/*",
+    "scripts/**/*.ts",
+    "src/ai/normalizeMode.ts",
     "./.vite/**/*",
     "types/env.d.ts",
     // Node 命令行脚本：双环境 parity 编排与离线 diff 报告
