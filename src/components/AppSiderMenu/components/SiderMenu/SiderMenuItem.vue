@@ -25,7 +25,11 @@ const activeTab = (ev: MouseEvent) => {
 </script>
 
 <template>
-  <div class="sider-menu-tab" :class="{ actived }" :data-tab-label="label">
+  <div
+    class="sider-menu-tab"
+    :class="{ actived, 'has-action': $slots.action }"
+    :data-tab-label="label"
+  >
     <button class="sider-menu-tab-hit" type="button" :aria-label="label" @click="activeTab">
       <slot name="tab">
         <span class="sider-menu-tab-button">
@@ -35,6 +39,7 @@ const activeTab = (ev: MouseEvent) => {
         </span>
       </slot>
     </button>
+    <slot name="action" />
     <Teleport v-if="contentRef && tabNameRef === name" :to="contentRef">
       <slot name="default" />
     </Teleport>
@@ -52,6 +57,17 @@ const activeTab = (ev: MouseEvent) => {
   width: 72px;
   height: 72px;
   padding: 12px;
+
+  &.has-action {
+    height: auto;
+    padding-block: 2px 0;
+
+    .sider-menu-tab-hit {
+      --icon-padding: 3px;
+      width: 44px;
+      margin-inline: auto;
+    }
+  }
 
   &:hover {
     --scale: 1.1;
@@ -81,7 +97,7 @@ const activeTab = (ev: MouseEvent) => {
 .sider-menu-tab-hit {
   display: block;
   width: 100%;
-  height: 100%;
+  aspect-ratio: 1;
   border-radius: 50%;
 
   &:focus-visible {

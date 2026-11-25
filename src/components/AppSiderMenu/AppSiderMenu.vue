@@ -92,8 +92,8 @@ const featuresWithRole = computed(() =>
 const isAdvancedFilter = computed(() => preferenceStore.filterType === 'advanced')
 
 const switchFilterMode = () => {
-  if (isAdvancedFilter.value) preferenceStore.filterType = 'basic'
-  else preferenceStore.filterType = 'advanced'
+  preferenceStore.filterType = isAdvancedFilter.value ? 'basic' : 'advanced'
+  preferenceStore.tabName = 'filter'
 }
 
 const isLogin = computed(() => {
@@ -173,13 +173,18 @@ onUnmounted(() => {
     <SiderMenuItem name="filter" :label="isAdvancedFilter ? '高级筛选' : '基础筛选'">
       <template #icon>
         <SiderMenuIcon name="filter" />
-        <span
-          class="sider-icon-badge sider-icon-mode"
+      </template>
+
+      <template #action>
+        <button
+          class="sider-filter-mode"
           :class="{ 'is-advanced': isAdvancedFilter }"
+          type="button"
+          :aria-label="isAdvancedFilter ? 'Pro，切换到基础筛选' : 'Base，切换到高级筛选'"
           @click="switchFilterMode"
         >
-          {{ isAdvancedFilter ? 'Pro' : 'Base' }}
-        </span>
+          <span class="sider-icon-badge">{{ isAdvancedFilter ? 'Pro' : 'Base' }}</span>
+        </button>
       </template>
 
       <MarkerFilter />
@@ -250,8 +255,6 @@ onUnmounted(() => {
 
 <style scoped>
 .sider-icon-badge {
-  position: absolute;
-  bottom: -2px;
   min-width: 16px;
   padding: 0 5px;
   border: 1px solid #a9d6c0;
@@ -267,21 +270,39 @@ onUnmounted(() => {
   user-select: none;
 }
 
-.sider-icon-mode {
-  right: 0;
+.sider-filter-mode {
+  display: grid;
+  width: 100%;
+  min-height: 44px;
+  place-items: center;
+  border-radius: 12px;
   cursor: pointer;
+  touch-action: manipulation;
 
-  &.is-advanced {
+  .sider-icon-badge {
+    min-width: 44px;
+    padding: 2px 6px;
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  &.is-advanced .sider-icon-badge {
     border-color: #d9c3ef;
     background: #5d4777;
   }
 
-  &:hover {
+  &:hover .sider-icon-badge {
     border-color: #fffaf0;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #7ff5fe;
   }
 }
 
 .sider-icon-count {
+  position: absolute;
+  bottom: -2px;
   left: 50%;
   padding-inline: 3px;
   font-family: Arial, sans-serif;
