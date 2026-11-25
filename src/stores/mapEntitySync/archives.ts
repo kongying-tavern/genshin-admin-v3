@@ -1,6 +1,8 @@
+import type { BinaryDownloadListener } from '@/api/alova/binaryDownload'
 import type { BinaryMD5Vo, ItemVo, MarkerVo } from '@/api/alova/globals'
 import type { MapEntitySync } from './index'
 import type { ArchivePage, MapEntities, MapResource, ResourceState } from './model'
+import type { DownloadProgressReporter } from './useEntityManager'
 import { md5 } from 'js-md5'
 import Apis from '@/api/alova'
 import db from '@/database'
@@ -48,12 +50,16 @@ async function manifest(resource: MapResource) {
   }
 }
 
-const rawBinary = {
-  meta: { raw: true },
-  transform: (response: unknown) => (response as Response).arrayBuffer(),
-}
+async function download(
+  resource: MapResource,
+  digest: string,
+  onBinaryDownload?: BinaryDownloadListener,
+) {
+  const rawBinary = {
+    meta: { raw: true, onBinaryDownload },
+    transform: (response: unknown) => (response as Response).arrayBuffer(),
+  }
 
-async function download(resource: MapResource, digest: string) {
   if (resource === 'marker')
     return Apis.marker_doc.listPageMarkerByBinary({ ...rawBinary, pathParams: { md5: digest } })
   if (resource === 'item')
@@ -116,7 +122,11 @@ export async function stageArchive<K extends MapResource>(
   session: Session,
   resource: K,
   active: ResourceState | undefined,
-  options: { maxDownloadPages?: number; readUnchanged?: boolean } = {},
+  options: {
+    maxDownloadPages?: number
+    readUnchanged?: boolean
+    onDownloadProgress?: DownloadProgressReporter
+  } = {},
 ) {
   if (!enabled.has(resource)) return
   const current = await manifest(resource)
@@ -140,12 +150,34 @@ export async function stageArchive<K extends MapResource>(
     )
   })
   if (options.maxDownloadPages !== undefined && missing.length > options.maxDownloadPages) return
+  const { onDownloadProgress } = options
+  // 清单只提供摘要，按待下载分片均分权重，并累加所有请求实际收到的字节。
+  let downloadedPages = 0
+  let receivedBytes = 0
+  if (missing.length) onDownloadProgress?.(0, 0)
   let cursor = 0
   const worker = async () => {
     while (cursor < missing.length) {
       const digest = missing[cursor++]
       sync.assertCurrent(session)
-      const entities = await decodeArchive(resource, await download(resource, digest), digest)
+      let pageBytes = 0
+      let pageRatio = 0
+      const reportPage = (bytes: number, ratio: number) => {
+        const nextRatio = Math.max(pageRatio, ratio)
+        if (bytes === pageBytes && nextRatio === pageRatio) return
+        receivedBytes += bytes - pageBytes
+        downloadedPages += nextRatio - pageRatio
+        pageBytes = bytes
+        pageRatio = nextRatio
+        onDownloadProgress?.(downloadedPages / missing.length, receivedBytes)
+      }
+      const bytes = await download(
+        resource,
+        digest,
+        onDownloadProgress && ((loaded, total) => reportPage(loaded, total ? loaded / total : 0)),
+      )
+      reportPage(bytes.byteLength, 1)
+      const entities = await decodeArchive(resource, bytes, digest)
       const page: ArchivePage = {
         scope: session.scope,
         resource,

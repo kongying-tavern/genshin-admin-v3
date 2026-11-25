@@ -152,7 +152,7 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
     }
   }
 
-  const manager = useEntityManager(sync, 'markerLink', async (session, full) => {
+  const manager = useEntityManager(sync, 'markerLink', async (session, full, task) => {
     const { state, pending } = await sync.refresh(session)
     const resource = state.resources.markerLink
     if (
@@ -161,7 +161,11 @@ export const useMarkerLinkStore = defineStore('global-marker-link', () => {
       && !resource?.pendingDeletes?.length
       && !pending.markerLink.size
     ) {
-      const stage = await stageArchive(sync, session, 'markerLink', resource).catch(() => undefined)
+      const stage = await task
+        .trackDownload('正在下载归档分片', { to: 0.8 }, onDownloadProgress =>
+          stageArchive(sync, session, 'markerLink', resource, { onDownloadProgress }),
+        )
+        .catch(() => undefined)
       if (stage?.unchanged && resource?.baseline) return { input: { batches: {} } }
       if (stage?.entities)
         return {

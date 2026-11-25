@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import compiled from '@/api/protobuf/compiled'
 import { createHttpMock, headerOf, jsonResponse } from '../_support/httpMock'
 
 /**
@@ -116,6 +117,43 @@ describe('共享 alova 实例的响应处理', () => {
       error: false,
       data: [{ id: 1, name: '管理员' }],
     })
+  })
+
+  it.each([
+    { name: '已知大小', hasLength: true, compressed: false },
+    { name: '未知大小', hasLength: false, compressed: false },
+    { name: 'HTTP 压缩', hasLength: true, compressed: true },
+  ])('在点位比对数据读取完成前上报进度（$name）', async ({ hasLength, compressed }) => {
+    const snapshots = [{ id: 1, version: 2, linkageId: 'a' }]
+    const bytes = compiled.protobuf.MarkerDiffSnapshotVoList.encode({ snapshots }).finish()
+    const headers: Record<string, string> = { 'Content-Type': 'application/octet-stream' }
+    if (hasLength) headers['Content-Length'] = String(bytes.length)
+    if (compressed) headers['Content-Encoding'] = 'gzip'
+    let stream: ReadableStreamDefaultController<Uint8Array> | undefined
+    http.respond = () =>
+      new Response(
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            stream = controller
+            controller.enqueue(bytes.subarray(0, 2))
+          },
+        }),
+        { headers },
+      )
+    const onBinaryDownload = vi.fn()
+    const result = Apis.marker_doc
+      .listMarkerDiffSnapshotByBinary({ meta: { raw: true, onBinaryDownload } })
+      .send()
+    const total = hasLength && !compressed ? bytes.length : undefined
+
+    try {
+      await vi.waitFor(() => expect(onBinaryDownload).toHaveBeenCalledWith(2, total))
+    } finally {
+      stream?.enqueue(bytes.subarray(2))
+      stream?.close()
+      await expect(result).resolves.toEqual({ snapshots })
+    }
+    expect(onBinaryDownload).toHaveBeenLastCalledWith(bytes.length, total)
   })
 
   it('业务错误以 HTTP 200 + error:true 返回时转为异常', async () => {

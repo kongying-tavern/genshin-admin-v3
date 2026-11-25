@@ -1,11 +1,22 @@
-import type { ManagerTask } from '../hooks'
+import type { ManagerProgressRange, ManagerTask } from '../hooks'
 import type { MapEntitySync } from './index'
 import type { CommitInput, MapResource } from './model'
+import { formatByteSize } from '@/utils/formatByteSize'
 import { useManager } from '../hooks'
 
 export const RECHECK_INTERVAL = 60 * 60 * 1000
 
 type Session = ReturnType<MapEntitySync['current']>
+
+export type DownloadProgressReporter = (ratio: number, bytes: number) => void
+
+export interface EntityFetchTask extends ManagerTask {
+  trackDownload: <T>(
+    label: string,
+    range: ManagerProgressRange,
+    read: (report: DownloadProgressReporter) => PromiseLike<T>,
+  ) => Promise<T>
+}
 
 export interface Reconciliation {
   input: CommitInput
@@ -15,7 +26,7 @@ export interface Reconciliation {
 export function useEntityManager(
   sync: MapEntitySync,
   resource: MapResource,
-  fetch: (session: Session, full: boolean, task: ManagerTask) => Promise<Reconciliation>,
+  fetch: (session: Session, full: boolean, task: EntityFetchTask) => Promise<Reconciliation>,
 ) {
   const nextUpdateTime = ref(0)
   const updateLoading = ref(false)
@@ -24,13 +35,36 @@ export function useEntityManager(
   let active: Session
   let queue: { session: Session; full?: boolean; job: Promise<void> } | undefined
 
+  const fetchWithProgress = (full: boolean, task: ManagerTask) => {
+    const session = active
+    return fetch(session, full, {
+      ...task,
+      async trackDownload(label, range, read) {
+        const previous = message.value
+        let started = false
+        try {
+          const result = await read((ratio, bytes) => {
+            if (!sync.isCurrent(session)) return
+            started = true
+            task.report(ratio, range)
+            message.value = bytes ? `${label} · 已接收 ${formatByteSize(bytes)}` : label
+          })
+          if (started && sync.isCurrent(session)) task.report(undefined, range)
+          return result
+        } finally {
+          if (started && sync.isCurrent(session)) message.value = previous
+        }
+      },
+    })
+  }
+
   const manager = useManager({
     context: { message },
     init: async () => {
       await sync.refresh(active)
     },
-    diff: (_, task) => fetch(active, false, task),
-    full: (_, task) => fetch(active, true, task),
+    diff: (_, task) => fetchWithProgress(false, task),
+    full: (_, task) => fetchWithProgress(true, task),
     commit: async (result, context) => {
       if (!result) return
       const session = active

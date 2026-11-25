@@ -33,7 +33,11 @@ export const useItemStore = defineStore('global-item', () => {
     const { state, entities, pending } = await sync.refresh(session)
     const resource = state.resources.item
     if (!full) {
-      const staged = await stageArchive(sync, session, 'item', resource).catch(() => undefined)
+      const staged = await task
+        .trackDownload('正在下载归档分片', { to: 0.8 }, onDownloadProgress =>
+          stageArchive(sync, session, 'item', resource, { onDownloadProgress }),
+        )
+        .catch(() => undefined)
       if (staged?.entities)
         return {
           input: {

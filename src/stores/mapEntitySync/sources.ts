@@ -1,5 +1,6 @@
 import type { ItemVo, MarkerLinkageVo, MarkerVo } from '@/api/alova/globals'
-import type { ManagerTask } from '../hooks'
+import type { ManagerProgressRange, ManagerTask } from '../hooks'
+import type { DownloadProgressReporter, EntityFetchTask } from './useEntityManager'
 import Apis from '@/api/alova'
 import { diffMarkers } from '../utils/diffMarkers'
 import { fetchMarkersByIds } from '../utils/fetchMarkersByIds'
@@ -47,18 +48,44 @@ export function sameMarkerRenderFields(a: MarkerVo, b: MarkerVo) {
   return jsonKey(signature(a)) === jsonKey(signature(b))
 }
 
+const binaryProgressMeta = (report: DownloadProgressReporter) => {
+  report(0, 0)
+  return {
+    raw: true,
+    onBinaryDownload: (loaded: number, total?: number) =>
+      report(total ? loaded / total : 0, loaded),
+  }
+}
+
 /** 全包的内容以在线索引为准，补齐较新版本及发布后的变化。 */
 export async function fetchMarkerReconciliation(
   local: Map<number, MarkerVo>,
   pending: ReadonlySet<number>,
   useArchive: boolean,
-  task: ManagerTask,
-  loadPages: (detailBatches?: number) => Promise<MarkerVo[] | undefined>,
+  task: EntityFetchTask,
+  loadPages: (
+    range: ManagerProgressRange,
+    detailBatches?: number,
+  ) => Promise<MarkerVo[] | undefined>,
 ) {
-  let archive = useArchive
-    ? ((await loadPages()) ?? (await Apis.marker_doc.listMarkersByBinary().catch(() => undefined)))
-    : undefined
-  const { snapshots } = await Apis.marker_doc.listMarkerDiffSnapshotByBinary()
+  // 全量请求先尝试归档，差异更新先用快照确定需要下载哪些数据。
+  const fullBinaryRange = { from: 0.25, to: 0.45 }
+  const detailsRange = { from: 0.65, to: 0.95 }
+  const snapshotRange = useArchive
+    ? { from: fullBinaryRange.to, to: detailsRange.from }
+    : { to: 0.35 }
+  let archive: MarkerVo[] | undefined
+  if (useArchive) {
+    archive = await loadPages({ to: fullBinaryRange.from })
+    archive ??= await task
+      .trackDownload('正在下载点位全量数据', fullBinaryRange, report =>
+        Apis.marker_doc.listMarkersByBinary({ meta: binaryProgressMeta(report) }),
+      )
+      .catch(() => undefined)
+  }
+  const { snapshots } = await task.trackDownload('正在下载点位比对数据', snapshotRange, report =>
+    Apis.marker_doc.listMarkerDiffSnapshotByBinary({ meta: binaryProgressMeta(report) }),
+  )
   if (!Array.isArray(snapshots)) throw new Error('点位快照响应异常')
   const snapshotIds = validateEntities(snapshots)
   if (snapshots.some(({ version }) => !Number.isSafeInteger(version) || version < 0))
@@ -69,7 +96,10 @@ export async function fetchMarkerReconciliation(
         count + Number(!local.has(id) || version > (local.get(id)?.version ?? 0)),
       0,
     )
-    archive = await loadPages(Math.max(1, Math.ceil(detailCount / 100)))
+    archive = await loadPages(
+      { from: snapshotRange.to, to: detailsRange.from },
+      Math.max(1, Math.ceil(detailCount / 100)),
+    )
   }
   const validArchive =
     archive
@@ -100,9 +130,9 @@ export async function fetchMarkerReconciliation(
   const { fetchIds, patches } = await diffMarkers(snapshots, baseline, new Set(local.keys()))
   for (const { id, linkageId } of patches) changed.set(id, { ...baseline.get(id), linkageId })
   const detailIds = [...new Set([...fetchIds, ...pending.intersection(snapshotIds)])]
-  task.report(0.3)
+  task.report(0, detailsRange)
   const details = await fetchMarkersByIds(detailIds, {
-    onProgress: (loaded, total) => task.report({ loaded, total }, { from: 0.3, to: 0.95 }),
+    onProgress: (loaded, total) => task.report({ loaded, total }, detailsRange),
   })
   const missing = checkDetails(details, detailIds)
   const versions = new Map(snapshots.map(({ id, version }) => [id, version]))

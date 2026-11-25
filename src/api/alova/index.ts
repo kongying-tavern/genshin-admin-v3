@@ -8,6 +8,7 @@ import { Logger } from '@/utils'
 import { Zip } from '@/utils/Zip'
 import compiled from '../protobuf/compiled'
 import { toNumber, toOptionalNumber } from '../protobuf/toNumber'
+import { observeBinaryDownload } from './binaryDownload'
 import { createApis, withConfigType } from './createApis'
 
 const logger = new Logger('Alova')
@@ -79,10 +80,11 @@ export const alovaInstance = createAlova({
     }
 
     // 解析响应数据
-    const contentType = response.headers.get('Content-Type')
-    if (contentType !== 'application/json') return response
-
-    if (method.config.meta?.raw) return response
+    const { raw, onBinaryDownload } = method.config.meta ?? {}
+    if (raw) {
+      return onBinaryDownload ? observeBinaryDownload(response, onBinaryDownload) : response
+    }
+    if (response.headers.get('Content-Type') !== 'application/json') return response
 
     const data = await response.json()
 

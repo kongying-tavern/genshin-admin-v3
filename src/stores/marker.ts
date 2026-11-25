@@ -90,11 +90,16 @@ export const useMarkerStore = defineStore('global-marker', () => {
       pending.marker,
       full || !resource?.baseline,
       task,
-      async detailBatches => {
-        const stage = await stageArchive(sync, session, 'marker', resource, {
-          maxDownloadPages: detailBatches,
-          readUnchanged: full || !resource?.baseline,
-        }).catch(() => undefined)
+      async (range, detailBatches) => {
+        const stage = await task
+          .trackDownload('正在下载归档分片', range, onDownloadProgress =>
+            stageArchive(sync, session, 'marker', resource, {
+              maxDownloadPages: detailBatches,
+              readUnchanged: full || !resource?.baseline,
+              onDownloadProgress,
+            }),
+          )
+          .catch(() => undefined)
         if (stage?.entities) {
           const compatible = await verifyMarkerArchive(stage.entities).catch(() => undefined)
           if (!compatible) {

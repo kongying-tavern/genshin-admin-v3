@@ -1,3 +1,4 @@
+import type { BinaryDownloadListener } from '@/api/alova/binaryDownload'
 import type { ArchivePage, ResourceState } from '@/stores/mapEntitySync/model'
 import { Blob } from 'node:buffer'
 import { gzipSync } from 'node:zlib'
@@ -9,6 +10,7 @@ const environment = vi.hoisted(() => ({
   bodies: new Map<string, ArrayBuffer>(),
   manifest: [] as string[],
   requests: [] as string[],
+  unknownLength: new Set<string>(),
 }))
 
 vi.mock('@/api/alova', () => ({
@@ -17,10 +19,20 @@ vi.mock('@/api/alova', () => ({
       listItemBinaryMD5: async () => ({
         data: environment.manifest.map(md5 => ({ md5, time: 1_700_000_000 })),
       }),
-      listPageItemByBinary: async ({ pathParams }: { pathParams: { md5: string } }) => {
-        environment.requests.push(pathParams.md5)
-        const body = environment.bodies.get(pathParams.md5)
+      listPageItemByBinary: async ({
+        pathParams: { md5 },
+        meta: { onBinaryDownload },
+      }: {
+        pathParams: { md5: string }
+        meta: { onBinaryDownload?: BinaryDownloadListener }
+      }) => {
+        environment.requests.push(md5)
+        const body = environment.bodies.get(md5)
         if (!body) throw new Error('下载中断')
+        onBinaryDownload?.(
+          Math.floor(body.byteLength / 2),
+          environment.unknownLength.has(md5) ? undefined : body.byteLength,
+        )
         return body
       },
     },
@@ -65,6 +77,7 @@ beforeEach(() => {
   environment.pages.clear()
   environment.bodies.clear()
   environment.requests.length = 0
+  environment.unknownLength.clear()
 })
 
 afterEach(() => {
@@ -73,6 +86,36 @@ afterEach(() => {
 })
 
 describe('地图实体归档', () => {
+  it('汇总并行分片的下载进度和已接收字节，跳过缓存分片', async () => {
+    const { stageArchive } = await import('@/stores/mapEntitySync/archives')
+    const cached = page(1)
+    const known = page(2)
+    const unknown = page(3)
+    environment.bodies.set(cached.digest, cached.bytes)
+    environment.manifest = [cached.digest]
+    await stageArchive(sync, session, 'item', undefined)
+
+    environment.requests.length = 0
+    environment.manifest.push(known.digest, unknown.digest)
+    environment.bodies.set(known.digest, known.bytes)
+    environment.bodies.set(unknown.digest, unknown.bytes)
+    environment.unknownLength.add(unknown.digest)
+    const onDownloadProgress = vi.fn<(ratio: number, bytes: number) => void>()
+    await stageArchive(sync, session, 'item', undefined, { onDownloadProgress })
+
+    expect(environment.requests).toEqual([known.digest, unknown.digest].sort())
+    expect(onDownloadProgress).toHaveBeenNthCalledWith(1, 0, 0)
+    const knownPartial = Math.floor(known.bytes.byteLength / 2)
+    const unknownPartial = Math.floor(unknown.bytes.byteLength / 2)
+    const [ratio, bytes] = onDownloadProgress.mock.calls[2]
+    expect(ratio).toBeCloseTo(knownPartial / known.bytes.byteLength / 2)
+    expect(bytes).toBe(knownPartial + unknownPartial)
+    expect(onDownloadProgress).toHaveBeenLastCalledWith(
+      1,
+      known.bytes.byteLength + unknown.bytes.byteLength,
+    )
+  })
+
   it('下载中断后复用已验证的页，并在热库清单相同时跳过正文', async () => {
     const { stageArchive } = await import('@/stores/mapEntitySync/archives')
     const first = page(1)
@@ -88,8 +131,11 @@ describe('地图实体归档', () => {
     expect(environment.requests).toEqual([second.digest])
     const active = { baseline: true, checkedAt: 0, ...result?.state } as ResourceState
     environment.requests.length = 0
-    expect((await stageArchive(sync, session, 'item', active))?.unchanged).toBe(true)
+    const onDownloadProgress = vi.fn()
+    const unchanged = await stageArchive(sync, session, 'item', active, { onDownloadProgress })
+    expect(unchanged?.unchanged).toBe(true)
     expect(environment.requests).toEqual([])
+    expect(onDownloadProgress).not.toHaveBeenCalled()
   })
 
   it('用整个清单计算成员删除，实体移页仍然保留', async () => {
