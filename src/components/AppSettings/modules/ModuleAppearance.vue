@@ -15,6 +15,13 @@ const fontSettings = [
 ] as const
 
 const fontOptions = computed(() => Object.keys(dadianStore.fontResources).filter(Boolean))
+
+const defaultFontFamily = 'ui-sans-serif, system-ui, sans-serif'
+
+const getOptionFontFamily = (font: string) => {
+  const loadedFont = dadianStore.loadedFontFamilies.get(font)
+  return loadedFont ? `${loadedFont}, ${defaultFontFamily}` : defaultFontFamily
+}
 </script>
 
 <template>
@@ -29,8 +36,18 @@ const fontOptions = computed(() => Object.keys(dadianStore.fontResources).filter
             style="width: min(40vw, 200px)"
             @update:model-value="font => (preferenceStore[key] = font)"
           >
-            <el-option label="默认字体" value="" />
-            <el-option v-for="font in fontOptions" :key="font" :label="font" :value="font" />
+            <template #label="{ label: fontLabel, value: font }">
+              <span :style="{ fontFamily: getOptionFontFamily(font) }">{{ fontLabel }}</span>
+            </template>
+
+            <el-option label="默认字体" value="" :style="{ fontFamily: defaultFontFamily }" />
+            <el-option
+              v-for="font in fontOptions"
+              :key="font"
+              :label="font"
+              :value="font"
+              :style="{ fontFamily: getOptionFontFamily(font) }"
+            />
           </el-select>
         </template>
       </SettingBar>
