@@ -60,6 +60,7 @@ const placementPoint = shallowRef<DTO.Coordinate2D>()
 const lockedPlacementCoordinate = shallowRef<DTO.Coordinate2D>()
 const trigger = useTemplateRef<HTMLButtonElement>('placementTrigger')
 const contextPanel = useTemplateRef<HTMLElement>('contextPanel')
+const contextActions = useTemplateRef<HTMLElement>('contextActions')
 const viewportWidth = inject(mapContainerWidthKey, ref(0))
 const viewportHeight = inject(mapContainerHeightKey, ref(0))
 const { position: projectedPosition } = useMapProjection({
@@ -68,11 +69,13 @@ const { position: projectedPosition } = useMapProjection({
   ),
   noCovertCoord: true,
 })
-const { width: panelWidth, height: panelHeight } = useElementSize(
-  contextPanel,
-  { width: 208, height: 208 },
-  { box: 'border-box' },
-)
+const initialMenuSize = { width: 208, height: 208 }
+const { width: panelWidth, height: panelHeight } = useElementSize(contextPanel, initialMenuSize, {
+  box: 'border-box',
+})
+const { height: actionsHeight } = useElementSize(contextActions, initialMenuSize, {
+  box: 'border-box',
+})
 
 const constrainToViewport = ([x, y]: DTO.Coordinate2D): DTO.Coordinate2D => [
   Math.max(0, Math.min(x, viewportWidth.value)),
@@ -121,30 +124,33 @@ const visibleMinimapTarget = computed(() =>
   placing.value && showMinimap.value ? minimapTarget.value : undefined,
 )
 
-const menuOffset = (point: number, size: number, extent: number) => {
+const menuOffset = (point: number, size: number, extent: number, leadingSpace = 0) => {
   const gap = 44
   const margin = 10
-  const before = point + gap + size > extent - margin
+  const spaceAfter = extent - point - margin
+  const spaceBefore = point - leadingSpace - margin
+  const before = spaceAfter < gap + size && (leadingSpace === 0 || spaceBefore > spaceAfter)
   const start = before ? point - gap - size : point + gap
   return {
     before,
-    offset: Math.max(margin, Math.min(start, extent - size - margin)),
+    offset: Math.max(margin, Math.min(start, extent - size - margin) - leadingSpace),
   }
 }
 
 const contextMenuPosition = computed(() => {
   // 锁定的瞄准环可随地图移出视口，操作菜单仍可在边缘使用。
   const [x, y] = constrainToViewport(reticlePosition.value)
-  const horizontal = menuOffset(x, panelWidth.value || 208, viewportWidth.value)
-  const vertical = menuOffset(y, panelHeight.value || 208, viewportHeight.value)
+  const horizontal = menuOffset(x, panelWidth.value || initialMenuSize.width, viewportWidth.value)
+  const buttonListHeight = actionsHeight.value || initialMenuSize.height
+  // 以按钮列表为定位基准，向上为小地图留出空间。
+  const minimapOffset = Math.max(0, panelHeight.value - buttonListHeight)
+  const vertical = menuOffset(y, buttonListHeight, viewportHeight.value, minimapOffset)
   return {
     left: `${horizontal.offset}px`,
     top: `${vertical.offset}px`,
     transformOrigin: `${horizontal.before ? 'right' : 'left'} ${vertical.before ? 'bottom' : 'top'}`,
     '--menu-shift-x': horizontal.before ? '8px' : '-8px',
     '--menu-shift-y': vertical.before ? '8px' : '-8px',
-    '--menu-direction': horizontal.before ? 'row-reverse' : 'row',
-    '--menu-align': vertical.before ? 'flex-end' : 'flex-start',
   }
 })
 
@@ -360,7 +366,12 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
         v-model:heading="heading"
         :target="visibleMinimapTarget"
       />
-      <div class="context-actions" role="group" :aria-label="placing ? '点位选址' : '地图操作'">
+      <div
+        ref="contextActions"
+        class="context-actions"
+        role="group"
+        :aria-label="placing ? '点位选址' : '地图操作'"
+      >
         <template v-if="placing">
           <button
             type="button"
@@ -613,16 +624,16 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   display: flex;
   width: max-content;
   max-width: calc(100% - 20px);
-  flex-direction: var(--menu-direction);
-  align-items: var(--menu-align);
+  max-height: calc(100% - 20px);
+  flex-direction: column;
+  align-items: center;
   gap: 8px;
 }
 
 .context-actions {
   display: grid;
   width: 208px;
-  min-width: 0;
-  max-height: calc(100dvh - 20px);
+  max-width: 100%;
   gap: 5px;
   overflow-y: auto;
   padding: 8px;
