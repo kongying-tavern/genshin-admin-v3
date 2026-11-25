@@ -1,6 +1,6 @@
 import type { UserPreference } from './types'
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { useArchiveStore } from '@/stores'
+import { useArchiveStore } from './archive'
 
 export const usePreferenceStore = defineStore('global-user-preference', () => {
   const archiveStore = useArchiveStore()
@@ -42,6 +42,11 @@ export const usePreferenceStore = defineStore('global-user-preference', () => {
     verifyMarkersOnline: model('map.setting.verifyMarkersOnline', () => false),
     zoomTransitionDuration: model('map.setting.zoomTransitionDuration', () => 66),
     markerDraggingCount: model('manager.setting.markerDraggingCount', () => 0),
+    mapLabelFont: model('appearance.setting.mapLabelFont', () => 'HYWenHei-85W'),
+    genshinFont: model('appearance.setting.genshinFont', () => 'HYWenHei-85W'),
+    elementFont: model('appearance.setting.elementFont', () => ''),
+    markerDescriptionFont: model('appearance.setting.markerDescriptionFont', () => 'SarasaMono'),
+    noticeEditorFont: model('appearance.setting.noticeEditorFont', () => 'MHYG'),
   }
 })
 

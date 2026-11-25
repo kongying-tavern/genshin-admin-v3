@@ -48,7 +48,7 @@ const resortedMarkers = computed(() =>
         && !mapStateStore.markersFilterFailed
         && !mapStateStore.markersFilterOffline
       "
-      class="h-full grid place-items-center content-center text-white font-['HYWenHei-85W']"
+      class="h-full grid place-items-center content-center text-white font-genshin"
     >
       <img class="w-60 h-60" src="/icons/qiliangliang.png" />
       <div>没有符合条件的点位</div>

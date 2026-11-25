@@ -267,9 +267,7 @@ const hasMapMission = computed(() => Boolean(mapStateStore.mission))
         </template>
 
         <template v-if="markerDetails" #append>
-          <div
-            class="p-1 flex flex-wrap gap-1 text-xs mx-1 rounded bg-[#4A526540] text-[#676D7A] font-[HYWenHei-55S]"
-          >
+          <div class="p-1 flex flex-wrap gap-1 text-xs mx-1 rounded bg-[#4A526540] text-[#676D7A]">
             <div
               class="info-tag is-interactive decoration-dashed underline-offset-2 hover:underline active:decoration-solid"
               @click="copyId"

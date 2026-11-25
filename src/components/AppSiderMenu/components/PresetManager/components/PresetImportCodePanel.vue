@@ -100,7 +100,6 @@ const { loadPreset } = usePresetLoad({
     border: 1px solid #6b7a92;
     box-shadow: none;
     color: #d3bc8e;
-    font-family: 'HYWenHei-85W';
     font-size: 14px;
     line-height: 1.6;
     font-variant-emoji: text;

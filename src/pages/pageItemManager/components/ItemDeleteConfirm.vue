@@ -60,7 +60,7 @@ const confirm = async () => {
         />
         <div class="w-[158px] overflow-hidden">
           <div
-            class="text-base font-[HYWenHei-85W] w-full overflow-hidden whitespace-nowrap text-ellipsis"
+            class="text-base w-full overflow-hidden whitespace-nowrap text-ellipsis"
             :title="item.name"
           >
             {{ item.name }}

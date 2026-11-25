@@ -73,7 +73,7 @@ useEventListener('pointerdown', ev => {
 </script>
 
 <template>
-  <div class="gs-select gs-select-variable">
+  <div class="gs-select gs-select-variable font-genshin">
     <div ref="labelRef" class="label-content" @click="openOptionList">
       <slot
         v-if="valueMap.has(modelValue)"

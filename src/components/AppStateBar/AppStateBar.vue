@@ -49,7 +49,7 @@ useEventListener('click', checkTooltip)
       :virtual-ref="virtualRef"
       :content="tooltipContent"
       :offset="8"
-      popper-class="state-bar-tooltip font-['HYWenHei-85W']"
+      popper-class="state-bar-tooltip font-genshin"
       placement="top"
       effect="customized"
       virtual-triggering

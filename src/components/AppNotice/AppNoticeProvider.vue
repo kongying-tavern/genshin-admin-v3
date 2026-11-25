@@ -11,7 +11,7 @@ onBeforeUnmount(() => context.close())
 <template>
   <dialog
     :ref="context.dialogRef"
-    class="app-notice-provider font-['HYWenHei-85W']"
+    class="app-notice-provider font-genshin"
     aria-label="公告"
     @cancel.prevent="context.close()"
     @close="context.syncClosed()"

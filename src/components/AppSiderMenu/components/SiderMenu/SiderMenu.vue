@@ -86,7 +86,7 @@ useEventListener('pointerdown', checkTooltip)
       :virtual-ref="virtualRef"
       :content="tooltipContent"
       :offset="4"
-      popper-class="sider-menu-tooltip font-['HYWenHei-85W']"
+      popper-class="sider-menu-tooltip font-genshin"
       placement="right"
       effect="customized"
       virtual-triggering

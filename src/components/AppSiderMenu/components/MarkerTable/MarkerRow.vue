@@ -23,7 +23,7 @@ const themeColor = computed(() => {
 
 <template>
   <div
-    class="marker-card font-['HYWenHei-85W']"
+    class="marker-card font-genshin"
     :class="{
       'is-hover': isHover,
       'is-focus': isFocus,

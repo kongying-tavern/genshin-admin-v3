@@ -3,3 +3,8 @@
 @import './popper.scss';
 @import './progress.scss';
 @import './tooltip.scss';
+
+// 管理窗口及可能传送到 body 的 Element Plus 弹层
+:where(.map-window-manager, .win-dialog, .el-dialog, .el-popper, .el-message, .el-message-box, .el-notification) {
+  font-family: var(--app-font-element, inherit);
+}

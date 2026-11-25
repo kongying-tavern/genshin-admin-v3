@@ -172,7 +172,7 @@ useSubscription(core$.subscribe())
 </script>
 
 <template>
-  <div v-if="isMatched" class="marker-toggle-controller">
+  <div v-if="isMatched" class="marker-toggle-controller font-genshin">
     <svg v-if="shape" :viewBox="`0 0 ${width} ${height}`" fill="transparent">
       <rect
         :x="shape.xmin"
@@ -215,7 +215,7 @@ useSubscription(core$.subscribe())
 
 .marker-toggle-controller {
   @apply absolute left-0 top-0 w-full h-full z-[10]
-    text-[#ECE5D8] font-[HYWenHei-85W]
+    text-[#ECE5D8]
     pointer-events-none;
 }
 

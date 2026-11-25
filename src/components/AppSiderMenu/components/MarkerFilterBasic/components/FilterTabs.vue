@@ -21,7 +21,7 @@ const tabPanels = computed(() => slots.default().filter(isTabPanel))
 
 <template>
   <div class="flex flex-col overflow-hidden">
-    <div class="filter-tabs font-[HYWenHei-85W]">
+    <div class="filter-tabs font-genshin">
       <template v-for="panel in tabPanels" :key="panel.props!.value">
         <div
           class="filter-tab"

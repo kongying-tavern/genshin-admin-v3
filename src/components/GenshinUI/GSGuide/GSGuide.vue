@@ -15,7 +15,7 @@ defineEmits<{
 </script>
 
 <template>
-  <div class="gs-guide">
+  <div class="gs-guide font-genshin">
     <div class="gs-guide-header">
       <div class="w-[64px] h-[64px] border-[3px] border-[#ECE5D840] rounded-full">
         <GuideIcon class="w-full h-full" />
@@ -86,7 +86,7 @@ defineEmits<{
 
 .gs-guide-title {
   @apply mb-5 px-6
-    text-3xl text-[#D3BC8E] font-[HYWenHei-85W];
+    text-3xl text-[#D3BC8E];
 }
 
 .gs-guide-zone {
@@ -102,6 +102,6 @@ defineEmits<{
 
 .gs-guide-text {
   @apply mt-5 px-6
-    text-xl text-[#ECE5D8] font-[HYWenHei-85W];
+    text-xl text-[#ECE5D8];
 }
 </style>

@@ -76,10 +76,7 @@ const defaultConfig: DTO.DadianJSON = {
   tiles: { '提瓦特-base0': { code: 'twt702' } },
   tilesBeta: { '提瓦特-base0': { code: 'twt703' } },
   application: {
-    nameCard: [
-      { label: '名片A', icon: 'a.png' },
-      { icon: 'no-label.png' },
-    ],
+    nameCard: [{ label: '名片A', icon: 'a.png' }, { icon: 'no-label.png' }],
   },
 }
 
@@ -136,6 +133,75 @@ describe('系统订阅配置 store', () => {
     expect(store.nameCardList).toEqual(defaultConfig.application?.nameCard)
     expect(store.nameCardMap.size).toBe(1)
     expect(store.nameCardMap.get('名片A')).toEqual({ label: '名片A', icon: 'a.png' })
+  })
+
+  it('区分已下发和已加载的字体，并忽略已替换资源的迟到响应', async () => {
+    const fonts = new Set<{ source: string }>()
+    const originalFonts = Object.getOwnPropertyDescriptor(document, 'fonts')
+    Object.defineProperty(document, 'fonts', { configurable: true, value: fonts })
+    const failed = Promise.withResolvers<void>()
+    const late = Promise.withResolvers<void>()
+    const load = vi
+      .fn()
+      .mockReturnValueOnce(failed.promise)
+      .mockReturnValueOnce(late.promise)
+      .mockResolvedValue(undefined)
+    vi.stubGlobal(
+      'FontFace',
+      class {
+        constructor(
+          readonly family: string,
+          readonly source: string,
+        ) {}
+        load = load
+      },
+    )
+
+    const family = '示例字体 Sans'
+    const configWithFont = (url: string): DTO.DadianJSON => ({
+      editor: { fontResources: { [family]: { url, type: 'woff2' } } },
+    })
+    const oldUrl = 'https://example.test/old.woff2'
+    const newUrl = 'https://example.test/new.woff2'
+    const store = useDadianStore()
+    try {
+      mocks.decompressAs.mockResolvedValue(configWithFont(oldUrl))
+      await store.init()
+      expect(store.fontResources[family]?.url).toBe(oldUrl)
+      expect(store.loadedFontFamilies.has(family)).toBe(false)
+
+      failed.reject(new Error('字体载入失败'))
+      await nextTick()
+      expect(store.loadedFontFamilies.has(family)).toBe(false)
+
+      mocks.decompressAs.mockResolvedValue(configWithFont(oldUrl))
+      await store.update()
+      expect(load).toHaveBeenCalledTimes(2)
+
+      mocks.decompressAs.mockResolvedValue(configWithFont(newUrl))
+      await store.update()
+      late.resolve()
+      await nextTick()
+      expect([...fonts]).toEqual([expect.objectContaining({ source: `url("${newUrl}")` })])
+      const loadedFamily = store.loadedFontFamilies.get(family)
+      expect(loadedFamily).toContain(`"${family}"`)
+
+      mocks.decompressAs.mockResolvedValue(configWithFont(oldUrl))
+      await store.update()
+      expect([...fonts]).toEqual([expect.objectContaining({ source: `url("${oldUrl}")` })])
+      expect(store.loadedFontFamilies.get(family)).not.toBe(loadedFamily)
+
+      mocks.decompressAs.mockResolvedValue({})
+      await store.update()
+      expect(store.fontResources).toEqual({})
+      expect(store.loadedFontFamilies.has(family)).toBe(false)
+      expect(fonts.size).toBe(0)
+    } finally {
+      store.$dispose()
+      vi.unstubAllGlobals()
+      if (originalFonts) Object.defineProperty(document, 'fonts', originalFonts)
+      else Reflect.deleteProperty(document, 'fonts')
+    }
   })
 
   it('tiles / tilesBeta 缺少 base0 时版本号回退为 -NA-', async () => {

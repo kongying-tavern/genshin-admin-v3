@@ -4,10 +4,32 @@ import { ElMessage } from 'element-plus'
 import { AppLogin } from '@/components'
 import { useGlobalDialog, useRoleWatch } from '@/hooks'
 import { RouteQuery } from '@/shared'
+import { useDadianStore } from '@/stores/dadian'
+import { usePreferenceStore } from '@/stores/userPreference'
 
 const router = useRouter()
 
 const { DialogService } = useGlobalDialog()
+
+const dadianStore = useDadianStore()
+const preferenceStore = usePreferenceStore()
+
+// 写入根元素，使传送到 body 的弹窗和下拉面板也能继承字体设置。
+const setFont = (
+  property: string,
+  family: string,
+  fallback = 'ui-sans-serif, system-ui, sans-serif',
+) => {
+  const font = dadianStore.loadedFontFamilies.get(family)
+  document.documentElement.style.setProperty(property, font ? `${font}, ${fallback}` : '')
+}
+
+watchEffect(() => {
+  setFont('--app-font-genshin', preferenceStore.genshinFont)
+  setFont('--app-font-element', preferenceStore.elementFont)
+  setFont('--app-font-marker-description', preferenceStore.markerDescriptionFont)
+  setFont('--app-font-notice-editor', preferenceStore.noticeEditorFont, 'sans-serif')
+})
 
 // 启动角色轮询监听（5min 轮询 + visibilitychange）
 useRoleWatch()

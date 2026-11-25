@@ -28,7 +28,7 @@ const emits = defineEmits<{
     class="gs-tab"
     :class="[`gs-tab--size-${size}`, `gs-tab--theme-${theme}`]"
   >
-    <div class="gs-tab-title shrink-0">
+    <div class="gs-tab-title font-genshin shrink-0">
       <div
         v-for="tab in tabs"
         :key="tab.value"

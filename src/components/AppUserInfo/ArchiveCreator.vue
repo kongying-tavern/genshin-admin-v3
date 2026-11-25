@@ -90,7 +90,7 @@ onUnmounted(() => {
           label-inactive-color="#D1D5DB"
           label-active-color="#D1D5DB"
         />
-        <div class="err-msg font-['HYWenHei-85W'] text-base h-6">
+        <div class="err-msg text-base h-6">
           {{ errMsg }}
         </div>
       </div>

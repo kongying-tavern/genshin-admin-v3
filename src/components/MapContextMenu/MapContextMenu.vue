@@ -304,7 +304,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
     </span>
   </Transition>
 
-  <div v-if="canCreate && !editingAreaTags" class="placement-tools">
+  <div v-if="canCreate && !editingAreaTags" class="placement-tools font-genshin">
     <button
       v-if="!placing"
       ref="placementTrigger"
@@ -343,7 +343,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
     <div
       v-if="showContextMenu || visibleMinimapTarget"
       ref="contextPanel"
-      class="context-menu"
+      class="context-menu font-genshin"
       :class="{ 'minimap-only': !showContextMenu }"
       :style="contextMenuPosition"
       @contextmenu.prevent
@@ -542,7 +542,6 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
     0 4px 16px #14192365,
     inset 0 0 0 2px #f8deb514;
   pointer-events: auto;
-  font-family: 'HYWenHei-85W', system-ui, sans-serif;
 }
 
 .placement-trigger {

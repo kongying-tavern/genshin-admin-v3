@@ -9,7 +9,7 @@ defineProps<{
 <template>
   <el-scrollbar height="100%">
     <div
-      class="feature-grid w-[350px] max-w-full p-3 h-full overflow-hidden flex flex-col gap-4 font-[HYWenHei-85W]"
+      class="feature-grid w-[350px] max-w-full p-3 h-full overflow-hidden flex flex-col gap-4 font-genshin"
     >
       <div
         v-for="featureGroup in features"

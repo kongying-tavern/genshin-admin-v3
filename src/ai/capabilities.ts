@@ -8,6 +8,7 @@ import {
   getSettingsDialogState,
   openSettingsDialog,
 } from '@/components/AppSettings/open'
+import { SETTING_SECTION_KEYS } from '@/components/AppSettings/sectionKeys'
 import {
   closeUserInfoDialog,
   getUserInfoDialogState,
@@ -101,8 +102,7 @@ const settingsCapability: SurfaceDefinition = {
   id: 'settings',
   kind: 'dialog',
   title: '系统设置',
-  description:
-    '打开设置弹窗，可通过 section 定位到 dashboard/app/mapsetting/manager/database/network/developer/about',
+  description: `打开设置弹窗，可通过 section 定位到 ${SETTING_SECTION_KEYS.join('/')}`,
   open: params => openSettingsDialog({ section: asRecord(params).section as string | undefined }),
   close: () => closeSettingsDialog(),
   getState: () => getSettingsDialogState(),

@@ -215,7 +215,7 @@ await __MAP_AI__.events.waitFor({
 
 | id | 类型 | 打开参数 | 说明 |
 | --- | --- | --- | --- |
-| `settings` | dialog | `{ section? }` | 系统设置，section 可选 `dashboard/app/mapsetting/manager/database/network/developer/about` |
+| `settings` | dialog | `{ section? }` | 系统设置，section 可选 `dashboard/appearance/app/mapsetting/manager/database/network/developer/about` |
 | `userInfo` | dialog | — | 用户中心，需要登录 |
 | `notices` | dialog | — | 公告弹窗 |
 | `siderMenu` | panel | `{ tab?, collapsed? }` | 侧边栏，tab 可选 `filter/marker-table/features` |

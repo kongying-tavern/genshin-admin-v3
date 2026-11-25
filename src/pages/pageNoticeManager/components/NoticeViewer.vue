@@ -131,7 +131,7 @@ const channels = [...NOTICE_NAME_MAP.entries()].map(([channel, name]) => ({
               :headers="[2, 4]"
               default-foreground="#4f473f"
               default-background="#fff"
-              view-font="MHYG, sans-serif"
+              view-font="var(--app-font-notice-editor, sans-serif)"
               :view-line-height="1.5"
               :view-zoom="0.75"
             />

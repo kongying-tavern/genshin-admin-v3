@@ -114,11 +114,8 @@ const confirmDelete = async () => {
 <template>
   <MapAffix :pos="position" no-covert-coord integer>
     <template v-if="focusedMeta">
-      <div class="genshin-link-popover font-[HYWenHei-85W] text-sm">
-        <div
-          class="bg-[#B6B3AF] p-1 rounded font-[HYWenHei-55S] flex items-center gap-1"
-          @click="copyGroupId"
-        >
+      <div class="genshin-link-popover font-genshin text-sm">
+        <div class="bg-[#B6B3AF] p-1 rounded flex items-center gap-1" @click="copyGroupId">
           <span
             class="shrink-0 w-[32px] h-5 rounded-sm bg-[#FAF5ED] text-[#4A5366] px-1 text-xs grid place-content-center"
           >
@@ -128,7 +125,7 @@ const confirmDelete = async () => {
             {{ focusedMeta.link.groupId?.slice(-8).toUpperCase() }}
           </span>
         </div>
-        <div class="bg-[#B6B3AF] p-1 rounded font-[HYWenHei-55S] flex items-center gap-1">
+        <div class="bg-[#B6B3AF] p-1 rounded flex items-center gap-1">
           <span
             class="shrink-0 w-[32px] h-5 rounded-sm bg-[#FAF5ED] text-[#4A5366] px-1 text-xs grid place-content-center"
           >
@@ -138,7 +135,7 @@ const confirmDelete = async () => {
             {{ focusedMeta.link.id }}
           </span>
         </div>
-        <div class="bg-[#B6B3AF] p-1 rounded font-[HYWenHei-55S] flex items-center gap-1">
+        <div class="bg-[#B6B3AF] p-1 rounded flex items-center gap-1">
           <span
             class="shrink-0 w-[32px] h-5 rounded-sm bg-[#FAF5ED] text-[#4A5366] px-1 text-xs grid place-content-center"
           >
@@ -149,7 +146,7 @@ const confirmDelete = async () => {
             {{ actionName }}
           </span>
         </div>
-        <div class="bg-[#B6B3AF] p-1 rounded font-[HYWenHei-55S] flex items-center gap-1">
+        <div class="bg-[#B6B3AF] p-1 rounded flex items-center gap-1">
           <span
             class="shrink-0 w-[32px] h-5 rounded-sm bg-[#FAF5ED] text-[#4A5366] px-1 text-xs grid place-content-center"
           >
@@ -159,7 +156,7 @@ const confirmDelete = async () => {
             {{ focusedMeta.link.fromId }}
           </span>
         </div>
-        <div class="bg-[#B6B3AF] p-1 rounded font-[HYWenHei-55S] flex items-center gap-1">
+        <div class="bg-[#B6B3AF] p-1 rounded flex items-center gap-1">
           <span
             class="shrink-0 w-[32px] h-5 rounded-sm bg-[#FAF5ED] text-[#4A5366] px-1 text-xs grid place-content-center"
           >

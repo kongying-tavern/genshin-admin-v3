@@ -27,3 +27,7 @@
 .gs-text-primary {
   color: var(--gs-text-color-priamry);
 }
+
+.font-genshin {
+  font-family: var(--app-font-genshin, ui-sans-serif, system-ui, sans-serif);
+}

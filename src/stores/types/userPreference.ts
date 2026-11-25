@@ -35,6 +35,15 @@ export interface UserPreference {
   /** 移动点位的快捷键 */
   'app.shortcutKey.draggingMarker': string
 
+  // ====================      外观      ====================
+
+  /** 字体资源名称。空字符串表示使用默认字体 */
+  'appearance.setting.mapLabelFont'?: string
+  'appearance.setting.genshinFont'?: string
+  'appearance.setting.elementFont'?: string
+  'appearance.setting.markerDescriptionFont'?: string
+  'appearance.setting.noticeEditorFont'?: string
+
   // ====================    用户中心    ====================
 
   /** 用户名片 */

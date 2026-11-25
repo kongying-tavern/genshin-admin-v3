@@ -182,7 +182,7 @@ const beforeClose = (done: () => void) => {
             :visible="erroeMessage.length > 0"
             effect="customized"
             :popper-class="{
-              'font-[\'HYWenHei-85W\']': true,
+              'font-genshin': true,
               'gs-tooltip': true,
               error: erroeMessage.length > 0,
             }"

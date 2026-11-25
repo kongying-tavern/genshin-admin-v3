@@ -43,7 +43,7 @@ const handleClose = () => {
     @closed="handleClose"
   >
     <div
-      class="genshin-dark-card flex flex-col overflow-hidden font-['HYWenHei-85W'] min-w-[600px] h-[600px] max-w-[100dvw] max-h-[100dvh]"
+      class="genshin-dark-card flex flex-col overflow-hidden font-genshin min-w-[600px] h-[600px] max-w-[100dvw] max-h-[100dvh]"
     >
       <div class="text-xl text-center">选择筛选类型</div>
       <GSDivider color="#76716A" :height="34" />

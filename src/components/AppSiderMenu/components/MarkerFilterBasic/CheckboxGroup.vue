@@ -100,7 +100,7 @@ const handleDragStart = (ev: DragEvent, row: T) => {
 </script>
 
 <template>
-  <div class="checkbox-group font-[HYWenHei-85W]">
+  <div class="checkbox-group font-genshin">
     <el-scrollbar
       class="checkbox-group-scrollbar"
       always

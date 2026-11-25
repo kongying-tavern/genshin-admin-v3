@@ -95,6 +95,7 @@ const textareaRows = computed(() => Math.floor((height.value - 20) / 21))
     <div class="flex gap-1">
       <el-input
         v-model="internalBind"
+        class="marker-description-input"
         type="textarea"
         resize="none"
         :rows="3"
@@ -136,7 +137,7 @@ const textareaRows = computed(() => Math.floor((height.value - 20) / 21))
           <el-input
             ref="addonInputRef"
             v-model="internalBind"
-            class="font-['SarasaMono']"
+            class="marker-description-input"
             type="textarea"
             resize="none"
             :rows="textareaRows"
@@ -147,3 +148,9 @@ const textareaRows = computed(() => Math.floor((height.value - 20) / 21))
     </AddonTeleporter>
   </div>
 </template>
+
+<style scoped>
+.marker-description-input {
+  font-family: var(--app-font-marker-description, ui-sans-serif, system-ui, sans-serif);
+}
+</style>

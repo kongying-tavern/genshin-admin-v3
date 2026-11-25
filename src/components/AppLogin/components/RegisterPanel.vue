@@ -57,7 +57,7 @@ const trigger = async () => {
       class="w-full flex flex-col p-4 bg-[var(--el-bg-color)]"
       style="--el-border-radius-base: 8px"
     >
-      <div class="flex flex-col justify-center items-center font-['HYWenHei-85W'] pb-4">
+      <div class="flex flex-col justify-center items-center font-genshin pb-4">
         <img class="w-12 h-12" src="/favicon.ico" />
         {{ title }}
       </div>

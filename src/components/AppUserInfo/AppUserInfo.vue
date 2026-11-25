@@ -29,7 +29,7 @@ const progressId = useId()
 </script>
 
 <template>
-  <div class="user-info-dialog">
+  <div class="user-info-dialog font-genshin">
     <header class="user-info-header">
       <h2>用户中心</h2>
       <GSButton
@@ -107,7 +107,7 @@ const progressId = useId()
 }
 
 .user-info-dialog {
-  @apply relative font-[HYWenHei-85W] text-[#424F65];
+  @apply relative text-[#424F65];
   --paint-padding: 2;
   container: user-center / inline-size;
   height: min(720px, calc(100dvh - 48px));

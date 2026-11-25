@@ -14,7 +14,7 @@ withDefaults(
 <template>
   <div
     v-bind="$attrs"
-    class="genshin-marker-popover font-['HYWenHei-85W']"
+    class="genshin-marker-popover font-genshin"
     :style="{
       '--arrow-offset-y': `${32 * 2 ** (zoom > -2 ? 0 : zoom + 2)}px`,
     }"

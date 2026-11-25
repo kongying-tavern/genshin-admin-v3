@@ -186,7 +186,7 @@
 
 | id                         | 类型            | 打开参数                                     | 说明                                                                             |
 | -------------------------- | ------------- | ---------------------------------------- | ------------------------------------------------------------------------------ |
-| `settings`                 | dialog        | `{ section? }`                           | 设置；section：`dashboard/app/mapsetting/manager/database/network/developer/about` |
+| `settings`                 | dialog        | `{ section? }`                           | 设置；section：`dashboard/appearance/app/mapsetting/manager/database/network/developer/about` |
 | `userInfo`                 | dialog        | —                                        | 用户中心，需要登录                                                                      |
 | `notices`                  | dialog        | —                                        | 公告弹窗                                                                           |
 | `siderMenu`                | panel         | `{ tab?, collapsed? }`                   | 侧边栏；tab：`filter/marker-table/features`                                         |

@@ -25,7 +25,12 @@ const componentOptions = computed<NormalizedOption[]>(() => {
 </script>
 
 <template>
-  <ElSegmented v-model="modelValue" class="gs-segmented" :size="size" :options="componentOptions" />
+  <ElSegmented
+    v-model="modelValue"
+    class="gs-segmented font-genshin"
+    :size="size"
+    :options="componentOptions"
+  />
 </template>
 
 <style lang="scss" scoped>

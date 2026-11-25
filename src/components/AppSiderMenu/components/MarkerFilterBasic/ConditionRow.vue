@@ -25,7 +25,7 @@ const handleDelete = () => {
 </script>
 
 <template>
-  <div class="condition-row font-['HYWenHei-85W']">
+  <div class="condition-row font-genshin">
     <div class="h-full flex-1 flex items-center p-1 gap-1 overflow-hidden">
       <MarkerFilterButton :clickable="false" :title="condition.area.name">
         {{ condition.area.name }}

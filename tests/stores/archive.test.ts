@@ -5,6 +5,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, reactive } from 'vue'
 import { useArchiveStore } from '@/stores/archive'
+import { usePreferenceStore } from '@/stores/userPreference'
 
 const mocks = vi.hoisted(() => ({
   put: vi.fn(),
@@ -127,6 +128,38 @@ afterEach(() => {
 })
 
 describe('1 号槽位和旧存档迁移', () => {
+  it('旧存档沿用各组件初始字体，字体改动按项目独立同步到 1 号槽位', async () => {
+    const store = await start()
+    const preferences = usePreferenceStore()
+    expect(preferences).toMatchObject({
+      mapLabelFont: 'HYWenHei-85W',
+      genshinFont: 'HYWenHei-85W',
+      elementFont: '',
+      markerDescriptionFont: 'SarasaMono',
+      noticeEditorFont: 'MHYG',
+    })
+
+    preferences.mapLabelFont = ''
+    preferences.noticeEditorFont = '示例字体'
+    seed(
+      1,
+      entry(40, [11], {
+        ...preference('mapsetting'),
+        'appearance.setting.elementFont': '云端字体',
+      }),
+    )
+    await store.flush()
+
+    expect(savedSlots()).toEqual([1])
+    expect(body(1).Preference).toMatchObject({
+      'appearance.setting.mapLabelFont': '',
+      'appearance.setting.elementFont': '云端字体',
+      'appearance.setting.noticeEditorFont': '示例字体',
+    })
+    expect(preferences.mapLabelFont).toBe('')
+    expect(preferences.elementFont).toBe('云端字体')
+  })
+
   it('1 号设置优先于较新的普通槽位及本地缓存，切换进度和读取旧历史都沿用它', async () => {
     local.set(7, {
       id: 7,

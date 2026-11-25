@@ -240,7 +240,7 @@ onUnmounted(() => {
 
           <div
             v-if="noticeStore.newCount > 0"
-            class="absolute top-0 right-0 h-[18px] w-[18px] rounded-full grid place-content-center text-xs text-white bg-[#E6455F] font-[HYWenHei-85W]"
+            class="absolute top-0 right-0 h-[18px] w-[18px] rounded-full grid place-content-center text-xs text-white bg-[#E6455F] font-genshin"
           >
             {{ noticeStore.newCount }}
           </div>

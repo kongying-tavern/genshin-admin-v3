@@ -7,6 +7,7 @@ import { usePreferenceStore } from '@/stores'
 import { transitionToggleSchema } from '@/utils'
 import {
   ModuleAbout,
+  ModuleAppearance,
   ModuleApp,
   ModuleDashboard,
   ModuleDatabase,
@@ -26,6 +27,7 @@ const preferenceStore = usePreferenceStore()
 const settingOptions: { key: SettingSectionKey; name: string; is: Component; icon?: Component }[] =
   [
     { key: 'dashboard', name: '基本信息', is: ModuleDashboard, icon: El.Monitor },
+    { key: 'appearance', name: '外观', is: ModuleAppearance, icon: El.Brush },
     { key: 'app', name: '快捷键', is: ModuleApp, icon: El.Box },
     { key: 'mapsetting', name: '地图', is: ModuleMapSetting, icon: El.MapLocation },
     { key: 'manager', name: '管理组件', is: ModuleManager, icon: El.Files },

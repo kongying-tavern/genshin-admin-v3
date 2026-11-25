@@ -16,6 +16,9 @@ const getVersion = (config: DTO.DadianJSON) => {
   return `${config.tiles?.['提瓦特-base0']?.code ?? '-NA-'} / ${config.tilesBeta?.['提瓦特-base0']?.code ?? '-NA-'}`
 }
 
+const quoteCssString = (value: string) =>
+  `"${value.replace(/["\\\n\r\f]/g, char => `\\${char.charCodeAt(0).toString(16)} `)}"`
+
 /** 订阅的打点配置 */
 export const useDadianStore = defineStore('system-config', () => {
   const userStore = useUserStore()
@@ -93,25 +96,47 @@ export const useDadianStore = defineStore('system-config', () => {
     isInit.value = true
   }
 
-  const fontFamilySet = ref(new Set<string>())
+  const fontResources = computed(() => raw.value.editor?.fontResources ?? {})
+  const loadedFontFamilies = reactive(new Map<string, string>())
+  const fontFaces = new Map<string, { url: string; face: FontFace }>()
+  let fontRevision = 0
 
-  const fontFamilyMission = ref(new Set<string>())
+  const removeFont = (family: string, face: FontFace) => {
+    fontFaces.delete(family)
+    loadedFontFamilies.delete(family)
+    document.fonts.delete(face)
+  }
 
-  // 自动加载字体资源
-  watch(
-    () => raw.value?.editor?.fontResources,
-    (fontResources = {}) => {
-      Object.entries(fontResources).forEach(([family, { url }]) => {
-        if (fontFamilyMission.value.has(family)) return
-        fontFamilyMission.value.add(family)
-        const fontFace = new FontFace(family, `url(${url})`)
-        document.fonts.add(fontFace)
-        fontFace.load().then(() => {
-          fontFamilySet.value.add(family)
-        })
-      })
-    },
-  )
+  const loadFont = async (family: string, url: string) => {
+    const cssFamily = quoteCssString(family)
+    const face = new FontFace(cssFamily, `url(${quoteCssString(url)})`)
+    fontFaces.set(family, { url, face })
+    try {
+      await face.load()
+    } catch {
+      if (fontFaces.get(family)?.face === face) fontFaces.delete(family)
+      return
+    }
+    if (fontFaces.get(family)?.face !== face) return
+    document.fonts.add(face)
+    // deck.gl 按字体字符串缓存字形纹理，同名字体换址后需要重新绘制字形。
+    loadedFontFamilies.set(family, `${cssFamily} /* ${++fontRevision} */`)
+  }
+
+  watch(fontResources, resources => {
+    for (const [family, { url, face }] of fontFaces) {
+      if (!Object.hasOwn(resources, family) || resources[family].url !== url) {
+        removeFont(family, face)
+      }
+    }
+    for (const [family, { url }] of Object.entries(resources)) {
+      if (family && !fontFaces.has(family)) void loadFont(family, url)
+    }
+  })
+
+  onScopeDispose(() => {
+    for (const [family, { face }] of fontFaces) removeFont(family, face)
+  })
 
   // 名片
   const nameCardList = computed(() => {
@@ -134,7 +159,8 @@ export const useDadianStore = defineStore('system-config', () => {
     loadDadianJSON,
     update,
     loading,
-    fontFamilySet,
+    fontResources,
+    loadedFontFamilies,
   }
 })
 

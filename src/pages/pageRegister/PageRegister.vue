@@ -20,7 +20,7 @@ const trigger = async () => {
 <template>
   <div class="h-full grid place-items-center">
     <el-card class="w-96 py-2" style="--el-card-border-radius: 8px">
-      <div class="flex flex-col justify-center items-center font-['HYWenHei-85W'] pb-4">
+      <div class="flex flex-col justify-center items-center font-genshin pb-4">
         <img class="w-12 h-12" src="/favicon.ico" />
         {{ title }}
       </div>

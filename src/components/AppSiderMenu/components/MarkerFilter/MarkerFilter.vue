@@ -19,7 +19,7 @@ const conditionManagerVisible = ref(false)
 </script>
 
 <template>
-  <div class="marker-filter font-['HYWenHei-85W'] h-full flex flex-col">
+  <div class="marker-filter font-genshin h-full flex flex-col">
     <MarkerFilterStatus />
     <MarkerFilterAdvanced v-if="filterType === 'advanced'">
       <template #append>

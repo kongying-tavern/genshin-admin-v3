@@ -73,10 +73,7 @@ const { humanFriendlyTimeText } = useRefreshTime(
       </AppIconTagRenderer>
 
       <div class="mx-3 h-12 flex-1 flex-col overflow-hidden" style="contain: layout">
-        <div
-          class="w-full mb-1 overflow-hidden whitespace-nowrap text-ellipsis font-[HYWenHei-85W]"
-          :title="data.name"
-        >
+        <div class="w-full mb-1 overflow-hidden whitespace-nowrap text-ellipsis" :title="data.name">
           {{ data.name }}
         </div>
         <div

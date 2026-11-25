@@ -33,7 +33,7 @@ const onAnimationEnd = (ev: AnimationEvent) => {
 <template>
   <div
     v-click-outside="closeMessageInAnimation"
-    class="gs-message"
+    class="gs-message font-genshin"
     :class="[
       `gs-message--type-${type}`,
       {

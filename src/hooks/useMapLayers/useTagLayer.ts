@@ -10,15 +10,14 @@ export const useTagLayer = (options?: () => GSTagLayerProps) => {
   const tagLayer = computed(() => {
     const tile = tileStore.currentTileConfig?.tile
     if (!tile) return
+    const font = dadianStore.loadedFontFamilies.get(preferenceStore.mapLabelFont)
     return new GSTagLayer({
       ...(options?.() ?? {
         visible: preferenceStore.showZoneTag,
         tagGroups: tileStore.visibleTagGroups,
       }),
       offset: tile.center,
-      fontFamily: dadianStore.fontFamilySet.has('HYWenHei-85W')
-        ? 'HYWenHei-85W, Monaco, monospace'
-        : undefined,
+      fontFamily: font ? `${font}, Monaco, monospace` : 'Monaco, monospace',
     })
   })
 

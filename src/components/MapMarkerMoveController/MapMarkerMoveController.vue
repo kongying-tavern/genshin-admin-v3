@@ -135,7 +135,7 @@ useSubscription(
 
 <template>
   <Transition name="draw-y" appear mode="in-out">
-    <div v-if="isDraggingProcessing" class="marker-move-controller">
+    <div v-if="isDraggingProcessing" class="marker-move-controller font-genshin">
       <div class="controller-info-bar">
         <div class="flex-1 text-center">
           <div>正在编辑点位坐标</div>
@@ -164,7 +164,7 @@ useSubscription(
 <style scoped>
 .marker-move-controller {
   @apply absolute left-0 top-0 w-full h-full z-[10]
-    text-[#ECE5D8] font-[HYWenHei-85W]
+    text-[#ECE5D8]
     pointer-events-none;
 }
 
