@@ -100,13 +100,10 @@ watch(
   () => (areaTagEditorOrigin.value = undefined),
 )
 
-const getMapCoordinate = (screenPoint?: DTO.Coordinate2D): DTO.Coordinate2D | undefined => {
+const getMapCoordinate = (screenPoint: DTO.Coordinate2D): DTO.Coordinate2D | undefined => {
   const viewport = genshinDeck.value?.getViewports()[0]
   if (!viewport) return
-  const position = screenPoint
-    ? [screenPoint[0] - viewport.x, screenPoint[1] - viewport.y]
-    : [viewport.width / 2, viewport.height / 2]
-  const [x, y] = viewport.unproject(position)
+  const [x, y] = viewport.unproject([screenPoint[0] - viewport.x, screenPoint[1] - viewport.y])
   return [x, y]
 }
 
@@ -276,8 +273,7 @@ onMounted(() => {
         @load="instance => (genshinDeck = instance)"
         @click="
           (info, event) =>
-            !isPlacingMarker
-            && (!areaTagEditorOrigin || event.rightButton)
+            (event.rightButton || (!isPlacingMarker && !areaTagEditorOrigin))
             && MapSubject.click.next({ info, event })
         "
         @hover="
@@ -301,7 +297,7 @@ onMounted(() => {
           v-model:placing="isPlacingMarker"
           :modal-open="isModal"
           :map-ready="Boolean(genshinDeck)"
-          :get-map-center="getMapCoordinate"
+          :get-map-coordinate="getMapCoordinate"
           :editing-area-tags="Boolean(areaTagEditorOrigin)"
           :area-tag-action="areaTagAction"
         />

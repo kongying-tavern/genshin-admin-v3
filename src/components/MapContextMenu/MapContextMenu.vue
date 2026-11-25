@@ -25,7 +25,7 @@ import PlacementMinimap from './PlacementMinimap.vue'
 const props = defineProps<{
   modalOpen: boolean
   mapReady: boolean
-  getMapCenter: () => DTO.Coordinate2D | undefined
+  getMapCoordinate: (point: DTO.Coordinate2D) => DTO.Coordinate2D | undefined
   editingAreaTags?: boolean
   areaTagAction?: { label: string; open: (coordinate: DTO.Coordinate2D) => void }
 }>()
@@ -54,22 +54,44 @@ const mapViewState = inject(mapViewStateKey)
 // 原图箭头朝西南偏西。在本次打点期间沿用上一次调好的朝向。
 const heading = ref(252)
 
-const coordinate = shallowRef<DTO.Coordinate2D>()
+const contextCoordinate = shallowRef<DTO.Coordinate2D>()
+// 用视口像素保存罗盘的位置，平移和缩放只更新它下方的地图坐标。
+const placementPoint = shallowRef<DTO.Coordinate2D>()
 const trigger = useTemplateRef<HTMLButtonElement>('placementTrigger')
 const contextPanel = useTemplateRef<HTMLElement>('contextPanel')
 const viewportWidth = inject(mapContainerWidthKey, ref(0))
 const viewportHeight = inject(mapContainerHeightKey, ref(0))
-const { position } = useMapProjection({ coord: coordinate, noCovertCoord: true })
+const { position: contextPosition } = useMapProjection({
+  coord: contextCoordinate,
+  noCovertCoord: true,
+})
 const { width: panelWidth, height: panelHeight } = useElementSize(
   contextPanel,
   { width: 208, height: 208 },
   { box: 'border-box' },
 )
 
+const constrainToViewport = ([x, y]: DTO.Coordinate2D): DTO.Coordinate2D => [
+  Math.max(0, Math.min(x, viewportWidth.value)),
+  Math.max(0, Math.min(y, viewportHeight.value)),
+]
+
+const placementPosition = computed(() => {
+  if (!placing.value) return
+  return constrainToViewport(
+    placementPoint.value ?? [viewportWidth.value / 2, viewportHeight.value / 2],
+  )
+})
+const reticlePosition = computed(() => placementPosition.value ?? contextPosition.value)
+const reticleStyle = computed(() => {
+  const [x, y] = reticlePosition.value
+  return { left: `${x}px`, top: `${y}px` }
+})
+
 const showContextMenu = computed(() => {
-  const [x, y] = position.value
+  const [x, y] = reticlePosition.value
   return (
-    coordinate.value !== undefined
+    contextCoordinate.value !== undefined
     && x >= 0
     && x <= viewportWidth.value
     && y >= 0
@@ -77,12 +99,25 @@ const showContextMenu = computed(() => {
   )
 })
 
-const reticlePosition = computed(() =>
-  placing.value ? undefined : { left: `${position.value[0]}px`, top: `${position.value[1]}px` },
+const minimapTarget = shallowRef<DTO.Coordinate2D>()
+watch(
+  [
+    placementPosition,
+    showMinimap,
+    () => mapViewState?.value.target,
+    () => mapViewState?.value.zoom,
+  ],
+  ([point, visible]) => {
+    minimapTarget.value = point && visible ? props.getMapCoordinate(point) : undefined
+  },
+  { flush: 'post', immediate: true },
+)
+const visibleMinimapTarget = computed(() =>
+  placing.value && showMinimap.value ? minimapTarget.value : undefined,
 )
 
 const menuOffset = (point: number, size: number, extent: number) => {
-  const gap = 32
+  const gap = 44
   const margin = 10
   const before = point + gap + size > extent - margin
   const start = before ? point - gap - size : point + gap
@@ -93,7 +128,7 @@ const menuOffset = (point: number, size: number, extent: number) => {
 }
 
 const contextMenuPosition = computed(() => {
-  const [x, y] = position.value
+  const [x, y] = reticlePosition.value
   const horizontal = menuOffset(x, panelWidth.value || 208, viewportWidth.value)
   const vertical = menuOffset(y, panelHeight.value || 208, viewportHeight.value)
   return {
@@ -107,30 +142,87 @@ const contextMenuPosition = computed(() => {
   }
 })
 
+let reticleDrag: { element: HTMLElement; pointerId: number; offset: DTO.Coordinate2D } | undefined
+
+const startReticleDrag = (event: PointerEvent) => {
+  const point = placementPosition.value
+  if (!point || reticleDrag || event.button !== 0 || !event.isPrimary) return
+  const element = event.currentTarget as HTMLElement
+  event.preventDefault()
+  element.setPointerCapture(event.pointerId)
+  reticleDrag = {
+    element,
+    pointerId: event.pointerId,
+    offset: [point[0] - event.clientX, point[1] - event.clientY],
+  }
+}
+
+const moveReticle = (event: PointerEvent) => {
+  if (reticleDrag?.pointerId !== event.pointerId) return
+  const [offsetX, offsetY] = reticleDrag.offset
+  placementPoint.value = constrainToViewport([event.clientX + offsetX, event.clientY + offsetY])
+}
+
+const releaseReticle = () => {
+  if (!reticleDrag) return
+  const { element, pointerId } = reticleDrag
+  reticleDrag = undefined
+  if (element.hasPointerCapture(pointerId)) element.releasePointerCapture(pointerId)
+}
+
+const endReticleDrag = (event: PointerEvent) => {
+  if (reticleDrag?.pointerId !== event.pointerId) return
+  if (event.type === 'pointerup') moveReticle(event)
+  releaseReticle()
+}
+
+onBeforeUnmount(releaseReticle)
+
 const closeContextMenu = () => {
-  coordinate.value = undefined
+  contextCoordinate.value = undefined
 }
 
 const closeMenus = () => {
+  releaseReticle()
   closeContextMenu()
+  placementPoint.value = undefined
   placing.value = false
 }
 
 watch([blocked, () => tileStore.currentTileConfig, () => userStore.isLogin], closeMenus)
 watch(canPlace, allowed => {
-  if (!allowed) placing.value = false
+  if (!allowed && placing.value) closeMenus()
 })
+
+const beginPlacement = (point?: DTO.Coordinate2D) => {
+  if (!canPlace.value) return
+  releaseReticle()
+  if (!point) closeContextMenu()
+  placementPoint.value = point
+  mapStateStore.interaction.clearFocus()
+  mapStateStore.interaction.clearHover()
+  placing.value = true
+  mapCanvasRef.value?.focus({ preventScroll: true })
+}
 
 useSubscription(
   MapSubject.click.subscribe(({ info, event }) => {
-    if (placing.value || !event.rightButton || blocked.value) return closeContextMenu()
+    if (blocked.value) return closeMenus()
     const [x, y] = info.coordinate ?? []
-    if (!Number.isFinite(x) || !Number.isFinite(y)) return closeContextMenu()
-    coordinate.value = [x, y]
+    if (!event.rightButton || !Number.isFinite(x) || !Number.isFinite(y)) {
+      if (!placing.value) closeContextMenu()
+      return
+    }
+    contextCoordinate.value = [x, y]
+    beginPlacement([info.x, info.y])
   }),
 )
 
-useSubscription(MapSubject.dragStart.subscribe(closeContextMenu))
+useSubscription(
+  MapSubject.dragStart.subscribe(() => {
+    if (!placing.value) closeContextMenu()
+  }),
+)
 
 useEventListener(
   mapCanvasRef,
@@ -141,17 +233,8 @@ useEventListener(
   { capture: true },
 )
 
-const beginPlacement = () => {
-  if (!canPlace.value) return
-  closeContextMenu()
-  mapStateStore.interaction.clearFocus()
-  mapStateStore.interaction.clearHover()
-  placing.value = true
-  mapCanvasRef.value?.focus({ preventScroll: true })
-}
-
 const cancelPlacement = async () => {
-  placing.value = false
+  closeMenus()
   await nextTick()
   trigger.value?.focus({ preventScroll: true })
 }
@@ -161,15 +244,18 @@ useEventListener('keydown', event => {
   if (placing.value) {
     event.preventDefault()
     void cancelPlacement()
-  } else if (coordinate.value) {
+  } else if (contextCoordinate.value) {
     event.preventDefault()
     closeContextMenu()
     mapCanvasRef.value?.focus({ preventScroll: true })
   }
 })
 
-const openMarkerCreator = (point?: DTO.Coordinate2D) => {
-  if (!point || !canCreate.value || blocked.value) return
+const confirmPlacement = () => {
+  const position = placementPosition.value
+  if (!position || !canPlace.value) return
+  const point = props.getMapCoordinate(position)
+  if (!point) return
   try {
     const markingItem = itemStore.itemIdMap.get(preferenceStore.defaultMarkingItemId)
     openMarkerCreatorDialog(tileStore.toMarkerCoordinate(point), markingItem)
@@ -179,31 +265,35 @@ const openMarkerCreator = (point?: DTO.Coordinate2D) => {
   }
 }
 
-const confirmPlacement = () => {
-  if (placing.value && canPlace.value) openMarkerCreator(props.getMapCenter())
-}
-
 const openSettingDialog = () => {
   openSettingsDialog()
-  closeContextMenu()
+  closeMenus()
 }
 
-const editAreaTags = (point: DTO.Coordinate2D) => {
-  props.areaTagAction?.open(point)
-  closeContextMenu()
+const editAreaTags = () => {
+  const position = placementPosition.value
+  const point = position ? props.getMapCoordinate(position) : contextCoordinate.value
+  if (point) props.areaTagAction?.open(point)
+  closeMenus()
 }
 
 const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 </script>
 
 <template>
-  <Transition name="reticle">
+  <Transition name="reticle" @before-leave="makeLeavingInert">
     <span
       v-if="placing || showContextMenu"
-      :key="placing ? 'center' : 'context'"
       class="placement-reticle"
-      :style="reticlePosition"
+      :class="{ 'draggable-reticle': placing }"
+      :style="reticleStyle"
       aria-hidden="true"
+      @pointerdown.stop="startReticleDrag"
+      @pointermove="moveReticle"
+      @pointerup="endReticleDrag"
+      @pointercancel="endReticleDrag"
+      @lostpointercapture="endReticleDrag"
+      @contextmenu.prevent
     >
       <span class="reticle-frame">
         <span class="reticle-ring" />
@@ -214,13 +304,6 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
     </span>
   </Transition>
 
-  <PlacementMinimap
-    v-if="placing && showMinimap && mapViewState"
-    v-model:heading="heading"
-    :target="mapViewState.target"
-    class="center-minimap"
-  />
-
   <div v-if="canCreate && !editingAreaTags" class="placement-tools">
     <button
       v-if="!placing"
@@ -228,15 +311,20 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
       type="button"
       class="placement-trigger"
       :disabled="!canPlace"
-      @click="beginPlacement"
+      @click="beginPlacement()"
     >
       <el-icon aria-hidden="true"><LocationInformation /></el-icon>
       添加点位
     </button>
 
     <Transition name="placement-menu" @before-leave="makeLeavingInert">
-      <div v-if="placing" class="placement-panel" role="group" aria-label="点位选址">
-        <p class="menu-step placement-hint" role="status">拖动或缩放地图，对准中心十字</p>
+      <div
+        v-if="placing && !showContextMenu"
+        class="placement-panel"
+        role="group"
+        aria-label="点位选址"
+      >
+        <p class="menu-step placement-hint" role="status">拖动罗盘或地图，确认点位位置</p>
         <div class="placement-actions">
           <button type="button" class="menu-step menu-button" @click="cancelPlacement">
             <el-icon aria-hidden="true"><Close /></el-icon>
@@ -253,24 +341,31 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 
   <Transition name="placement-menu" @before-leave="makeLeavingInert">
     <div
-      v-if="showContextMenu && coordinate"
+      v-if="showContextMenu || visibleMinimapTarget"
       ref="contextPanel"
       class="context-menu"
+      :class="{ 'minimap-only': !showContextMenu }"
       :style="contextMenuPosition"
-      role="group"
-      aria-label="地图操作"
       @contextmenu.prevent
     >
-      <PlacementMinimap v-if="showMinimap" v-model:heading="heading" :target="coordinate" />
-      <div class="context-actions">
+      <PlacementMinimap
+        v-if="visibleMinimapTarget"
+        v-model:heading="heading"
+        :target="visibleMinimapTarget"
+      />
+      <div v-if="showContextMenu" class="context-actions" role="group" aria-label="地图操作">
         <button
-          v-if="canCreate && !editingAreaTags"
+          v-if="placing"
           type="button"
           class="menu-step menu-button primary"
-          @click="openMarkerCreator(coordinate)"
+          @click="confirmPlacement"
         >
           <el-icon aria-hidden="true"><Plus /></el-icon>
           添加点位
+        </button>
+        <button v-if="placing" type="button" class="menu-step menu-button" @click="cancelPlacement">
+          <el-icon aria-hidden="true"><Close /></el-icon>
+          退出创建模式
         </button>
         <button type="button" class="menu-step menu-button" @click="openSettingDialog">
           <el-icon aria-hidden="true"><Setting /></el-icon>
@@ -280,7 +375,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
           v-if="isDev && areaTagAction && mapReady && tileStore.currentTileConfig"
           type="button"
           class="menu-step menu-button"
-          @click="editAreaTags(coordinate)"
+          @click="editAreaTags"
         >
           <el-icon aria-hidden="true"><Edit /></el-icon>
           {{ areaTagAction.label }}
@@ -293,8 +388,6 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 <style scoped>
 .placement-reticle {
   position: absolute;
-  top: 50%;
-  left: 50%;
   z-index: 7;
   display: grid;
   width: 78px;
@@ -302,6 +395,17 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   place-items: center;
   translate: -50% -50%;
   pointer-events: none;
+}
+
+.draggable-reticle {
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+}
+
+.draggable-reticle:active {
+  cursor: grabbing;
 }
 
 .reticle-frame {
@@ -511,28 +615,8 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   --minimap-size: min(188px, 35vw, 40vh);
 }
 
-.center-minimap {
-  position: absolute;
+.context-menu.minimap-only {
   z-index: 8;
-  top: 50%;
-  left: calc(50% + 48px);
-  translate: 0 calc(var(--minimap-size) / -2);
-}
-
-@media (width <= 600px) and (orientation: portrait) {
-  .center-minimap {
-    --minimap-size: min(188px, 42vw, max(96px, calc(50dvh - 128px)));
-    top: calc(50% + 48px);
-    left: 50%;
-    translate: -50% 0;
-  }
-}
-
-@media (height <= 440px) and (orientation: landscape) {
-  .center-minimap {
-    right: calc(50% + 48px);
-    left: auto;
-  }
 }
 
 .menu-button {
