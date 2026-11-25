@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Check, Close, Edit, LocationInformation, Plus, Setting } from '@element-plus/icons-vue'
+import { Close, Edit, LocationInformation, Plus, Setting } from '@element-plus/icons-vue'
 import { useSubscription } from '@vueuse/rxjs'
 import { ElMessage } from 'element-plus'
 import { openSettingsDialog } from '@/components/AppSettings/open'
@@ -55,14 +55,17 @@ const mapViewState = inject(mapViewStateKey)
 const heading = ref(252)
 
 const contextCoordinate = shallowRef<DTO.Coordinate2D>()
-// 用视口像素保存罗盘的位置，平移和缩放只更新它下方的地图坐标。
+// 未锁定时记录视口像素，锁定时记录地图坐标。
 const placementPoint = shallowRef<DTO.Coordinate2D>()
+const lockedPlacementCoordinate = shallowRef<DTO.Coordinate2D>()
 const trigger = useTemplateRef<HTMLButtonElement>('placementTrigger')
 const contextPanel = useTemplateRef<HTMLElement>('contextPanel')
 const viewportWidth = inject(mapContainerWidthKey, ref(0))
 const viewportHeight = inject(mapContainerHeightKey, ref(0))
-const { position: contextPosition } = useMapProjection({
-  coord: contextCoordinate,
+const { position: projectedPosition } = useMapProjection({
+  coord: computed(() =>
+    placing.value ? lockedPlacementCoordinate.value : contextCoordinate.value,
+  ),
   noCovertCoord: true,
 })
 const { width: panelWidth, height: panelHeight } = useElementSize(
@@ -76,39 +79,41 @@ const constrainToViewport = ([x, y]: DTO.Coordinate2D): DTO.Coordinate2D => [
   Math.max(0, Math.min(y, viewportHeight.value)),
 ]
 
-const placementPosition = computed(() => {
-  if (!placing.value) return
-  return constrainToViewport(
-    placementPoint.value ?? [viewportWidth.value / 2, viewportHeight.value / 2],
-  )
-})
-const reticlePosition = computed(() => placementPosition.value ?? contextPosition.value)
+const placementScreenPoint = computed(() =>
+  constrainToViewport(placementPoint.value ?? [viewportWidth.value / 2, viewportHeight.value / 2]),
+)
+const reticlePosition = computed(() =>
+  placing.value && !lockedPlacementCoordinate.value
+    ? placementScreenPoint.value
+    : projectedPosition.value,
+)
 const reticleStyle = computed(() => {
   const [x, y] = reticlePosition.value
   return { left: `${x}px`, top: `${y}px` }
 })
 
-const showContextMenu = computed(() => {
+const showContextActions = computed(() => {
+  if (!contextCoordinate.value) return false
+  if (placing.value) return true
   const [x, y] = reticlePosition.value
-  return (
-    contextCoordinate.value !== undefined
-    && x >= 0
-    && x <= viewportWidth.value
-    && y >= 0
-    && y <= viewportHeight.value
-  )
+  return x >= 0 && x <= viewportWidth.value && y >= 0 && y <= viewportHeight.value
 })
+
+const getPlacementCoordinate = () =>
+  lockedPlacementCoordinate.value ?? props.getMapCoordinate(placementScreenPoint.value)
 
 const minimapTarget = shallowRef<DTO.Coordinate2D>()
 watch(
   [
-    placementPosition,
+    placing,
     showMinimap,
+    placementScreenPoint,
+    lockedPlacementCoordinate,
     () => mapViewState?.value.target,
     () => mapViewState?.value.zoom,
   ],
-  ([point, visible]) => {
-    minimapTarget.value = point && visible ? props.getMapCoordinate(point) : undefined
+  ([active, visible]) => {
+    minimapTarget.value = active && visible ? getPlacementCoordinate() : undefined
   },
   { flush: 'post', immediate: true },
 )
@@ -128,7 +133,8 @@ const menuOffset = (point: number, size: number, extent: number) => {
 }
 
 const contextMenuPosition = computed(() => {
-  const [x, y] = reticlePosition.value
+  // 锁定的瞄准环可随地图移出视口，操作菜单仍可在边缘使用。
+  const [x, y] = constrainToViewport(reticlePosition.value)
   const horizontal = menuOffset(x, panelWidth.value || 208, viewportWidth.value)
   const vertical = menuOffset(y, panelHeight.value || 208, viewportHeight.value)
   return {
@@ -145,15 +151,16 @@ const contextMenuPosition = computed(() => {
 let reticleDrag: { element: HTMLElement; pointerId: number; offset: DTO.Coordinate2D } | undefined
 
 const startReticleDrag = (event: PointerEvent) => {
-  const point = placementPosition.value
-  if (!point || reticleDrag || event.button !== 0 || !event.isPrimary) return
+  if (!placing.value || preferenceStore.lockPlacementReticle) return
+  if (reticleDrag || event.button !== 0 || !event.isPrimary) return
+  const [x, y] = placementScreenPoint.value
   const element = event.currentTarget as HTMLElement
   event.preventDefault()
   element.setPointerCapture(event.pointerId)
   reticleDrag = {
     element,
     pointerId: event.pointerId,
-    offset: [point[0] - event.clientX, point[1] - event.clientY],
+    offset: [x - event.clientX, y - event.clientY],
   }
 }
 
@@ -178,6 +185,21 @@ const endReticleDrag = (event: PointerEvent) => {
 
 onBeforeUnmount(releaseReticle)
 
+watch(
+  () => preferenceStore.lockPlacementReticle,
+  locked => {
+    if (!placing.value) return
+    releaseReticle()
+    if (locked) {
+      lockedPlacementCoordinate.value = getPlacementCoordinate()
+    } else if (lockedPlacementCoordinate.value) {
+      placementPoint.value = constrainToViewport(projectedPosition.value)
+      lockedPlacementCoordinate.value = undefined
+    }
+  },
+  { flush: 'sync' },
+)
+
 const closeContextMenu = () => {
   contextCoordinate.value = undefined
 }
@@ -186,6 +208,7 @@ const closeMenus = () => {
   releaseReticle()
   closeContextMenu()
   placementPoint.value = undefined
+  lockedPlacementCoordinate.value = undefined
   placing.value = false
 }
 
@@ -199,6 +222,9 @@ const beginPlacement = (point?: DTO.Coordinate2D) => {
   releaseReticle()
   if (!point) closeContextMenu()
   placementPoint.value = point
+  lockedPlacementCoordinate.value = preferenceStore.lockPlacementReticle
+    ? (contextCoordinate.value ?? props.getMapCoordinate(placementScreenPoint.value))
+    : undefined
   mapStateStore.interaction.clearFocus()
   mapStateStore.interaction.clearHover()
   placing.value = true
@@ -252,9 +278,8 @@ useEventListener('keydown', event => {
 })
 
 const confirmPlacement = () => {
-  const position = placementPosition.value
-  if (!position || !canPlace.value) return
-  const point = props.getMapCoordinate(position)
+  if (!placing.value || !canPlace.value) return
+  const point = getPlacementCoordinate()
   if (!point) return
   try {
     const markingItem = itemStore.itemIdMap.get(preferenceStore.defaultMarkingItemId)
@@ -271,8 +296,7 @@ const openSettingDialog = () => {
 }
 
 const editAreaTags = () => {
-  const position = placementPosition.value
-  const point = position ? props.getMapCoordinate(position) : contextCoordinate.value
+  const point = placing.value ? getPlacementCoordinate() : contextCoordinate.value
   if (point) props.areaTagAction?.open(point)
   closeMenus()
 }
@@ -283,9 +307,12 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 <template>
   <Transition name="reticle" @before-leave="makeLeavingInert">
     <span
-      v-if="placing || showContextMenu"
+      v-if="placing || showContextActions"
       class="placement-reticle"
-      :class="{ 'draggable-reticle': placing }"
+      :class="{
+        'draggable-reticle': placing && !preferenceStore.lockPlacementReticle,
+        'locked-reticle': placing && preferenceStore.lockPlacementReticle,
+      }"
       :style="reticleStyle"
       aria-hidden="true"
       @pointerdown.stop="startReticleDrag"
@@ -305,46 +332,26 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   </Transition>
 
   <div v-if="canCreate && !editingAreaTags" class="placement-tools font-genshin">
-    <button
-      v-if="!placing"
-      ref="placementTrigger"
-      type="button"
-      class="placement-trigger"
-      :disabled="!canPlace"
-      @click="beginPlacement()"
-    >
-      <el-icon aria-hidden="true"><LocationInformation /></el-icon>
-      添加点位
-    </button>
-
-    <Transition name="placement-menu" @before-leave="makeLeavingInert">
-      <div
-        v-if="placing && !showContextMenu"
-        class="placement-panel"
-        role="group"
-        aria-label="点位选址"
+    <Transition name="placement-trigger" @before-leave="makeLeavingInert">
+      <button
+        v-if="!placing"
+        ref="placementTrigger"
+        type="button"
+        class="placement-trigger"
+        :disabled="!canPlace"
+        @click="beginPlacement()"
       >
-        <p class="menu-step placement-hint" role="status">拖动罗盘或地图，确认点位位置</p>
-        <div class="placement-actions">
-          <button type="button" class="menu-step menu-button" @click="cancelPlacement">
-            <el-icon aria-hidden="true"><Close /></el-icon>
-            取消
-          </button>
-          <button type="button" class="menu-step menu-button primary" @click="confirmPlacement">
-            <el-icon aria-hidden="true"><Check /></el-icon>
-            确认位置
-          </button>
-        </div>
-      </div>
+        <el-icon aria-hidden="true"><LocationInformation /></el-icon>
+        添加点位
+      </button>
     </Transition>
   </div>
 
   <Transition name="placement-menu" @before-leave="makeLeavingInert">
     <div
-      v-if="showContextMenu || visibleMinimapTarget"
+      v-if="placing || showContextActions"
       ref="contextPanel"
       class="context-menu font-genshin"
-      :class="{ 'minimap-only': !showContextMenu }"
       :style="contextMenuPosition"
       @contextmenu.prevent
     >
@@ -353,33 +360,43 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
         v-model:heading="heading"
         :target="visibleMinimapTarget"
       />
-      <div v-if="showContextMenu" class="context-actions" role="group" aria-label="地图操作">
-        <button
-          v-if="placing"
-          type="button"
-          class="menu-step menu-button primary"
-          @click="confirmPlacement"
-        >
-          <el-icon aria-hidden="true"><Plus /></el-icon>
-          添加点位
-        </button>
-        <button v-if="placing" type="button" class="menu-step menu-button" @click="cancelPlacement">
-          <el-icon aria-hidden="true"><Close /></el-icon>
-          退出创建模式
-        </button>
-        <button type="button" class="menu-step menu-button" @click="openSettingDialog">
-          <el-icon aria-hidden="true"><Setting /></el-icon>
-          系统设置
-        </button>
-        <button
-          v-if="isDev && areaTagAction && mapReady && tileStore.currentTileConfig"
-          type="button"
-          class="menu-step menu-button"
-          @click="editAreaTags"
-        >
-          <el-icon aria-hidden="true"><Edit /></el-icon>
-          {{ areaTagAction.label }}
-        </button>
+      <div class="context-actions" role="group" :aria-label="placing ? '点位选址' : '地图操作'">
+        <template v-if="placing">
+          <button
+            type="button"
+            class="menu-step menu-button lock-switch"
+            role="switch"
+            :aria-checked="preferenceStore.lockPlacementReticle"
+            title="将瞄准环锁定在地图坐标上"
+            @click="preferenceStore.lockPlacementReticle = !preferenceStore.lockPlacementReticle"
+          >
+            锁定
+            <span class="lock-switch-track" aria-hidden="true" />
+          </button>
+          <button type="button" class="menu-step menu-button primary" @click="confirmPlacement">
+            <el-icon aria-hidden="true"><Plus /></el-icon>
+            添加点位
+          </button>
+          <button type="button" class="menu-step menu-button" @click="cancelPlacement">
+            <el-icon aria-hidden="true"><Close /></el-icon>
+            退出创建模式
+          </button>
+        </template>
+        <template v-if="showContextActions">
+          <button type="button" class="menu-step menu-button" @click="openSettingDialog">
+            <el-icon aria-hidden="true"><Setting /></el-icon>
+            系统设置
+          </button>
+          <button
+            v-if="isDev && areaTagAction && mapReady && tileStore.currentTileConfig"
+            type="button"
+            class="menu-step menu-button"
+            @click="editAreaTags"
+          >
+            <el-icon aria-hidden="true"><Edit /></el-icon>
+            {{ areaTagAction.label }}
+          </button>
+        </template>
       </div>
     </div>
   </Transition>
@@ -502,6 +519,20 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   rotate: 90deg;
 }
 
+.locked-reticle .reticle-ring {
+  border-color: #bcefe2;
+}
+
+.locked-reticle .reticle-ring::after {
+  border-color: #bcefe2a6;
+  border-radius: 50%;
+}
+
+.locked-reticle .reticle-center::before,
+.locked-reticle .reticle-center::after {
+  background: #d1fff0;
+}
+
 .reticle-enter-active .reticle-frame {
   transition:
     scale 360ms cubic-bezier(0.18, 0.86, 0.32, 1),
@@ -526,14 +557,14 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 }
 
 .placement-tools {
+  --trigger-inset: max(14px, env(safe-area-inset-right, 0px));
   position: absolute;
   z-index: 9;
   top: max(14px, env(safe-area-inset-top, 0px));
-  right: max(14px, env(safe-area-inset-right, 0px));
+  right: var(--trigger-inset);
 }
 
 .placement-trigger,
-.placement-panel,
 .context-actions {
   color: #f2e8d5;
   border: 1px solid #a99065;
@@ -563,31 +594,17 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   opacity: 0.54;
 }
 
-.placement-panel,
-.context-actions {
-  padding: 8px;
-  border-radius: 28px;
+.placement-trigger-enter-active,
+.placement-trigger-leave-active {
+  transition:
+    translate 230ms ease-out,
+    opacity 200ms ease-out;
 }
 
-.placement-panel {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: min(230px, calc(100vw - 96px));
-  transform-origin: top right;
-}
-
-.placement-hint {
-  margin: 2px 4px 8px;
-  color: #e6d6ba;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.placement-actions {
-  display: grid;
-  grid-template-columns: 2fr 3fr;
-  gap: 6px;
+.placement-trigger-enter-from,
+.placement-trigger-leave-to {
+  translate: calc(100% + var(--trigger-inset)) 0;
+  opacity: 0;
 }
 
 .context-menu {
@@ -608,14 +625,12 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   max-height: calc(100dvh - 20px);
   gap: 5px;
   overflow-y: auto;
+  padding: 8px;
+  border-radius: 28px;
 }
 
 .context-menu .placement-minimap {
   --minimap-size: min(188px, 35vw, 40vh);
-}
-
-.context-menu.minimap-only {
-  z-index: 8;
 }
 
 .menu-button {
@@ -631,6 +646,40 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   color: #f2e8d5;
   font-size: 14px;
   white-space: nowrap;
+}
+
+.lock-switch {
+  justify-content: space-between;
+  padding-inline: 14px;
+}
+
+.lock-switch-track {
+  display: flex;
+  width: 32px;
+  height: 18px;
+  align-items: center;
+  padding: 2px;
+  border: 1px solid #dcc8a080;
+  border-radius: 9px;
+  background: #141923;
+}
+
+.lock-switch-track::after {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #f2dfb9;
+  content: '';
+}
+
+.lock-switch[aria-checked='true'] .lock-switch-track {
+  justify-content: flex-end;
+  border-color: #bcefe2;
+  background: #3e655c;
+}
+
+.lock-switch[aria-checked='true'] .lock-switch-track::after {
+  background: #d1fff0;
 }
 
 .menu-button:not(:disabled),
@@ -689,16 +738,8 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   --step: 2;
 }
 
-.menu-step:nth-child(4) {
+.menu-step:nth-child(n + 4) {
   --step: 3;
-}
-
-.placement-actions .menu-step {
-  --step: 1;
-}
-
-.placement-actions .menu-step + .menu-step {
-  --step: 2;
 }
 
 .placement-menu-enter-active .menu-step {
@@ -723,8 +764,8 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 
 @media (width <= 600px) {
   .placement-tools {
+    --trigger-inset: max(12px, env(safe-area-inset-right, 0px));
     top: calc(max(12px, env(safe-area-inset-top, 0px)) + 40px);
-    right: max(12px, env(safe-area-inset-right, 0px));
   }
 }
 
@@ -732,6 +773,8 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   .reticle-enter-active,
   .reticle-leave-active,
   .reticle-enter-active .reticle-frame,
+  .placement-trigger-enter-active,
+  .placement-trigger-leave-active,
   .placement-menu-enter-active,
   .placement-menu-leave-active,
   .placement-menu-enter-active .menu-step,

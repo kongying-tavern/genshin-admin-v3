@@ -243,6 +243,26 @@ describe('1 号槽位和旧存档迁移', () => {
 })
 
 describe('设置与进度分别同步', () => {
+  it('旧存档默认关闭选址锁定，锁定设置由 1 号槽位同步', async () => {
+    const store = await start()
+    const preferences = usePreferenceStore()
+    expect(preferences.lockPlacementReticle).toBe(false)
+
+    preferences.lockPlacementReticle = true
+    await store.flush()
+    expect(savedSlots()).toEqual([1])
+    expect(body(1).Preference['map.setting.lockPlacementReticle']).toBe(true)
+    await store.loadArchiveSlot(3)
+    expect(preferences.lockPlacementReticle).toBe(true)
+
+    seed(
+      1,
+      entry(40, [11], { ...preference('mapsetting'), 'map.setting.lockPlacementReticle': false }),
+    )
+    await store.fetchArchive()
+    expect(preferences.lockPlacementReticle).toBe(false)
+  })
+
   it('只改设置只写 1 号，合并云端最新点位、刷新时间和进度时间', async () => {
     const store = await start()
     seed(1, {

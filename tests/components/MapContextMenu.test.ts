@@ -15,7 +15,11 @@ const { openMarkerCreatorDialog, openSettingsDialog, createDeck, setDeckProps, f
   }))
 
 const permission = ref(true)
-const preference = reactive({ defaultMarkingItemId: 3, showPlacementMinimap: false })
+const preference = reactive({
+  defaultMarkingItemId: 3,
+  lockPlacementReticle: false,
+  showPlacementMinimap: false,
+})
 const user = reactive({ isLogin: true })
 const viewState = ref({ target: [50, 60] as DTO.Coordinate2D, zoom: 1 })
 const width = ref(800)
@@ -132,6 +136,7 @@ describe('地图点位创建入口', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     permission.value = true
+    preference.lockPlacementReticle = false
     preference.showPlacementMinimap = false
     user.isLogin = true
     viewState.value.zoom = 1
@@ -146,7 +151,9 @@ describe('地图点位创建入口', () => {
 
   it('触屏从地图中心开始选址，可分别拖动罗盘和地图，再用罗盘位置打开表单', async () => {
     await wrapper.get('.placement-trigger').trigger('click')
-    expect(wrapper.get('[aria-label="点位选址"]').text()).toContain('拖动罗盘或地图')
+    expect(wrapper.find('.placement-trigger').exists()).toBe(false)
+    const lock = wrapper.get('.context-menu [aria-label="点位选址"] [role="switch"]')
+    expect(lock.attributes('aria-checked')).toBe('false')
     expect(wrapper.find('.reticle-center').exists()).toBe(true)
     expect(createDeck).not.toHaveBeenCalled()
     expect(mapState.interaction.clearFocus).toHaveBeenCalledOnce()
@@ -173,9 +180,10 @@ describe('地图点位创建入口', () => {
     expect(reticle.style.top).toBe('360px')
     expect(openMarkerCreatorDialog).not.toHaveBeenCalled()
 
-    await wrapper.get('.placement-actions .primary').trigger('click')
+    await wrapper.get('.context-menu .primary').trigger('click')
     expect(openMarkerCreatorDialog).toHaveBeenCalledExactlyOnceWith([90, 100], defaultItem)
     expect(wrapper.find('.placement-reticle').exists()).toBe(false)
+    expect(wrapper.find('.placement-trigger').exists()).toBe(true)
   })
 
   it('小地图跟随罗盘下的地图坐标并固定缩放，旋转三角后仍按同一坐标创建', async () => {
@@ -214,9 +222,81 @@ describe('地图点位创建入口', () => {
     await wrapper.get('input[aria-label="三角朝向"]').setValue('90')
     expect(wrapper.find('svg g[transform="rotate(90)"]').exists()).toBe(true)
     expect(setDeckProps).not.toHaveBeenCalled()
-    await wrapper.get('.placement-actions .primary').trigger('click')
+    await wrapper.get('.context-menu .primary').trigger('click')
     expect(openMarkerCreatorDialog).toHaveBeenCalledWith([65, 67.5], defaultItem)
     expect(finalizeDeck).toHaveBeenCalledOnce()
+  })
+
+  it('鼠标选址锁定当前罗盘坐标，平移和缩放只移动主图上的罗盘和菜单', async () => {
+    preference.showPlacementMinimap = true
+    rightClick([430, 370])
+    await nextTick()
+    const reticle = wrapper.get<HTMLElement>('.placement-reticle').element
+    const capture = mockPointerCapture(reticle)
+    pointer(reticle, 'pointerdown', [430, 370])
+    pointer(reticle, 'pointerup', [450, 350])
+    await nextTick()
+
+    const lock = wrapper.get('[role="switch"]')
+    expect(lock.attributes('aria-checked')).toBe('false')
+    await lock.trigger('click')
+    expect(preference.lockPlacementReticle).toBe(true)
+    expect(lock.attributes('aria-checked')).toBe('true')
+    expect(reticle.classList.contains('locked-reticle')).toBe(true)
+    expect(reticle.classList.contains('draggable-reticle')).toBe(false)
+    expect(reticle.style.left).toBe('450px')
+    expect(reticle.style.top).toBe('350px')
+
+    pointer(reticle, 'pointerdown', [450, 350])
+    pointer(reticle, 'pointerup', [470, 370])
+    expect(capture.setPointerCapture).toHaveBeenCalledOnce()
+    setDeckProps.mockClear()
+    const menu = wrapper.get<HTMLElement>('.context-menu').element
+    const menuLeft = menu.style.left
+    MapSubject.dragStart.next(mapEvent([200, 220]))
+    viewState.value = { target: [85, 100], zoom: 2 }
+    await nextTick()
+    expect(reticle.style.left).toBe('360px')
+    expect(reticle.style.top).toBe('240px')
+    expect(menu.style.left).not.toBe(menuLeft)
+    expect(setDeckProps).not.toHaveBeenCalled()
+
+    await wrapper.get('.context-menu .primary').trigger('click')
+    expect(openMarkerCreatorDialog).toHaveBeenCalledExactlyOnceWith([65, 65], defaultItem)
+  })
+
+  it('触屏沿用锁定设置，瞄准环移出视口后仍可确认或解锁', async () => {
+    preference.lockPlacementReticle = true
+    await wrapper.get('.placement-trigger').trigger('click')
+    const reticle = wrapper.get<HTMLElement>('.placement-reticle').element
+    expect(reticle.classList.contains('locked-reticle')).toBe(true)
+    expect(reticle.style.left).toBe('400px')
+    expect(reticle.style.top).toBe('300px')
+
+    viewState.value.target = [-500, 70]
+    await nextTick()
+    expect(reticle.style.left).toBe('1500px')
+    expect(reticle.style.top).toBe('280px')
+    await wrapper.get('.context-menu .primary').trigger('click')
+    expect(openMarkerCreatorDialog).toHaveBeenCalledExactlyOnceWith([40, 40], defaultItem)
+
+    await wrapper.get('.placement-trigger').trigger('click')
+    const nextReticle = wrapper.get<HTMLElement>('.placement-reticle').element
+    const lock = wrapper.get('[role="switch"]')
+    expect(lock.attributes('aria-checked')).toBe('true')
+    viewState.value.target = [-250, 82]
+    await nextTick()
+    expect(nextReticle.style.left).toBe('-100px')
+    await lock.trigger('click')
+    expect(preference.lockPlacementReticle).toBe(false)
+    expect(nextReticle.classList.contains('draggable-reticle')).toBe(true)
+    expect(nextReticle.style.left).toBe('0px')
+    expect(nextReticle.style.top).toBe('276px')
+
+    viewState.value.target = [-260, 85]
+    await nextTick()
+    expect(nextReticle.style.left).toBe('0px')
+    expect(nextReticle.style.top).toBe('276px')
   })
 
   it('右键小地图以点击位置为中心，关闭开关或撤权时释放视口', async () => {
@@ -244,15 +324,16 @@ describe('地图点位创建入口', () => {
 
   it('支持 Escape 取消，并在地图任务或权限变化时退出选址', async () => {
     await wrapper.get('.placement-trigger').trigger('click')
+    expect(wrapper.find('.context-menu').exists()).toBe(true)
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', cancelable: true }))
     await nextTick()
-    expect(wrapper.find('.placement-panel').exists()).toBe(false)
+    expect(wrapper.find('.context-menu').exists()).toBe(false)
     expect(document.activeElement).toBe(wrapper.get('.placement-trigger').element)
 
     await wrapper.get('.placement-trigger').trigger('click')
     mapState.mission = true
     await nextTick()
-    expect(wrapper.find('.placement-panel').exists()).toBe(false)
+    expect(wrapper.find('.context-menu').exists()).toBe(false)
     expect(wrapper.get('.placement-trigger').attributes('disabled')).toBeDefined()
 
     mapState.mission = false

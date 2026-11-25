@@ -26,6 +26,7 @@ export const usePreferenceStore = defineStore('global-user-preference', () => {
     filterType: model('markerFilter.setting.filterType', () => 'basic'),
     itemIds: model('markerFilter.state.itemIds', () => []),
     itemTypeId: model('markerFilter.state.itemTypeId', () => -1),
+    lockPlacementReticle: model('map.setting.lockPlacementReticle', () => false),
     maxLogs: model('developer.setting.maxLogs', () => 100),
     noticeEvents: model('socket.setting.noticeEvents', () => []),
     pageSize: model('manager.setting.pageSize', () => []),

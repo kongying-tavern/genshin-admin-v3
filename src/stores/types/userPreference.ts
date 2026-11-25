@@ -71,6 +71,9 @@ export interface UserPreference {
   /** 在新增点位的罗盘旁显示选址小地图 */
   'map.setting.showPlacementMinimap'?: boolean
 
+  /** 将新增点位的瞄准环锁定在地图坐标上 */
+  'map.setting.lockPlacementReticle'?: boolean
+
   /** 透明化状态为已完成的点位 */
   'map.setting.transparentMarked': boolean
 
@@ -186,6 +189,7 @@ export const getDefaultPreference = (): UserPreference => ({
   'map.setting.showZoneTag': true,
   'map.setting.showFullCrosshair': false,
   'map.setting.showPlacementMinimap': false,
+  'map.setting.lockPlacementReticle': false,
   'map.setting.transparentMarked': true,
   'map.setting.verifyMarkersOnline': false,
   'map.setting.zoomTransitionDuration': 66,
