@@ -136,7 +136,7 @@ describe('系统订阅配置 store', () => {
   })
 
   it('区分已下发和已加载的字体，并忽略已替换资源的迟到响应', async () => {
-    const fonts = new Set<{ source: string }>()
+    const fonts = new Set<{ family: string; source: string }>()
     const originalFonts = Object.getOwnPropertyDescriptor(document, 'fonts')
     Object.defineProperty(document, 'fonts', { configurable: true, value: fonts })
     const failed = Promise.withResolvers<void>()
@@ -182,7 +182,7 @@ describe('系统订阅配置 store', () => {
       await store.update()
       late.resolve()
       await nextTick()
-      expect([...fonts]).toEqual([expect.objectContaining({ source: `url("${newUrl}")` })])
+      expect([...fonts]).toEqual([expect.objectContaining({ family, source: `url("${newUrl}")` })])
       const loadedFamily = store.loadedFontFamilies.get(family)
       expect(loadedFamily).toContain(`"${family}"`)
 

@@ -108,8 +108,8 @@ export const useDadianStore = defineStore('system-config', () => {
   }
 
   const loadFont = async (family: string, url: string) => {
-    const cssFamily = quoteCssString(family)
-    const face = new FontFace(cssFamily, `url(${quoteCssString(url)})`)
+    // 注册时使用原始名称，写入 CSS 字体列表时再加引号。
+    const face = new FontFace(family, `url(${quoteCssString(url)})`)
     fontFaces.set(family, { url, face })
     try {
       await face.load()
@@ -120,7 +120,7 @@ export const useDadianStore = defineStore('system-config', () => {
     if (fontFaces.get(family)?.face !== face) return
     document.fonts.add(face)
     // deck.gl 按字体字符串缓存字形纹理，同名字体换址后需要重新绘制字形。
-    loadedFontFamilies.set(family, `${cssFamily} /* ${++fontRevision} */`)
+    loadedFontFamilies.set(family, `${quoteCssString(family)} /* ${++fontRevision} */`)
   }
 
   watch(fontResources, resources => {
