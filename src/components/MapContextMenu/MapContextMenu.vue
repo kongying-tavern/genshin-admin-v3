@@ -648,7 +648,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   display: grid;
   width: 208px;
   max-width: 100%;
-  gap: 5px;
+  gap: 8px;
   overflow-y: auto;
   padding: 8px;
   border-radius: 28px;
