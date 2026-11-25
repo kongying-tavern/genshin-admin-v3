@@ -45,6 +45,7 @@ const activeTab = (ev: MouseEvent) => {
 .sider-menu-tab {
   --icon-padding: 5px;
   --icon-color: #d3bc8e;
+  --sider-icon-accent: #a9ded2;
   --scale: 1;
   --button-bg: transparent;
 
@@ -61,10 +62,12 @@ const activeTab = (ev: MouseEvent) => {
   &.actived {
     --button-bg: #ece5d8;
     --icon-color: #3b4255;
+    --sider-icon-accent: #2c7066;
   }
 }
 
 .sider-menu-tab-button {
+  position: relative;
   display: block;
   width: 100%;
   height: 100%;

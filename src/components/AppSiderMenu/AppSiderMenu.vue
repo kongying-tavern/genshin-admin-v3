@@ -2,7 +2,6 @@
 import type { FeatureGroupOption } from './components'
 import type { MapWindow, WindowContextHookReturnType } from '@/components'
 import type { ManagerWindowOption } from './windowOptions'
-import * as ElIcons from '@element-plus/icons-vue'
 import { registerCapability } from '@/ai/bindings'
 import { fail } from '@/ai/errors'
 import { AppUserAvatar, AppWindowTeleporter, useAppWindow } from '@/components'
@@ -24,6 +23,7 @@ import {
   SiderMenu,
   SiderMenuItem,
 } from './components'
+import SiderMenuIcon from './components/SiderMenu/SiderMenuIcon.vue'
 import { isSiderTabKey, SIDER_TAB_KEYS } from './tabKeys'
 import { registerWindowCapability } from './windowCapabilities'
 import { MANAGER_WINDOW_OPTIONS, USER_MANUAL_WINDOW } from './windowOptions'
@@ -172,19 +172,14 @@ onUnmounted(() => {
 
     <SiderMenuItem name="filter" :label="isAdvancedFilter ? '高级筛选' : '基础筛选'">
       <template #icon>
-        <div class="w-full h-full overflow-hidden select-none">
-          <el-icon class="left-0 top-0" color="var(--icon-color)" :size="38">
-            <ElIcons.Filter />
-          </el-icon>
-
-          <div
-            class="absolute right-0 bottom-0 rounded-full px-1.5 py-0.2 align-middle leading-snug text-sm font-bold -translate-x-[-2px] -translate-y-[-2px] hover:outline hover:outline-2 hover:outline-gray-200 cursor-pointer"
-            :class="[isAdvancedFilter ? 'bg-[#806BA7]' : 'bg-[#68B11E]']"
-            @click="switchFilterMode()"
-          >
-            {{ isAdvancedFilter ? 'Pro' : 'Base' }}
-          </div>
-        </div>
+        <SiderMenuIcon name="filter" />
+        <span
+          class="sider-icon-badge sider-icon-mode"
+          :class="{ 'is-advanced': isAdvancedFilter }"
+          @click="switchFilterMode"
+        >
+          {{ isAdvancedFilter ? 'Pro' : 'Base' }}
+        </span>
       </template>
 
       <MarkerFilter />
@@ -192,22 +187,15 @@ onUnmounted(() => {
 
     <SiderMenuItem name="marker-table" label="点位列表">
       <template #icon>
-        <div class="w-full h-full overflow-hidden select-none">
-          <el-icon class="left-0 top-0" color="var(--icon-color)" :size="38">
-            <ElIcons.List />
-          </el-icon>
-
-          <div
-            v-show="
-              mapStateStore.markersFilterLoading || mapStateStore.currentLayerMarkers.length > 0
-            "
-            class="absolute left-1/2 bottom-1 -translate-x-1/2 w-fit h-5 min-w-[20px] rounded-full p-0.5 grid place-items-center bg-[#68B11E]"
-          >
-            <span class="text-xs leading-none px-0.5 text-white">
-              {{ mapStateStore.currentLayerMarkers.length || '…' }}
-            </span>
-          </div>
-        </div>
+        <SiderMenuIcon name="markers" />
+        <span
+          v-show="
+            mapStateStore.markersFilterLoading || mapStateStore.currentLayerMarkers.length > 0
+          "
+          class="sider-icon-badge sider-icon-count"
+        >
+          {{ mapStateStore.currentLayerMarkers.length || '…' }}
+        </span>
       </template>
       <MarkerTable />
     </SiderMenuItem>
@@ -223,12 +211,10 @@ onUnmounted(() => {
         </template>
       </SiderMenuItem>
 
-      <SiderMenuItem
-        v-if="accessStore.get('MANAGER_COMPONENT')"
-        name="features"
-        label="系统管理"
-        :icon="ElIcons.Grid"
-      >
+      <SiderMenuItem v-if="accessStore.get('MANAGER_COMPONENT')" name="features" label="系统管理">
+        <template #icon>
+          <SiderMenuIcon name="management" />
+        </template>
         <FeatureGrid :features="featuresWithRole" />
       </SiderMenuItem>
 
@@ -248,16 +234,62 @@ onUnmounted(() => {
       </SiderMenuItem>
 
       <SiderMenuItem v-if="manualWindow.enabled()" label="用户手册" @click="toggleManual">
-        <template #icon="{ color }">
-          <div class="w-full h-full">
-            <el-icon :color="isManualOpen ? '#68B11E' : color" :size="38">
-              <ElIcons.Reading />
-            </el-icon>
-          </div>
+        <template #icon>
+          <SiderMenuIcon name="manual" :class="{ 'sider-icon-manual-open': isManualOpen }" />
         </template>
       </SiderMenuItem>
 
-      <SiderMenuItem label="系统设置" :icon="ElIcons.Setting" @click="openSettingDialog" />
+      <SiderMenuItem label="系统设置" @click="openSettingDialog">
+        <template #icon>
+          <SiderMenuIcon name="settings" />
+        </template>
+      </SiderMenuItem>
     </template>
   </SiderMenu>
 </template>
+
+<style scoped>
+.sider-icon-badge {
+  position: absolute;
+  bottom: -2px;
+  min-width: 16px;
+  padding: 0 5px;
+  border: 1px solid #a9d6c0;
+  border-radius: 999px;
+  background: #305e50;
+  color: #fffaf0;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 12px;
+  text-align: center;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.sider-icon-mode {
+  right: 0;
+  cursor: pointer;
+
+  &.is-advanced {
+    border-color: #d9c3ef;
+    background: #5d4777;
+  }
+
+  &:hover {
+    border-color: #fffaf0;
+  }
+}
+
+.sider-icon-count {
+  left: 50%;
+  padding-inline: 3px;
+  font-family: Arial, sans-serif;
+  translate: -50% 0;
+  pointer-events: none;
+}
+
+.sider-icon-manual-open {
+  --icon-color: var(--sider-icon-accent);
+}
+</style>
