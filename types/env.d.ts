@@ -64,6 +64,8 @@ interface ImportMetaEnv {
 
   /** @ignore */
   readonly APP_VERSION: string
+  /** 静态构建的唯一标识，开发服务器中为空 */
+  readonly APP_BUILD_ID: string
   /** @ignore */
   readonly APP_BRANCH: string
   /** @ignore */

@@ -3,6 +3,7 @@ import type { LocationQueryValue } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { AppLogin } from '@/components'
 import { useGlobalDialog, useRoleWatch } from '@/hooks'
+import { useAppVersionCheck } from '@/hooks/useAppVersionCheck'
 import { RouteQuery } from '@/shared'
 import { useDadianStore } from '@/stores/dadian'
 import { usePreferenceStore } from '@/stores/userPreference'
@@ -33,6 +34,7 @@ watchEffect(() => {
 
 // 启动角色轮询监听（5min 轮询 + visibilitychange）
 useRoleWatch()
+useAppVersionCheck()
 
 const queryHandlers = new Map<
   string,

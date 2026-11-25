@@ -86,6 +86,12 @@ pnpm preview
 
 如果生产预览也发生整页重载，可以在桌面 Chrome 控制台检查 `document.wasDiscarded`。值为 `true` 表示浏览器回收了整个标签页，返回时重新创建了文档。[Chrome 页面生命周期说明](https://developer.chrome.com/docs/web-platform/page-lifecycle-api)
 
+### 前端发版探测
+
+每次静态构建都会生成独立的构建标识，并输出到 `dist/version.json`。页面打开时、回到前台时、网络恢复时以及前台每隔 5 分钟会检查这个文件。检测到部署的构建变化后，页面提示用户保存编辑内容并自行刷新。
+
+部署时将 `version.json` 与入口 HTML 和静态资源一同发布。若需分步上传，先上传静态资源和入口 HTML，再发布 `version.json`。为版本文件设置 `Cache-Control: no-store`，为入口 HTML 设置 `Cache-Control: no-cache`，并让 CDN 遵循这两项配置。
+
 ### 地图实体同步
 
 点位、物品和点位关联按后端实例、账号与可见权限保存独立的 IndexedDB 基线。设置中的「数据库」页可查看最近在线核对时间、待核对范围和待确认的点位创建。升级时会重建这三类实体的旧缓存，用户存档继续使用原表。

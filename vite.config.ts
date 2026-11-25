@@ -1,4 +1,5 @@
 import type { Plugin, ProxyOptions } from 'vite'
+import { randomUUID } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import BaseSSL from '@vitejs/plugin-basic-ssl'
@@ -77,6 +78,23 @@ export default defineConfig(async configEnv => {
 
   const packageJSON = await fs.readFile('package.json', { encoding: 'utf8' })
   const VERSION = JSON.parse(packageJSON).version as string
+  const BUILD_ID = configEnv.command === 'build' ? randomUUID() : ''
+
+  plugins.push({
+    name: 'app-version',
+    apply: 'build',
+    generateBundle: {
+      // 在 HTML 的首屏资源清单生成后输出版本文件，避免参与预加载。
+      order: 'post',
+      handler() {
+        this.emitFile({
+          type: 'asset',
+          fileName: 'version.json',
+          source: JSON.stringify({ version: VERSION, buildId: BUILD_ID }),
+        })
+      },
+    },
+  })
 
   return {
     envDir,
@@ -92,6 +110,7 @@ export default defineConfig(async configEnv => {
       __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
 
       'import.meta.env.APP_VERSION': JSON.stringify(VERSION),
+      'import.meta.env.APP_BUILD_ID': JSON.stringify(BUILD_ID),
       'import.meta.env.APP_BRANCH': JSON.stringify(COMMIT_BRANCH),
       'import.meta.env.APP_COMMIT_HASH': JSON.stringify(COMMIT_HASH),
     },
