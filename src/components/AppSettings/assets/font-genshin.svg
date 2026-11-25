@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="184" height="80" viewBox="0 0 184 80" fill="none">
+  <title>原神风格的卡片和按钮</title>
+  <style>
+    @media (prefers-color-scheme: dark) {
+      .canvas {
+        fill: #494139;
+      }
+    }
+  </style>
+  <defs>
+    <linearGradient id="card" x2="1" y2="1">
+      <stop stop-color="#485364" />
+      <stop offset="1" stop-color="#303745" />
+    </linearGradient>
+  </defs>
+  <rect class="canvas" width="184" height="80" fill="#ede4d3" />
+  <rect x="12" y="7" width="160" height="66" rx="9" fill="url(#card)" />
+  <rect x="16" y="11" width="152" height="58" rx="6" stroke="#bfa574" stroke-opacity=".65" />
+  <g stroke="#d4bb88" stroke-linecap="round" stroke-opacity=".8">
+    <path d="M16 25v-8a6 6 0 0 1 6-6h8m124 0h8a6 6 0 0 1 6 6v8" />
+    <path d="M16 55v8a6 6 0 0 0 6 6h8m124 0h8a6 6 0 0 0 6-6v-8" />
+    <path d="M39 36h45m16 0h45" />
+  </g>
+  <path d="m92 32 4 4-4 4-4-4z" fill="#e0c792" />
+  <text
+    x="92"
+    y="28"
+    text-anchor="middle"
+    fill="#f6e7c9"
+    font-family="system-ui, sans-serif"
+    font-size="13"
+    font-weight="700"
+    letter-spacing="1"
+  >云存档</text>
+  <rect x="28" y="44" width="61" height="19" rx="9.5" fill="#ede5d8" />
+  <rect x="95.5" y="44.5" width="60" height="18" rx="9" fill="#515c70" stroke="#9299a6" />
+  <circle cx="40" cy="53.5" r="6.5" fill="#333844" />
+  <circle cx="40" cy="53.5" r="2.6" stroke="#f6c451" stroke-width="1.4" />
+  <path d="M102 53.5h8m-3-3 3 3-3 3" stroke="#e0c792" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+  <g font-family="system-ui, sans-serif" font-size="11" font-weight="700">
+    <text x="52" y="57.5" fill="#3e495e">保存</text>
+    <text x="117" y="57.5" fill="#f7eddb">读取</text>
+  </g>
+</svg>

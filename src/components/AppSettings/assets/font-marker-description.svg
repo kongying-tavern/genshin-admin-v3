@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="184" height="80" viewBox="0 0 184 80" fill="none">
+  <title>点位表单里的多行描述框</title>
+  <style>
+    :root {
+      --canvas: #eaf0f8;
+      --panel: #fff;
+      --line: #bdcde0;
+      --input: #f0f7ff;
+      --text: #273b55;
+      --accent: #367dd0;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --canvas: #222c3b;
+        --panel: #2c3646;
+        --line: #516179;
+        --input: #263d56;
+        --text: #edf4fd;
+        --accent: #79b7fc;
+      }
+    }
+  </style>
+  <rect width="184" height="80" fill="var(--canvas)" />
+  <rect x="9.5" y="6.5" width="165" height="67" rx="5.5" fill="var(--panel)" stroke="var(--line)" />
+  <rect x="18.5" y="28.5" width="123" height="36" rx="4" fill="var(--input)" stroke="var(--accent)" />
+  <g fill="var(--text)" font-family="system-ui, sans-serif">
+    <text x="18" y="23" font-size="11" font-weight="700">点位描述</text>
+    <text x="26" y="44" font-size="11">从传送点向东，</text>
+    <text x="26" y="58" font-size="11">在树旁采集。</text>
+  </g>
+  <path d="M94 49v11" stroke="var(--accent)" stroke-width="1.2" stroke-linecap="round" />
+  <circle cx="155" cy="38" r="9" fill="var(--input)" stroke="var(--line)" />
+  <g stroke="var(--accent)" stroke-width="1.3" stroke-linecap="round">
+    <circle cx="155" cy="38" r="3.2" />
+    <path d="M155 33v1.7m0 6.6V43m-5-5h1.7m6.6 0h1.7m-8.5-3.5 1.2 1.2m4.6 4.6 1.2 1.2m0-7-1.2 1.2m-4.6 4.6-1.2 1.2" />
+  </g>
+</svg>

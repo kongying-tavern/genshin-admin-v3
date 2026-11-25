@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="184" height="80" viewBox="0 0 184 80" fill="none">
+  <title>公告管理的富文本编辑器</title>
+  <style>
+    :root {
+      --canvas: #eaf0f8;
+      --panel: #fff;
+      --muted: #edf2f8;
+      --line: #bdcde0;
+      --selection: #e1efff;
+      --text: #273b55;
+      --accent: #2468b8;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --canvas: #222c3b;
+        --panel: #2c3646;
+        --muted: #354256;
+        --line: #516179;
+        --selection: #345478;
+        --text: #edf4fd;
+        --accent: #cfe7ff;
+      }
+    }
+  </style>
+  <rect width="184" height="80" fill="var(--canvas)" />
+  <rect x="9.5" y="6.5" width="165" height="67" rx="5.5" fill="var(--panel)" stroke="var(--line)" />
+  <path d="M15 7h154a5 5 0 0 1 5 5v16H10V12a5 5 0 0 1 5-5z" fill="var(--muted)" />
+  <path d="M10 28h164" stroke="var(--line)" />
+  <rect x="17.5" y="11.5" width="25" height="12" rx="2.5" fill="var(--panel)" stroke="var(--line)" />
+  <rect x="48" y="11" width="16" height="13" rx="3" fill="var(--selection)" />
+  <path d="M101 13v9" stroke="var(--line)" />
+  <g font-family="system-ui, sans-serif" fill="var(--text)">
+    <text x="24" y="21" font-size="9">20</text>
+    <text x="52.5" y="21.5" font-size="11" font-weight="800" fill="var(--accent)">B</text>
+    <text x="71" y="21.5" font-size="11" font-family="serif" font-style="italic">I</text>
+    <text x="85" y="21" font-size="10" text-decoration="underline">U</text>
+    <text x="110" y="21" font-size="10" font-weight="600">H₂</text>
+  </g>
+  <rect x="18" y="34" width="64" height="19" rx="3" fill="var(--selection)" />
+  <text x="23" y="48" fill="var(--accent)" font-family="system-ui, sans-serif" font-size="13" font-weight="750">地图更新</text>
+  <circle cx="24" cy="62" r="1.6" fill="var(--accent)" />
+  <text x="31" y="66" fill="var(--text)" font-family="system-ui, sans-serif" font-size="11">新增点位及路线。</text>
+</svg>

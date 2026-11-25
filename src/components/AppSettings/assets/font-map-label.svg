@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="184" height="80" viewBox="0 0 184 80" fill="none">
+  <title>地图上的地名标签</title>
+  <rect width="184" height="80" fill="#315761" />
+  <path
+    d="M0 0h95c-6 12-21 11-28 22-6 9-1 18-12 25C39 57 16 51 0 69zm134 0h50v80H52c15-13 35-11 42-25 5-10-3-19 7-30 8-8 24-12 33-25z"
+    fill="#4c6c54"
+    stroke="#8aa181"
+    stroke-width="1.4"
+  />
+  <g stroke="#abc29a" stroke-opacity=".38" stroke-linecap="round">
+    <path d="M6 14c12 2 24-8 43-8m-44 40c13-8 34 1 47-11m-27 9c9 0 23 2 31-6" />
+    <path d="M140 7c11 7 24 2 38 5m-47 3c15 11 31 5 48 10m-62 1c17 11 38 9 58 14" />
+    <path d="M76 77c23-10 33-8 48-7s31-1 46-10m-31 14c9 1 23-2 35-7" />
+  </g>
+  <path
+    d="M9 57c14-16 32-12 44-23m45 36c17-3 21-18 41-23 12-3 21-3 37-2"
+    stroke="#d3cca3"
+    stroke-opacity=".6"
+    stroke-dasharray="2 3"
+    stroke-linecap="round"
+  />
+  <g fill="#c9edc9">
+    <path d="m38 29 4 4-4 4-4-4zm96 30 4 4-4 4-4-4z" />
+  </g>
+  <g
+    fill="#fff8e7"
+    stroke="#263f3b"
+    stroke-width="3"
+    paint-order="stroke"
+    text-anchor="middle"
+    font-family="system-ui, sans-serif"
+    font-size="14"
+    font-weight="700"
+  >
+    <text x="38" y="25">蒙德城</text>
+    <text x="134" y="55">风起地</text>
+  </g>
+</svg>

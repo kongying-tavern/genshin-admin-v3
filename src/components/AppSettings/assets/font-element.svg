@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="184" height="80" viewBox="0 0 184 80" fill="none">
+  <title>Element 系列管理组件</title>
+  <style>
+    :root {
+      --canvas: #eaf0f8;
+      --panel: #fff;
+      --muted: #edf2f8;
+      --line: #bdcde0;
+      --text: #273b55;
+      --subtle: #516b89;
+      --accent: #2873c8;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --canvas: #222c3b;
+        --panel: #2c3646;
+        --muted: #354256;
+        --line: #516179;
+        --text: #edf4fd;
+        --subtle: #becce0;
+        --accent: #327bcf;
+      }
+    }
+  </style>
+  <rect width="184" height="80" fill="var(--canvas)" />
+  <rect x="9.5" y="6.5" width="165" height="67" rx="5.5" fill="var(--panel)" stroke="var(--line)" />
+  <path d="M15 7h154a5 5 0 0 1 5 5v10H10V12a5 5 0 0 1 5-5z" fill="var(--muted)" />
+  <path d="M10 22h164" stroke="var(--line)" />
+  <g stroke="var(--subtle)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M135 15h5m7-3h5v5h-5zm13 0 5 5m0-5-5 5" />
+    <circle cx="24" cy="34" r="2.7" />
+    <path d="m26 36 2.6 2.5" />
+  </g>
+  <rect x="17.5" y="27.5" width="87" height="14" rx="3" stroke="var(--line)" />
+  <rect x="126" y="27" width="41" height="15" rx="3" fill="var(--accent)" />
+  <path d="M135 32v5m-2.5-2.5h5" stroke="#fff" stroke-linecap="round" />
+  <path d="M17 47h150v11H17z" fill="var(--muted)" />
+  <path d="M17 58h150M102 47v21" stroke="var(--line)" />
+  <g font-family="system-ui, sans-serif" font-size="10">
+    <text x="18" y="18" fill="var(--text)" font-weight="700">物品管理</text>
+    <text x="34" y="38" fill="var(--subtle)">物品名称</text>
+    <text x="142" y="38" fill="#fff" font-weight="600">新增</text>
+    <g fill="var(--subtle)" font-size="8.5" font-weight="600">
+      <text x="22" y="55.5">名称</text>
+      <text x="111" y="55.5">所属地区</text>
+    </g>
+    <text x="22" y="68" fill="var(--text)">甜甜花</text>
+    <text x="111" y="68" fill="var(--text)">蒙德</text>
+  </g>
+</svg>
