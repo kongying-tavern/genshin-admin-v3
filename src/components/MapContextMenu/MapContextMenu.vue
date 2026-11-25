@@ -61,6 +61,7 @@ const lockedPlacementCoordinate = shallowRef<DTO.Coordinate2D>()
 const trigger = useTemplateRef<HTMLButtonElement>('placementTrigger')
 const contextPanel = useTemplateRef<HTMLElement>('contextPanel')
 const contextActions = useTemplateRef<HTMLElement>('contextActions')
+const confirmButton = useTemplateRef<HTMLButtonElement>('confirmButton')
 const viewportWidth = inject(mapContainerWidthKey, ref(0))
 const viewportHeight = inject(mapContainerHeightKey, ref(0))
 const { position: projectedPosition } = useMapProjection({
@@ -124,17 +125,18 @@ const visibleMinimapTarget = computed(() =>
   placing.value && showMinimap.value ? minimapTarget.value : undefined,
 )
 
+const menuGap = 44
+const menuMargin = 10
+const clampMenuOffset = (start: number, size: number, extent: number) =>
+  Math.max(menuMargin, Math.min(start, extent - size - menuMargin))
+
 const menuOffset = (point: number, size: number, extent: number, leadingSpace = 0) => {
-  const gap = 44
-  const margin = 10
-  const spaceAfter = extent - point - margin
-  const spaceBefore = point - leadingSpace - margin
-  const before = spaceAfter < gap + size && (leadingSpace === 0 || spaceBefore > spaceAfter)
-  const start = before ? point - gap - size : point + gap
-  return {
-    before,
-    offset: Math.max(margin, Math.min(start, extent - size - margin) - leadingSpace),
-  }
+  const spaceAfter = extent - point - menuMargin
+  const spaceBefore = point - leadingSpace - menuMargin
+  const before = spaceAfter < menuGap + size && (leadingSpace === 0 || spaceBefore > spaceAfter)
+  const start = (before ? point - menuGap - size : point + menuGap) - leadingSpace
+  const offset = clampMenuOffset(start, size + leadingSpace, extent)
+  return { before, offset, fits: start === offset }
 }
 
 const contextMenuPosition = computed(() => {
@@ -142,12 +144,19 @@ const contextMenuPosition = computed(() => {
   const [x, y] = constrainToViewport(reticlePosition.value)
   const horizontal = menuOffset(x, panelWidth.value || initialMenuSize.width, viewportWidth.value)
   const buttonListHeight = actionsHeight.value || initialMenuSize.height
-  // 以按钮列表为定位基准，向上为小地图留出空间。
-  const minimapOffset = Math.max(0, panelHeight.value - buttonListHeight)
+  const menuHeight = Math.max(panelHeight.value, buttonListHeight)
+  const minimapOffset = menuHeight - buttonListHeight
   const vertical = menuOffset(y, buttonListHeight, viewportHeight.value, minimapOffset)
+  // 菜单能完整放在瞄准环一侧时，以「添加点位」按钮的中心对齐瞄准环。
+  const button = horizontal.fits ? confirmButton.value : null
+  const buttonHeight = button?.offsetHeight ?? 0
+  const top =
+    button && buttonHeight
+      ? clampMenuOffset(y - button.offsetTop - buttonHeight / 2, menuHeight, viewportHeight.value)
+      : vertical.offset
   return {
     left: `${horizontal.offset}px`,
-    top: `${vertical.offset}px`,
+    top: `${top}px`,
     transformOrigin: `${horizontal.before ? 'right' : 'left'} ${vertical.before ? 'bottom' : 'top'}`,
     '--menu-shift-x': horizontal.before ? '8px' : '-8px',
     '--menu-shift-y': vertical.before ? '8px' : '-8px',
@@ -374,6 +383,15 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
       >
         <template v-if="placing">
           <button
+            ref="confirmButton"
+            type="button"
+            class="menu-step menu-button primary"
+            @click="confirmPlacement"
+          >
+            <el-icon aria-hidden="true"><Plus /></el-icon>
+            添加点位
+          </button>
+          <button
             type="button"
             class="menu-step menu-button lock-switch"
             role="switch"
@@ -384,11 +402,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
             锁定
             <span class="lock-switch-track" aria-hidden="true" />
           </button>
-          <button type="button" class="menu-step menu-button primary" @click="confirmPlacement">
-            <el-icon aria-hidden="true"><Plus /></el-icon>
-            添加点位
-          </button>
-          <button type="button" class="menu-step menu-button" @click="cancelPlacement">
+          <button type="button" class="menu-step menu-button warning" @click="cancelPlacement">
             <el-icon aria-hidden="true"><Close /></el-icon>
             退出创建模式
           </button>
@@ -704,6 +718,12 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   color: #343044;
 }
 
+.menu-button.warning {
+  border-color: var(--el-color-warning, #e6a23c);
+  background: #603c28;
+  color: #ffd29b;
+}
+
 .menu-button:focus-visible,
 .placement-trigger:focus-visible {
   outline: 2px solid #ffe2a5;
@@ -719,6 +739,11 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 
   .menu-button.primary:hover {
     background: #fff0cd;
+  }
+
+  .menu-button.warning:hover {
+    border-color: #ffc578;
+    background: #754b31;
   }
 }
 

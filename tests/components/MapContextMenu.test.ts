@@ -152,7 +152,14 @@ describe('地图点位创建入口', () => {
   it('触屏从地图中心开始选址，可分别拖动罗盘和地图，再用罗盘位置打开表单', async () => {
     await wrapper.get('.placement-trigger').trigger('click')
     expect(wrapper.find('.placement-trigger').exists()).toBe(false)
-    const lock = wrapper.get('.context-menu [aria-label="点位选址"] [role="switch"]')
+    const actions = wrapper.get('.context-menu [aria-label="点位选址"]')
+    expect(actions.findAll('button').map(button => button.text())).toEqual([
+      '添加点位',
+      '锁定',
+      '退出创建模式',
+    ])
+    expect(actions.get('.warning').text()).toBe('退出创建模式')
+    const lock = actions.get('[role="switch"]')
     expect(lock.attributes('aria-checked')).toBe('false')
     expect(wrapper.find('.reticle-center').exists()).toBe(true)
     expect(createDeck).not.toHaveBeenCalled()
@@ -360,11 +367,17 @@ describe('地图点位创建入口', () => {
     expect(openMarkerCreatorDialog).toHaveBeenCalledWith([235, 185], defaultItem)
   })
 
-  it('右键选址时拖动罗盘会移动菜单，拖动地图后仍可确认罗盘位置', async () => {
+  it('右键选址时添加按钮跟随罗盘对齐，拖动地图后仍可确认罗盘位置', async () => {
     rightClick([240, 250])
     await nextTick()
     const reticle = wrapper.get<HTMLElement>('.placement-reticle').element
     const menu = wrapper.get<HTMLElement>('.context-menu').element
+    const addButton = wrapper.get('.context-menu .primary')
+    // jsdom 不计算布局，提供按钮相对菜单的偏移和高度。
+    Object.defineProperties(addButton.element, {
+      offsetTop: { value: 9 },
+      offsetHeight: { value: 44 },
+    })
     expect(reticle.style.left).toBe('240px')
     expect(reticle.style.top).toBe('250px')
     const menuLeft = menu.style.left
@@ -377,6 +390,7 @@ describe('地图点位创建入口', () => {
     expect(reticle.style.left).toBe('280px')
     expect(reticle.style.top).toBe('280px')
     expect(menu.style.left).not.toBe(menuLeft)
+    expect(menu.style.top).toBe('249px')
 
     MapSubject.dragStart.next(mapEvent([200, 220]))
     viewState.value = { target: [70, 90], zoom: 2 }
@@ -386,7 +400,7 @@ describe('地图点位创建入口', () => {
     expect(reticle.style.top).toBe('280px')
     expect(openMarkerCreatorDialog).not.toHaveBeenCalled()
 
-    await wrapper.get('.context-menu .primary').trigger('click')
+    await addButton.trigger('click')
     expect(openMarkerCreatorDialog).toHaveBeenCalledExactlyOnceWith([30, 65], defaultItem)
     expect(wrapper.find('.context-menu').exists()).toBe(false)
   })
