@@ -309,6 +309,36 @@ describe('地图点位创建入口', () => {
     expect(openMarkerCreatorDialog).toHaveBeenCalledExactlyOnceWith([-610, 0], defaultItem)
   })
 
+  it('点击方位指示器将视口移回原锁定点，保留缩放和选址', async () => {
+    preference.lockPlacementReticle = true
+    rightClick([430, 370])
+    await nextTick()
+
+    viewState.value = { target: [-500, 70], zoom: 2 }
+    await nextTick()
+    const direction = wrapper.get('.reticle-direction')
+    const subscription = MapSubject.viewState.subscribe(patch => {
+      viewState.value = { ...viewState.value, ...patch }
+    })
+    try {
+      await direction.trigger('click')
+    } finally {
+      subscription.unsubscribe()
+    }
+
+    expect(viewState.value).toMatchObject({ target: [65, 95], zoom: 2 })
+    expect(direction.element.tagName).toBe('BUTTON')
+    expect(wrapper.find('.reticle-direction').exists()).toBe(false)
+    const reticle = wrapper.get<HTMLElement>('.placement-reticle').element
+    expect(reticle.style.left).toBe('400px')
+    expect(reticle.style.top).toBe('300px')
+    expect(wrapper.get('[role="switch"]').attributes('aria-checked')).toBe('true')
+    expect(openMarkerCreatorDialog).not.toHaveBeenCalled()
+
+    await wrapper.get('.context-menu .primary').trigger('click')
+    expect(openMarkerCreatorDialog).toHaveBeenCalledExactlyOnceWith([55, 75], defaultItem)
+  })
+
   it('瞄准器已在中心时，点击仍保存本次视口的中心', async () => {
     await wrapper.get('.placement-trigger').trigger('click')
     const menu = wrapper.get('.context-menu')
@@ -518,7 +548,7 @@ describe('地图点位创建入口', () => {
     expect(menu.style.top).toBe('52px')
     expect(wrapper.get('.reticle-guide-axis.horizontal').isVisible()).toBe(false)
     expect(wrapper.get('.reticle-guide-axis.vertical').isVisible()).toBe(false)
-    expect(wrapper.get('.reticle-direction-note').text()).toContain('平移地图')
+    expect(wrapper.get('.reticle-direction-note').text()).toContain('点击箭头移回锁定点')
 
     viewState.value.target = [300, -180]
     await nextTick()

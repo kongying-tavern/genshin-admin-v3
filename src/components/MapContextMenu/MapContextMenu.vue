@@ -293,6 +293,14 @@ const cancelRecenter = () => {
   recenterPoint.value = undefined
 }
 
+const focusLockedPlacement = () => {
+  const target = lockedPlacementCoordinate.value
+  if (!canPlace.value || !placementDirection.value || recentering.value || !target) return
+  releaseReticle()
+  MapSubject.viewState.next({ target, transitionDuration: 0 })
+  mapCanvasRef.value?.focus({ preventScroll: true })
+}
+
 const recenterPlacement = (event: MouseEvent) => {
   if (!placing.value || !canPlace.value || recentering.value) return
   releaseReticle()
@@ -537,8 +545,9 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
     </Transition>
   </div>
 
-  <div
+  <button
     v-if="placementDirection"
+    type="button"
     class="reticle-direction"
     :data-edge="placementDirection.edge"
     :style="{
@@ -547,11 +556,14 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
       width: `${directionBadgeSize}px`,
       '--direction-angle': `${placementDirection.angle}deg`,
     }"
-    role="img"
-    :aria-label="`锁定点在视口${directionLabels[placementDirection.edge]}`"
+    :disabled="recentering || !canPlace"
+    :aria-label="`移回锁定点（视口${directionLabels[placementDirection.edge]}）`"
+    title="移回锁定点"
+    @click="focusLockedPlacement"
+    @contextmenu.prevent
   >
     <span class="reticle-direction-arrow" aria-hidden="true" />
-  </div>
+  </button>
 
   <Transition name="placement-menu" @before-leave="makeLeavingInert">
     <div
@@ -578,7 +590,9 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
         <p v-if="placementDirection" class="reticle-direction-note">
           <strong>锁定点在视口外</strong>
           <span>{{
-            visibleGuideAxes.some(Boolean) ? '拖动辅助线微调位置' : '平移地图，找回辅助线'
+            visibleGuideAxes.some(Boolean)
+              ? '点击箭头移回锁定点，或拖动辅助线微调'
+              : '点击箭头移回锁定点'
           }}</span>
         </p>
         <template v-if="placing">
@@ -804,12 +818,13 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   box-sizing: border-box;
   aspect-ratio: 1;
   place-items: center;
+  padding: 0;
   translate: -50% -50%;
   border: 1px solid #e3c795;
   border-radius: 50%;
   background: radial-gradient(circle at 40% 32%, #424d60, #222b3a 74%);
   box-shadow: 0 2px 8px #15203280;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .reticle-direction::before {
@@ -942,7 +957,8 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 }
 
 .menu-button:not(:disabled),
-.placement-trigger:not(:disabled) {
+.placement-trigger:not(:disabled),
+.reticle-direction:not(:disabled) {
   cursor: pointer;
 }
 
@@ -959,14 +975,16 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 }
 
 .menu-button:focus-visible,
-.placement-trigger:focus-visible {
+.placement-trigger:focus-visible,
+.reticle-direction:focus-visible {
   outline: 2px solid #ffe2a5;
   outline-offset: 2px;
 }
 
 @media (hover: hover) {
   .menu-button:hover,
-  .placement-trigger:not(:disabled):hover {
+  .placement-trigger:not(:disabled):hover,
+  .reticle-direction:not(:disabled):hover {
     background: #3a4352;
     border-color: #ffe2a5;
   }
