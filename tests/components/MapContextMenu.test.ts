@@ -180,9 +180,10 @@ describe('地图点位创建入口', () => {
     await nextTick()
     expect(reticle.style.left).toBe('460px')
     expect(reticle.style.top).toBe('360px')
-    const overlayStyle = wrapper.get<HTMLElement>('.reticle-overlay').element.style
-    expect(overlayStyle.getPropertyValue('--reticle-x')).toBe('460px')
-    expect(overlayStyle.getPropertyValue('--reticle-y')).toBe('360px')
+    const horizontal = wrapper.get<HTMLElement>('.reticle-guide-axis.horizontal').element
+    const vertical = wrapper.get<HTMLElement>('.reticle-guide-axis.vertical').element
+    expect(horizontal.style.getPropertyValue('--guide-hit-start')).toBe('356px')
+    expect(vertical.style.getPropertyValue('--guide-hit-start')).toBe('456px')
 
     MapSubject.dragStart.next(mapEvent([200, 220]))
     viewState.value.target = [70, 90]
@@ -196,6 +197,28 @@ describe('地图点位创建入口', () => {
     expect(wrapper.find('.placement-reticle').exists()).toBe(false)
     expect(wrapper.find('.reticle-guides').exists()).toBe(false)
     expect(wrapper.find('.placement-trigger').exists()).toBe(true)
+  })
+
+  it('拖动竖线只调整横坐标，取消时释放指针', async () => {
+    await wrapper.get('.placement-trigger').trigger('click')
+    const axis = wrapper.get('.reticle-guide-axis.vertical')
+    const guide = axis.get<HTMLElement>('.reticle-guide').element
+    const capture = mockPointerCapture(guide)
+
+    pointer(guide, 'pointerdown', [402, 120])
+    pointer(guide, 'pointermove', [462, 190])
+    await nextTick()
+    expect(axis.classes()).toContain('is-dragging')
+    expect(wrapper.get<HTMLElement>('.placement-reticle').element.style.left).toBe('460px')
+    expect(wrapper.get<HTMLElement>('.placement-reticle').element.style.top).toBe('300px')
+
+    pointer(guide, 'pointercancel', [480, 200])
+    pointer(guide, 'pointermove', [500, 250])
+    await nextTick()
+    expect(capture.setPointerCapture).toHaveBeenCalledExactlyOnceWith(1)
+    expect(capture.releasePointerCapture).toHaveBeenCalledExactlyOnceWith(1)
+    expect(axis.classes()).not.toContain('is-dragging')
+    expect(wrapper.get<HTMLElement>('.placement-reticle').element.style.left).toBe('460px')
   })
 
   it('小地图跟随罗盘下的地图坐标并固定缩放，旋转三角后仍按同一坐标创建', async () => {
@@ -290,7 +313,9 @@ describe('地图点位创建入口', () => {
     await nextTick()
     expect(reticle.style.left).toBe('1500px')
     expect(reticle.style.top).toBe('280px')
-    expect(wrapper.find('.reticle-guides').exists()).toBe(false)
+    expect(wrapper.get('.reticle-guide-axis.horizontal').isVisible()).toBe(true)
+    expect(wrapper.get('.reticle-guide-axis.vertical').isVisible()).toBe(false)
+    expect(wrapper.get('.reticle-direction').attributes('data-edge')).toBe('right')
     await wrapper.get('.context-menu .primary').trigger('click')
     expect(openMarkerCreatorDialog).toHaveBeenCalledExactlyOnceWith([40, 40], defaultItem)
 
@@ -301,17 +326,94 @@ describe('地图点位创建入口', () => {
     viewState.value.target = [-250, 82]
     await nextTick()
     expect(nextReticle.style.left).toBe('-100px')
+    expect(wrapper.get('.reticle-direction').attributes('data-edge')).toBe('left')
     await lock.trigger('click')
     expect(preference.lockPlacementReticle).toBe(false)
     expect(nextReticle.classList.contains('draggable-reticle')).toBe(true)
     expect(nextReticle.style.left).toBe('0px')
     expect(nextReticle.style.top).toBe('276px')
     expect(wrapper.find('.reticle-guides').exists()).toBe(true)
+    expect(wrapper.find('.reticle-direction').exists()).toBe(false)
 
     viewState.value.target = [-260, 85]
     await nextTick()
     expect(nextReticle.style.left).toBe('0px')
     expect(nextReticle.style.top).toBe('276px')
+  })
+
+  it('锁定点在视口外时，可用仍在视口内的横线微调地图纵坐标', async () => {
+    preference.lockPlacementReticle = true
+    preference.showPlacementMinimap = true
+    await wrapper.get('.placement-trigger').trigger('click')
+    viewState.value = { target: [-500, 70], zoom: 2 }
+    await nextTick()
+
+    const vertical = wrapper.get('.reticle-guide-axis.vertical')
+    expect(vertical.isVisible()).toBe(false)
+    const hiddenGuide = vertical.get<HTMLElement>('.reticle-guide').element
+    const hiddenCapture = mockPointerCapture(hiddenGuide)
+    pointer(hiddenGuide, 'pointerdown', [799, 120])
+    expect(hiddenCapture.setPointerCapture).not.toHaveBeenCalled()
+
+    const horizontal = wrapper.get('.reticle-guide-axis.horizontal')
+    expect(horizontal.isVisible()).toBe(true)
+    const guide = horizontal.get<HTMLElement>('.reticle-guide').element
+    const capture = mockPointerCapture(guide)
+    const touch = { pointerType: 'touch' }
+    pointer(guide, 'pointerdown', [160, 259], touch)
+    pointer(guide, 'pointermove', [240, 279], touch)
+    pointer(guide, 'pointerup', [280, 299], touch)
+    await nextTick()
+    expect(capture.releasePointerCapture).toHaveBeenCalledExactlyOnceWith(1)
+    const reticle = wrapper.get<HTMLElement>('.placement-reticle').element
+    expect(reticle.style.left).toBe('2600px')
+    expect(reticle.style.top).toBe('300px')
+    expect(setDeckProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({ viewState: { target: [50, 70], zoom: 0 } }),
+    )
+    expect(wrapper.get('.reticle-direction').attributes('data-edge')).toBe('right')
+    await wrapper.get('.context-menu .primary').trigger('click')
+    expect(openMarkerCreatorDialog).toHaveBeenCalledExactlyOnceWith([40, 50], defaultItem)
+  })
+
+  it('方位箭头随锁定点换边，小地图和操作菜单继续使用同一个实例', async () => {
+    preference.lockPlacementReticle = true
+    preference.showPlacementMinimap = true
+    await wrapper.get('.placement-trigger').trigger('click')
+    const heading = wrapper.get('input[aria-label="三角朝向"]')
+    const menu = wrapper.get<HTMLElement>('.context-menu').element
+    await heading.setValue('90')
+
+    viewState.value.target = [250, 310]
+    await nextTick()
+    expect(wrapper.get('.reticle-guide-axis.horizontal').isVisible()).toBe(false)
+    expect(wrapper.get('.reticle-guide-axis.vertical').isVisible()).toBe(true)
+    expect(wrapper.get('.reticle-direction-note').text()).toContain('拖动辅助线')
+
+    viewState.value.target = [300, 300]
+    await nextTick()
+    const badge = wrapper.get('.reticle-direction')
+    expect(badge.attributes('data-edge')).toBe('top')
+    expect(menu.style.top).toBe('52px')
+    expect(wrapper.get('.reticle-guide-axis.horizontal').isVisible()).toBe(false)
+    expect(wrapper.get('.reticle-guide-axis.vertical').isVisible()).toBe(false)
+    expect(wrapper.get('.reticle-direction-note').text()).toContain('平移地图')
+
+    viewState.value.target = [300, -180]
+    await nextTick()
+    expect(badge.attributes('data-edge')).toBe('bottom')
+    expect(parseFloat(menu.style.top)).toBeLessThan(576)
+    expect(wrapper.get('.context-menu').element).toBe(menu)
+    expect(wrapper.get('input[aria-label="三角朝向"]').element).toBe(heading.element)
+    expect(wrapper.find('svg g[transform="rotate(90)"]').exists()).toBe(true)
+    expect(createDeck).toHaveBeenCalledOnce()
+    expect(finalizeDeck).not.toHaveBeenCalled()
+
+    viewState.value.target = [50, 60]
+    await nextTick()
+    expect(wrapper.find('.reticle-direction').exists()).toBe(false)
+    expect(wrapper.get('.reticle-guide-axis.horizontal').isVisible()).toBe(true)
+    expect(wrapper.get('.reticle-guide-axis.vertical').isVisible()).toBe(true)
   })
 
   it('右键小地图以点击位置为中心，关闭开关或撤权时释放视口', async () => {

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import type { PlacementAxis } from './placementGeometry'
 import { Close, Edit, LocationInformation, Plus, Setting } from '@element-plus/icons-vue'
 import { useSubscription } from '@vueuse/rxjs'
 import { ElMessage } from 'element-plus'
@@ -20,6 +21,13 @@ import {
   useUserStore,
 } from '@/stores'
 import { useMapProjection } from '../MapAffix/hooks'
+import {
+  directionBadgeSize,
+  getPlacementDirection,
+  reticleRadius,
+  reticleSquareOffset,
+} from './placementGeometry'
+import PlacementGuides from './PlacementGuides.vue'
 import PlacementMinimap from './PlacementMinimap.vue'
 
 const props = defineProps<{
@@ -64,7 +72,8 @@ const contextActions = useTemplateRef<HTMLElement>('contextActions')
 const confirmButton = useTemplateRef<HTMLButtonElement>('confirmButton')
 const viewportWidth = inject(mapContainerWidthKey, ref(0))
 const viewportHeight = inject(mapContainerHeightKey, ref(0))
-const { position: projectedPosition } = useMapProjection({
+const viewport = computed<DTO.Coordinate2D>(() => [viewportWidth.value, viewportHeight.value])
+const { position: projectedPosition, scaleRatio } = useMapProjection({
   coord: computed(() =>
     placing.value ? lockedPlacementCoordinate.value : contextCoordinate.value,
   ),
@@ -95,14 +104,25 @@ const reticleStyle = computed(() => {
   const [x, y] = reticlePosition.value
   return { left: `${x}px`, top: `${y}px` }
 })
+const reticleDimensions = {
+  '--reticle-radius': `${reticleRadius}px`,
+  '--reticle-square-offset': `${reticleSquareOffset}px`,
+}
 
-const reticleInViewport = computed(() => {
+const visibleGuideAxes = computed(() => {
   const [x, y] = reticlePosition.value
-  return x >= 0 && x <= viewportWidth.value && y >= 0 && y <= viewportHeight.value
+  return [x >= 0 && x <= viewportWidth.value, y >= 0 && y <= viewportHeight.value] as const
 })
 const showContextActions = computed(
-  () => Boolean(contextCoordinate.value) && (placing.value || reticleInViewport.value),
+  () =>
+    Boolean(contextCoordinate.value) && (placing.value || visibleGuideAxes.value.every(Boolean)),
 )
+const placementDirection = computed(() =>
+  placing.value && lockedPlacementCoordinate.value
+    ? getPlacementDirection(reticlePosition.value, viewport.value)
+    : undefined,
+)
+const directionLabels = { left: '左侧', right: '右侧', top: '上方', bottom: '下方' }
 
 const getPlacementCoordinate = () =>
   lockedPlacementCoordinate.value ?? props.getMapCoordinate(placementScreenPoint.value)
@@ -128,6 +148,7 @@ const visibleMinimapTarget = computed(() =>
 
 const menuGap = 44
 const menuMargin = 10
+const directionMenuGap = directionBadgeSize / 2 + 10
 const clampMenuOffset = (start: number, size: number, extent: number) =>
   Math.max(menuMargin, Math.min(start, extent - size - menuMargin))
 
@@ -141,19 +162,45 @@ const menuOffset = (point: number, size: number, extent: number, leadingSpace = 
 }
 
 const contextMenuPosition = computed(() => {
-  // 锁定的瞄准环可随地图移出视口，操作菜单仍可在边缘使用。
-  const [x, y] = constrainToViewport(reticlePosition.value)
-  const horizontal = menuOffset(x, panelWidth.value || initialMenuSize.width, viewportWidth.value)
+  const [width, height] = viewport.value
+  const menuWidth = panelWidth.value || initialMenuSize.width
   const buttonListHeight = actionsHeight.value || initialMenuSize.height
   const menuHeight = Math.max(panelHeight.value, buttonListHeight)
+
+  const direction = placementDirection.value
+  if (direction) {
+    const { x, y, edge } = direction
+    const stacked = edge === 'top' || edge === 'bottom'
+    const leading = edge === 'top' || edge === 'left'
+    const anchor = stacked ? y : x
+    const extent = stacked ? height : width
+    const available = (leading ? extent - anchor : anchor) - directionMenuGap - menuMargin
+    const maxWidth = Math.max(0, stacked ? width - 2 * menuMargin : available)
+    const maxHeight = Math.max(0, stacked ? available : height - 2 * menuMargin)
+    const fittedWidth = Math.min(menuWidth, maxWidth)
+    const fittedHeight = Math.min(menuHeight, maxHeight)
+    const adjacent = leading
+      ? anchor + directionMenuGap
+      : anchor - directionMenuGap - (stacked ? fittedHeight : fittedWidth)
+
+    return {
+      left: `${stacked ? clampMenuOffset(x - fittedWidth / 2, fittedWidth, width) : adjacent}px`,
+      top: `${stacked ? adjacent : clampMenuOffset(y - fittedHeight / 2, fittedHeight, height)}px`,
+      '--menu-max-width': `${maxWidth}px`,
+      '--menu-max-height': `${maxHeight}px`,
+    }
+  }
+
+  const [x, y] = constrainToViewport(reticlePosition.value)
+  const horizontal = menuOffset(x, menuWidth, width)
   const minimapOffset = menuHeight - buttonListHeight
-  const vertical = menuOffset(y, buttonListHeight, viewportHeight.value, minimapOffset)
+  const vertical = menuOffset(y, buttonListHeight, height, minimapOffset)
   // 菜单能完整放在瞄准环一侧时，以「添加点位」按钮的中心对齐瞄准环。
   const button = horizontal.fits ? confirmButton.value : null
   const buttonHeight = button?.offsetHeight ?? 0
   const top =
     button && buttonHeight
-      ? clampMenuOffset(y - button.offsetTop - buttonHeight / 2, menuHeight, viewportHeight.value)
+      ? clampMenuOffset(y - button.offsetTop - buttonHeight / 2, menuHeight, height)
       : vertical.offset
   return {
     left: `${horizontal.offset}px`,
@@ -164,37 +211,68 @@ const contextMenuPosition = computed(() => {
   }
 })
 
-let reticleDrag: { element: HTMLElement; pointerId: number; offset: DTO.Coordinate2D } | undefined
+type ReticleDrag = { element: HTMLElement; pointerId: number } & (
+  | { axis?: undefined; offset: DTO.Coordinate2D }
+  | { axis: PlacementAxis; lastClientPosition: number }
+)
+const reticleDrag = shallowRef<ReticleDrag>()
 
-const startReticleDrag = (event: PointerEvent) => {
-  if (!placing.value || preferenceStore.lockPlacementReticle) return
-  if (reticleDrag || event.button !== 0 || !event.isPrimary) return
-  const [x, y] = placementScreenPoint.value
+const startReticleDrag = (event: PointerEvent, axis?: PlacementAxis) => {
+  if (
+    !placing.value
+    || !canPlace.value
+    || reticleDrag.value
+    || event.button !== 0
+    || !event.isPrimary
+  )
+    return
+  if (axis === undefined ? preferenceStore.lockPlacementReticle : !visibleGuideAxes.value[axis])
+    return
+
+  const { clientX, clientY, pointerId } = event
   const element = event.currentTarget as HTMLElement
   event.preventDefault()
-  element.setPointerCapture(event.pointerId)
-  reticleDrag = {
-    element,
-    pointerId: event.pointerId,
-    offset: [x - event.clientX, y - event.clientY],
-  }
+  element.setPointerCapture(pointerId)
+  const [x, y] = placementScreenPoint.value
+  reticleDrag.value =
+    axis === undefined
+      ? { element, pointerId, offset: [x - clientX, y - clientY] }
+      : { element, pointerId, axis, lastClientPosition: axis === 0 ? clientX : clientY }
 }
 
 const moveReticle = (event: PointerEvent) => {
-  if (reticleDrag?.pointerId !== event.pointerId) return
-  const [offsetX, offsetY] = reticleDrag.offset
-  placementPoint.value = constrainToViewport([event.clientX + offsetX, event.clientY + offsetY])
+  const drag = reticleDrag.value
+  if (drag?.pointerId !== event.pointerId) return
+  const { clientX, clientY } = event
+  const { axis } = drag
+  if (axis === undefined) {
+    const [offsetX, offsetY] = drag.offset
+    placementPoint.value = constrainToViewport([clientX + offsetX, clientY + offsetY])
+    return
+  }
+
+  const clientPosition = axis === 0 ? clientX : clientY
+  const delta = clientPosition - drag.lastClientPosition
+  if (delta === 0) return
+  drag.lastClientPosition = clientPosition
+
+  // 移动当前轴的坐标，另一个轴即使在视口外也保留原值。
+  const locked = lockedPlacementCoordinate.value
+  const point: DTO.Coordinate2D = [...(locked ?? placementScreenPoint.value)]
+  point[axis] += locked ? delta / scaleRatio.value : delta
+  if (locked) lockedPlacementCoordinate.value = point
+  else placementPoint.value = constrainToViewport(point)
 }
 
 const releaseReticle = () => {
-  if (!reticleDrag) return
-  const { element, pointerId } = reticleDrag
-  reticleDrag = undefined
+  if (!reticleDrag.value) return
+  const { element, pointerId } = reticleDrag.value
+  reticleDrag.value = undefined
   if (element.hasPointerCapture(pointerId)) element.releasePointerCapture(pointerId)
 }
 
 const endReticleDrag = (event: PointerEvent) => {
-  if (reticleDrag?.pointerId !== event.pointerId) return
+  if (reticleDrag.value?.pointerId !== event.pointerId) return
   if (event.type === 'pointerup') moveReticle(event)
   releaseReticle()
 }
@@ -325,10 +403,21 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
     <div
       v-if="placing || showContextActions"
       class="reticle-overlay"
-      :style="{ '--reticle-x': reticleStyle.left, '--reticle-y': reticleStyle.top }"
+      :style="reticleDimensions"
       aria-hidden="true"
+      @pointermove="moveReticle"
+      @pointerup="endReticleDrag"
+      @pointercancel="endReticleDrag"
+      @lostpointercapture="endReticleDrag"
     >
-      <span v-if="placing && reticleInViewport" class="reticle-guides" />
+      <PlacementGuides
+        v-if="placing"
+        :point="reticlePosition"
+        :viewport="viewport"
+        :visible-axes="visibleGuideAxes"
+        :active-axis="reticleDrag?.axis"
+        @press="startReticleDrag"
+      />
       <span
         class="placement-reticle"
         :class="{
@@ -336,11 +425,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
           'locked-reticle': placing && preferenceStore.lockPlacementReticle,
         }"
         :style="reticleStyle"
-        @pointerdown.stop="startReticleDrag"
-        @pointermove="moveReticle"
-        @pointerup="endReticleDrag"
-        @pointercancel="endReticleDrag"
-        @lostpointercapture="endReticleDrag"
+        @pointerdown.stop="startReticleDrag($event)"
         @contextmenu.prevent
       >
         <span class="reticle-ring" />
@@ -367,11 +452,28 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
     </Transition>
   </div>
 
+  <div
+    v-if="placementDirection"
+    class="reticle-direction"
+    :data-edge="placementDirection.edge"
+    :style="{
+      left: `${placementDirection.x}px`,
+      top: `${placementDirection.y}px`,
+      width: `${directionBadgeSize}px`,
+      '--direction-angle': `${placementDirection.angle}deg`,
+    }"
+    role="img"
+    :aria-label="`锁定点在视口${directionLabels[placementDirection.edge]}`"
+  >
+    <span class="reticle-direction-arrow" aria-hidden="true" />
+  </div>
+
   <Transition name="placement-menu" @before-leave="makeLeavingInert">
     <div
       v-if="placing || showContextActions"
       ref="contextPanel"
       class="context-menu font-genshin"
+      :class="{ 'has-direction': placementDirection }"
       :style="contextMenuPosition"
       @contextmenu.prevent
     >
@@ -386,6 +488,12 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
         role="group"
         :aria-label="placing ? '点位选址' : '地图操作'"
       >
+        <p v-if="placementDirection" class="reticle-direction-note">
+          <strong>锁定点在视口外</strong>
+          <span>{{
+            visibleGuideAxes.some(Boolean) ? '拖动辅助线微调位置' : '平移地图，找回辅助线'
+          }}</span>
+        </p>
         <template v-if="placing">
           <button
             ref="confirmButton"
@@ -401,7 +509,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
             class="menu-step menu-button lock-switch"
             role="switch"
             :aria-checked="preferenceStore.lockPlacementReticle"
-            title="将瞄准环锁定在地图坐标上"
+            title="平移地图时保留选址坐标，仍可拖动辅助线微调"
             @click="preferenceStore.lockPlacementReticle = !preferenceStore.lockPlacementReticle"
           >
             锁定
@@ -434,9 +542,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 
 <style scoped>
 .reticle-overlay {
-  --reticle-radius: 32px;
   --reticle-border-width: 2px;
-  --reticle-square-offset: calc(var(--reticle-radius) + 4px);
   --reticle-line-color: #8c8c8cb3;
   position: absolute;
   z-index: 7;
@@ -444,46 +550,10 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   pointer-events: none;
 }
 
-.reticle-guides {
-  position: absolute;
-  inset: 0;
-}
-
-.reticle-guides::before,
-.reticle-guides::after {
-  position: absolute;
-  content: '';
-}
-
-/* 延伸线从方块中心开始，方块遮住相接处的线段。 */
-.reticle-guides::before {
-  inset: var(--reticle-y) 0 auto;
-  height: 1px;
-  translate: 0 -50%;
-  background: linear-gradient(
-    to right,
-    var(--reticle-line-color) calc(var(--reticle-x) - var(--reticle-square-offset)),
-    transparent 0 calc(var(--reticle-x) + var(--reticle-square-offset)),
-    var(--reticle-line-color) 0
-  );
-}
-
-.reticle-guides::after {
-  inset: 0 auto 0 var(--reticle-x);
-  width: 1px;
-  translate: -50% 0;
-  background: linear-gradient(
-    to bottom,
-    var(--reticle-line-color) calc(var(--reticle-y) - var(--reticle-square-offset)),
-    transparent 0 calc(var(--reticle-y) + var(--reticle-square-offset)),
-    var(--reticle-line-color) 0
-  );
-}
-
 .placement-reticle {
   position: absolute;
   display: grid;
-  width: 84px;
+  width: calc(2 * var(--reticle-square-offset));
   aspect-ratio: 1;
   place-items: center;
   translate: -50% -50%;
@@ -513,6 +583,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 .reticle-axis {
   position: absolute;
   width: calc(2 * var(--reticle-square-offset));
+  pointer-events: none;
 }
 
 .reticle-axis-vertical {
@@ -630,13 +701,48 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   opacity: 0;
 }
 
+.reticle-direction {
+  position: absolute;
+  display: grid;
+  box-sizing: border-box;
+  aspect-ratio: 1;
+  place-items: center;
+  translate: -50% -50%;
+  border: 1px solid #e3c795;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 32%, #424d60, #222b3a 74%);
+  box-shadow: 0 2px 8px #15203280;
+  pointer-events: none;
+}
+
+.reticle-direction::before {
+  position: absolute;
+  inset: 3px;
+  border: 1px solid #dbc49a56;
+  border-radius: inherit;
+  content: '';
+}
+
+.reticle-direction-arrow {
+  width: 18px;
+  height: 19px;
+  rotate: var(--direction-angle);
+  background: linear-gradient(#fff5d8, #dab779);
+  clip-path: polygon(50% 0, 100% 100%, 50% 74%, 0 100%);
+}
+
+.reticle-direction,
+.context-menu.has-direction {
+  z-index: var(--map-window-layer, 11);
+}
+
 .context-menu {
   position: absolute;
   z-index: 10;
   display: flex;
   width: max-content;
-  max-width: calc(100% - 20px);
-  max-height: calc(100% - 20px);
+  max-width: var(--menu-max-width, calc(100% - 20px));
+  max-height: var(--menu-max-height, calc(100% - 20px));
   flex-direction: column;
   align-items: center;
   gap: 8px;
@@ -646,6 +752,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   display: grid;
   width: 208px;
   max-width: 100%;
+  min-height: 0;
   gap: 8px;
   overflow-y: auto;
   padding: 8px;
@@ -654,6 +761,33 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 
 .context-menu .placement-minimap {
   --minimap-size: min(188px, 35vw, 40vh);
+}
+
+.context-menu.has-direction .placement-minimap {
+  --minimap-size: min(
+    188px,
+    35vw,
+    40vh,
+    var(--menu-max-width),
+    max(0px, calc(var(--menu-max-height) - 112px))
+  );
+}
+
+.reticle-direction-note {
+  display: grid;
+  gap: 3px;
+  margin: 0 3px;
+  padding: 3px 4px 7px;
+  border-bottom: 1px solid #d3bc8e45;
+  color: #d3c0a1;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.reticle-direction-note strong {
+  color: #f4dfb3;
+  font-weight: normal;
 }
 
 .menu-button {
