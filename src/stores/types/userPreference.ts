@@ -83,7 +83,7 @@ export interface UserPreference {
   /** 隐藏点位弹窗 */
   'map.setting.hideMarkerPopover'?: boolean
 
-  /** 打开点位弹窗和筛选时在线核对点位 */
+  /** 高新鲜度模式，查看单个点位时在线核对 */
   'map.setting.verifyMarkersOnline'?: boolean
 
   /** 地图缩放时的过渡时间 */

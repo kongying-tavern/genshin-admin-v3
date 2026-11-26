@@ -1,12 +1,14 @@
 import type { MarkerVo } from '@/api/alova/globals'
 import type { GSMarkerInfo } from '@/packages/map'
 import { mount } from '@vue/test-utils'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { computed, nextTick, reactive, ref, shallowRef } from 'vue'
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { effectScope, nextTick, reactive, ref, shallowRef } from 'vue'
 import { getCapability, inspectSurface } from '@/ai/bindings'
+import MarkerTable from '@/components/AppSiderMenu/components/MarkerTable/MarkerTable.vue'
 import MapMarkerPopover from '@/components/MapMarkerPopover/MapMarkerPopover.vue'
+import { useMarkerControl } from '@/hooks/useMarkerControl'
+import { useInteractionInfo } from '@/stores/mapState/hooks/useInteractionInfo'
 
-const focus = shallowRef<GSMarkerInfo>()
 const sync = reactive({
   scope: 'account',
   online: true,
@@ -14,47 +16,60 @@ const sync = reactive({
 })
 const local = reactive(new Map<number, GSMarkerInfo>())
 const preferences = reactive({ verifyMarkersOnline: true })
+const archivePreferences = reactive({ 'map.setting.hideMarkerPopover': false })
 const canEdit = ref(false)
+const mapState = reactive({
+  interaction: useInteractionInfo(),
+  subscribeMission: () => ({ isProcessing: ref(false) }),
+  setTempMarkers: vi.fn(),
+  currentMarkerIdMap: local,
+  get currentLayerMarkers() {
+    return [...local.values()]
+  },
+})
 const { listMarkerById, openMarkerEditorDialog } = vi.hoisted(() => ({
   listMarkerById: vi.fn(),
   openMarkerEditorDialog: vi.fn(),
 }))
 const verifyMarkers =
   vi.fn<(ids: number[], signal: AbortSignal) => Promise<Map<number, MarkerVo>>>()
-const deletedIds = new Set<number>()
+const deletedIds = reactive(new Set<number>())
 
 vi.mock('@/api/alova', () => ({ default: { marker: { listMarkerById } } }))
 vi.mock('@/stores/mapEntitySync', () => ({ useMapEntitySync: () => sync }))
+vi.mock('@/stores/utils', () => ({ createRenderMarkers: () => [] }))
+vi.mock('@/packages/map', () => ({
+  EaseoutInterpolator: class {},
+  GSMarkerLayer: { layerName: 'marker' },
+}))
 vi.mock('@/stores', () => ({
   useAccessStore: () => ({
     get: (permission: string) => permission === 'MARKER_EDIT' && canEdit.value,
     checkHiddenFlag: () => true,
   }),
+  useArchiveStore: () => ({ preference: archivePreferences }),
+  useAreaStore: () => ({}),
+  useItemStore: () => ({}),
+  useSocketStore: () => ({ ipc: { on: vi.fn() } }),
   usePreferenceStore: () => preferences,
-  useMapStateStore: () => ({ interaction: { isPopoverOnHover: false } }),
-  useIconStore: () => ({ iconTextureUrl: ref(''), iconCoordMap: shallowRef(new Map()) }),
+  useMapStateStore: () => mapState,
+  useIconStore: () => reactive({ iconTextureUrl: ref(''), iconCoordMap: shallowRef(new Map()) }),
   useMarkerStore: () => ({
     getVisibleMarker: (id: number) => local.get(id),
     verifyMarkers,
     deletedIds,
   }),
 }))
-vi.mock('@/hooks', () => ({
+vi.mock('@/hooks', async () => ({
+  ...(await import('@/hooks/useMarkerControl')),
+  ...(await import('@/hooks/useState')),
   useGlobalDialog: () => ({}),
-  useMarkerControl: () => ({
-    focus,
-    isPopoverActived: computed(() => Boolean(focus.value)),
-    isSnapshot: computed(() => Boolean(focus.value?.__gs_isSnapshot)),
-    cachedMarkerVo: computed<GSMarkerInfo | null>(previous => focus.value ?? previous ?? null),
-    focusMarker: (marker: GSMarkerInfo) => {
-      focus.value = marker
-    },
-    blur: () => {
-      focus.value = undefined
-    },
-  }),
 }))
 vi.mock('@/components', () => ({
+  AppVirtualTable: {
+    props: ['data'],
+    template: '<div><slot v-for="item in data" :key="item.id" :item="item" /></div>',
+  },
   AppBilibiliVideoPlayer: {},
   AppIconTagRenderer: { template: '<div />' },
   GSButton: { template: '<button><slot /></button>' },
@@ -78,17 +93,26 @@ vi.mock('@/components/MapMarkerPopover/hooks', () => ({
 }))
 
 const makeMarker = (id: number, markerTitle: string): GSMarkerInfo =>
-  ({ id, markerTitle, render: { position: [0, 0], mainIconId: 1 } }) as GSMarkerInfo
+  ({
+    id,
+    markerTitle,
+    render: { position: [0, 0], mainIconId: 1, area: { code: 'world:mondstadt' } },
+  }) as GSMarkerInfo
 
 describe('点位弹窗句柄与加载状态', () => {
+  const controlScope = effectScope()
+  const { blur } = controlScope.run(useMarkerControl)!
   let wrapper: ReturnType<typeof mount>
+  let table: ReturnType<typeof mount> | undefined
 
   beforeEach(() => {
     vi.useFakeTimers()
-    focus.value = undefined
+    blur()
     sync.scope = 'account'
     sync.online = true
     preferences.verifyMarkersOnline = true
+    archivePreferences['map.setting.hideMarkerPopover'] = false
+    mapState.interaction.setIsPopoverOnHover(false)
     canEdit.value = false
     local.clear()
     deletedIds.clear()
@@ -110,8 +134,67 @@ describe('点位弹窗句柄与加载状态', () => {
   })
 
   afterEach(() => {
+    table?.unmount()
+    table = undefined
     wrapper?.unmount()
     vi.useRealTimers()
+  })
+
+  afterAll(() => controlScope.stop())
+
+  it('列表立即显示本地点位，点击后只核对选中项', async () => {
+    const first = makeMarker(1, '待核对点位')
+    const second = makeMarker(2, '其他点位')
+    local.set(1, first).set(2, second)
+    const read = Promise.withResolvers<Map<number, MarkerVo>>()
+    verifyMarkers.mockReturnValueOnce(read.promise)
+    table = mount(MarkerTable)
+
+    expect(table.text()).toContain(first.markerTitle)
+    expect(table.text()).toContain(second.markerTitle)
+    const row = table.findAll('.marker-card')[1]
+    await row.trigger('pointerenter')
+    await vi.advanceTimersByTimeAsync(200)
+    expect(verifyMarkers).not.toHaveBeenCalled()
+
+    await row.trigger('click')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(verifyMarkers).toHaveBeenCalledExactlyOnceWith([1], expect.any(AbortSignal))
+    expect(table.text()).toContain(first.markerTitle)
+    expect(table.text()).toContain(second.markerTitle)
+
+    const confirmed = { ...first, markerTitle: '已核对点位' }
+    local.set(1, confirmed)
+    read.resolve(new Map([[1, confirmed]]))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(table.text()).toContain(confirmed.markerTitle)
+    expect(wrapper.text()).toContain(confirmed.markerTitle)
+  })
+
+  it('隐藏弹窗时再次点击同一点位会重新核对，确认删除后列表移除该点位', async () => {
+    archivePreferences['map.setting.hideMarkerPopover'] = true
+    const first = makeMarker(1, '之后被删除的点位')
+    const second = makeMarker(2, '保留点位')
+    local.set(1, first).set(2, second)
+    verifyMarkers.mockResolvedValueOnce(new Map([[1, first]])).mockImplementationOnce(async () => {
+      deletedIds.add(1)
+      local.delete(1)
+      return new Map()
+    })
+    table = mount(MarkerTable)
+
+    const row = table.findAll('.marker-card')[1]
+    await row.trigger('click')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(verifyMarkers).toHaveBeenCalledExactlyOnceWith([1], expect.any(AbortSignal))
+    expect(wrapper.find('section').exists()).toBe(false)
+
+    await row.trigger('click')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(verifyMarkers).toHaveBeenNthCalledWith(2, [1], expect.any(AbortSignal))
+    expect(table.text()).not.toContain(first.markerTitle)
+    expect(table.text()).toContain(second.markerTitle)
+    expect(wrapper.find('section').exists()).toBe(false)
   })
 
   it('关闭时离线可直接显示缓存，切换设置后立即应用当前弹窗', async () => {

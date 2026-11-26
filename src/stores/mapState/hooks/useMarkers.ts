@@ -11,10 +11,8 @@ import type {
 import type { MAFMeta } from '@/stores/types'
 import { toValue } from 'vue'
 import { useMapEntitySync } from '@/stores/mapEntitySync'
-import { usePreferenceStore } from '@/stores/userPreference'
 import { createRenderMarkers } from '@/stores/utils'
 import { useMarkerAdvancedFilter, useMarkerFilter } from '.'
-import { useMarkerFilterFreshness } from './useMarkerFilterFreshness'
 
 interface MarkerHookOptions {
   archiveStore: ReturnType<typeof useArchiveStore>
@@ -27,7 +25,6 @@ interface MarkerHookOptions {
 
 export const useMarkers = (options: MarkerHookOptions) => {
   const { archiveStore, markerStore, tileStore, areaStore, itemStore } = options
-  const preferenceStore = usePreferenceStore()
   const sync = useMapEntitySync()
 
   const { markerFilterType } = useMarkerFilter(options)
@@ -133,57 +130,11 @@ export const useMarkers = (options: MarkerHookOptions) => {
 
   // ==================== 临时点位 - start ====================
 
-  const layerCandidates = computed(() => {
+  const staticMarkers = computed(() => {
     const { currentTileCode } = tileStore
     if (!currentTileCode) return []
     return markersGroupByTile.value[currentTileCode] ?? []
   })
-
-  const selectedConditions = computed(() =>
-    markerFilterType.value === 'advanced' ? advancedFilter.value : archiveItemIds.value,
-  )
-  const verification = useMarkerFilterFreshness({
-    enabled: () => preferenceStore.verifyMarkersOnline,
-    selection: () =>
-      JSON.stringify([
-        sync.scope,
-        tileStore.currentTileCode,
-        markerFilterType.value,
-        selectedConditions.value,
-      ]),
-    online: () => sync.online,
-    candidates: () => layerCandidates.value,
-    verify: (ids, signal) => markerStore.verifyMarkers(ids, signal),
-  })
-
-  let hiddenSince = 0
-  watch(useDocumentVisibility(), visibility => {
-    if (visibility === 'hidden') hiddenSince = Date.now()
-    else if (
-      preferenceStore.verifyMarkersOnline
-      && hiddenSince
-      && Date.now() - hiddenSince >= 30_000
-    )
-      verification.refresh()
-  })
-
-  /** 开启核对时，地图和列表只接收已确认且没有待更新标记的点位。 */
-  const staticMarkers = computed(() => {
-    const markers = verification.markers.value
-    if (!preferenceStore.verifyMarkersOnline) return markers
-    const pendingIds = sync.projection.pending.marker
-    return markers.filter(({ id }) => !pendingIds.has(id!))
-  })
-
-  const markersFilterLoading = computed(
-    () =>
-      preferenceStore.verifyMarkersOnline
-      && (verification.loading.value
-        || (sync.online
-          && selectedConditions.value.length > 0
-          && markerStore.updateLoading
-          && !markerStore.syncState?.baseline)),
-  )
 
   const staticMarkerIds = computed(() => new Set(staticMarkers.value.map(marker => marker.id!)))
 
@@ -307,10 +258,6 @@ export const useMarkers = (options: MarkerHookOptions) => {
   )
 
   return {
-    markersFilterLoading,
-    markersFilterFailed: verification.failed,
-    markersFilterOffline: verification.offline,
-    retryMarkerFilter: verification.retry,
     markersGroupByTile,
     currentLayerMarkers,
     currentMarkers,

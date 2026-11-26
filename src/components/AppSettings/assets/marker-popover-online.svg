@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="320" height="144" viewBox="0 0 320 144" fill="none">
-  <title>开启点位在线核对</title>
-  <desc>点位弹窗先显示骨架屏，服务端确认后再显示最新详情。</desc>
+  <title>开启高新鲜度模式</title>
+  <desc>点击单个点位后向服务端核对，弹窗在等待时显示骨架屏，核对后显示最新详情。</desc>
   <defs>
     <linearGradient id="map" x1="10" y1="0" x2="310" y2="144" gradientUnits="userSpaceOnUse">
       <stop stop-color="#2b3d4b" />
@@ -48,6 +48,13 @@
   <circle cx="240" cy="121" r="13" fill="#bde0b6" fill-opacity=".13" />
   <circle cx="240" cy="121" r="8" stroke="#bde0b6" stroke-opacity=".58" />
   <path d="m240 117 4 4-4 4-4-4z" fill="#cbe9c5" />
+  <path
+    d="m86 123 4 12 2-5 5-2z"
+    fill="#f0e8d8"
+    stroke="#263744"
+    stroke-width="1.2"
+    stroke-linejoin="round"
+  />
 
   <g transform="translate(20 19)" filter="url(#shadow)">
     <use href="#popup" />
@@ -62,8 +69,10 @@
     </g>
   </g>
 
-  <circle cx="160" cy="62" r="13" fill="#688b80" fill-opacity=".2" />
-  <path d="M154 62h12m-5-5 5 5-5 5" stroke="#c4dec1" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+  <g stroke="#c4dec1" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M153 56a3 3 0 0 1 0-6 4.5 4.5 0 0 1 8-1.5 3.8 3.8 0 1 1 4 7.5z" />
+    <path d="M152 67h16m-5-5 5 5-5 5" />
+  </g>
 
   <g transform="translate(180 19)" filter="url(#shadow)">
     <use href="#popup" />

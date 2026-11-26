@@ -49,29 +49,25 @@ const _useMarkerControl = () => {
     () => '',
   )
 
-  const focus = computed(() => {
-    if (isMultiSelecting.value || hideMarkerPopover.value) return
-    if (mapStateStore.interaction.isPopoverOnHover) {
-      const hoverIds = mapStateStore.interaction.hoverElements.get(MARKER_INTERACTION_KEY) as
-        | Set<number>
-        | undefined
-      if (!hoverIds || hoverIds.size > 1) return
-      const markerId = hoverIds.values().next().value!
-      return mapStateStore.currentMarkerIdMap.get(markerId)
-    } else {
-      const focusIds = mapStateStore.interaction.focusElements.get(MARKER_INTERACTION_KEY) as
-        | Set<number>
-        | undefined
-      if (!focusIds || focusIds.size > 1) return
-      const markerId = focusIds.values().next().value!
-      const placeholder = focusPlaceholder.value
-      if (placeholder?.id === markerId && placeholder.__gs_isSnapshot) return placeholder
-      if (markerStore.deletedIds.has(markerId)) return
-      return (
-        mapStateStore.currentMarkerIdMap.get(markerId)
-        ?? (placeholder?.id === markerId ? placeholder : undefined)
-      )
-    }
+  const focusedIds = computed(() => {
+    if (isMultiSelecting.value || mapStateStore.interaction.isPopoverOnHover) return
+    const ids = mapStateStore.interaction.focusElements.get(MARKER_INTERACTION_KEY) as
+      | ReadonlySet<number>
+      | undefined
+    return ids?.size === 1 ? ids : undefined
+  })
+
+  /** 隐藏弹窗时仍保留用户选中的点位，供单点核对使用。 */
+  const selectedMarker = computed(() => {
+    const markerId = focusedIds.value?.values().next().value
+    if (markerId === undefined) return
+    const placeholder = focusPlaceholder.value
+    if (placeholder?.id === markerId && placeholder.__gs_isSnapshot) return placeholder
+    if (markerStore.deletedIds.has(markerId)) return
+    return (
+      mapStateStore.currentMarkerIdMap.get(markerId)
+      ?? (placeholder?.id === markerId ? placeholder : undefined)
+    )
   })
 
   const hover = computed(() => {
@@ -82,6 +78,11 @@ const _useMarkerControl = () => {
     if (!hoverIds || hoverIds.size > 1) return
     const markerId = hoverIds.values().next().value!
     return mapStateStore.currentMarkerIdMap.get(markerId)
+  })
+
+  const focus = computed(() => {
+    if (isMultiSelecting.value || hideMarkerPopover.value) return
+    return mapStateStore.interaction.isPopoverOnHover ? hover.value : selectedMarker.value
   })
 
   /** 快照模式，点位只能查看不可交互 */
@@ -262,6 +263,8 @@ const _useMarkerControl = () => {
     cachedMarkerVo,
     hover,
     focus,
+    focusedIds,
+    selectedMarker,
     normalizeMarker,
     focusMarker,
     blur,

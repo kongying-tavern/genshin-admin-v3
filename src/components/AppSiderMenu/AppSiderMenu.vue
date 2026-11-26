@@ -194,12 +194,10 @@ onUnmounted(() => {
       <template #icon>
         <SiderMenuIcon name="markers" />
         <span
-          v-show="
-            mapStateStore.markersFilterLoading || mapStateStore.currentLayerMarkers.length > 0
-          "
+          v-show="mapStateStore.currentLayerMarkers.length > 0"
           class="sider-icon-badge sider-icon-count"
         >
-          {{ mapStateStore.currentLayerMarkers.length || '…' }}
+          {{ mapStateStore.currentLayerMarkers.length }}
         </span>
       </template>
       <MarkerTable />

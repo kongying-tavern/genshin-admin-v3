@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { InfoFilled } from '@element-plus/icons-vue'
 import { useDadianStore, usePreferenceStore, useTileStore } from '@/stores'
 import cachedPopover from '../assets/marker-popover-cached.svg'
 import onlinePopover from '../assets/marker-popover-online.svg'
@@ -82,11 +81,11 @@ const consoleConfig = () => {
       </SettingBar>
       <div class="marker-verification">
         <SettingBar
-          label="点位在线核对"
-          note="开启后，打开点位弹窗或筛选时会向服务端核对，减少看到过期或已删除的点位。"
+          label="高新鲜度模式"
+          note="开启后将尽最大努力确认信息的新鲜度，网络请求压力将大幅提高！不建议在较差的网络环境下开启!"
         >
           <template #setting>
-            <el-switch v-model="preferenceStore.verifyMarkersOnline" aria-label="点位在线核对" />
+            <el-switch v-model="preferenceStore.verifyMarkersOnline" aria-label="高新鲜度模式" />
           </template>
         </SettingBar>
 
@@ -96,21 +95,17 @@ const consoleConfig = () => {
               <img :src="cachedPopover" width="320" height="144" alt="" />
               <figcaption>
                 <span class="marker-verification-mode">关闭</span>
-                <span>直接显示缓存详情</span>
+                <span>通过 WebSocket 消息和定时更新同步</span>
               </figcaption>
             </figure>
             <figure class="marker-verification-preview">
               <img :src="onlinePopover" width="320" height="144" alt="" />
               <figcaption>
                 <span class="marker-verification-mode is-online">开启</span>
-                <span>先显示骨架屏，再显示最新详情</span>
+                <span>点击点位时额外在线核对</span>
               </figcaption>
             </figure>
           </div>
-          <p class="marker-verification-cost">
-            <el-icon :size="14" aria-hidden="true"><InfoFilled /></el-icon>
-            <span>会增加网络请求和等待时间，离线时需等到联网后才能确认结果。</span>
-          </p>
         </div>
       </div>
       <SettingBar
@@ -186,21 +181,6 @@ const consoleConfig = () => {
   &.is-online {
     background: var(--el-color-success-light-9);
     color: var(--el-color-success-dark-2);
-  }
-}
-
-.marker-verification-cost {
-  display: flex;
-  gap: 6px;
-  align-items: flex-start;
-  margin: 9px 0 0;
-  color: var(--el-text-color-regular);
-  font-size: 12px;
-  line-height: 1.5;
-
-  .el-icon {
-    flex: none;
-    margin-top: 2px;
   }
 }
 </style>

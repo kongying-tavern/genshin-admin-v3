@@ -30,14 +30,25 @@ const sync = useMapEntitySync()
 
 const { iconTextureUrl: tagSpriteUrl, iconCoordMap } = storeToRefs(useIconStore())
 
-const { cachedMarkerVo, isSnapshot, isPopoverActived, focus, blur, focusMarker } =
-  useMarkerControl()
+const {
+  cachedMarkerVo,
+  isSnapshot,
+  isPopoverActived,
+  focus,
+  focusedIds,
+  selectedMarker,
+  blur,
+  focusMarker,
+} = useMarkerControl()
 
 type DetailStatus = 'checking' | 'ready' | 'offline' | 'unavailable' | 'error'
 
-const requestedId = computed(() =>
-  preferenceStore.verifyMarkersOnline && !isSnapshot.value ? focus.value?.id : undefined,
-)
+const requestedId = computed(() => {
+  if (!preferenceStore.verifyMarkersOnline) return
+  const marker = focus.value ?? selectedMarker.value
+  if (marker?.__gs_isSnapshot) return
+  return marker?.id
+})
 const localMarker = computed(() => {
   const id = focus.value?.id
   return id === undefined ? undefined : markerStore.getVisibleMarker(id)
@@ -67,9 +78,10 @@ const markerDetails = computed<GSMarkerInfo | null>(() => {
   return marker ? { ...marker, render: anchor.render } : null
 })
 
+// 再次点击列表中的同一点位时，焦点集合会更换，触发重新核对。
 watch(
-  [requestedId, () => sync.scope, () => sync.online, refreshCount],
-  ([id, scope, online], _, onCleanup) => {
+  [requestedId, focusedIds, () => sync.scope, () => sync.online, refreshCount],
+  ([id, , scope, online], _, onCleanup) => {
     detail.value = undefined
     if (id === undefined || !scope || !online) return
     const controller = new AbortController()
@@ -101,10 +113,10 @@ watch(
 )
 
 watch(pending, value => {
-  if (value) retry()
+  if (value && focus.value) retry()
 })
 watch(useDocumentVisibility(), visibility => {
-  if (visibility === 'visible' && requestedId.value !== undefined) retry()
+  if (visibility === 'visible' && focus.value && requestedId.value !== undefined) retry()
 })
 
 const { isFinished, toggle: toggleFinished } = useMarkerFinished(markerDetails)
@@ -159,7 +171,7 @@ const unbindSurface = registerCapability({
   id: 'markerPopover',
   kind: 'popover',
   title: '点位弹窗',
-  description: '按 markerId 打开点位详情，开启点位在线核对时异步核对，或关闭当前弹层',
+  description: '按 markerId 打开点位详情，开启高新鲜度模式时异步核对，或关闭当前弹层',
   open: params => {
     const record = (params ?? {}) as { markerId?: unknown }
     const markerId = Number(record.markerId)
