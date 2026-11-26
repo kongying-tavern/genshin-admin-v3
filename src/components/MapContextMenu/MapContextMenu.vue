@@ -5,6 +5,7 @@ import { useSubscription } from '@vueuse/rxjs'
 import { ElMessage } from 'element-plus'
 import { openSettingsDialog } from '@/components/AppSettings/open'
 import { openMarkerCreatorDialog } from '@/components/MarkerModifyer/actions'
+import { EaseoutInterpolator } from '@/packages/map'
 import {
   mapCanvasRef,
   mapContainerHeightKey,
@@ -293,11 +294,17 @@ const cancelRecenter = () => {
   recenterPoint.value = undefined
 }
 
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 const focusLockedPlacement = () => {
   const target = lockedPlacementCoordinate.value
   if (!canPlace.value || !placementDirection.value || recentering.value || !target) return
   releaseReticle()
-  MapSubject.viewState.next({ target, transitionDuration: 0 })
+  MapSubject.viewState.next({
+    target,
+    transitionDuration: prefersReducedMotion() ? 0 : recenterDuration,
+    transitionInterpolator: new EaseoutInterpolator(['target', 'zoom']),
+  })
   mapCanvasRef.value?.focus({ preventScroll: true })
 }
 
@@ -335,10 +342,7 @@ const recenterPlacement = (event: MouseEvent) => {
     }
   }
 
-  if (
-    (x === centerX && y === centerY)
-    || window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  ) {
+  if ((x === centerX && y === centerY) || prefersReducedMotion()) {
     finish()
     return
   }

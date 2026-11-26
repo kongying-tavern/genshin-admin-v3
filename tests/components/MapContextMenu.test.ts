@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, reactive, ref } from 'vue'
 import MapContextMenu from '@/components/MapContextMenu/MapContextMenu.vue'
+import { EaseoutInterpolator } from '@/packages/map'
 import { mapContainerHeightKey, mapContainerWidthKey, MapSubject, mapViewStateKey } from '@/shared'
 
 const { openMarkerCreatorDialog, openSettingsDialog, createDeck, setDeckProps, finalizeDeck } =
@@ -309,35 +310,52 @@ describe('地图点位创建入口', () => {
     expect(openMarkerCreatorDialog).toHaveBeenCalledExactlyOnceWith([-610, 0], defaultItem)
   })
 
-  it('点击方位指示器将视口移回原锁定点，保留缩放和选址', async () => {
-    preference.lockPlacementReticle = true
-    rightClick([430, 370])
-    await nextTick()
+  it.each([
+    { motion: '默认动态效果', reducedMotion: false, duration: 300 },
+    { motion: '减少动态效果', reducedMotion: true, duration: 0 },
+  ])(
+    '点击方位指示器将视口移回原锁定点，保留缩放和选址（$motion）',
+    async ({ reducedMotion, duration }) => {
+      const motionQuery = '(prefers-reduced-motion: reduce)'
+      const matchMedia = window.matchMedia.bind(window)
+      vi.spyOn(window, 'matchMedia').mockImplementation(query => ({
+        ...matchMedia(query),
+        matches: reducedMotion && query === motionQuery,
+      }))
+      preference.lockPlacementReticle = true
+      rightClick([430, 370])
+      await nextTick()
 
-    viewState.value = { target: [-500, 70], zoom: 2 }
-    await nextTick()
-    const direction = wrapper.get('.reticle-direction')
-    const subscription = MapSubject.viewState.subscribe(patch => {
-      viewState.value = { ...viewState.value, ...patch }
-    })
-    try {
-      await direction.trigger('click')
-    } finally {
-      subscription.unsubscribe()
-    }
+      viewState.value = { target: [-500, 70], zoom: 2 }
+      await nextTick()
+      const direction = wrapper.get('.reticle-direction')
+      const subscription = MapSubject.viewState.subscribe(patch => {
+        viewState.value = { ...viewState.value, ...patch }
+      })
+      try {
+        await direction.trigger('click')
+      } finally {
+        subscription.unsubscribe()
+      }
 
-    expect(viewState.value).toMatchObject({ target: [65, 95], zoom: 2 })
-    expect(direction.element.tagName).toBe('BUTTON')
-    expect(wrapper.find('.reticle-direction').exists()).toBe(false)
-    const reticle = wrapper.get<HTMLElement>('.placement-reticle').element
-    expect(reticle.style.left).toBe('400px')
-    expect(reticle.style.top).toBe('300px')
-    expect(wrapper.get('[role="switch"]').attributes('aria-checked')).toBe('true')
-    expect(openMarkerCreatorDialog).not.toHaveBeenCalled()
+      expect(viewState.value).toMatchObject({
+        target: [65, 95],
+        zoom: 2,
+        transitionDuration: duration,
+        transitionInterpolator: expect.any(EaseoutInterpolator),
+      })
+      expect(direction.element.tagName).toBe('BUTTON')
+      expect(wrapper.find('.reticle-direction').exists()).toBe(false)
+      const reticle = wrapper.get<HTMLElement>('.placement-reticle').element
+      expect(reticle.style.left).toBe('400px')
+      expect(reticle.style.top).toBe('300px')
+      expect(wrapper.get('[role="switch"]').attributes('aria-checked')).toBe('true')
+      expect(openMarkerCreatorDialog).not.toHaveBeenCalled()
 
-    await wrapper.get('.context-menu .primary').trigger('click')
-    expect(openMarkerCreatorDialog).toHaveBeenCalledExactlyOnceWith([55, 75], defaultItem)
-  })
+      await wrapper.get('.context-menu .primary').trigger('click')
+      expect(openMarkerCreatorDialog).toHaveBeenCalledExactlyOnceWith([55, 75], defaultItem)
+    },
+  )
 
   it('瞄准器已在中心时，点击仍保存本次视口的中心', async () => {
     await wrapper.get('.placement-trigger').trigger('click')
