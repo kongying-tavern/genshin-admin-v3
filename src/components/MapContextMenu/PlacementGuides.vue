@@ -72,12 +72,13 @@ const guides = computed(() =>
 }
 
 .reticle-guide-axis {
-  --guide-color: #e4ddcc;
+  --guide-color: var(--placement-ink);
   position: absolute;
   display: grid;
 }
 
 .reticle-guide-axis.horizontal {
+  --guide-direction: to right;
   inset: var(--guide-hit-start) 0 auto;
   height: var(--guide-hit-size);
   grid-template-columns: var(--guide-tracks);
@@ -85,6 +86,7 @@ const guides = computed(() =>
 }
 
 .reticle-guide-axis.vertical {
+  --guide-direction: to bottom;
   inset: 0 auto 0 var(--guide-hit-start);
   width: var(--guide-hit-size);
   grid-template-rows: var(--guide-tracks);
@@ -93,7 +95,6 @@ const guides = computed(() =>
 
 .reticle-guide {
   position: relative;
-  overflow: clip;
   pointer-events: auto;
   touch-action: none;
   user-select: none;
@@ -109,9 +110,11 @@ const guides = computed(() =>
 
 .reticle-guide::before {
   position: absolute;
-  background-color: var(--guide-color);
-  box-shadow: 0 0 0 1px var(--placement-outline);
-  transition: background-color 120ms ease-out;
+  background: repeating-linear-gradient(
+    var(--guide-direction),
+    var(--guide-color) 0 7px,
+    #fff5debf 7px 10px
+  );
   content: '';
 }
 
@@ -127,17 +130,11 @@ const guides = computed(() =>
 
 @media (hover: hover) {
   .reticle-guide-axis:not(.is-dragging):has(.reticle-guide:hover) {
-    --guide-color: #ffcd80;
+    --guide-color: #975116;
   }
 }
 
 .reticle-guide-axis.is-dragging {
-  --guide-color: #fff;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .reticle-guide::before {
-    transition: none;
-  }
+  --guide-color: #00696c;
 }
 </style>
