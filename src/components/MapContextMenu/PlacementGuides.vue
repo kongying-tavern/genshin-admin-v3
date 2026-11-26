@@ -72,7 +72,8 @@ const guides = computed(() =>
 }
 
 .reticle-guide-axis {
-  --guide-color: var(--placement-ink);
+  --guide-bg-color: #fff5debf;
+  --guide-color: transparent;
   position: absolute;
   display: grid;
 }
@@ -113,7 +114,7 @@ const guides = computed(() =>
   background: repeating-linear-gradient(
     var(--guide-direction),
     var(--guide-color) 0 7px,
-    #fff5debf 7px 10px
+    var(--guide-bg-color) 7px 10px
   );
   content: '';
 }
@@ -130,11 +131,12 @@ const guides = computed(() =>
 
 @media (hover: hover) {
   .reticle-guide-axis:not(.is-dragging):has(.reticle-guide:hover) {
-    --guide-color: #975116;
+    --guide-color: var(--placement-ink);
   }
 }
 
 .reticle-guide-axis.is-dragging {
-  --guide-color: #00696c;
+  --guide-color: #fff5debf;
+  /* --guide-bg-color: */
 }
 </style>
