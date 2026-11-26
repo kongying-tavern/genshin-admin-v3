@@ -147,8 +147,9 @@ onBeforeUnmount(() => {
 .minimap-face::after {
   position: absolute;
   inset: 0;
-  border: 1px solid #d4e6ff40;
+  border: 2px solid var(--placement-outline);
   border-radius: inherit;
+  box-shadow: inset 0 0 0 2px var(--placement-stroke);
   content: '';
 }
 

@@ -541,9 +541,14 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 </template>
 
 <style scoped>
+.reticle-overlay,
+.context-menu {
+  --placement-stroke: #fff1cf;
+  --placement-outline: #252e3c;
+}
+
 .reticle-overlay {
   --reticle-border-width: 2px;
-  --reticle-line-color: #8c8c8cb3;
   position: absolute;
   z-index: 7;
   inset: 0;
@@ -576,8 +581,11 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   box-sizing: border-box;
   width: calc(2 * var(--reticle-radius));
   aspect-ratio: 1;
-  border: var(--reticle-border-width) solid var(--reticle-line-color);
+  border: var(--reticle-border-width) solid var(--placement-stroke);
   border-radius: 50%;
+  box-shadow:
+    0 0 0 1px var(--placement-outline),
+    inset 0 0 0 1px var(--placement-outline);
 }
 
 .reticle-axis {
@@ -599,8 +607,9 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   height: 6px;
   translate: -50% -50%;
   rotate: 45deg;
-  border: 1px solid #fff1cf;
+  border: 1px solid var(--placement-stroke);
   background: #c89e64;
+  box-shadow: 0 0 0 1px var(--placement-outline);
   content: '';
 }
 
@@ -622,9 +631,10 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 .reticle-center::before,
 .reticle-center::after {
   width: 100%;
-  height: 1px;
+  height: 2px;
   grid-area: 1 / 1;
-  background: #fff8df;
+  background: var(--placement-stroke);
+  box-shadow: 0 0 0 1px var(--placement-outline);
   content: '';
 }
 

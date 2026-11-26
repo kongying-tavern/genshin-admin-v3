@@ -72,7 +72,7 @@ const guides = computed(() =>
 }
 
 .reticle-guide-axis {
-  --guide-color: var(--reticle-line-color);
+  --guide-color: #e4ddcc;
   position: absolute;
   display: grid;
 }
@@ -93,6 +93,7 @@ const guides = computed(() =>
 
 .reticle-guide {
   position: relative;
+  overflow: clip;
   pointer-events: auto;
   touch-action: none;
   user-select: none;
@@ -109,6 +110,7 @@ const guides = computed(() =>
 .reticle-guide::before {
   position: absolute;
   background-color: var(--guide-color);
+  box-shadow: 0 0 0 1px var(--placement-outline);
   transition: background-color 120ms ease-out;
   content: '';
 }
@@ -125,12 +127,12 @@ const guides = computed(() =>
 
 @media (hover: hover) {
   .reticle-guide-axis:not(.is-dragging):has(.reticle-guide:hover) {
-    --guide-color: #ebcd95;
+    --guide-color: #ffcd80;
   }
 }
 
 .reticle-guide-axis.is-dragging {
-  --guide-color: #fff2d0;
+  --guide-color: #fff;
 }
 
 @media (prefers-reduced-motion: reduce) {
