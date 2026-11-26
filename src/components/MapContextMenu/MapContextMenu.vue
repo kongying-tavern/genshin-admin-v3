@@ -21,12 +21,7 @@ import {
   useUserStore,
 } from '@/stores'
 import { useMapProjection } from '../MapAffix/hooks'
-import {
-  directionBadgeSize,
-  getPlacementDirection,
-  reticleRadius,
-  reticleSquareOffset,
-} from './placementGeometry'
+import { directionBadgeSize, getPlacementDirection } from './placementGeometry'
 import PlacementGuides from './PlacementGuides.vue'
 import PlacementMinimap from './PlacementMinimap.vue'
 
@@ -104,10 +99,12 @@ const reticleStyle = computed(() => {
   const [x, y] = reticlePosition.value
   return { left: `${x}px`, top: `${y}px` }
 })
-const reticleDimensions = {
-  '--reticle-radius': `${reticleRadius}px`,
-  '--reticle-square-offset': `${reticleSquareOffset}px`,
-}
+const reticleRadius = computed(() => (placing.value ? 48 : 32))
+const reticleSquareOffset = computed(() => reticleRadius.value + 4)
+const reticleDimensions = computed(() => ({
+  '--reticle-radius': `${reticleRadius.value}px`,
+  '--reticle-square-offset': `${reticleSquareOffset.value}px`,
+}))
 
 const visibleGuideAxes = computed(() => {
   const [x, y] = reticlePosition.value
@@ -146,13 +143,13 @@ const visibleMinimapTarget = computed(() =>
   placing.value && showMinimap.value ? minimapTarget.value : undefined,
 )
 
-const menuGap = 44
 const menuMargin = 10
 const directionMenuGap = directionBadgeSize / 2 + 10
 const clampMenuOffset = (start: number, size: number, extent: number) =>
   Math.max(menuMargin, Math.min(start, extent - size - menuMargin))
 
 const menuOffset = (point: number, size: number, extent: number, leadingSpace = 0) => {
+  const menuGap = reticleSquareOffset.value + 8
   const spaceAfter = extent - point - menuMargin
   const spaceBefore = point - leadingSpace - menuMargin
   const before = spaceAfter < menuGap + size && (leadingSpace === 0 || spaceBefore > spaceAfter)
@@ -413,6 +410,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
       <PlacementGuides
         v-if="placing"
         :point="reticlePosition"
+        :square-offset="reticleSquareOffset"
         :viewport="viewport"
         :visible-axes="visibleGuideAxes"
         :active-axis="reticleDrag?.axis"
@@ -582,7 +580,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   aspect-ratio: 1;
   border: var(--reticle-border-width) solid var(--placement-ink);
   border-radius: 50%;
-  filter: drop-shadow(#FFF 0 0 1px);
+  filter: drop-shadow(#fff 0 0 1px);
 }
 
 .reticle-axis {

@@ -2,8 +2,6 @@ import { clamp } from '@vueuse/core'
 
 export type PlacementAxis = 0 | 1
 
-export const reticleRadius = 32
-export const reticleSquareOffset = reticleRadius + 4
 export const directionBadgeSize = 36
 
 interface PlacementDirection {

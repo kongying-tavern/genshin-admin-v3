@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import type { PlacementAxis } from './placementGeometry'
 import { clamp } from '@vueuse/core'
-import { reticleSquareOffset } from './placementGeometry'
 
 const props = defineProps<{
   point: DTO.Coordinate2D
+  squareOffset: number
   viewport: DTO.Coordinate2D
   visibleAxes: readonly [boolean, boolean]
   activeAxis?: PlacementAxis
@@ -26,16 +26,15 @@ const guides = computed(() =>
     // 线靠近边缘时把 8px 热区留在视口内，描边仍沿目标坐标绘制。
     const hitSize = Math.min(8, crossExtent)
     const hitStart = clamp(coordinate - hitSize / 2, 0, crossExtent - hitSize)
-    const strokeStart = clamp(coordinate - 0.5, 0, Math.max(0, crossExtent - 1))
-    const before = clamp(split - reticleSquareOffset, 0, length)
-    const after = clamp(length - split - reticleSquareOffset, 0, length)
+    const before = clamp(split - props.squareOffset, 0, length)
+    const after = clamp(length - split - props.squareOffset, 0, length)
 
     return {
       ...guide,
       style: {
         '--guide-hit-start': `${hitStart}px`,
         '--guide-hit-size': `${hitSize}px`,
-        '--guide-stroke-offset': `${strokeStart - hitStart}px`,
+        '--guide-center-offset': `${coordinate - hitStart}px`,
         '--guide-tracks': `${before}px minmax(0, 1fr) ${after}px`,
       },
     }
@@ -120,13 +119,15 @@ const guides = computed(() =>
 }
 
 .horizontal .reticle-guide::before {
-  inset: var(--guide-stroke-offset) 0 auto;
+  inset: var(--guide-center-offset) 0 auto;
   height: 1px;
+  translate: 0 -50%;
 }
 
 .vertical .reticle-guide::before {
-  inset: 0 auto 0 var(--guide-stroke-offset);
+  inset: 0 auto 0 var(--guide-center-offset);
   width: 1px;
+  translate: -50% 0;
 }
 
 @media (hover: hover) {

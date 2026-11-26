@@ -167,6 +167,8 @@ describe('地图点位创建入口', () => {
     expect(mapState.interaction.clearFocus).toHaveBeenCalledOnce()
     expect(mapState.interaction.clearHover).toHaveBeenCalledOnce()
 
+    const overlay = wrapper.get<HTMLElement>('.reticle-overlay').element
+    expect(overlay.style.getPropertyValue('--reticle-radius')).toBe('48px')
     const reticle = wrapper.get<HTMLElement>('.placement-reticle').element
     expect(reticle.style.left).toBe('400px')
     expect(reticle.style.top).toBe('300px')
@@ -184,6 +186,9 @@ describe('地图点位创建入口', () => {
     const vertical = wrapper.get<HTMLElement>('.reticle-guide-axis.vertical').element
     expect(horizontal.style.getPropertyValue('--guide-hit-start')).toBe('356px')
     expect(vertical.style.getPropertyValue('--guide-hit-start')).toBe('456px')
+    expect(horizontal.style.getPropertyValue('--guide-tracks')).toBe('408px minmax(0, 1fr) 288px')
+    expect(vertical.style.getPropertyValue('--guide-tracks')).toBe('308px minmax(0, 1fr) 188px')
+    expect(wrapper.get<HTMLElement>('.context-menu').element.style.left).toBe('520px')
 
     MapSubject.dragStart.next(mapEvent([200, 220]))
     viewState.value.target = [70, 90]
@@ -529,6 +534,10 @@ describe('地图点位创建入口', () => {
     expect(capture.releasePointerCapture).toHaveBeenCalledExactlyOnceWith(1)
     expect(reticle.style.left).toBe('800px')
     expect(reticle.style.top).toBe('0px')
+    const horizontal = wrapper.get<HTMLElement>('.reticle-guide-axis.horizontal').element
+    const vertical = wrapper.get<HTMLElement>('.reticle-guide-axis.vertical').element
+    expect(horizontal.style.getPropertyValue('--guide-center-offset')).toBe('0px')
+    expect(vertical.style.getPropertyValue('--guide-center-offset')).toBe('8px')
 
     width.value = 600
     await nextTick()
@@ -553,6 +562,8 @@ describe('地图点位创建入口', () => {
 
     expect(wrapper.find('.placement-trigger').exists()).toBe(false)
     expect(wrapper.find('.reticle-guides').exists()).toBe(false)
+    const overlay = wrapper.get<HTMLElement>('.reticle-overlay').element
+    expect(overlay.style.getPropertyValue('--reticle-radius')).toBe('32px')
     expect(wrapper.find('.context-menu .primary').exists()).toBe(false)
     expect(wrapper.get('.context-menu').text()).not.toContain('编辑地区标签')
     await wrapper.get('.context-menu button').trigger('click')
