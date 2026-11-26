@@ -147,7 +147,10 @@ describe('地图点位创建入口', () => {
     wrapper = mountMenu()
   })
 
-  afterEach(() => wrapper.unmount())
+  afterEach(() => {
+    wrapper.unmount()
+    vi.useRealTimers()
+  })
 
   it('触屏从地图中心开始选址，可分别拖动罗盘和地图，再用罗盘位置打开表单', async () => {
     expect(wrapper.find('.reticle-guides').exists()).toBe(false)
@@ -156,11 +159,13 @@ describe('地图点位创建入口', () => {
     const actions = wrapper.get('.context-menu [aria-label="点位选址"]')
     expect(actions.findAll('button').map(button => button.text())).toEqual([
       '添加点位',
+      '中心点',
       '锁定',
       '退出创建模式',
     ])
     expect(actions.get('.warning').text()).toBe('退出创建模式')
     const lock = actions.get('[role="switch"]')
+    expect(actions.get('.center-button').element.parentElement).toBe(lock.element.parentElement)
     expect(lock.attributes('aria-checked')).toBe('false')
     expect(wrapper.find('.reticle-center').exists()).toBe(true)
     expect(createDeck).not.toHaveBeenCalled()
@@ -224,6 +229,117 @@ describe('地图点位创建入口', () => {
     expect(capture.releasePointerCapture).toHaveBeenCalledExactlyOnceWith(1)
     expect(axis.classes()).not.toContain('is-dragging')
     expect(wrapper.get<HTMLElement>('.placement-reticle').element.style.left).toBe('460px')
+  })
+
+  it('回中缓动期间禁用菜单，连续改变视口也只回到点击时的中心', async () => {
+    vi.useFakeTimers()
+    rightClick([680, 450])
+    await nextTick()
+
+    const reticle = wrapper.get<HTMLElement>('.placement-reticle').element
+    const menu = wrapper.get('.context-menu')
+    const center = menu.get('.center-button')
+    await center.trigger('click')
+    expect(menu.element.hasAttribute('inert')).toBe(true)
+
+    vi.advanceTimersToNextFrame()
+    width.value = 1000
+    height.value = 700
+    vi.advanceTimersByTime(144)
+    await nextTick()
+    expect(parseFloat(reticle.style.left)).toBeGreaterThan(400)
+    expect(parseFloat(reticle.style.left)).toBeLessThan(540)
+    await center.trigger('click')
+    await menu.get('.primary').trigger('click')
+    await menu.get('[role="switch"]').trigger('click')
+    await menu.get('.warning').trigger('click')
+    expect(openMarkerCreatorDialog).not.toHaveBeenCalled()
+    expect(preference.lockPlacementReticle).toBe(false)
+    expect(wrapper.find('.context-menu').exists()).toBe(true)
+    expect(menu.element.hasAttribute('inert')).toBe(true)
+
+    width.value = 360
+    height.value = 280
+    vi.advanceTimersByTime(176)
+    await nextTick()
+    expect(reticle.style.left).toBe('400px')
+    expect(reticle.style.top).toBe('300px')
+    expect(menu.element.hasAttribute('inert')).toBe(false)
+
+    width.value = 1400
+    height.value = 1000
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    expect(reticle.style.left).toBe('400px')
+    expect(reticle.style.top).toBe('300px')
+
+    await center.trigger('click')
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    expect(reticle.style.left).toBe('700px')
+    expect(reticle.style.top).toBe('500px')
+  })
+
+  it('锁定点移出视口后可回中，并继续锁定回中落点', async () => {
+    vi.useFakeTimers()
+    preference.lockPlacementReticle = true
+    rightClick([430, 370])
+    await nextTick()
+
+    viewState.value.target = [-500, 70]
+    await nextTick()
+    expect(wrapper.get('.reticle-direction').attributes('data-edge')).toBe('right')
+
+    const reticle = wrapper.get<HTMLElement>('.placement-reticle').element
+    await wrapper.get('.center-button').trigger('click')
+    width.value = 1200
+    height.value = 800
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    expect(reticle.style.left).toBe('400px')
+    expect(reticle.style.top).toBe('300px')
+    expect(wrapper.find('.reticle-direction').exists()).toBe(false)
+    expect(wrapper.get('[role="switch"]').attributes('aria-checked')).toBe('true')
+
+    viewState.value.target = [-490, 80]
+    await nextTick()
+    expect(reticle.style.left).toBe('380px')
+    expect(reticle.style.top).toBe('280px')
+    await wrapper.get('.context-menu .primary').trigger('click')
+    expect(openMarkerCreatorDialog).toHaveBeenCalledExactlyOnceWith([-610, 0], defaultItem)
+  })
+
+  it('瞄准器已在中心时，点击仍保存本次视口的中心', async () => {
+    await wrapper.get('.placement-trigger').trigger('click')
+    const menu = wrapper.get('.context-menu')
+    await menu.get('.center-button').trigger('click')
+    expect(menu.element.hasAttribute('inert')).toBe(false)
+
+    width.value = 1000
+    height.value = 800
+    await nextTick()
+    const reticle = wrapper.get<HTMLElement>('.placement-reticle').element
+    expect(reticle.style.left).toBe('400px')
+    expect(reticle.style.top).toBe('300px')
+  })
+
+  it('回中时按 Escape 退出，重新选址不受上一轮动画影响', async () => {
+    vi.useFakeTimers()
+    rightClick([680, 450])
+    await nextTick()
+    await wrapper.get('.center-button').trigger('click')
+    vi.advanceTimersByTime(80)
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', cancelable: true }))
+    await nextTick()
+    expect(wrapper.find('.context-menu').exists()).toBe(false)
+
+    rightClick([350, 240])
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    const reticle = wrapper.get<HTMLElement>('.placement-reticle').element
+    expect(reticle.style.left).toBe('350px')
+    expect(reticle.style.top).toBe('240px')
+    expect(wrapper.get('.context-menu').element.hasAttribute('inert')).toBe(false)
   })
 
   it('小地图跟随罗盘下的地图坐标并固定缩放，旋转三角后仍按同一坐标创建', async () => {

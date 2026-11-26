@@ -59,8 +59,12 @@ const heading = ref(252)
 
 const contextCoordinate = shallowRef<DTO.Coordinate2D>()
 // 未锁定时记录视口像素，锁定时记录地图坐标。
-const placementPoint = shallowRef<DTO.Coordinate2D>()
+const placementPoint = shallowRef<{ position: DTO.Coordinate2D; fromViewportSnapshot?: true }>()
 const lockedPlacementCoordinate = shallowRef<DTO.Coordinate2D>()
+const recenterPoint = shallowRef<DTO.Coordinate2D>()
+const recentering = computed(() => recenterPoint.value !== undefined)
+const recenterDuration = 300
+let recenterFrame: number | undefined
 const trigger = useTemplateRef<HTMLButtonElement>('placementTrigger')
 const contextPanel = useTemplateRef<HTMLElement>('contextPanel')
 const contextActions = useTemplateRef<HTMLElement>('contextActions')
@@ -68,6 +72,10 @@ const confirmButton = useTemplateRef<HTMLButtonElement>('confirmButton')
 const viewportWidth = inject(mapContainerWidthKey, ref(0))
 const viewportHeight = inject(mapContainerHeightKey, ref(0))
 const viewport = computed<DTO.Coordinate2D>(() => [viewportWidth.value, viewportHeight.value])
+const viewportCenter = computed<DTO.Coordinate2D>(() => [
+  viewportWidth.value / 2,
+  viewportHeight.value / 2,
+])
 const { position: projectedPosition, scaleRatio } = useMapProjection({
   coord: computed(() =>
     placing.value ? lockedPlacementCoordinate.value : contextCoordinate.value,
@@ -87,11 +95,14 @@ const constrainToViewport = ([x, y]: DTO.Coordinate2D): DTO.Coordinate2D => [
   Math.max(0, Math.min(y, viewportHeight.value)),
 ]
 
-const placementScreenPoint = computed(() =>
-  constrainToViewport(placementPoint.value ?? [viewportWidth.value / 2, viewportHeight.value / 2]),
-)
+const placementScreenPoint = computed(() => {
+  if (recenterPoint.value) return recenterPoint.value
+  const point = placementPoint.value
+  if (!point) return viewportCenter.value
+  return point.fromViewportSnapshot ? point.position : constrainToViewport(point.position)
+})
 const reticlePosition = computed(() =>
-  placing.value && !lockedPlacementCoordinate.value
+  placing.value && (recentering.value || !lockedPlacementCoordinate.value)
     ? placementScreenPoint.value
     : projectedPosition.value,
 )
@@ -122,7 +133,8 @@ const placementDirection = computed(() =>
 const directionLabels = { left: '左侧', right: '右侧', top: '上方', bottom: '下方' }
 
 const getPlacementCoordinate = () =>
-  lockedPlacementCoordinate.value ?? props.getMapCoordinate(placementScreenPoint.value)
+  (recentering.value ? undefined : lockedPlacementCoordinate.value)
+  ?? props.getMapCoordinate(placementScreenPoint.value)
 
 const minimapTarget = shallowRef<DTO.Coordinate2D>()
 watch(
@@ -218,6 +230,7 @@ const startReticleDrag = (event: PointerEvent, axis?: PlacementAxis) => {
   if (
     !placing.value
     || !canPlace.value
+    || recentering.value
     || reticleDrag.value
     || event.button !== 0
     || !event.isPrimary
@@ -244,7 +257,7 @@ const moveReticle = (event: PointerEvent) => {
   const { axis } = drag
   if (axis === undefined) {
     const [offsetX, offsetY] = drag.offset
-    placementPoint.value = constrainToViewport([clientX + offsetX, clientY + offsetY])
+    placementPoint.value = { position: constrainToViewport([clientX + offsetX, clientY + offsetY]) }
     return
   }
 
@@ -258,7 +271,7 @@ const moveReticle = (event: PointerEvent) => {
   const point: DTO.Coordinate2D = [...(locked ?? placementScreenPoint.value)]
   point[axis] += locked ? delta / scaleRatio.value : delta
   if (locked) lockedPlacementCoordinate.value = point
-  else placementPoint.value = constrainToViewport(point)
+  else placementPoint.value = { position: constrainToViewport(point) }
 }
 
 const releaseReticle = () => {
@@ -274,17 +287,88 @@ const endReticleDrag = (event: PointerEvent) => {
   releaseReticle()
 }
 
-onBeforeUnmount(releaseReticle)
+const cancelRecenter = () => {
+  if (recenterFrame !== undefined) cancelAnimationFrame(recenterFrame)
+  recenterFrame = undefined
+  recenterPoint.value = undefined
+}
+
+const recenterPlacement = (event: MouseEvent) => {
+  if (!placing.value || !canPlace.value || recentering.value) return
+  releaseReticle()
+
+  const button = event.currentTarget as HTMLButtonElement
+  const restoreFocus = document.activeElement === button
+  const center = viewportCenter.value
+  const [centerX, centerY] = center
+  const [x, y] = reticlePosition.value
+  const finish = () => {
+    placementPoint.value = { position: center, fromViewportSnapshot: true }
+    const locked = lockedPlacementCoordinate.value
+    if (!preferenceStore.lockPlacementReticle) {
+      lockedPlacementCoordinate.value = undefined
+    } else if (locked) {
+      // 沿用主图投影的尺寸和比例，避免画布尺寸更新不同步时在落点跳动。
+      const [projectedX, projectedY] = projectedPosition.value
+      const scale = scaleRatio.value
+      lockedPlacementCoordinate.value = [
+        locked[0] + (centerX - projectedX) / scale,
+        locked[1] + (centerY - projectedY) / scale,
+      ]
+    } else {
+      lockedPlacementCoordinate.value = props.getMapCoordinate(center)
+    }
+    recenterFrame = undefined
+    recenterPoint.value = undefined
+    if (restoreFocus) {
+      void nextTick(() => {
+        if (document.activeElement === document.body) button.focus({ preventScroll: true })
+      })
+    }
+  }
+
+  if (
+    (x === centerX && y === centerY)
+    || window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  ) {
+    finish()
+    return
+  }
+
+  recenterPoint.value = [x, y]
+  let startedAt: number | undefined
+  const step = (now: number) => {
+    startedAt ??= now
+    const progress = Math.min((now - startedAt) / recenterDuration, 1)
+    if (progress === 1) {
+      finish()
+      return
+    }
+    const eased = 1 - (1 - progress) ** 3
+    recenterPoint.value = [x + (centerX - x) * eased, y + (centerY - y) * eased]
+    recenterFrame = requestAnimationFrame(step)
+  }
+  recenterFrame = requestAnimationFrame(step)
+}
+
+onBeforeUnmount(() => {
+  cancelRecenter()
+  releaseReticle()
+})
+
+watch(placing, active => {
+  if (!active) cancelRecenter()
+})
 
 watch(
   () => preferenceStore.lockPlacementReticle,
   locked => {
-    if (!placing.value) return
+    if (!placing.value || recentering.value) return
     releaseReticle()
     if (locked) {
       lockedPlacementCoordinate.value = getPlacementCoordinate()
     } else if (lockedPlacementCoordinate.value) {
-      placementPoint.value = constrainToViewport(projectedPosition.value)
+      placementPoint.value = { position: constrainToViewport(projectedPosition.value) }
       lockedPlacementCoordinate.value = undefined
     }
   },
@@ -296,6 +380,7 @@ const closeContextMenu = () => {
 }
 
 const closeMenus = () => {
+  cancelRecenter()
   releaseReticle()
   closeContextMenu()
   placementPoint.value = undefined
@@ -312,7 +397,7 @@ const beginPlacement = (point?: DTO.Coordinate2D) => {
   if (!canPlace.value) return
   releaseReticle()
   if (!point) closeContextMenu()
-  placementPoint.value = point
+  placementPoint.value = point ? { position: point } : undefined
   lockedPlacementCoordinate.value = preferenceStore.lockPlacementReticle
     ? (contextCoordinate.value ?? props.getMapCoordinate(placementScreenPoint.value))
     : undefined
@@ -325,6 +410,7 @@ const beginPlacement = (point?: DTO.Coordinate2D) => {
 useSubscription(
   MapSubject.click.subscribe(({ info, event }) => {
     if (blocked.value) return closeMenus()
+    if (recentering.value) return
     const [x, y] = info.coordinate ?? []
     if (!event.rightButton || !Number.isFinite(x) || !Number.isFinite(y)) {
       if (!placing.value) closeContextMenu()
@@ -401,6 +487,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
       v-if="placing || showContextActions"
       class="reticle-overlay"
       :style="reticleDimensions"
+      :inert="recentering || undefined"
       aria-hidden="true"
       @pointermove="moveReticle"
       @pointerup="endReticleDrag"
@@ -473,6 +560,8 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
       class="context-menu font-genshin"
       :class="{ 'has-direction': placementDirection }"
       :style="contextMenuPosition"
+      :inert="recentering || undefined"
+      @click.capture="recentering && $event.stopPropagation()"
       @contextmenu.prevent
     >
       <PlacementMinimap
@@ -502,17 +591,22 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
             <el-icon aria-hidden="true"><Plus /></el-icon>
             添加点位
           </button>
-          <button
-            type="button"
-            class="menu-step menu-button lock-switch"
-            role="switch"
-            :aria-checked="preferenceStore.lockPlacementReticle"
-            title="平移地图时保留选址坐标，仍可拖动辅助线微调"
-            @click="preferenceStore.lockPlacementReticle = !preferenceStore.lockPlacementReticle"
-          >
-            锁定
-            <span class="lock-switch-track" aria-hidden="true" />
-          </button>
+          <div class="menu-step placement-adjustments">
+            <button type="button" class="menu-button center-button" @click="recenterPlacement">
+              中心点
+            </button>
+            <button
+              type="button"
+              class="menu-button lock-switch"
+              role="switch"
+              :aria-checked="preferenceStore.lockPlacementReticle"
+              title="平移地图时保留选址坐标，仍可拖动辅助线微调"
+              @click="preferenceStore.lockPlacementReticle = !preferenceStore.lockPlacementReticle"
+            >
+              锁定
+              <span class="lock-switch-track" aria-hidden="true" />
+            </button>
+          </div>
           <button type="button" class="menu-step menu-button warning" @click="cancelPlacement">
             <el-icon aria-hidden="true"><Close /></el-icon>
             退出创建模式
@@ -808,9 +902,14 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   white-space: nowrap;
 }
 
+.placement-adjustments {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .lock-switch {
   justify-content: space-between;
-  padding-inline: 14px;
 }
 
 .lock-switch-track {
