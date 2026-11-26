@@ -582,6 +582,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   aspect-ratio: 1;
   border: var(--reticle-border-width) solid var(--placement-ink);
   border-radius: 50%;
+  filter: drop-shadow(#FFF 0 0 1px);
 }
 
 .reticle-axis {

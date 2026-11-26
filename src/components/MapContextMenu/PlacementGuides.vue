@@ -73,7 +73,7 @@ const guides = computed(() =>
 
 .reticle-guide-axis {
   --guide-bg-color: #fff5debf;
-  --guide-color: transparent;
+  --guide-color: #33333340;
   position: absolute;
   display: grid;
 }
@@ -131,12 +131,12 @@ const guides = computed(() =>
 
 @media (hover: hover) {
   .reticle-guide-axis:not(.is-dragging):has(.reticle-guide:hover) {
-    --guide-color: var(--placement-ink);
+    --guide-color: #fff5debf;
+    --guide-bg-color: #fff5debf;
   }
 }
 
 .reticle-guide-axis.is-dragging {
-  --guide-color: #fff5debf;
-  /* --guide-bg-color: */
+  --guide-color: yellow;
 }
 </style>
