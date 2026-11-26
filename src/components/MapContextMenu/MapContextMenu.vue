@@ -96,12 +96,13 @@ const reticleStyle = computed(() => {
   return { left: `${x}px`, top: `${y}px` }
 })
 
-const showContextActions = computed(() => {
-  if (!contextCoordinate.value) return false
-  if (placing.value) return true
+const reticleInViewport = computed(() => {
   const [x, y] = reticlePosition.value
   return x >= 0 && x <= viewportWidth.value && y >= 0 && y <= viewportHeight.value
 })
+const showContextActions = computed(
+  () => Boolean(contextCoordinate.value) && (placing.value || reticleInViewport.value),
+)
 
 const getPlacementCoordinate = () =>
   lockedPlacementCoordinate.value ?? props.getMapCoordinate(placementScreenPoint.value)
@@ -321,29 +322,33 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 
 <template>
   <Transition name="reticle" @before-leave="makeLeavingInert">
-    <span
+    <div
       v-if="placing || showContextActions"
-      class="placement-reticle"
-      :class="{
-        'draggable-reticle': placing && !preferenceStore.lockPlacementReticle,
-        'locked-reticle': placing && preferenceStore.lockPlacementReticle,
-      }"
-      :style="reticleStyle"
+      class="reticle-overlay"
+      :style="{ '--reticle-x': reticleStyle.left, '--reticle-y': reticleStyle.top }"
       aria-hidden="true"
-      @pointerdown.stop="startReticleDrag"
-      @pointermove="moveReticle"
-      @pointerup="endReticleDrag"
-      @pointercancel="endReticleDrag"
-      @lostpointercapture="endReticleDrag"
-      @contextmenu.prevent
     >
-      <span class="reticle-frame">
+      <span v-if="placing && reticleInViewport" class="reticle-guides" />
+      <span
+        class="placement-reticle"
+        :class="{
+          'draggable-reticle': placing && !preferenceStore.lockPlacementReticle,
+          'locked-reticle': placing && preferenceStore.lockPlacementReticle,
+        }"
+        :style="reticleStyle"
+        @pointerdown.stop="startReticleDrag"
+        @pointermove="moveReticle"
+        @pointerup="endReticleDrag"
+        @pointercancel="endReticleDrag"
+        @lostpointercapture="endReticleDrag"
+        @contextmenu.prevent
+      >
         <span class="reticle-ring" />
         <span class="reticle-axis" />
         <span class="reticle-axis reticle-axis-vertical" />
+        <span class="reticle-center" />
       </span>
-      <span class="reticle-center" />
-    </span>
+    </div>
   </Transition>
 
   <div v-if="canCreate && !editingAreaTags" class="placement-tools font-genshin">
@@ -428,11 +433,57 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 </template>
 
 <style scoped>
-.placement-reticle {
+.reticle-overlay {
+  --reticle-radius: 32px;
+  --reticle-border-width: 2px;
+  --reticle-square-offset: calc(var(--reticle-radius) + 4px);
+  --reticle-line-color: #8c8c8cb3;
   position: absolute;
   z-index: 7;
+  inset: 0;
+  pointer-events: none;
+}
+
+.reticle-guides {
+  position: absolute;
+  inset: 0;
+}
+
+.reticle-guides::before,
+.reticle-guides::after {
+  position: absolute;
+  content: '';
+}
+
+/* 延伸线从方块中心开始，方块遮住相接处的线段。 */
+.reticle-guides::before {
+  inset: var(--reticle-y) 0 auto;
+  height: 1px;
+  translate: 0 -50%;
+  background: linear-gradient(
+    to right,
+    var(--reticle-line-color) calc(var(--reticle-x) - var(--reticle-square-offset)),
+    transparent 0 calc(var(--reticle-x) + var(--reticle-square-offset)),
+    var(--reticle-line-color) 0
+  );
+}
+
+.reticle-guides::after {
+  inset: 0 auto 0 var(--reticle-x);
+  width: 1px;
+  translate: -50% 0;
+  background: linear-gradient(
+    to bottom,
+    var(--reticle-line-color) calc(var(--reticle-y) - var(--reticle-square-offset)),
+    transparent 0 calc(var(--reticle-y) + var(--reticle-square-offset)),
+    var(--reticle-line-color) 0
+  );
+}
+
+.placement-reticle {
+  position: absolute;
   display: grid;
-  width: 78px;
+  width: 84px;
   aspect-ratio: 1;
   place-items: center;
   translate: -50% -50%;
@@ -450,51 +501,18 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   cursor: grabbing;
 }
 
-.reticle-frame {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: radial-gradient(circle, #17223222 10%, #17223292 49%, transparent 70%);
-}
-
 .reticle-ring {
   position: absolute;
-  inset: 13px;
-  border: 1px solid #ffe6b8;
+  box-sizing: border-box;
+  width: calc(2 * var(--reticle-radius));
+  aspect-ratio: 1;
+  border: var(--reticle-border-width) solid var(--reticle-line-color);
   border-radius: 50%;
-  box-shadow:
-    0 0 0 1px #202839b0,
-    0 0 14px #ffe0a035,
-    inset 0 0 0 1px #202839b0;
-}
-
-.reticle-ring::before,
-.reticle-ring::after {
-  position: absolute;
-  content: '';
-}
-
-.reticle-ring::before {
-  inset: 4px;
-  border: 1px solid #f3d7a875;
-  border-radius: 50%;
-}
-
-.reticle-ring::after {
-  inset: 7px;
-  rotate: 45deg;
-  border: 1px solid #f3d7a899;
-  border-radius: 4px;
 }
 
 .reticle-axis {
   position: absolute;
-  width: 68px;
-  height: 1px;
-  background: linear-gradient(to right, #f5d9a4 9px, transparent 9px calc(100% - 9px), #f5d9a4 0);
-  filter: drop-shadow(0 0 1px #171e2b);
+  width: calc(2 * var(--reticle-square-offset));
 }
 
 .reticle-axis-vertical {
@@ -505,9 +523,10 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 .reticle-axis::after {
   position: absolute;
   top: 50%;
+  box-sizing: border-box;
   width: 6px;
   height: 6px;
-  translate: 0 -50%;
+  translate: -50% -50%;
   rotate: 45deg;
   border: 1px solid #fff1cf;
   background: #c89e64;
@@ -515,7 +534,7 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 }
 
 .reticle-axis::after {
-  right: 0;
+  left: 100%;
 }
 
 .reticle-axis::before {
@@ -523,12 +542,10 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 }
 
 .reticle-center {
-  position: relative;
   display: grid;
-  width: 20px;
-  height: 20px;
+  width: calc(2 * (var(--reticle-radius) - var(--reticle-border-width) - 6px));
+  aspect-ratio: 1;
   place-items: center;
-  filter: drop-shadow(0 0 1px #151d2a);
 }
 
 .reticle-center::before,
@@ -544,39 +561,20 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
   rotate: 90deg;
 }
 
-.locked-reticle .reticle-ring {
-  border-color: #bcefe2;
-}
-
-.locked-reticle .reticle-ring::after {
-  border-color: #bcefe2a6;
-  border-radius: 50%;
-}
-
 .locked-reticle .reticle-center::before,
 .locked-reticle .reticle-center::after {
   background: #d1fff0;
 }
 
-.reticle-enter-active .reticle-frame {
-  transition:
-    scale 360ms cubic-bezier(0.18, 0.86, 0.32, 1),
-    opacity 230ms ease-out;
-}
-
 .reticle-enter-active {
-  transition: opacity 360ms ease-out;
+  transition: opacity 230ms ease-out;
 }
 
 .reticle-leave-active {
   transition: opacity 140ms ease-in;
 }
 
-.reticle-enter-from .reticle-frame {
-  scale: 1.26;
-  opacity: 0;
-}
-
+.reticle-enter-from,
 .reticle-leave-to {
   opacity: 0;
 }
@@ -808,7 +806,6 @@ const makeLeavingInert = (element: Element) => element.setAttribute('inert', '')
 @media (prefers-reduced-motion: reduce) {
   .reticle-enter-active,
   .reticle-leave-active,
-  .reticle-enter-active .reticle-frame,
   .placement-trigger-enter-active,
   .placement-trigger-leave-active,
   .placement-menu-enter-active,

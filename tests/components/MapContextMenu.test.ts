@@ -150,6 +150,7 @@ describe('地图点位创建入口', () => {
   afterEach(() => wrapper.unmount())
 
   it('触屏从地图中心开始选址，可分别拖动罗盘和地图，再用罗盘位置打开表单', async () => {
+    expect(wrapper.find('.reticle-guides').exists()).toBe(false)
     await wrapper.get('.placement-trigger').trigger('click')
     expect(wrapper.find('.placement-trigger').exists()).toBe(false)
     const actions = wrapper.get('.context-menu [aria-label="点位选址"]')
@@ -179,6 +180,9 @@ describe('地图点位创建入口', () => {
     await nextTick()
     expect(reticle.style.left).toBe('460px')
     expect(reticle.style.top).toBe('360px')
+    const overlayStyle = wrapper.get<HTMLElement>('.reticle-overlay').element.style
+    expect(overlayStyle.getPropertyValue('--reticle-x')).toBe('460px')
+    expect(overlayStyle.getPropertyValue('--reticle-y')).toBe('360px')
 
     MapSubject.dragStart.next(mapEvent([200, 220]))
     viewState.value.target = [70, 90]
@@ -190,6 +194,7 @@ describe('地图点位创建入口', () => {
     await wrapper.get('.context-menu .primary').trigger('click')
     expect(openMarkerCreatorDialog).toHaveBeenCalledExactlyOnceWith([90, 100], defaultItem)
     expect(wrapper.find('.placement-reticle').exists()).toBe(false)
+    expect(wrapper.find('.reticle-guides').exists()).toBe(false)
     expect(wrapper.find('.placement-trigger').exists()).toBe(true)
   })
 
@@ -276,6 +281,7 @@ describe('地图点位创建入口', () => {
     preference.lockPlacementReticle = true
     await wrapper.get('.placement-trigger').trigger('click')
     const reticle = wrapper.get<HTMLElement>('.placement-reticle').element
+    expect(wrapper.find('.reticle-guides').exists()).toBe(true)
     expect(reticle.classList.contains('locked-reticle')).toBe(true)
     expect(reticle.style.left).toBe('400px')
     expect(reticle.style.top).toBe('300px')
@@ -284,6 +290,7 @@ describe('地图点位创建入口', () => {
     await nextTick()
     expect(reticle.style.left).toBe('1500px')
     expect(reticle.style.top).toBe('280px')
+    expect(wrapper.find('.reticle-guides').exists()).toBe(false)
     await wrapper.get('.context-menu .primary').trigger('click')
     expect(openMarkerCreatorDialog).toHaveBeenCalledExactlyOnceWith([40, 40], defaultItem)
 
@@ -299,6 +306,7 @@ describe('地图点位创建入口', () => {
     expect(nextReticle.classList.contains('draggable-reticle')).toBe(true)
     expect(nextReticle.style.left).toBe('0px')
     expect(nextReticle.style.top).toBe('276px')
+    expect(wrapper.find('.reticle-guides').exists()).toBe(true)
 
     viewState.value.target = [-260, 85]
     await nextTick()
@@ -442,6 +450,7 @@ describe('地图点位创建入口', () => {
     await nextTick()
 
     expect(wrapper.find('.placement-trigger').exists()).toBe(false)
+    expect(wrapper.find('.reticle-guides').exists()).toBe(false)
     expect(wrapper.find('.context-menu .primary').exists()).toBe(false)
     expect(wrapper.get('.context-menu').text()).not.toContain('编辑地区标签')
     await wrapper.get('.context-menu button').trigger('click')
