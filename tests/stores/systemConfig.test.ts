@@ -30,6 +30,10 @@ const userSession = vi.hoisted(() => ({
   info: { roleId: 1 } as { roleId?: number },
 }))
 
+const accessSession = vi.hoisted(() => ({
+  state: { hasBeta: true },
+}))
+
 vi.mock('@/api/config', () => ({
   getSystemConfig: mocks.getSystemConfig,
   default: { getSystemConfig: mocks.getSystemConfig },
@@ -41,6 +45,7 @@ vi.mock('@/configs', () => ({
 
 vi.mock('@/database', () => ({
   cache: {
+    transaction: (_mode: string, _table: unknown, callback: () => Promise<void>) => callback(),
     systemConfig: {
       clear: mocks.clear,
       put: mocks.put,
@@ -52,6 +57,10 @@ vi.mock('@/stores/user', () => ({
   useUserStore: () => userSession,
 }))
 
+vi.mock('@/stores/access', () => ({
+  useAccessStore: () => accessSession.state,
+}))
+
 vi.mock('@/utils', () => ({
   Zip: { decompressAs: mocks.decompressAs },
   messageFrom: (err: unknown) => (err instanceof Error ? err.message : String(err)),
@@ -60,12 +69,6 @@ vi.mock('@/utils', () => ({
 vi.mock('element-plus', () => ({
   ElMessage: { success: vi.fn(), error: vi.fn() },
 }))
-
-/** 使用真实的 useFetchHook，只替换它依赖的下游模块 */
-vi.mock('@/hooks', async () => {
-  const { useFetchHook } = await import('@/hooks/useFetch')
-  return { useFetchHook }
-})
 
 /** 归档原始字节（内容无关紧要，摘要按原样计算） */
 const rawBytes = new Uint8Array([0x42, 0x5a, 0x68, 0x39, 0x31, 0x41, 0x59, 0x26])
@@ -89,6 +92,7 @@ describe('系统订阅配置 store', () => {
   beforeEach(async () => {
     setActivePinia(createPinia())
     userSession.info = reactive({ roleId: 1 })
+    accessSession.state = reactive({ hasBeta: true })
 
     mocks.getSystemConfig.mockReset().mockResolvedValue(rawBuffer())
     mocks.decompressAs.mockReset().mockResolvedValue(defaultConfig)
@@ -211,6 +215,71 @@ describe('系统订阅配置 store', () => {
     await store.init()
 
     expect(store.meta.version).toBe('-NA- / -NA-')
+  })
+
+  it('权限降低时立即隐藏 Beta 版本', async () => {
+    const store = useDadianStore()
+    await store.init()
+
+    accessSession.state.hasBeta = false
+
+    expect(store.meta).toEqual({ digest: expectedDigest, version: 'twt702' })
+    expect(store.raw).toEqual(defaultConfig)
+  })
+
+  it('加载本地配置及恢复订阅时，原文、签名和版本一起更新', async () => {
+    const localConfig: DTO.DadianJSON = {
+      tiles: { '提瓦特-base0': { code: 'local' } },
+      editor: { quickInputSnippets: ['样例'] },
+    }
+    const text = JSON.stringify(localConfig)
+    const localBytes = new TextEncoder().encode(text)
+    const file = {
+      type: 'application/json',
+      arrayBuffer: async () => localBytes.buffer,
+      text: async () => text,
+    }
+    const getFile = vi.fn().mockResolvedValue(file)
+    vi.stubGlobal('showOpenFilePicker', vi.fn().mockResolvedValue([{ getFile }]))
+    mocks.validateDadianJSON.mockReturnValue({ valid: true })
+
+    try {
+      const store = useDadianStore()
+      await store.init()
+
+      const pending = Promise.withResolvers<ArrayBuffer>()
+      mocks.getSystemConfig.mockReturnValueOnce(pending.promise)
+      const staleUpdate = store.update()
+      expect(store.loading).toBe(true)
+
+      await store.loadDadianJSON()
+
+      expect(store.raw).toEqual(localConfig)
+      expect(store.meta).toEqual({
+        digest: createHash('sha256').update(localBytes).digest('hex'),
+        version: 'local / -NA-',
+      })
+      expect(store.loading).toBe(false)
+
+      pending.resolve(rawBuffer())
+      await staleUpdate
+      expect(store.raw).toEqual(localConfig)
+      expect(mocks.put).toHaveBeenCalledTimes(1)
+
+      const pendingFile = Promise.withResolvers<typeof file>()
+      getFile.mockReturnValueOnce(pendingFile.promise)
+      const staleLocalLoad = store.loadDadianJSON()
+      await vi.waitFor(() => expect(getFile).toHaveBeenCalledTimes(2))
+
+      await store.update()
+      pendingFile.resolve(file)
+      await staleLocalLoad
+
+      expect(store.raw).toEqual(defaultConfig)
+      expect(store.meta).toEqual({ digest: expectedDigest, version: 'twt702 / twt703' })
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 
   it('登录角色变化时自动刷新订阅配置', async () => {

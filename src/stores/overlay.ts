@@ -1,8 +1,7 @@
-import type { MergedOverlayGroups, OverlayChunk, OverlayChunkGroup } from '@/packages/map'
-import { merge } from 'lodash'
+import type { OverlayChunk } from '@/packages/map'
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { UrlTemplate } from '@/utils'
 import { useAccessStore, useArchiveStore, useDadianStore, useTileStore } from '.'
+import { resolveOverlayConfig } from './systemConfigLayers'
 
 /** 地图附加图层 */
 export const useOverlayStore = defineStore('global-map-overlays', () => {
@@ -30,168 +29,12 @@ export const useOverlayStore = defineStore('global-map-overlays', () => {
     return archiveStore.preference['map.state.showOverlay']
   })
 
-  const mergedPlugins = computed(() => {
-    const { plugins = {}, pluginsBeta = {} } = dadianStore.raw
-    return accessStore.hasBeta ? merge(plugins, pluginsBeta) : plugins
-  })
-
-  /** 合并了 BETA 权限下的配置 */
-  const mergedOverlayGroups = computed((): MergedOverlayGroups => {
-    const overlayGroups: MergedOverlayGroups = {}
-    for (const areaCode in mergedPlugins.value) {
-      overlayGroups[areaCode] = []
-      const { overlay = false, overlayConfig = {} } = mergedPlugins.value[areaCode]
-      overlay
-        && overlayConfig.overlays?.forEach(
-          ({
-            urlTemplate = overlayConfig.urlTemplate,
-            children: items = [],
-            role = 'default',
-            ...rest
-          }) => {
-            overlayGroups[areaCode].push({
-              multiple: overlayConfig.multiple ?? false,
-              mask: overlayConfig.overlayMask ?? false,
-              urlTemplate,
-              id: `group-${crypto.randomUUID()}`,
-              items,
-              role,
-              ...rest,
-            })
-          },
-        )
-    }
-    return overlayGroups
-  })
-
-  /** 规范化的单项 overlay 配置 */
-  const normalizedOverlayChunks = computed((): OverlayChunk[] => {
-    const { mergedTileConfigs } = tileStore
-    if (!mergedTileConfigs) return []
-    const resultMap = new Map<string, OverlayChunk>()
-    const groupCache = new Map<string, OverlayChunkGroup>()
-    for (const areaCode in mergedOverlayGroups.value) {
-      for (
-        let groupIndex = 0;
-        groupIndex < mergedOverlayGroups.value[areaCode].length;
-        groupIndex++
-      ) {
-        const {
-          id: groupId,
-          label: groupLabel = 'unknown group',
-          value: groupValue = `[G]${crypto.randomUUID()}`,
-          items,
-          url: groupUrl,
-          urlTemplate: groupUrlTemplate,
-          bounds: groupBounds,
-          mask = false,
-          role,
-          multiple = false,
-        } = mergedOverlayGroups.value[areaCode][groupIndex]
-
-        const tileConfigInArea = mergedTileConfigs[areaCode]
-        if (!tileConfigInArea) continue
-
-        if (!groupCache.has(groupValue)) {
-          groupCache.set(groupValue, {
-            id: groupId,
-            name: groupLabel,
-            mask,
-            role,
-            multiple,
-            areaCodes: new Set<string>([areaCode]),
-            areaIndexes: new Map<string, number>([[areaCode, groupIndex]]),
-          })
-        }
-        const group = groupCache.get(groupValue)!
-        group.areaCodes.add(areaCode)
-        group.areaIndexes.set(areaCode, groupIndex)
-
-        for (const {
-          label: itemLabel = 'unknown item',
-          value: itemValue = crypto.randomUUID(),
-          url: itemUrl = groupUrl,
-          urlTemplate: itemUrlTemplate = groupUrlTemplate,
-          bounds: itemBounds = groupBounds,
-          chunks = [],
-        } of items) {
-          const item = {
-            id: `${groupValue}-->${itemValue}`,
-            name: itemLabel,
-          }
-
-          const templater = new UrlTemplate(itemUrlTemplate ?? '')
-          templater.compile({ groupLabel, groupValue, itemLabel, itemValue })
-
-          if (!chunks.length) {
-            if (!itemBounds) continue
-            const url = itemUrl ?? templater.toString()
-            if (resultMap.has(url)) {
-              resultMap.get(url)!.areaCodes.add(areaCode)
-              continue
-            }
-
-            const {
-              center: [cx, cy],
-            } = tileConfigInArea.tile
-            const [[xmin, ymin], [xmax, ymax]] = itemBounds
-
-            resultMap.set(item.id, {
-              id: item.id,
-              areaCodes: new Set<string>([areaCode]),
-              label: itemLabel,
-              url,
-              bounds: [
-                [xmin + cx, ymin + cy],
-                [xmax + cx, ymax + cy],
-              ],
-              group,
-              item,
-            })
-            continue
-          }
-
-          for (const {
-            label: chunkLabel = 'unknown chunk',
-            value: chunkValue = crypto.randomUUID(),
-            url: chunkUrl = itemUrl,
-            bounds: chunkBounds = itemBounds,
-          } of chunks) {
-            if (!chunkBounds) continue
-
-            templater.compile({ chunkLabel, chunkValue })
-
-            const url = chunkUrl || templater.toString()
-            if (resultMap.has(url)) {
-              resultMap.get(url)!.areaCodes.add(areaCode)
-              continue
-            }
-
-            const {
-              center: [cx, cy],
-            } = tileConfigInArea.tile
-            const [[xmin, ymin], [xmax, ymax]] = chunkBounds
-
-            const chunkId = `${item.id}-->${chunkValue}`
-
-            resultMap.set(chunkId, {
-              id: chunkId,
-              areaCodes: new Set<string>([areaCode]),
-              label: chunkLabel,
-              url,
-              bounds: [
-                [xmin + cx, ymin + cy],
-                [xmax + cx, ymax + cy],
-              ],
-              group,
-              item,
-            })
-          }
-        }
-      }
-    }
-    return Array.from(resultMap.values())
-  })
+  const resolved = computed(() =>
+    resolveOverlayConfig(dadianStore.raw, accessStore.hasBeta, tileStore.mergedTileConfigs),
+  )
+  const normalizedOverlayChunks = computed(() => resolved.value.chunks)
+  const enabledAreas = computed(() => resolved.value.enabledAreas)
+  const groupsByArea = computed(() => resolved.value.groupsByArea)
 
   // 初始化地图类型附加图层
   watch(
@@ -298,6 +141,8 @@ export const useOverlayStore = defineStore('global-map-overlays', () => {
     toggleItem,
 
     // getters
+    enabledAreas,
+    groupsByArea,
     items,
     chunkMap,
     existOverlays,

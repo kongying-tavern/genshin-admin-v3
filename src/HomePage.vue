@@ -205,14 +205,10 @@ watch(
   () => tileStore.currentTileConfig,
   currentTileConfig => {
     if (!currentTileConfig) return
-    const {
-      target: [x, y],
-      zoom,
-    } = currentTileConfig.initViewState
-    const [ox, oy] = currentTileConfig.tile.center
+    const { target, zoom } = currentTileConfig.initViewState
     viewState.value = {
       ...viewState.value,
-      target: [x + ox, y + oy],
+      target: tileStore.toMapCoordinate(target),
       zoom,
       transitionDuration: 1000,
       transitionInterpolator: new EaseoutInterpolator(['target', 'zoom']),

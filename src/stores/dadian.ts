@@ -3,8 +3,8 @@ import { acceptHMRUpdate, defineStore } from 'pinia'
 import { getSystemConfig } from '@/api/config'
 import { validateDadianJSON } from '@/configs'
 import { cache } from '@/database'
-import { useFetchHook } from '@/hooks'
 import { Zip } from '@/utils'
+import { useAccessStore } from './access'
 import { useUserStore } from './user'
 
 const getDigest = async (data: ArrayBuffer) => {
@@ -12,8 +12,9 @@ const getDigest = async (data: ArrayBuffer) => {
   return [...new Uint8Array(hash)].map(num => num.toString(16).padStart(2, '0')).join('')
 }
 
-const getVersion = (config: DTO.DadianJSON) => {
-  return `${config.tiles?.['提瓦特-base0']?.code ?? '-NA-'} / ${config.tilesBeta?.['提瓦特-base0']?.code ?? '-NA-'}`
+const getVersion = (config: DTO.DadianJSON, hasBeta: boolean) => {
+  const version = config.tiles?.['提瓦特-base0']?.code ?? '-NA-'
+  return hasBeta ? `${version} / ${config.tilesBeta?.['提瓦特-base0']?.code ?? '-NA-'}` : version
 }
 
 const quoteCssString = (value: string) =>
@@ -22,37 +23,38 @@ const quoteCssString = (value: string) =>
 /** 订阅的打点配置 */
 export const useDadianStore = defineStore('system-config', () => {
   const userStore = useUserStore()
+  const accessStore = useAccessStore()
 
-  // 直接请求新的配置，当请求失败时回退到本地缓存
-  const {
-    data,
-    refresh: update,
-    loading,
-  } = useFetchHook({
-    initialValue: {
-      json: {},
-      hash: '',
-    },
-    onRequest: async () => {
-      const currentSystemConfigData = await getSystemConfig()
-      const currentSystemConfig = await Zip.decompressAs<DTO.DadianJSON>(
-        new Uint8Array(currentSystemConfigData),
-        {
-          name: 'system-config',
-        },
-      )
-      const currentSystemConfigDigest = await getDigest(currentSystemConfigData)
-      await cache.systemConfig.clear()
-      await cache.systemConfig.put({
-        digest: currentSystemConfigDigest,
-        json: currentSystemConfig,
+  const data = shallowRef<{ json: DTO.DadianJSON; hash: string }>({ json: {}, hash: '' })
+  const loading = ref(false)
+  let revision = 0
+
+  const update = async () => {
+    const requestRevision = ++revision
+    loading.value = true
+
+    try {
+      const archive = await getSystemConfig()
+      if (requestRevision !== revision) return
+      const json = await Zip.decompressAs<DTO.DadianJSON>(new Uint8Array(archive), {
+        name: 'system-config',
       })
-      return {
-        json: currentSystemConfig,
-        hash: currentSystemConfigDigest,
-      }
-    },
-  })
+      const hash = await getDigest(archive)
+      if (requestRevision !== revision) return
+
+      await cache.transaction('rw', cache.systemConfig, async () => {
+        await cache.systemConfig.clear()
+        await cache.systemConfig.put({ digest: hash, json })
+      })
+      if (requestRevision !== revision) return
+      data.value = { json, hash }
+      return data.value
+    } catch {
+      // 订阅恢复失败时保留当前可用的配置。
+    } finally {
+      if (requestRevision === revision) loading.value = false
+    }
+  }
 
   watch(
     () => userStore.info?.roleId,
@@ -63,29 +65,34 @@ export const useDadianStore = defineStore('system-config', () => {
 
   const meta = computed(() => ({
     digest: data.value.hash,
-    version: getVersion(data.value.json),
+    version: getVersion(data.value.json, accessStore.hasBeta),
   }))
 
   const loadDadianJSON = async () => {
+    const requestRevision = revision
     try {
       const [fileHandle] = await window
         .showOpenFilePicker()
         .catch(() => [] as FileSystemFileHandle[])
-      if (!fileHandle) return
+      if (!fileHandle || requestRevision !== revision) return
       const file = await fileHandle.getFile()
-      if (file.type !== 'application/json') return
-      const newSystemConfigDigest = await getDigest(await file.arrayBuffer())
-      const text = await file.text()
-      const json = JSON.parse(text)
+      if (file.type !== 'application/json' || requestRevision !== revision) return
+      const [hash, text] = await Promise.all([file.arrayBuffer().then(getDigest), file.text()])
+      if (requestRevision !== revision) return
+
+      const json: DTO.DadianJSON = JSON.parse(text)
       const { valid, errors } = validateDadianJSON(json)
       if (!valid) throw new Error(errors ? errors[0]?.message : 'unknown')
-      data.value = {
-        json,
-        hash: newSystemConfigDigest,
-      }
+
+      // 本地配置生效后，忽略仍在加载的上一份订阅。
+      revision++
+      data.value = { json, hash }
+      loading.value = false
       ElMessage.success('加载成功')
     } catch (err) {
-      ElMessage.error(`无法加载此配置：${err instanceof Error ? err.message : err}`)
+      if (requestRevision === revision) {
+        ElMessage.error(`无法加载此配置：${err instanceof Error ? err.message : err}`)
+      }
     }
   }
 

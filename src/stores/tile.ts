@@ -1,29 +1,11 @@
-import { defaultsDeep, merge } from 'lodash'
+import type { AreaTileConfig } from './systemConfigTiles'
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { AREA_ADDITIONAL_CONFIG_MAP, areaTags, groupAreaTags } from '@/configs'
+import { areaTags, groupAreaTags } from '@/configs'
+import { toMapCoordinate } from '@/packages/map/src/utils/mapCoordinates'
 import { useAccessStore, useArchiveStore, useAreaStore, useDadianStore } from '@/stores'
+import { resolveSystemConfigTiles } from './systemConfigTiles'
 
-export interface TileInfo extends Required<
-  Pick<DTO.TileConfig, 'code' | 'name' | 'extension' | 'tilesOffset' | 'size' | 'center'>
-> {}
-
-/**
- * 与地区对应的 tile 配置，为什么没有设计为与 layer code 对应而是与地区 code 对应，见以下原因：
- * 1. 首先是为了匹配筛选器的操作逻辑，即选择地区自动切换地图
- * 2. 其次，有利于为地区附加对应的边界等数据
- * 3. 对于打点工具来说，关注地区信息比关注 tile 信息本身的时候会更多
- */
-export interface AreaTileConfig {
-  /** 地区 code，便于在列表中使用 */
-  code?: string
-  /** 地区关联的 tile 的信息，使用对象是为了方便复用 */
-  tile: TileInfo
-  /** 导航到该地区时的默认视口状态 */
-  initViewState: {
-    target: DTO.Coordinate2D
-    zoom: number
-  }
-}
+export type { AreaTileConfig, TileInfo } from './systemConfigTiles'
 
 /** 底图 */
 export const useTileStore = defineStore('global-map-tile', () => {
@@ -36,105 +18,28 @@ export const useTileStore = defineStore('global-map-tile', () => {
     return archiveStore.preference['markerFilter.state.areaCode']
   })
 
-  const mergedTiles = computed(() => {
-    const { tiles = {}, tilesBeta = {} } = dadianStore.raw
-    return accessStore.hasBeta ? merge(tiles, tilesBeta) : tiles
-  })
-
-  /**
-   * key 是用于构建 tiles url 的参数
-   * @deprecated 用 `codeMap` 代替
-   */
-  const mergedTileConfigs = computed((): Record<string, AreaTileConfig> => {
-    const areaTileConfigs: Record<string, AreaTileConfig> = {}
-
-    for (const maybeAreaCode in mergedTiles.value) {
-      // 只保留实际配置，继承用的配置忽略
-      if (!/[A-Z]:[A-Z]+(?::\s+)?/.test(maybeAreaCode)) continue
-
-      const tileConfig = mergedTiles.value[maybeAreaCode]
-      if (tileConfig.extend) defaultsDeep(tileConfig, mergedTiles.value[tileConfig.extend])
-
-      const {
-        code = '',
-        name = '',
-        center = [0, 0],
-        extension = 'png',
-        settings = {},
-        size = [0, 0],
-        tilesOffset = [0, 0],
-      } = tileConfig
-      const { target: rewriteTarget } = AREA_ADDITIONAL_CONFIG_MAP[maybeAreaCode] ?? {}
-      const { center: target = [0, 0], zoom = 0 } = settings
-
-      areaTileConfigs[maybeAreaCode] = {
-        tile: {
-          code,
-          name,
-          center,
-          size,
-          extension,
-          tilesOffset,
-        },
-        initViewState: {
-          target: rewriteTarget ?? target,
-          zoom,
-        },
-      }
-    }
-
-    return areaTileConfigs
-  })
+  const resolvedTileConfigs = computed(() =>
+    resolveSystemConfigTiles(dadianStore.raw, accessStore.hasBeta),
+  )
 
   /**
    * @key 表示地区 code
    * @value 表示 tile 的相关配置
    */
-  const codeMap = computed<Map<string, AreaTileConfig>>(() => {
-    const map = new Map<string, AreaTileConfig>()
+  const codeMap = computed(
+    () =>
+      new Map(
+        Array.from(resolvedTileConfigs.value, ([code, { config }]) => [code, config] as const),
+      ),
+  )
 
-    for (const areaCode in mergedTiles.value) {
-      // 只保留实际配置，继承用的配置忽略
-      if (!/[A-Z]:[A-Z]+(?::\s+)?/.test(areaCode)) continue
-
-      const tileConfig = mergedTiles.value[areaCode]
-      if (tileConfig.extend) defaultsDeep(tileConfig, mergedTiles.value[tileConfig.extend])
-
-      const {
-        code = '',
-        name = '',
-        center = [0, 0],
-        extension = 'png',
-        settings = {},
-        size = [0, 0],
-        tilesOffset = [0, 0],
-      } = tileConfig
-      const { target: rewriteTarget } = AREA_ADDITIONAL_CONFIG_MAP[areaCode] ?? {}
-      const { center: target = [0, 0], zoom = 0 } = settings
-
-      map.set(areaCode, {
-        tile: {
-          code,
-          name,
-          center,
-          size,
-          extension,
-          tilesOffset,
-        },
-        initViewState: {
-          target: rewriteTarget ?? target,
-          zoom,
-        },
-      })
-    }
-
-    return map
-  })
+  /** @deprecated 用 `codeMap` 代替 */
+  const mergedTileConfigs = computed(() => Object.fromEntries(codeMap.value))
 
   /** 当前激活的底图配置 */
   const currentTileConfig = computed(() => {
     if (!areaCode.value) return
-    return mergedTileConfigs.value[areaCode.value]
+    return codeMap.value.get(areaCode.value)
   })
 
   /** 当前激活的底图code */
@@ -201,15 +106,13 @@ export const useTileStore = defineStore('global-map-tile', () => {
   }
 
   /** 将点位坐标转换为地图坐标 */
-  const toMapCoordinate = ([x, y]: DTO.Coordinate2D): DTO.Coordinate2D => {
-    if (!currentTileConfig.value) return [x, y]
-    const {
-      center: [ox, oy],
-    } = currentTileConfig.value.tile
-    return [x + ox, y + oy]
+  const convertToMapCoordinate = (coordinate: DTO.Coordinate2D): DTO.Coordinate2D => {
+    const origin = currentTileConfig.value?.tile.center
+    return origin ? toMapCoordinate(coordinate, origin) : [...coordinate]
   }
 
   return {
+    resolvedTileConfigs,
     codeMap,
     mergedTileConfigs,
     currentTileConfig,
@@ -219,7 +122,7 @@ export const useTileStore = defineStore('global-map-tile', () => {
     mapTileOptions,
 
     toMarkerCoordinate,
-    toMapCoordinate,
+    toMapCoordinate: convertToMapCoordinate,
   }
 })
 

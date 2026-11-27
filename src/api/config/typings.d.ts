@@ -152,7 +152,7 @@ declare namespace DTO {
 
   interface PluginConfig {
     /** 开启的 extra 插件 */
-    extra?: keyof ExtraConfig
+    extra?: string[]
     /** extra 插件具体配置 */
     extraConfig?: ExtraConfig
     /** 是否启用叠层 */

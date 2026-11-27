@@ -1,22 +1,41 @@
 <script setup lang="ts">
-import { useDadianStore, usePreferenceStore, useTileStore } from '@/stores'
+import type { ElButton } from 'element-plus'
+import { useDadianStore } from '@/stores/dadian'
+import { usePreferenceStore } from '@/stores/userPreference'
 import cachedPopover from '../assets/marker-popover-cached.svg'
 import onlinePopover from '../assets/marker-popover-online.svg'
 import placementMinimap from '../assets/placement-minimap.svg'
 import { SettingBar, SettingGroup, SettingPanel } from '../components'
+import MapConfigViewer from './map-config/MapConfigViewer.vue'
+import { useMapConfigViewer } from './map-config/useMapConfigViewer'
 
-const tileStore = useTileStore()
 const dadianStore = useDadianStore()
 const preferenceStore = usePreferenceStore()
+const model = useMapConfigViewer()
+const showConfig = ref(false)
+const initialAreaCode = ref('')
+const configButton = ref<InstanceType<typeof ElButton>>()
 
-const consoleConfig = () => {
-  // oxlint-disable-next-line no-console
-  console.log(tileStore.mergedTileConfigs)
+const openConfig = () => {
+  initialAreaCode.value = preferenceStore.areaCode
+  showConfig.value = true
+}
+
+const closeConfig = async () => {
+  showConfig.value = false
+  await nextTick()
+  configButton.value?.ref?.focus()
 }
 </script>
 
 <template>
-  <SettingPanel>
+  <MapConfigViewer
+    v-if="showConfig"
+    :model="model"
+    :initial-area-code="initialAreaCode"
+    @back="closeConfig"
+  />
+  <SettingPanel v-show="!showConfig">
     <SettingGroup name="状态">
       <SettingBar label="配置状态">
         <template #note>
@@ -26,7 +45,7 @@ const consoleConfig = () => {
           </div>
         </template>
         <template #setting>
-          <el-button @click="consoleConfig"> 查看配置 </el-button>
+          <el-button ref="configButton" @click="openConfig"> 查看配置 </el-button>
         </template>
       </SettingBar>
     </SettingGroup>
