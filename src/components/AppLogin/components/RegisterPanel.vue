@@ -58,7 +58,7 @@ const trigger = async () => {
       style="--el-border-radius-base: 8px"
     >
       <div class="flex flex-col justify-center items-center font-genshin pb-4">
-        <img class="w-12 h-12" src="/favicon.ico" />
+        <img class="w-12 h-12" src="/favicon.png" />
         {{ title }}
       </div>
 

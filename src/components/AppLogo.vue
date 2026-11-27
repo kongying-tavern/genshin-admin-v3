@@ -3,7 +3,7 @@
     <div
       class="kongying-logo w-full h-full flex justify-center items-center gap-1 select-none bg-opacity-70 cursor-pointer"
     >
-      <img class="w-8 h-8 object-contain" src="/favicon.ico" />
+      <img class="w-8 h-8 object-contain" src="/favicon.png" />
       <div class="h-8 text-xs font-genshin">空荧<br />酒馆后厨</div>
     </div>
   </div>

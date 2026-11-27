@@ -27,8 +27,8 @@ const createPlugins = (): Plugin[] => [
         comments: false,
       },
       // 测试中不需要打包资源：模板里的图片地址保持为字符串即可。
-      // 若不关闭，`<img src="/favicon.ico">` 这类根路径会被改写为 import，
-      // 而 vitest 的 node 运行器无法解析（createRequire 收到 file:///favicon.ico）。
+      // 若不关闭，`<img src="/favicon.png">` 这类根路径会被改写为 import，
+      // 而 vitest 的 node 运行器无法解析（createRequire 收到 file:///favicon.png）。
       transformAssetUrls: false,
     },
   }) as Plugin,
