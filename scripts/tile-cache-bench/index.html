@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>瓦片缓存读取基准</title>
+    <style>
+      body { margin: 2rem auto; padding: 0 1rem; max-width: 76rem; font: 1rem/1.5 system-ui, sans-serif; }
+      form { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.75rem; }
+      input { width: 5rem; }
+      #table-wrap { overflow: auto; }
+      table { border-collapse: collapse; white-space: nowrap; font-variant-numeric: tabular-nums; }
+      th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #8886; text-align: right; }
+      th:nth-child(-n+2), td:nth-child(-n+2) { text-align: left; }
+    </style>
+    <script type="module" src="./bench.mjs"></script>
+  </head>
+  <body>
+    <main>
+      <h1>瓦片缓存读取基准</h1>
+      <form id="controls">
+        <label>瓦片数 <input id="tiles" type="number" min="1" max="512" value="256" required /></label>
+        <label>轮数 <input id="rounds" type="number" min="1" max="15" value="5" required /></label>
+        <label>最多复用句柄 <input id="handles" type="number" min="1" max="512" value="256" required /></label>
+        <button type="submit">开始</button>
+      </form>
+      <p id="environment"></p>
+      <p id="status" role="status" data-state="idle"></p>
+      <div id="table-wrap" hidden>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">方式</th>
+              <th scope="col">访问</th>
+              <th scope="col">中位耗时/轮（ms）</th>
+              <th scope="col">p50（µs）</th>
+              <th scope="col">p95（µs）</th>
+              <th scope="col">p99（µs）</th>
+              <th scope="col">吞吐（MiB/s）</th>
+              <th scope="col">Worker 内/瓦片（µs）</th>
+              <th scope="col">计时段打开句柄数</th>
+            </tr>
+          </thead>
+          <tbody id="results"></tbody>
+        </table>
+      </div>
+    </main>
+  </body>
+</html>
