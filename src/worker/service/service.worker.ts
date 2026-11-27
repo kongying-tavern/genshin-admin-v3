@@ -2,190 +2,96 @@ import {
   TILE_BYPASS_ACK,
   TILE_BYPASS_PROBE,
 } from '@/packages/map/src/utils/tileServiceWorkerProtocol'
-import { isTileUrl, normalizeTileBase } from '@/packages/map/src/utils/tileUrl'
-import { WorkerIPC } from '@/utils/worker/worker-ipc'
-import { CacheMeta } from '@/worker/service/utils/cache-meta'
-import { ServiceWorkerLogger } from '@/worker/service/utils/service-worker-logger'
+import { isTileUrl, normalizeTileBase, parseTileUrl } from '@/packages/map/src/utils/tileUrl'
+import { logStaticResource } from './utils/service-worker-logger'
+import { isStaticCacheClearRequest } from './utils/static-cache-clear-protocol'
+import type { StaticCacheClearResult } from './utils/static-cache-clear-protocol'
+import { isObsoleteStaticCache } from './utils/static-cache-name'
+import { createStaticResourceCache } from './utils/static-resource-cache'
+import {
+  classifyStaticRequest,
+  matchesLegacyRequest,
+  resolveStaticApiBase,
+} from './utils/static-resource-policy'
 
 declare const globalThis: ServiceWorkerGlobalScope
 
-const ipc = new WorkerIPC<never, AppServiceWorker.EventMap>({
-  addEventListener: (...args: Parameters<MessagePort['addEventListener']>) => {
-    globalThis.addEventListener(...args)
-  },
-  postMessage: async request => {
-    const clients = await globalThis.clients.matchAll({ includeUncontrolled: true })
-    clients.forEach(client => client.postMessage(request))
-  },
-})
-
-const logger = new ServiceWorkerLogger(ipc)
-
-// ==================== global env ====================
-
-const VERSION = 3
+const { origin, pathname: scope } = new URL(globalThis.registration.scope)
 const tileBase = import.meta.env.VITE_ASSETS_BASE
   ? normalizeTileBase(import.meta.env.VITE_ASSETS_BASE)
   : undefined
-const AVAILABLE_DESTINATION = new Set(['audio', 'font', 'image', 'video'])
-// 系统配置下发的 WOFF2 字体以 application/octet-stream 提供。
-const FONT_CONTENT_TYPE =
-  /^(?:font\/[\w.+-]+|application\/(?:(?:x-)?font(?:-[\w.+-]+)?|vnd\.ms-fontobject|octet-stream))\s*(?:;|$)/i
-const IMAGE_TYPES = new Set([
-  'apng',
-  'avif',
-  'gif',
-  'jpg',
-  'jpeg',
-  'jfif',
-  'pjpeg',
-  'pjp',
-  'png',
-  'svg',
-  'webp',
-])
-
-// ====================   on install   ====================
-
-globalThis.addEventListener('install', ev => {
-  logger.info('install')
-  ev.waitUntil(globalThis.skipWaiting())
+const apiBase = resolveStaticApiBase(import.meta.env.VITE_API_BASE, origin)
+const storage = globalThis.caches
+const resourceCache = createStaticResourceCache({
+  storage,
+  fetchResource: request => fetch(request),
+  scope,
+  matchesLegacyEntry: (request, resource) => {
+    const url = new URL(request.url)
+    return !parseTileUrl(url) && matchesLegacyRequest(request, resource, url, origin, apiBase)
+  },
 })
 
-// ====================    on activate    ====================
+globalThis.addEventListener('install', event => {
+  // oxlint-disable-next-line eslint/no-console
+  console.info('[服务线程] 安装')
+  event.waitUntil(globalThis.skipWaiting())
+})
 
-/**
- * 检查过期缓存
- * - 缓存附加信息的表示格式示例: `n=tiles-twt40&v=1&m=cors`
- */
-const clearOutDatedCache = async () => {
-  const allCacheNames = await caches.keys()
-  await Promise.all(
-    allCacheNames.map(async cacheName => {
-      const { version } = CacheMeta.parse(cacheName)
-      const isOutDated = version === null || version < VERSION
-      if (!isOutDated) return
-      logger.info(`clear out dated cache "${cacheName}"`)
-      await globalThis.caches.delete(cacheName)
-    }),
-  )
-}
-
-globalThis.addEventListener('activate', ev => {
-  logger.info('activate')
-  ev.waitUntil(
+globalThis.addEventListener('activate', event => {
+  event.waitUntil(
     (async () => {
-      await clearOutDatedCache()
-      await globalThis.clients.claim()
+      try {
+        const names = (await storage.keys()).filter(name => isObsoleteStaticCache(name, scope))
+        const results = await Promise.allSettled(names.map(name => storage.delete(name)))
+        const deleted = results.filter(result => result.status === 'fulfilled' && result.value)
+        const failed = results.filter(result => result.status === 'rejected')
+        // oxlint-disable-next-line eslint/no-console
+        console.info(`[服务线程] 激活，清理旧缓存库 ${deleted.length} 个，失败 ${failed.length} 个`)
+      } catch {
+        console.warn('[服务线程] 激活时无法列举缓存库')
+      } finally {
+        await globalThis.clients.claim()
+      }
     })(),
   )
 })
 
-globalThis.addEventListener('message', ({ data, source }) => {
-  if (data === TILE_BYPASS_PROBE) source?.postMessage(TILE_BYPASS_ACK)
-})
-
-// ====================    on fetch    ====================
-
-/** 匹配缓存库 */
-const matchCache = (
-  urlObject: URL,
-  destination: string,
-): { name: string; typeValidate?: RegExp } | null => {
-  const { host, pathname } = urlObject
-
-  // 附加图层
-  if (pathname.includes('/d/underground/')) return { name: 'overlays', typeValidate: /^image\// }
-
-  // 字体
-  if (destination === 'font') return { name: 'fonts', typeValidate: FONT_CONTENT_TYPE }
-
-  // 图标
-  if (host.startsWith('oss.') || pathname.includes('/icons/'))
-    return { name: 'icons', typeValidate: /^image\// }
-
-  // WebAssembly 模块
-  if (pathname.endsWith('.wasm')) return { name: 'wasm' }
-
-  return null
-}
-
-globalThis.addEventListener('fetch', ev => {
-  const { url, mode, destination: rawDestination } = ev.request
-  const urlObject = new URL(url)
-  // 在 OSS 图标匹配之前放行底图瓦片，页面负责读取和迁移旧缓存。
-  if (tileBase && isTileUrl(urlObject, tileBase)) return
-  const { protocol, host, pathname } = urlObject
-
-  logger.info(`fetch ${url}`)
-
-  // 由元素发起的请求会获取此值，但 fetch 发起的请求就没有了，需要通过技术手段确定
-  const destination =
-    rawDestination
-    || (() => {
-      const extname = (pathname.match(/(\.[a-z0-9]+)$/i)?.[1] ?? '.unknown')
-        .replace('.', '')
-        .toLowerCase()
-      if (IMAGE_TYPES.has(extname)) return 'image'
-      return ''
-    })()
-
-  if (
-    [
-      !protocol.startsWith('http'),
-      host === 'localhost',
-      host === '127.0.0.1',
-      !AVAILABLE_DESTINATION.has(destination),
-    ].some(Boolean)
-  ) {
+globalThis.addEventListener('message', event => {
+  const { data, source, ports } = event
+  if (data === TILE_BYPASS_PROBE) {
+    source?.postMessage(TILE_BYPASS_ACK)
     return
   }
 
-  const storageMeta = matchCache(urlObject, destination)
-  if (!storageMeta) return
+  const port = ports[0]
+  if (!port || !isStaticCacheClearRequest(data)) return
+  event.waitUntil(
+    resourceCache
+      .clear(data.name)
+      .catch(() => false)
+      .then(ok => {
+        port.postMessage({ ok } satisfies StaticCacheClearResult)
+      }),
+  )
+})
 
-  const matchesContentType = (contentType: string | null) =>
-    !storageMeta.typeValidate || storageMeta.typeValidate.test(contentType ?? '')
+globalThis.addEventListener('fetch', event => {
+  const { request, clientId } = event
+  const url = new URL(request.url)
+  // 地图包接管底图瓦片和旧缓存迁移。
+  if (tileBase && isTileUrl(url, tileBase)) return
 
-  ev.respondWith(
-    (async () => {
-      try {
-        const storageName = CacheMeta.stringify({
-          version: VERSION,
-          mode,
-          name: storageMeta.name,
-          type: destination,
-        })
-        const storage = await globalThis.caches.open(storageName)
-        const maybeCachedResponse = await storage.match(url)
+  const resource = classifyStaticRequest(request, url, origin, apiBase)
+  if (!resource) return
 
-        if (maybeCachedResponse) {
-          const contentType = maybeCachedResponse.headers.get('Content-Type')
-          if (matchesContentType(contentType)) {
-            logger.info(
-              `cache "${url}" hit in storage "${storageName}" with contentType "${contentType}"`,
-            )
-            return maybeCachedResponse
-          }
-          await storage.delete(url)
-        }
-
-        const res = await fetch(ev.request)
-
-        if (res.status === 200 && matchesContentType(res.headers.get('Content-Type'))) {
-          await storage.put(url, res.clone())
-          logger.info(`cache "${url}" success in storage "${storageName}"`)
-        }
-
-        return res
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Request Error'
-        logger.error(`handle fetch "${url}" caused by "${message}"`)
-        return new Response(null, {
-          status: 404,
-          statusText: message,
-        })
+  event.respondWith(
+    resourceCache.respond(event, resource, url, (operation, detail) => {
+      if (clientId) {
+        event.waitUntil(
+          logStaticResource(globalThis.clients, clientId, resource, operation, detail),
+        )
       }
-    })(),
+    }),
   )
 })

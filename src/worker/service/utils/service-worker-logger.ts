@@ -1,17 +1,59 @@
-import type { WorkerIPC } from '@/utils/worker/worker-ipc'
+import type { RequestMessage } from '@/utils/worker/types'
+import type { StaticResource } from './static-resource-policy'
 
-export class ServiceWorkerLogger {
-  #ipc: WorkerIPC<never, AppServiceWorker.EventMap>
+export type StaticResourceOperation =
+  | 'hit'
+  | 'stored'
+  | 'stale'
+  | 'network'
+  | 'open-error'
+  | 'match-error'
+  | 'delete-error'
+  | 'put-error'
+  | 'fetch-error'
 
-  constructor(ipc: WorkerIPC<never, AppServiceWorker.EventMap>) {
-    this.#ipc = ipc
-  }
+const ERROR_NAMES = new Set([
+  'AbortError',
+  'Error',
+  'InvalidStateError',
+  'NetworkError',
+  'NotFoundError',
+  'QuotaExceededError',
+  'SecurityError',
+  'TimeoutError',
+  'TypeError',
+])
 
-  info = (message: string) => {
-    this.#ipc.emit('log', 'info', message)
-  }
+const errorName = (error: unknown) => {
+  const name = error instanceof Error || error instanceof DOMException ? error.name : 'Error'
+  return ERROR_NAMES.has(name) ? name : 'Error'
+}
 
-  error = (message: string) => {
-    this.#ipc.emit('log', 'error', message)
+export const logStaticResource = async (
+  clients: Pick<Clients, 'get'>,
+  clientId: string,
+  resource: StaticResource,
+  operation: StaticResourceOperation,
+  detail?: unknown,
+) => {
+  if (!clientId) return
+  try {
+    const client = await clients.get(clientId)
+    if (client?.type !== 'window') return
+
+    const isError = operation.endsWith('-error')
+    const status =
+      typeof detail === 'number' && Number.isInteger(detail) && detail >= 0 && detail <= 599
+        ? ` ${detail}`
+        : ''
+    const suffix = isError ? ` ${errorName(detail)}` : status
+    client.postMessage({
+      id: crypto.randomUUID(),
+      type: 'request',
+      channel: 'log',
+      args: [isError ? 'error' : 'info', `${resource} ${operation}${suffix}`],
+    } satisfies RequestMessage<AppServiceWorker.EventMap['log']['args']>)
+  } catch {
+    // 请求来源可能已经关闭，诊断投递失败不影响响应。
   }
 }

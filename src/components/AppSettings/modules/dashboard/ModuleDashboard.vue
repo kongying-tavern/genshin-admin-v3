@@ -7,8 +7,10 @@ import { useFetchHook } from '@/hooks'
 import { clearTileCache, listStorageCaches } from '@/packages/map/src/utils/tileCache'
 import { useBroadcastStore, useUserStore } from '@/stores'
 import { formatByteSize } from '@/utils'
+import { classifyStaticCache } from '@/worker/service/utils/static-cache-name'
 import { SettingBar, SettingGroup, SettingPanel } from '../../components'
 import { StorageChart } from './components'
+import { clearStaticCache } from './staticCacheClear'
 
 const userStore = useUserStore()
 const broadcastStore = useBroadcastStore()
@@ -28,7 +30,19 @@ const {
   execute: refreshStorageCaches,
   state: storageCaches,
   isLoading: cacheListLoading,
-} = useAsyncState(listStorageCaches, { tileCaches: [], cacheKeys: [] }, { resetOnExecute: false })
+} = useAsyncState(
+  async () => {
+    const [storage, registration] = await Promise.all([
+      listStorageCaches(),
+      navigator.serviceWorker?.getRegistration().catch(() => undefined),
+    ])
+    const scope = registration && new URL(registration.scope).pathname
+    const cacheKeys = scope ? storage.cacheKeys.filter(key => classifyStaticCache(key, scope)) : []
+    return { ...storage, cacheKeys }
+  },
+  { tileCaches: [], cacheKeys: [] },
+  { resetOnExecute: false },
+)
 
 const cacheEntries = computed(() => [
   ...storageCaches.value.tileCaches.map(tile => {
@@ -43,7 +57,7 @@ const cacheEntries = computed(() => [
   ...storageCaches.value.cacheKeys.map(cacheKey => ({
     id: `cache:${cacheKey}`,
     label: cacheKey,
-    clear: () => window.caches.delete(cacheKey),
+    clear: () => clearStaticCache(cacheKey),
   })),
 ])
 
@@ -56,9 +70,10 @@ const { refresh: deleteCache, loading: deletingLoading } = useFetchHook({
     )
     const results = await Promise.allSettled(selectedEntries.map(async ({ clear }) => clear()))
     await Promise.all([refreshStorageEstimate(), refreshStorageCaches()])
-    selectedCacheIds.value = []
-    if (results.some(result => result.status === 'rejected'))
-      ElMessage.error('有缓存未能删除，请重试')
+    selectedCacheIds.value = selectedEntries
+      .filter((_, index) => results[index].status === 'rejected')
+      .map(({ id }) => id)
+    if (selectedCacheIds.value.length) ElMessage.error('有缓存未能删除，请重试')
   },
 })
 
