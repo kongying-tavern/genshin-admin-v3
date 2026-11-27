@@ -1,7 +1,7 @@
 # 空荧酒馆地图点位标记系统
 
 <div align="center" />
-![空荧后厨](./public/favicon.ico)
+![空荧后厨](./public/favicon.png)
 
 ## 空荧后厨
 
