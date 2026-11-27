@@ -1,17 +1,7 @@
 import type { GSTileLayerProps } from '../types'
+import type { TileData } from '../utils/tileSource'
 import { BitmapLayer, TileLayer } from 'deck.gl'
-
-interface TileData {
-  byteLength: number
-  image: ImageBitmap
-  url: string
-}
-
-/** tiles 前缀地址 */
-const BASE_URL = import.meta.env.VITE_ASSETS_BASE
-
-/** 地图 zoom 为 0 时对应服务器资源的实际 zoom 值 */
-const ZOOM_MAPPING = 13
+import { loadTile } from '../utils/tileSource'
 
 export class GSTileLayer extends TileLayer<TileData | null, GSTileLayerProps> {
   static layerName = 'GenshinTileLayer'
@@ -19,7 +9,7 @@ export class GSTileLayer extends TileLayer<TileData | null, GSTileLayerProps> {
   constructor(props: GSTileLayerProps) {
     const {
       code,
-      extension = 'png',
+      extension,
       size: [w, h],
       tilesOffset: [ox, oy] = [0, 0],
     } = props
@@ -35,21 +25,7 @@ export class GSTileLayer extends TileLayer<TileData | null, GSTileLayerProps> {
       maxCacheByteSize: Number.MAX_SAFE_INTEGER,
       maxCacheSize: Number.MAX_SAFE_INTEGER,
       extent: [ox, h + oy, w + ox, oy],
-      getTileData: async ({ index: { x, y, z }, signal }) => {
-        try {
-          if (signal?.aborted) return null
-          const url = `${BASE_URL}/tiles_${code}/${z + ZOOM_MAPPING}/${x}_${y}.${extension}`
-          const blob = await fetch(url, { mode: 'cors', signal }).then(res => res.blob())
-          const image = await createImageBitmap(blob)
-          return {
-            byteLength: blob.size,
-            image,
-            url,
-          }
-        } catch {
-          return null
-        }
-      },
+      getTileData: ({ index, signal }) => loadTile(code, extension, index, signal),
       renderSubLayers: props => {
         if (!props.data) return null
         const { url, image } = props.data

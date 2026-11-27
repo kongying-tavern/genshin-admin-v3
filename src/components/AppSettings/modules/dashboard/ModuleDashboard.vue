@@ -2,7 +2,9 @@
 import type { StorageEstimateExpand, UsageItem } from './types'
 import { Odometer, PictureRounded } from '@element-plus/icons-vue'
 import * as ElIcons from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { useFetchHook } from '@/hooks'
+import { clearTileCache, listStorageCaches } from '@/packages/map/src/utils/tileCache'
 import { useBroadcastStore, useUserStore } from '@/stores'
 import { formatByteSize } from '@/utils'
 import { SettingBar, SettingGroup, SettingPanel } from '../../components'
@@ -16,30 +18,47 @@ const clients = computed(() => {
 })
 
 const { execute: refreshStorageEstimate, state: storageEstimate } =
-  useAsyncState<StorageEstimateExpand>(navigator.storage.estimate(), {
-    quota: 0,
-    usage: 0,
-    usageDetails: {
-      caches: 0,
-      indexedDB: 0,
-      serviceWorkerRegistrations: 0,
-    },
-  })
+  useAsyncState<StorageEstimateExpand>(
+    async () => (await navigator.storage?.estimate?.()) ?? {},
+    {},
+    { resetOnExecute: false },
+  )
 
 const {
-  execute: refreshCacheKeys,
-  state: cacheKeys,
-  isLoading: cacheKeysLoading,
-} = useAsyncState(() => window.caches.keys(), [])
+  execute: refreshStorageCaches,
+  state: storageCaches,
+  isLoading: cacheListLoading,
+} = useAsyncState(listStorageCaches, { tileCaches: [], cacheKeys: [] }, { resetOnExecute: false })
 
-const selectedCacheKeys = ref<string[]>([])
+const cacheEntries = computed(() => [
+  ...storageCaches.value.tileCaches.map(tile => {
+    const source = tile.source ?? tile.sourceKey.slice(0, 8)
+    const stores = [tile.opfs && 'OPFS', tile.legacy && '旧缓存'].filter(Boolean).join(' / ')
+    return {
+      id: `tile:${tile.sourceKey}:${tile.code}`,
+      label: `底图瓦片 · ${tile.code} · ${source}（${stores}）`,
+      clear: () => clearTileCache(tile),
+    }
+  }),
+  ...storageCaches.value.cacheKeys.map(cacheKey => ({
+    id: `cache:${cacheKey}`,
+    label: cacheKey,
+    clear: () => window.caches.delete(cacheKey),
+  })),
+])
+
+const selectedCacheIds = ref<string[]>([])
 
 const { refresh: deleteCache, loading: deletingLoading } = useFetchHook({
   onRequest: async () => {
-    await Promise.all(selectedCacheKeys.value.map(cacheKey => window.caches.delete(cacheKey)))
-    await refreshStorageEstimate()
-    await refreshCacheKeys()
-    selectedCacheKeys.value = []
+    const selectedEntries = cacheEntries.value.filter(({ id }) =>
+      selectedCacheIds.value.includes(id),
+    )
+    const results = await Promise.allSettled(selectedEntries.map(async ({ clear }) => clear()))
+    await Promise.all([refreshStorageEstimate(), refreshStorageCaches()])
+    selectedCacheIds.value = []
+    if (results.some(result => result.status === 'rejected'))
+      ElMessage.error('有缓存未能删除，请重试')
   },
 })
 
@@ -63,30 +82,21 @@ const { state: glInfo } = useAsyncState<{ label: string; value: unknown }[]>(asy
 }, [])
 
 const storageDetails = computed<UsageItem[]>(() => {
-  if (!storageEstimate.value.usageDetails) return []
-  const { caches, indexedDB, serviceWorkerRegistrations } = storageEstimate.value.usageDetails
-  const totalUsage = storageEstimate.value.usage ?? 0
-  const res = [
-    {
-      name: '缓存',
-      value: caches,
-      percentage: (100 * caches) / totalUsage,
-      text: `${formatByteSize(caches)}`,
-    },
-    {
-      name: '数据库',
-      value: indexedDB,
-      percentage: (100 * indexedDB) / totalUsage,
-      text: `${formatByteSize(indexedDB)}`,
-    },
-    {
-      name: '服务线程',
-      value: serviceWorkerRegistrations,
-      percentage: (100 * serviceWorkerRegistrations) / totalUsage,
-      text: `${formatByteSize(serviceWorkerRegistrations)}`,
-    },
+  const { usage, usageDetails } = storageEstimate.value
+  if (!usage || !usageDetails) return []
+  const { caches, indexedDB, serviceWorkerRegistrations } = usageDetails
+  return [
+    { name: '缓存', value: caches ?? 0 },
+    { name: '数据库', value: indexedDB ?? 0 },
+    { name: '服务线程', value: serviceWorkerRegistrations ?? 0 },
   ]
-  return res
+    .filter(({ value }) => value > 0)
+    .map(({ name, value }) => ({
+      name,
+      value,
+      percentage: (100 * value) / usage,
+      text: formatByteSize(value),
+    }))
 })
 
 const userAgent = navigator.userAgent
@@ -126,28 +136,28 @@ const userAgent = navigator.userAgent
           </div>
         </template>
 
-        <template v-if="storageEstimate.usageDetails" #detail>
+        <template #detail>
           <div class="w-full flex flex-wrap gap-2">
-            <StorageChart :data="storageDetails" />
+            <StorageChart v-if="storageDetails.length" :data="storageDetails" />
             <div
-              v-loading="cacheKeysLoading"
+              v-loading="cacheListLoading"
               element-loading-text="正在加载缓存列表..."
               class="flex-1 h-[240px] text-xs flex flex-col gap-1 overflow-hidden"
             >
-              <div class="shrink-0">缓存存储 ({{ cacheKeys.length }})</div>
+              <div class="shrink-0">缓存存储 ({{ cacheEntries.length }})</div>
               <el-checkbox-group
-                v-model="selectedCacheKeys"
+                v-model="selectedCacheIds"
                 size="small"
                 class="flex-1 flex flex-col overflow-auto"
                 :disabled="deletingLoading"
               >
                 <el-checkbox
-                  v-for="(cacheKey, index) in cacheKeys"
-                  :key="cacheKey"
-                  :value="cacheKey"
+                  v-for="entry in cacheEntries"
+                  :key="entry.id"
+                  :value="entry.id"
                   class="shrink-0"
                 >
-                  {{ `(${index + 1}) ${cacheKey}` }}
+                  {{ entry.label }}
                 </el-checkbox>
               </el-checkbox-group>
               <div class="shrink-0 flex justify-end">
@@ -155,7 +165,7 @@ const userAgent = navigator.userAgent
                   size="small"
                   type="danger"
                   plain
-                  :disabled="!selectedCacheKeys.length"
+                  :disabled="deletingLoading || !selectedCacheIds.length"
                   :icon="ElIcons.Delete"
                   @click="deleteCache"
                 >

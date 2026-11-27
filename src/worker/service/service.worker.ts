@@ -1,3 +1,8 @@
+import {
+  TILE_BYPASS_ACK,
+  TILE_BYPASS_PROBE,
+} from '@/packages/map/src/utils/tileServiceWorkerProtocol'
+import { isTileUrl, normalizeTileBase } from '@/packages/map/src/utils/tileUrl'
 import { WorkerIPC } from '@/utils/worker/worker-ipc'
 import { CacheMeta } from '@/worker/service/utils/cache-meta'
 import { ServiceWorkerLogger } from '@/worker/service/utils/service-worker-logger'
@@ -19,6 +24,9 @@ const logger = new ServiceWorkerLogger(ipc)
 // ==================== global env ====================
 
 const VERSION = 3
+const tileBase = import.meta.env.VITE_ASSETS_BASE
+  ? normalizeTileBase(import.meta.env.VITE_ASSETS_BASE)
+  : undefined
 const AVAILABLE_DESTINATION = new Set(['audio', 'font', 'image', 'video'])
 // 系统配置下发的 WOFF2 字体以 application/octet-stream 提供。
 const FONT_CONTENT_TYPE =
@@ -73,6 +81,10 @@ globalThis.addEventListener('activate', ev => {
   )
 })
 
+globalThis.addEventListener('message', ({ data, source }) => {
+  if (data === TILE_BYPASS_PROBE) source?.postMessage(TILE_BYPASS_ACK)
+})
+
 // ====================    on fetch    ====================
 
 /** 匹配缓存库 */
@@ -82,29 +94,27 @@ const matchCache = (
 ): { name: string; typeValidate?: RegExp } | null => {
   const { host, pathname } = urlObject
 
-  // 1. 地图切片
-  const tilesCode = pathname.match(/tiles_([a-zA-Z0-9]+)\//)?.[1]
-  if (tilesCode) return { name: `tiles-${tilesCode}`, typeValidate: /^image\// }
-
-  // 2. 附加图层
+  // 附加图层
   if (pathname.includes('/d/underground/')) return { name: 'overlays', typeValidate: /^image\// }
 
-  // 3. 字体
+  // 字体
   if (destination === 'font') return { name: 'fonts', typeValidate: FONT_CONTENT_TYPE }
 
-  // 4. 图标
+  // 图标
   if (host.startsWith('oss.') || pathname.includes('/icons/'))
     return { name: 'icons', typeValidate: /^image\// }
 
-  // 5. 瓦片
+  // WebAssembly 模块
   if (pathname.endsWith('.wasm')) return { name: 'wasm' }
 
   return null
 }
 
 globalThis.addEventListener('fetch', ev => {
-  const { url, mode, destination: rawDestination } = ev.request.clone()
+  const { url, mode, destination: rawDestination } = ev.request
   const urlObject = new URL(url)
+  // 在 OSS 图标匹配之前放行底图瓦片，页面负责读取和迁移旧缓存。
+  if (tileBase && isTileUrl(urlObject, tileBase)) return
   const { protocol, host, pathname } = urlObject
 
   logger.info(`fetch ${url}`)

@@ -1,9 +1,9 @@
 export interface StorageEstimateExpand extends StorageEstimate {
-  /** 用量详情，目前仅在 chromuim 内核浏览器下可用 */
+  /** 用量详情，目前仅在 Chromium 内核浏览器下可用 */
   usageDetails?: {
-    caches: number
-    indexedDB: number
-    serviceWorkerRegistrations: number
+    caches?: number
+    indexedDB?: number
+    serviceWorkerRegistrations?: number
   }
 }
 
